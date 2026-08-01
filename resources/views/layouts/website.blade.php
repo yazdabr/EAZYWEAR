@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>@yield('title', 'Eazywear Indonesia')</title>
+
+    @vite([
+        'resources/css/app.css',
+        'resources/js/app.js'
+    ])
+
+</head>
+
+<body class="bg-white text-gray-900">
+
+    <x-website.navbar />
+
+    <main>
+
+        @yield('content')
+
+    </main>
+
+    <x-website.footer />
+
+</body>
+
+</html>

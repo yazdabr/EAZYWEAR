@@ -1,3 +1,101 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+    --color-primary: #FFFFFF;
+
+    --color-secondary: #111111;
+
+    --color-accent: #B88A1A;
+
+    --color-muted: #F5F5F5;
+
+    --color-border: #E5E7EB;
+
+    --color-success: #10B981;
+
+    --color-danger: #EF4444;
+}
+
+body{
+    font-family: "Inter", sans-serif;
+}
+
+h1,h2,h3,h4,h5,h6{
+    font-family:"Poppins",sans-serif;
+}
+
+/* HERO ANIMATION */
+
+@keyframes fadeRight {
+
+    from {
+
+        opacity: 0;
+        transform: translateX(-40px);
+
+    }
+
+    to {
+
+        opacity: 1;
+        transform: translateX(0);
+
+    }
+
+}
+
+@keyframes fadeUp {
+
+    from {
+
+        opacity: 0;
+        transform: translateY(40px);
+
+    }
+
+    to {
+
+        opacity: 1;
+        transform: translateY(0);
+
+    }
+
+}
+
+.hero-label {
+
+    opacity: 0;
+    animation: fadeRight .8s ease forwards;
+    animation-delay: .2s;
+
+}
+
+.hero-title {
+
+    opacity: 0;
+    animation: fadeRight .8s ease forwards;
+    animation-delay: .5s;
+
+}
+
+.hero-description {
+
+    opacity: 0;
+    animation: fadeRight .8s ease forwards;
+    animation-delay: .8s;
+
+}
+
+.hero-buttons {
+
+    opacity: 0;
+    animation: fadeUp .8s ease forwards;
+    animation-delay: 1.1s;
+
+}

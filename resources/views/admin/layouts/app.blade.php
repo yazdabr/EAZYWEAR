@@ -71,6 +71,8 @@
 
     @stack('scripts')
 
+    <x-admin.toast />
+
 </body>
 
 </html>

@@ -17,7 +17,8 @@
         {{-- DASHBOARD --}}
         <nav class="space-y-1">
             <a href="{{ route('admin.dashboard') }}" 
-               class="flex items-center gap-3 rounded-lg bg-[#C4902C] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition">
+            class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 
+                    {{ request()->routeIs('admin.dashboard') ? 'bg-[#C4902C] text-white shadow-md' : 'text-gray-400 hover:bg-[#C4902C] hover:text-white' }}">
                 <x-heroicon-o-squares-2x2 class="h-5 w-5 shrink-0" />
                 <span>Dashboard</span>
             </a>
@@ -31,9 +32,21 @@
         </div>
 
         <nav class="mt-2 space-y-1">
-            <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
-                <x-heroicon-o-archive-box class="h-5 w-5 shrink-0" />
-                <span>Products</span>
+            <a
+                href="{{ route('admin.products.index') }}"
+                class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                {{ request()->routeIs('admin.products.*')
+                    ? 'bg-[#C8942D] text-white shadow-lg'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+
+                <x-heroicon-o-archive-box class="h-5 w-5 shrink-0"/>
+
+                <span>
+
+                    Products
+
+                </span>
+
             </a>
 
             <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">

@@ -171,3 +171,31 @@ h1,h2,h3,h4,h5,h6{
     transform: translate(0) scale(1);
 
 }
+
+.dropdown-menu.show{
+
+    display:block;
+
+    animation:dropdown .25s ease;
+
+}
+
+@keyframes dropdown{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(-10px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}

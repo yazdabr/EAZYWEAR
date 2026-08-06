@@ -1,5 +1,9 @@
 <div
-    x-data="{ open: false }"
+    x-data="{
+        open: false,
+        scrolled: false
+    }"
+    @scroll.window="scrolled = window.scrollY > 20"
     class="relative">
 
 {{-- ================= MOBILE MENU (DROPDOWN) ================= --}}
@@ -42,37 +46,43 @@
 
         {{-- Navigation Menu --}}
         <nav class="flex flex-col space-y-1.5 py-6">
-            <a
-                href="/"
-                @click="open = false"
-                class="flex items-center justify-between rounded-xl bg-[#AE7C18]/10 px-4 py-3 text-base font-semibold text-[#AE7C18]">
-                <span>Home</span>
-                <x-heroicon-o-chevron-right class="h-5 w-5"/>
-            </a>
 
-            <a
-                href="/catalog"
-                @click="open = false"
-                class="flex items-center justify-between rounded-xl px-4 py-3 text-base font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#AE7C18]">
-                <span>Catalog</span>
-                <x-heroicon-o-chevron-right class="h-5 w-5 opacity-40"/>
-            </a>
+            <x-ui.nav-link
+                route="home"
+                mobile
+                @click="open = false">
 
-            <a
-                href="/about"
-                @click="open = false"
-                class="flex items-center justify-between rounded-xl px-4 py-3 text-base font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#AE7C18]">
-                <span>About</span>
-                <x-heroicon-o-chevron-right class="h-5 w-5 opacity-40"/>
-            </a>
+                Home
 
-            <a
-                href="/contact"
-                @click="open = false"
-                class="flex items-center justify-between rounded-xl px-4 py-3 text-base font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#AE7C18]">
-                <span>Contact</span>
-                <x-heroicon-o-chevron-right class="h-5 w-5 opacity-40"/>
-            </a>
+            </x-ui.nav-link>
+
+            <x-ui.nav-link
+                route="catalog"
+                mobile
+                @click="open = false">
+
+                Catalog
+
+            </x-ui.nav-link>
+
+            <x-ui.nav-link
+                route="about"
+                mobile
+                @click="open = false">
+
+                About
+
+            </x-ui.nav-link>
+
+            <x-ui.nav-link
+                route="contact"
+                mobile
+                @click="open = false">
+
+                Contact
+
+            </x-ui.nav-link>
+
         </nav>
 
         {{-- Bottom Actions: Search & Login --}}
@@ -98,7 +108,10 @@
     {{-- ================= HEADER ================= --}}
 
     <header
-        class="sticky top-0 z-50 border-b border-gray-200/70 bg-white/90 backdrop-blur-md">
+        :class="scrolled
+            ? 'bg-white/95 backdrop-blur-xl shadow-lg border-gray-200/70'
+            : 'bg-white/70 backdrop-blur-md border-transparent'"
+        class="fixed inset-x-0 top-0 z-[1000] border-b transition-all duration-300">
 
         <x-ui.container>
 
@@ -115,54 +128,45 @@
                 </a>
 
                 {{-- Desktop Menu --}}
-                <ul
-                    class="hidden items-center gap-10 lg:flex">
+                <ul class="hidden items-center gap-10 lg:flex">
 
                     <li>
 
-                        <a
-                            href="/"
-                            class="border-b-2 border-[#AE7C18] pb-2 text-sm font-semibold text-[#AE7C18]">
+                        <x-ui.nav-link route="home">
 
                             Home
 
-                        </a>
+                        </x-ui.nav-link>
 
                     </li>
 
                     <li>
 
-                        <a
-                            href="/catalog"
-                            class="pb-2 text-sm font-semibold transition hover:text-[#AE7C18]">
+                        <x-ui.nav-link route="catalog">
 
                             Catalog
 
-                        </a>
+                        </x-ui.nav-link>
 
                     </li>
 
                     <li>
 
-                        <a
-                            href="/about"
-                            class="pb-2 text-sm font-semibold transition hover:text-[#AE7C18]">
+                        <x-ui.nav-link route="about">
 
                             About
 
-                        </a>
+                        </x-ui.nav-link>
 
                     </li>
 
                     <li>
 
-                        <a
-                            href="/contact"
-                            class="pb-2 text-sm font-semibold transition hover:text-[#AE7C18]">
+                        <x-ui.nav-link route="contact">
 
                             Contact
 
-                        </a>
+                        </x-ui.nav-link>
 
                     </li>
 

@@ -1,18 +1,18 @@
-<footer class="border-t border-gray-200 bg-white">
+<footer class="border-t border-gray-200 bg-[#F3F4F6]">
 
     <x-ui.container>
 
-        <div class="grid items-start gap-12 py-20 md:grid-cols-2 lg:grid-cols-4">
+        <div class="grid items-start gap-12 py-8 md:grid-cols-2 lg:grid-cols-4">
 
             {{-- Brand --}}
-            <div class="self-start">
+            <div class="self-start text-center lg:text-left">
 
                 <img
                     src="{{ asset('images/hero/logoo.png') }}"
                     alt="Eazywear"
-                    class="h-5 w-auto">
+                    class="mx-auto h-5 w-auto lg:mx-0">
 
-                <p class="mt-5 max-w-xs leading-8 text-gray-600">
+                <p class="mx-auto mt-5 max-w-xs leading-8 text-gray-600 lg:mx-0">
 
                     Premium Indonesian athletic gear engineered
                     for performance and the technical pursuit of excellence.
@@ -22,7 +22,7 @@
             </div>
 
             {{-- Quick Links --}}
-            <div>
+            <div class="text-center lg:text-left">
 
                 <h3
                     class="mb-6 text-sm font-semibold uppercase tracking-[0.2em] text-[#AE7C18]">
@@ -62,7 +62,7 @@
             </div>
 
             {{-- Categories --}}
-            <div>
+            <div class="text-center lg:text-left">
 
                 <h3
                     class="mb-6 text-sm font-semibold uppercase tracking-[0.2em] text-[#AE7C18]">
@@ -86,7 +86,7 @@
             </div>
 
             {{-- Contact --}}
-            <div>
+            <div class="text-center lg:text-left">
 
                 <h3
                     class="mb-6 text-sm font-semibold uppercase tracking-[0.2em] text-[#AE7C18]">
@@ -95,9 +95,9 @@
 
                 </h3>
 
-                <div class="space-y-5">
+                <div class="space-y-6">
 
-                    <div class="flex items-start gap-3">
+                    <div class="flex flex-col items-center gap-2 lg:flex-row lg:items-start lg:gap-3">
 
                         <x-heroicon-o-map-pin
                             class="mt-1 h-5 w-5 text-[#AE7C18]" />
@@ -110,7 +110,7 @@
 
                     </div>
 
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-col items-center gap-2 lg:flex-row lg:gap-3">
 
                         <x-heroicon-o-envelope
                             class="h-5 w-5 text-[#AE7C18]" />
@@ -123,7 +123,7 @@
 
                     </div>
 
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-col items-center gap-2 lg:flex-row lg:gap-3">
 
                         <x-heroicon-o-phone
                             class="h-5 w-5 text-[#AE7C18]" />
@@ -144,7 +144,7 @@
 
         {{-- Bottom Footer --}}
         <div
-            class="flex flex-col items-center justify-between gap-4 border-t border-gray-200 py-6 text-sm text-gray-500 md:flex-row">
+            class="flex flex-col items-center justify-between gap-4 border-t border-gray-200 py-6 text-center text-sm text-gray-500 md:flex-row md:text-left">
 
             <p>
 

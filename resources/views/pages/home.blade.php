@@ -1,21 +1,21 @@
 @extends('layouts.website')
 
-@section('title','Home')
+@section('title', 'Home')
 
 @section('content')
 
-<x-home.hero />
+    @include('home.hero')
 
-<x-home.why-choose />
+    @include('home.why-choose')
 
-<x-home.categories />
+    @include('home.categories')
 
-<x-home.featured-products />
+    @include('home.featured-products')
 
-<x-home.production-process />
+    @include('home.production-process')
 
-<x-home.testimonials />
+    @include('home.testimonials')
 
-<x-home.cta />
+    @include('home.cta')
 
 @endsection

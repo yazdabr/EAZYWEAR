@@ -1,89 +1,41 @@
 @props([
-
-    'status' => 'Active',
-
+    'status'
 ])
 
 @php
 
-$status = strtolower($status);
+$status = trim($status);
 
-$styles = [
+$classes = match ($status) {
 
-    'active' => [
+    'Active' =>
+        'bg-emerald-100 text-emerald-700',
 
-        'bg' => 'bg-emerald-100',
+    'Inactive' =>
+        'bg-red-100 text-red-700',
 
-        'text' => 'text-emerald-700',
+    'Pending' =>
+        'bg-amber-100 text-amber-700',
 
-        'dot' => 'bg-emerald-500',
+    'Paid' =>
+        'bg-sky-100 text-sky-700',
 
-        'label' => 'Active',
+    'Completed' =>
+        'bg-emerald-100 text-emerald-700',
 
-    ],
+    'Cancelled' =>
+        'bg-red-100 text-red-700',
 
-    'draft' => [
+    default =>
+        'bg-slate-100 text-slate-700',
 
-        'bg' => 'bg-amber-100',
-
-        'text' => 'text-amber-700',
-
-        'dot' => 'bg-amber-500',
-
-        'label' => 'Draft',
-
-    ],
-
-    'low stock' => [
-
-        'bg' => 'bg-orange-100',
-
-        'text' => 'text-orange-700',
-
-        'dot' => 'bg-orange-500',
-
-        'label' => 'Low Stock',
-
-    ],
-
-    'out of stock' => [
-
-        'bg' => 'bg-red-100',
-
-        'text' => 'text-red-700',
-
-        'dot' => 'bg-red-500',
-
-        'label' => 'Out of Stock',
-
-    ],
-
-    'archived' => [
-
-        'bg' => 'bg-slate-200',
-
-        'text' => 'text-slate-700',
-
-        'dot' => 'bg-slate-500',
-
-        'label' => 'Archived',
-
-    ],
-
-];
-
-$current = $styles[$status] ?? $styles['active'];
+};
 
 @endphp
 
 <span
-    class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold {{ $current['bg'] }} {{ $current['text'] }}">
+    class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold {{ $classes }}">
 
-    <span
-        class="h-2 w-2 rounded-full {{ $current['dot'] }}">
-
-    </span>
-
-    {{ $current['label'] }}
+    {{ $status }}
 
 </span>

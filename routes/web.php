@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\SizeController;
+use App\Http\Controllers\Admin\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,73 +35,25 @@ Route::prefix('admin')
     ->name('admin.')
     ->group(function () {
 
-        /*
-        |--------------------------------------------------------------------------
-        | Dashboard
-        |--------------------------------------------------------------------------
-        */
-
-        Route::view('/dashboard', 'admin.dashboard.index')
+        Route::view('/dashboard','admin.dashboard.index')
             ->name('dashboard');
 
-        /*
-        |--------------------------------------------------------------------------
-        | Master Data
-        |--------------------------------------------------------------------------
-        */
+        Route::view('/products','admin.products.index')
+            ->name('products');
 
-        Route::view('/products', 'admin.products.index')
-            ->name('products.index');
+        Route::get('/categories',[CategoryController::class,'index'])
+            ->name('categories');
 
-        Route::view('/categories', 'admin.categories.index')
-            ->name('categories.index');
+        Route::get('/sizes', [SizeController::class, 'index'])
+            ->name('sizes');
 
-        Route::view('/sizes', 'admin.sizes.index')
-            ->name('sizes.index');
+        Route::get('/transactions', [TransactionController::class, 'index'])
+            ->name('transactions');
 
-        Route::view('/colors', 'admin.colors.index')
-            ->name('colors.index');
-
-        Route::view('/product-images', 'admin.product-images.index')
-            ->name('product-images.index');
-
-        /*
-        |--------------------------------------------------------------------------
-        | Transactions
-        |--------------------------------------------------------------------------
-        */
-
-        Route::view('/transactions', 'admin.transactions.index')
-            ->name('transactions.index');
-
-        Route::view('/api-logs', 'admin.api-logs.index')
-            ->name('api-logs.index');
-
-        /*
-        |--------------------------------------------------------------------------
-        | Reports
-        |--------------------------------------------------------------------------
-        */
-
-        Route::view('/reports', 'admin.reports.index')
-            ->name('reports.index');
-
-        /*
-        |--------------------------------------------------------------------------
-        | Users
-        |--------------------------------------------------------------------------
-        */
-
-        Route::view('/users', 'admin.users.index')
-            ->name('users.index');
-
-        /*
-        |--------------------------------------------------------------------------
-        | Profile
-        |--------------------------------------------------------------------------
-        */
-
-        Route::view('/profile', 'admin.profile.index')
-            ->name('profile.index');
-
-    });
+            Route::get('/transactions/create', [TransactionController::class, 'create'])
+                ->name('transactions.create');
+            
+            Route::get('/transactions/{invoice}/print', function ($invoice) {
+                    return view('admin.transactions.print', compact('invoice'));
+                })->name('transactions.print');
+});

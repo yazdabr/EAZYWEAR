@@ -33,13 +33,17 @@
 
         <nav class="mt-2 space-y-1">
             <a
-                href="{{ route('admin.products.index') }}"
+
+                href="{{ route('admin.products') }}"
+
                 class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
-                {{ request()->routeIs('admin.products.*')
-                    ? 'bg-[#C8942D] text-white shadow-lg'
+
+                {{ request()->routeIs('admin.products')
+                    ? 'bg-[#C99322] text-white shadow-lg'
                     : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
 
-                <x-heroicon-o-archive-box class="h-5 w-5 shrink-0"/>
+                <x-heroicon-o-archive-box
+                    class="h-5 w-5 shrink-0"/>
 
                 <span>
 
@@ -49,25 +53,47 @@
 
             </a>
 
-            <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
-                <x-heroicon-o-view-columns class="h-5 w-5 shrink-0" />
-                <span>Categories</span>
+            <a
+
+                href="{{ route('admin.categories') }}"
+
+                class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+
+                {{ request()->routeIs('admin.categories')
+                    ? 'bg-[#C99322] text-white shadow-lg'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+
+                <x-heroicon-o-squares-2x2
+                    class="h-5 w-5 shrink-0"/>
+
+                <span>
+
+                    Categories
+
+                </span>
+
             </a>
 
-            <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
-                <x-heroicon-o-rectangle-stack class="h-5 w-5 shrink-0" />
-                <span>Sizes</span>
-            </a>
+            <a
 
-            <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
-                <x-heroicon-o-adjustments-horizontal class="h-5 w-5 shrink-0" />
-                <span>Colors</span>
-            </a>
+                href="{{ route('admin.sizes') }}"
 
-            <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
-                <x-heroicon-o-photo class="h-5 w-5 shrink-0" />
-                <span>Product Images</span>
+                class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                {{ request()->routeIs('admin.sizes')
+                    ? 'bg-[#C99322] text-white shadow-lg'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+
+                <x-heroicon-o-scale
+                    class="h-5 w-5 shrink-0" />
+
+                <span>
+
+                    Sizes
+
+                </span>
+
             </a>
+            
         </nav>
 
         {{-- TRANSACTIONS --}}
@@ -78,9 +104,17 @@
         </div>
 
         <nav class="mt-2 space-y-1">
-            <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
-                <x-heroicon-o-receipt-percent class="h-5 w-5 shrink-0" />
-                <span>Transaction List</span>
+            <a
+                href="{{ route('admin.transactions') }}"
+                class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                {{ request()->routeIs('admin.transactions')
+                    ? 'bg-[#C99322] text-white shadow-lg'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                <x-heroicon-o-receipt-percent
+                    class="h-5 w-5 shrink-0" />
+                <span>
+                    Transaction List
+                </span>
             </a>
 
             <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">

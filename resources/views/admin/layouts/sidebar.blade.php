@@ -116,28 +116,62 @@
                     Transaction List
                 </span>
             </a>
+            <a
+                href="{{ route('admin.api-logs') }}"
 
-            <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
-                <x-heroicon-o-code-bracket-square class="h-5 w-5 shrink-0" />
-                <span>API Logs</span>
+                class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                {{ request()->routeIs('admin.api-logs')
+                    ? 'bg-[#AE7C18] text-white shadow-md shadow-[#AE7C18]/20'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+
+                <x-heroicon-o-command-line
+                    class="h-5 w-5 shrink-0" />
+
+                <span>
+
+                    API Logs
+
+                </span>
+
             </a>
         </nav>
 
-        {{-- REPORTS --}}
+        {{-- ================= REPORTS ================= --}}
         <div class="mt-6 px-2">
+
             <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+
                 REPORTS
+
             </p>
+
         </div>
 
         <nav class="mt-2 space-y-1">
-            <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
-                <x-heroicon-o-chart-bar class="h-5 w-5 shrink-0" />
-                <span>Sales Report</span>
+
+            <a
+
+                href="{{ route('admin.sales-reports') }}"
+
+                class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white
+                {{ request()->routeIs('admin.sales-reports')
+                    ? 'bg-white/10 text-white'
+                    : '' }}">
+
+                <x-heroicon-o-chart-bar
+                    class="h-5 w-5 shrink-0" />
+
+                <span>
+
+                    Sales Reports
+
+                </span>
+
             </a>
+
         </nav>
 
-        {{-- USERS --}}
+        {{-- USERS
         <div class="mt-6 px-2">
             <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
                 USERS
@@ -149,7 +183,7 @@
                 <x-heroicon-o-users class="h-5 w-5 shrink-0" />
                 <span>User Management</span>
             </a>
-        </nav>
+        </nav> --}}
 
     </div>
 

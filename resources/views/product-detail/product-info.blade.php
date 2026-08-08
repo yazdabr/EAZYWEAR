@@ -147,7 +147,7 @@
 
                 </div>
 
-                {{-- Color --}}
+                {{-- Color
                 <div class="mt-10">
 
                     <h3
@@ -176,7 +176,7 @@
 
                     </div>
 
-                </div>
+                </div> --}}
 
                 {{-- Feature Box --}}
                 <div class="mt-10 grid gap-4 sm:grid-cols-2">

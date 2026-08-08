@@ -165,13 +165,15 @@
 
                             $dispatch('toast',{
 
-                                type:'success',
+                                type: transaction.status === 'Pending'
+                                    ? 'warning'
+                                    : 'error',
 
-                                title: transaction.status==='Pending'
+                                title: transaction.status === 'Pending'
                                     ? 'Transaction Cancelled'
                                     : 'Transaction Deleted',
 
-                                message: transaction.status==='Pending'
+                                message: transaction.status === 'Pending'
                                     ? 'Transaction has been cancelled.'
                                     : 'Transaction has been deleted.'
 

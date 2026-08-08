@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\SizeController;
 use App\Http\Controllers\Admin\TransactionController;
+use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\Admin\ApiLogController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,4 +58,13 @@ Route::prefix('admin')
             Route::get('/transactions/{invoice}/print', function ($invoice) {
                     return view('admin.transactions.print', compact('invoice'));
                 })->name('transactions.print');
+
+        Route::get('/sales-reports', [SalesReportController::class, 'index'])
+            ->name('sales-reports');
+
+            Route::get('/sales-reports/print', [SalesReportController::class, 'print'])
+                ->name('sales-reports.print');
+
+        Route::get('/api-logs', [ApiLogController::class, 'index'])
+            ->name('api-logs');
 });

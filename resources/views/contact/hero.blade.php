@@ -1,13 +1,15 @@
 <section
     class="relative overflow-hidden border-b bg-gradient-to-r from-[#F8F4EB] via-[#FFFDF8] to-[#F7ECD6]">
 
-    {{-- Background Glow --}}
-    <div
-        class="absolute -left-20 top-10 h-64 w-64 rounded-full bg-[#AE7C18]/10 blur-3xl">
-    </div>
-
-    <div
-        class="absolute right-0 top-0 h-80 w-80 rounded-full bg-[#AE7C18]/10 blur-3xl">
+    {{-- 1. Full PNG Background Layer (Transparan & Cover) --}}
+    <div class="pointer-events-none absolute inset-0 z-0">
+        <img 
+            src="{{ asset('images/hero/bg.png') }}" 
+            alt="Hero Background" 
+            class="h-full w-full object-cover object-right opacity-15 mix-blend-multiply"
+        >
+        {{-- Overlay Gradient agar Teks di Kiri Tetap Kontras & Jelas --}}
+        <div class="absolute inset-0 bg-gradient-to-r from-[#FAF6EF] via-[#FAF6EF]/90 to-transparent"></div>
     </div>
 
     <x-ui.container>

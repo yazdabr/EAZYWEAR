@@ -79,91 +79,225 @@ $transactions = [
 
     {{-- ================= FILTER ================= --}}
     <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+
         {{-- Header Section Filter --}}
         <div class="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
+
             <div class="flex items-center gap-2.5">
-                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#AE7C18]/10 text-[#AE7C18]">
-                    <x-heroicon-o-funnel class="h-4 w-4" />
-                </div>
-                <h3 class="text-xl font-semibold text-slate-800">Filter Data</h3>
+                <h3 class="text-xl font-semibold text-slate-800">
+
+                    Filter Data
+
+                </h3>
             </div>
-            <span class="text-xs text-slate-400">Filter berdasarkan kata kunci & kriteria</span>
+            <span class="text-xs text-slate-400">
+
+                Filter berdasarkan kata kunci & kriteria
+
+            </span>
         </div>
 
         {{-- Controls Grid --}}
         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-12">
 
-            {{-- Search Input --}}
+            {{-- ================= SEARCH ================= --}}
             <div class="md:col-span-2 lg:col-span-4">
-                <label class="mb-1.5 block text-xs font-medium text-slate-600">Search</label>
-                <x-admin.search-input placeholder="Search customer name or email..." />
+
+                <label class="mb-1.5 block text-xs font-medium text-slate-600">
+
+                    Search
+
+                </label>
+
+                <x-admin.search-input
+                    placeholder="Search customer name or email..." />
+
             </div>
 
-            {{-- Month --}}
-            <div class="lg:col-span-2">
-                <label class="mb-1.5 block text-xs font-medium text-slate-600">Month</label>
-                <x-admin.select>
-                    <option value="">All Month</option>
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                </x-admin.select>
-            </div>
 
-            {{-- Year --}}
-            <div class="lg:col-span-2">
-                <label class="mb-1.5 block text-xs font-medium text-slate-600">Year</label>
-                <x-admin.select>
-                    <option value="2026">2026</option>
-                    <option value="2025">2025</option>
-                    <option value="2024">2024</option>
-                </x-admin.select>
-            </div>
+            {{-- ================= RIGHT CONTROLS ================= --}}
+            <div class="md:col-span-2 lg:col-span-8">
 
-            {{-- Status --}}
-            <div class="lg:col-span-2">
-                <label class="mb-1.5 block text-xs font-medium text-slate-600">Status</label>
-                <x-admin.select>
-                    <option value="">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="paid">Paid</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                </x-admin.select>
-            </div>
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-end">
 
-            {{-- Action Buttons --}}
-            <div class="flex flex-col lg:col-span-2">
-                {{-- Spacer Label agar sejajar presisi secara vertikal --}}
-                <label class="invisible mb-1.5 block text-xs font-medium select-none">Action</label>
-                
-                <div class="flex gap-2">
-                    <button
-                        type="submit"
-                        class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-[#AE7C18]/20 transition-all duration-200 hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18] focus:ring-offset-2 active:scale-[0.98]">
-                        <x-heroicon-o-magnifying-glass class="h-4 w-4" />
-                        <span>Filter</span>
-                    </button>
+                    {{-- Month --}}
+                    <div class="w-full sm:w-52">
 
-                    <button
-                        type="reset"
-                        title="Reset Filter"
-                        class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm font-medium text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98]">
-                        <x-heroicon-o-arrow-path class="h-4 w-4" />
-                    </button>
+                        <label class="mb-1.5 block text-xs font-medium text-slate-600">
+
+                            Month
+
+                        </label>
+
+                        <x-admin.select>
+
+                            <option value="">
+
+                                All Month
+
+                            </option>
+
+                            <option value="1">
+
+                                January
+
+                            </option>
+
+                            <option value="2">
+
+                                February
+
+                            </option>
+
+                            <option value="3">
+
+                                March
+
+                            </option>
+
+                            <option value="4">
+
+                                April
+
+                            </option>
+
+                            <option value="5">
+
+                                May
+
+                            </option>
+
+                            <option value="6">
+
+                                June
+
+                            </option>
+
+                            <option value="7">
+
+                                July
+
+                            </option>
+
+                            <option value="8">
+
+                                August
+
+                            </option>
+
+                            <option value="9">
+
+                                September
+
+                            </option>
+
+                            <option value="10">
+
+                                October
+
+                            </option>
+
+                            <option value="11">
+
+                                November
+
+                            </option>
+
+                            <option value="12">
+
+                                December
+
+                            </option>
+
+                        </x-admin.select>
+
+                    </div>
+
+
+                    {{-- Year --}}
+                    <div class="w-full sm:w-40">
+
+                        <label class="mb-1.5 block text-xs font-medium text-slate-600">
+
+                            Year
+
+                        </label>
+
+                        <x-admin.select>
+
+                            <option value="">
+
+                                All Year
+
+                            </option>
+
+                            <option value="2026">
+
+                                2026
+
+                            </option>
+
+                            <option value="2025">
+
+                                2025
+
+                            </option>
+
+                            <option value="2024">
+
+                                2024
+
+                            </option>
+
+                        </x-admin.select>
+
+                    </div>
+
+
+                    {{-- Actions --}}
+                    <div class="flex items-center gap-2">
+
+                        {{-- Filter --}}
+                        <button
+
+                            type="submit"
+
+                            class="inline-flex h-[50px] items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-5 text-sm font-semibold text-white shadow-md shadow-[#AE7C18]/20 transition-all duration-200 hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18] focus:ring-offset-2 active:scale-[0.98]">
+
+                            <x-heroicon-o-magnifying-glass
+                                class="h-4 w-4" />
+
+                            <span>
+
+                                Filter
+
+                            </span>
+
+                        </button>
+
+
+                        {{-- Reset --}}
+                        <button
+
+                            type="reset"
+
+                            title="Reset Filter"
+
+                            class="inline-flex h-[50px] w-[50px] items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98]">
+
+                            <x-heroicon-o-arrow-path
+                                class="h-4 w-4" />
+
+                        </button>
+
+                    </div>
+
                 </div>
+
             </div>
 
         </div>
+
     </div>
 
     {{-- ================= STATISTICS ================= --}}
@@ -321,22 +455,17 @@ $transactions = [
 
         </div>
 
-        {{-- Footer --}}
-        <div class="flex items-center justify-between border-t border-slate-200 px-6 py-5">
-
-            <p class="text-sm text-slate-500">
-
-                Showing 3 of 152 transactions
-
+        <div class="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-4 py-4 text-center sm:px-6 sm:py-5 md:flex-row md:text-left">
+            <p class="text-xs font-medium text-slate-500 sm:text-sm">
+                Showing <span class="font-semibold text-slate-900">3</span> of <span class="font-semibold text-slate-900">152</span> transactions
             </p>
 
             <x-admin.pagination />
-
         </div>
 
-    </div>
+            </div>
 
-</div>
+        </div>
 
 @endsection
 

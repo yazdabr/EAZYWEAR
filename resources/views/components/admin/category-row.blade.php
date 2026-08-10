@@ -4,16 +4,7 @@
 
 <tr class="transition duration-200 hover:bg-slate-50">
 
-    {{-- Checkbox --}}
-    <td class="px-6 py-5">
-
-        <input
-            type="checkbox"
-            class="h-4 w-4 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]">
-
-    </td>
-
-    {{-- Category --}}
+    {{-- Kategori --}}
     <td class="px-6 py-5">
 
         <div>
@@ -45,7 +36,7 @@
 
     </td>
 
-    {{-- Products --}}
+    {{-- Produk --}}
     <td class="px-6 py-5 text-center">
 
         <span class="inline-flex rounded-lg bg-slate-100 px-3 py-1 text-sm font-semibold">
@@ -64,7 +55,7 @@
 
     </td>
 
-    {{-- Created --}}
+    {{-- Dibuat --}}
     <td class="px-6 py-5 text-center">
 
         <span class="text-sm text-slate-500">
@@ -75,122 +66,145 @@
 
     </td>
 
-    {{-- Action --}}
+    {{-- Aksi --}}
     <td class="px-6 py-5 text-center">
 
         <div
-            x-data="{open:false}"
-            class="relative inline-block">
+            x-data="{ open: false }"
+            class="relative inline-block text-left">
 
+            {{-- Tombol Aksi --}}
             <button
+                type="button"
 
-                @click="open=!open"
+                @click="open = !open"
 
-                class="rounded-lg p-2 transition hover:bg-slate-100">
+                title="Aksi"
+
+                class="rounded-lg p-2 transition-all duration-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+
+                :class="open ? 'bg-slate-100' : ''">
 
                 <x-heroicon-o-ellipsis-horizontal
-                    class="h-5 w-5 text-slate-500"/>
+                    class="h-5 w-5 text-slate-500" />
 
             </button>
 
-            <div
 
+            {{-- Dropdown Aksi --}}
+            <div
                 x-show="open"
 
-                @click.outside="open=false"
+                @click.outside="open = false"
 
-                x-transition
+                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
 
-                class="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-2 shadow-xl"
+                x-transition:leave="transition ease-in duration-100"
+                x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
+
+                class="absolute right-0 top-full z-[80] mt-2 w-44 origin-top-right overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-900/10"
 
                 style="display:none;">
 
+
+                {{-- ================= LIHAT ================= --}}
                 <button
+                    type="button"
 
                     @click="
+                        open = false;
 
-                        open=false;
+                        $dispatch('open-view-category', {
 
-                        $dispatch('open-view-category',{
+                            name: @js($category['name']),
 
-                            name:@js($category['name']),
+                            slug: @js($category['slug']),
 
-                            slug:@js($category['slug']),
+                            description: @js($category['description']),
 
-                            description:@js($category['description']),
+                            products: @js($category['products']),
 
-                            products:@js($category['products']),
+                            status: @js($category['status']),
 
-                            status:@js($category['status']),
-
-                            created:@js($category['created'])
+                            created: @js($category['created'])
 
                         });
-
                     "
 
-                    class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50">
 
                     <x-heroicon-o-eye
-                        class="h-4 w-4"/>
+                        class="h-4 w-4 shrink-0 text-slate-500" />
 
-                    View
+                    <span>
+                        Lihat
+                    </span>
 
                 </button>
 
+
+                {{-- ================= UBAH ================= --}}
                 <button
+                    type="button"
 
                     @click="
+                        open = false;
 
-                        open=false;
+                        $dispatch('open-edit-category', {
 
-                        $dispatch('open-edit-category',{
+                            name: @js($category['name']),
 
-                            name:'{{ $category['name'] }}',
+                            slug: @js($category['slug']),
 
-                            slug:'{{ $category['slug'] }}',
+                            description: @js($category['description']),
 
-                            description:'{{ $category['description'] }}',
-
-                            status:'{{ $category['status'] }}'
+                            status: @js($category['status'])
 
                         });
-
                     "
 
-                    class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50">
 
                     <x-heroicon-o-pencil-square
-                        class="h-4 w-4"/>
+                        class="h-4 w-4 shrink-0 text-slate-500" />
 
-                    Edit
+                    <span>
+                        Ubah
+                    </span>
 
                 </button>
 
+
+                {{-- ================= HAPUS ================= --}}
                 <button
+                    type="button"
 
                     @click="
+                        open = false;
 
-                        open=false;
+                        $dispatch('open-delete-category', {
 
-                        $dispatch('open-delete-category',{
+                            id: @js($category['slug']),
 
-                            id:@js($category['slug']),
-
-                            name:@js($category['name'])
+                            name: @js($category['name'])
 
                         });
-
                     "
 
-                    class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-red-600 transition hover:bg-red-50">
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50">
 
                     <x-heroicon-o-trash
-                        class="h-4 w-4"/>
+                        class="h-4 w-4 shrink-0" />
 
-                    Delete
+                    <span>
+                        Hapus
+                    </span>
 
                 </button>
+
 
             </div>
 

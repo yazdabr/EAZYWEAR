@@ -15,8 +15,8 @@
             this.closeModal();
             $dispatch('toast', {
                 type: 'success',
-                title: 'Logs Cleared',
-                message: 'All API logs have been cleared successfully.'
+                title: 'Log Dibersihkan',
+                message: 'Semua log API berhasil dibersihkan.'
             });
         }
     }"
@@ -50,10 +50,10 @@
                     </div>
                     <div>
                         <h3 class="text-lg font-bold text-slate-900">
-                            Clear API Logs
+                            Bersihkan Log API
                         </h3>
                         <p class="mt-1 text-xs text-slate-500">
-                            Permanently remove all API logs.
+                            Hapus semua log API secara permanen.
                         </p>
                     </div>
                 </div>
@@ -65,7 +65,7 @@
                     <div class="flex gap-3">
                         <x-heroicon-o-exclamation-triangle class="h-5 w-5 shrink-0 text-red-600" />
                         <p class="text-sm leading-6 text-red-700">
-                            This will permanently delete all API logs from the system. This action cannot be undone.
+                            Ini akan menghapus semua log API dari sistem secara permanen. Tindakan ini tidak dapat dibatalkan.
                         </p>
                     </div>
                 </div>
@@ -77,7 +77,7 @@
                     type="button"
                     @click="closeModal()"
                     class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                    Cancel
+                    Batal
                 </button>
 
                 <button
@@ -85,7 +85,7 @@
                     @click="clearLogs()"
                     class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:scale-[0.98]">
                     <x-heroicon-o-trash class="h-4 w-4" />
-                    Clear All Logs
+                    Hapus Semua Log
                 </button>
             </div>
 

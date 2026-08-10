@@ -84,13 +84,13 @@
 
                     <h2 class="text-xl font-bold text-slate-900">
 
-                        Category Details
+                        Detail Kategori
 
                     </h2>
 
                     <p class="mt-1 text-sm text-slate-500">
 
-                        View category information.
+                        Lihat informasi kategori.
 
                     </p>
 
@@ -119,7 +119,7 @@
 
                     <span class="inline-flex rounded-full bg-[#AE7C18]/10 px-4 py-1 text-sm font-semibold text-[#AE7C18]">
 
-                        Category
+                        Kategori
 
                     </span>
 
@@ -162,7 +162,7 @@
 
                         <span class="text-slate-500">
 
-                            Products
+                            Produk
 
                         </span>
 
@@ -187,7 +187,7 @@
 
                             class="rounded-full px-3 py-1 text-sm font-semibold"
 
-                            :class="category.status==='Active'
+                            :class="category.status==='Aktif'
                                 ? 'bg-emerald-100 text-emerald-700'
                                 : 'bg-red-100 text-red-700'"
 
@@ -201,7 +201,7 @@
 
                         <span class="text-slate-500">
 
-                            Created
+                            Dibuat
 
                         </span>
 
@@ -229,7 +229,7 @@
 
                 class="rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 transition hover:bg-slate-100">
 
-                Close
+                Tutup
 
             </button>
 
@@ -249,7 +249,7 @@
 
                 class="rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white transition hover:bg-[#96690F]">
 
-                Edit Category
+                Ubah Kategori
 
             </button>
 

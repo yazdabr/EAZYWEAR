@@ -19,13 +19,19 @@
 
             stock:'',
 
+            status: 'Aktif',
+
             updated:''
 
         },
 
-        openView(product){
+        openView(product) {
 
-            this.product = product;
+            this.product = {
+                ...product,
+
+                status: product.status || 'Aktif'
+            };
 
             this.open = true;
 
@@ -90,14 +96,14 @@
                     <h2
                         class="text-xl font-bold text-slate-900">
 
-                        Product Details
+                        Detail Produk
 
                     </h2>
 
                     <p
                         class="mt-1 text-sm text-slate-500">
 
-                        View product information.
+                        Lihat informasi produk.
 
                     </p>
 
@@ -159,7 +165,7 @@
                     <h4
                         class="mb-2 text-sm font-semibold text-slate-700">
 
-                        Description
+                        Deskripsi
 
                     </h4>
 
@@ -177,46 +183,80 @@
                 <div
                     class="mt-8 space-y-4">
 
+                    {{-- Harga --}}
                     <div
                         class="flex justify-between">
 
                         <span
                             class="text-slate-500">
 
-                            Price
+                            Harga
 
                         </span>
 
                         <span
-
                             class="font-bold text-[#AE7C18]"
-
                             x-text="'Rp ' + Number(product.price).toLocaleString('id-ID')">
 
                         </span>
 
                     </div>
 
+
+                    {{-- Stok --}}
                     <div
                         class="flex justify-between">
 
                         <span
                             class="text-slate-500">
 
-                            Stock
+                            Stok
 
                         </span>
 
                         <span
-
                             class="font-semibold"
-
                             x-text="product.stock">
 
                         </span>
 
                     </div>
 
+
+                    {{-- Status --}}
+                    <div
+                        class="flex items-center justify-between">
+
+                        <span
+                            class="text-slate-500">
+
+                            Status
+
+                        </span>
+
+                        <span
+                            class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
+
+                            :class="product.status === 'Aktif'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-red-100 text-red-700'">
+
+                            <span
+                                class="h-1.5 w-1.5 rounded-full"
+
+                                :class="product.status === 'Aktif'
+                                    ? 'bg-emerald-500'
+                                    : 'bg-red-500'">
+                            </span>
+
+                            <span x-text="product.status"></span>
+
+                        </span>
+
+                    </div>
+
+
+                    {{-- SKU --}}
                     <div
                         class="flex justify-between">
 
@@ -228,29 +268,27 @@
                         </span>
 
                         <span
-
                             class="font-medium"
-
                             x-text="product.sku">
 
                         </span>
 
                     </div>
 
+
+                    {{-- Terakhir Diperbarui --}}
                     <div
                         class="flex justify-between">
 
                         <span
                             class="text-slate-500">
 
-                            Updated
+                            Terakhir Diperbarui
 
                         </span>
 
                         <span
-
                             class="font-medium"
-
                             x-text="product.updated">
 
                         </span>
@@ -276,7 +314,7 @@
 
                     class="flex-1 rounded-xl border border-slate-300 py-3 font-medium text-slate-700 transition hover:bg-slate-100">
 
-                    Close
+                    Tutup
 
                 </button>
 
@@ -300,7 +338,7 @@
 
                     class="flex-1 rounded-xl bg-[#AE7C18] py-3 font-semibold text-white transition hover:bg-[#96690F]">
 
-                    Edit Product
+                    Edit Produk
 
                 </button>
 

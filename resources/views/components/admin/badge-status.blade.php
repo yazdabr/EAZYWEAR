@@ -8,22 +8,22 @@ $status = trim($status);
 
 $classes = match ($status) {
 
-    'Active' =>
+    'Aktif' =>
         'bg-emerald-100 text-emerald-700',
 
-    'Inactive' =>
+    'Tidak Aktif' =>
         'bg-red-100 text-red-700',
 
-    'Pending' =>
+    'Menunggu' =>
         'bg-amber-100 text-amber-700',
 
-    'Paid' =>
+    'Lunas' =>
         'bg-sky-100 text-sky-700',
 
-    'Completed' =>
+    'Selesai' =>
         'bg-emerald-100 text-emerald-700',
 
-    'Cancelled' =>
+    'Dibatalkan' =>
         'bg-red-100 text-red-700',
 
     default =>

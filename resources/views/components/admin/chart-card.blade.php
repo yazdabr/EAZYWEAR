@@ -16,20 +16,20 @@
 
         {{-- Filter --}}
         <div x-data="{ active: 'Monthly' }" class="flex w-full rounded-xl bg-slate-100 p-1 sm:w-auto">
-            <button @click="active='Weekly'" 
-                :class="active==='Weekly' ? 'bg-white shadow text-slate-900' : 'text-slate-500'" 
+            <button @click="active='Mingguan'" 
+                :class="active==='Mingguan' ? 'bg-white shadow text-slate-900' : 'text-slate-500'" 
                 class="flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition sm:flex-none sm:px-4 sm:py-2 sm:text-sm">
-                Weekly
+                Mingguan
             </button>
-            <button @click="active='Monthly'" 
-                :class="active==='Monthly' ? 'bg-[#AE7C18] text-white shadow' : 'text-slate-500'" 
+            <button @click="active='Bulanan'" 
+                :class="active==='Bulanan' ? 'bg-[#AE7C18] text-white shadow' : 'text-slate-500'" 
                 class="flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition sm:flex-none sm:px-4 sm:py-2 sm:text-sm">
-                Monthly
+                Bulanan
             </button>
-            <button @click="active='Yearly'" 
-                :class="active==='Yearly' ? 'bg-white shadow text-slate-900' : 'text-slate-500'" 
+            <button @click="active='Tahunan'" 
+                :class="active==='Tahunan' ? 'bg-white shadow text-slate-900' : 'text-slate-500'" 
                 class="flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition sm:flex-none sm:px-4 sm:py-2 sm:text-sm">
-                Yearly
+                Tahunan
             </button>
         </div>
     </div>

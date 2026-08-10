@@ -6,7 +6,7 @@
         <div class="text-sm text-slate-500">
             Total :
             <span class="font-semibold text-slate-800">
-                128 Products
+                128 Produk
             </span>
         </div>
 
@@ -23,24 +23,20 @@
 
                 <tr>
 
-                    <th class="w-10 px-4 py-3.5 text-center">
-                        <input type="checkbox" class="rounded border-slate-300 text-[#C4902C] focus:ring-[#C4902C]">
+                    <th class="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Produk
                     </th>
 
                     <th class="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Product
-                    </th>
-
-                    <th class="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        SKU & Category
+                        SKU & Kategori
                     </th>
 
                     <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Price
+                        Harga
                     </th>
 
                     <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Stock
+                        Stok
                     </th>
 
                     <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -48,11 +44,11 @@
                     </th>
 
                     <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Updated
+                        Diperbarui
                     </th>
 
                     <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        Action
+                        Aksi
                     </th>
 
                 </tr>

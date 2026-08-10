@@ -73,19 +73,19 @@
 
             </div>
 
-            {{-- Title --}}
+            {{-- Judul --}}
             <h2
                 class="mt-6 text-center text-2xl font-bold text-slate-900">
 
-                Delete Size?
+                Hapus Ukuran?
 
             </h2>
 
-            {{-- Description --}}
+            {{-- Deskripsi --}}
             <p
                 class="mt-3 text-center text-slate-500">
 
-                Are you sure you want to delete
+                Apakah Anda yakin ingin menghapus
 
                 <span
 
@@ -102,11 +102,11 @@
             <p
                 class="mt-2 text-center text-sm text-red-500">
 
-                This action cannot be undone.
+                Tindakan ini tidak dapat dibatalkan.
 
             </p>
 
-            {{-- Buttons --}}
+            {{-- Tombol --}}
             <div
                 class="mt-8 flex gap-3">
 
@@ -116,7 +116,7 @@
 
                     class="flex-1 rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 transition hover:bg-slate-100">
 
-                    Cancel
+                    Batal
 
                 </button>
 
@@ -132,9 +132,9 @@
 
                                 type:'error',
 
-                                title:'Size Deleted',
+                                title:'Ukuran Dihapus',
 
-                                message:'The size has been deleted successfully.'
+                                message:'Ukuran telah berhasil dihapus.'
 
                             });
 
@@ -144,7 +144,7 @@
 
                     class="flex-1 rounded-xl bg-red-600 px-5 py-3 font-semibold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-700">
 
-                    Delete
+                    Hapus
 
                 </button>
 

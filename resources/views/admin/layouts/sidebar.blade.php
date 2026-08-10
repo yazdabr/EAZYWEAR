@@ -24,10 +24,10 @@
             </a>
         </nav>
 
-        {{-- MASTER DATA --}}
+        {{-- DATA UTAMA --}}
         <div class="mt-6 px-2">
             <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                MASTER DATA
+                DATA UTAMA
             </p>
         </div>
 
@@ -47,7 +47,7 @@
 
                 <span>
 
-                    Products
+                    Produk
 
                 </span>
 
@@ -68,7 +68,7 @@
 
                 <span>
 
-                    Categories
+                    Kategori
 
                 </span>
 
@@ -88,7 +88,7 @@
 
                 <span>
 
-                    Sizes
+                    Ukuran
 
                 </span>
 
@@ -96,10 +96,10 @@
             
         </nav>
 
-        {{-- TRANSACTIONS --}}
+        {{-- TRANSAKSI --}}
         <div class="mt-6 px-2">
             <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                TRANSACTIONS
+                TRANSAKSI
             </p>
         </div>
 
@@ -113,7 +113,7 @@
                 <x-heroicon-o-receipt-percent
                     class="h-5 w-5 shrink-0" />
                 <span>
-                    Transaction List
+                    Daftar Transaksi
                 </span>
             </a>
             <a
@@ -129,19 +129,19 @@
 
                 <span>
 
-                    API Logs
+                    Log API
 
                 </span>
 
             </a>
         </nav>
 
-        {{-- ================= REPORTS ================= --}}
+        {{-- ================= LAPORAN ================= --}}
         <div class="mt-6 px-2">
 
             <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
 
-                REPORTS
+                LAPORAN
 
             </p>
 
@@ -163,40 +163,25 @@
 
                 <span>
 
-                    Sales Reports
+                    Laporan Penjualan
 
                 </span>
 
             </a>
 
         </nav>
-
-        {{-- USERS
-        <div class="mt-6 px-2">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                USERS
-            </p>
-        </div>
-
-        <nav class="mt-2 space-y-1">
-            <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
-                <x-heroicon-o-users class="h-5 w-5 shrink-0" />
-                <span>User Management</span>
-            </a>
-        </nav> --}}
-
     </div>
 
     {{-- ================= FOOTER ================= --}}
     <div class="px-4 py-4 space-y-1">
         <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
             <x-heroicon-o-user class="h-5 w-5 shrink-0" />
-            <span>Profile</span>
+            <span>Profil</span>
         </a>
 
         <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-red-500 transition-all duration-200 hover:bg-red-500/10">
             <x-heroicon-o-arrow-left-on-rectangle class="h-5 w-5 shrink-0 text-red-500" />
-            <span>Logout</span>
+            <span>Keluar</span>
         </a>
     </div>
 

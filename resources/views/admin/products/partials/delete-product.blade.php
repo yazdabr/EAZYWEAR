@@ -71,14 +71,14 @@
             <h2
                 class="mt-6 text-center text-2xl font-bold text-slate-900">
 
-                Delete Product?
+                Hapus Produk?
 
             </h2>
 
             <p
                 class="mt-3 text-center text-slate-500">
 
-                Are you sure you want to delete
+                Apakah Anda yakin ingin menghapus
 
                 <span
 
@@ -93,7 +93,7 @@
             <p
                 class="mt-2 text-center text-sm text-red-500">
 
-                This action cannot be undone.
+                Tindakan ini tidak dapat dibatalkan.
 
             </p>
 
@@ -106,7 +106,7 @@
 
                     class="flex-1 rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 hover:bg-slate-100">
 
-                    Cancel
+                    Batal
 
                 </button>
 
@@ -120,9 +120,9 @@
 
                             type:'error',
 
-                            title:'Product Deleted',
+                            title:'Produk Dihapus',
 
-                            message:'The product has been deleted successfully.'
+                            message:'Produk berhasil dihapus.'
 
                         });
 
@@ -130,7 +130,7 @@
 
                     class="flex-1 rounded-xl bg-red-600 px-5 py-3 font-semibold text-white shadow-lg shadow-red-500/20 transition-all duration-300 hover:bg-red-700 hover:shadow-xl hover:shadow-red-500/30 active:scale-95">
 
-                    Delete
+                    Hapus
 
                 </button>
 

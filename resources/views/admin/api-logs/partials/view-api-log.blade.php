@@ -19,7 +19,7 @@
             'User-Agent': 'Mozilla/5.0'
         },
         requestBody: {
-            example: 'Request body data'
+            example: 'Data body permintaan'
         },
         responseBody: {},
         errorMessage: '',
@@ -31,8 +31,8 @@
 
             if (this.log.status >= 400) {
                 this.errorMessage = this.log.status >= 500
-                    ? 'Internal server error occurred while processing the request.'
-                    : 'The request could not be processed because the submitted data was invalid.';
+                    ? 'Terjadi kesalahan server internal saat memproses permintaan.'
+                    : 'Permintaan tidak dapat diproses karena data yang dikirim tidak valid.';
             } else {
                 this.errorMessage = '';
             }
@@ -40,8 +40,8 @@
             this.responseBody = {
                 status: this.log.status,
                 message: this.log.status >= 400
-                    ? 'Request failed'
-                    : 'Request processed successfully'
+                    ? 'Permintaan gagal'
+                    : 'Permintaan berhasil diproses'
             };
         },
 
@@ -64,23 +64,23 @@
 
         statusLabel() {
             if (this.statusType() === 'success') {
-                return 'Success';
+                return 'Berhasil';
             }
             if (this.statusType() === 'client-error') {
-                return 'Client Error';
+                return 'Kesalahan Klien';
             }
             if (this.statusType() === 'server-error') {
-                return 'Server Error';
+                return 'Kesalahan Server';
             }
-            return 'Redirect';
+            return 'Pengalihan';
         },
 
         copyText(text) {
             navigator.clipboard.writeText(text);
             this.$dispatch('toast', {
                 type: 'success',
-                title: 'Copied',
-                message: 'Data copied to clipboard.'
+                title: 'Disalin',
+                message: 'Data disalin ke clipboard.'
             });
         }
     }"
@@ -121,7 +121,7 @@
                 </div>
                 <div>
                     <h2 class="text-xl font-bold text-slate-900">
-                        API Log Detail
+                        Detail Log API
                     </h2>
                     <p class="mt-1 text-xs text-slate-500">
                         <span x-text="log.request_id"></span>
@@ -186,7 +186,7 @@
                                     x-text="statusLabel()">
                                 </p>
                                 <p class="mt-0.5 text-xs text-slate-500">
-                                    HTTP Status Code
+                                    Kode Status HTTP
                                 </p>
                             </div>
                         </div>
@@ -208,7 +208,7 @@
                 <div class="rounded-2xl border border-slate-200 bg-white">
                     <div class="border-b border-slate-200 px-5 py-4">
                         <h3 class="font-semibold text-slate-900">
-                            Request Information
+                            Informasi Permintaan
                         </h3>
                     </div>
 
@@ -216,7 +216,7 @@
                         {{-- Request ID --}}
                         <div>
                             <p class="text-xs font-medium text-slate-500">
-                                Request ID
+                                ID Permintaan
                             </p>
                             <p
                                 class="mt-1.5 break-all text-sm font-semibold text-slate-900"
@@ -227,7 +227,7 @@
                         {{-- Method --}}
                         <div>
                             <p class="text-xs font-medium text-slate-500">
-                                Method
+                                Metode
                             </p>
                             <span
                                 class="mt-1.5 inline-flex rounded-lg bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700"
@@ -249,7 +249,7 @@
                         {{-- URL --}}
                         <div class="sm:col-span-2">
                             <p class="text-xs font-medium text-slate-500">
-                                Request URL
+                                URL Permintaan
                             </p>
                             <div class="mt-1.5 flex items-center gap-2">
                                 <code
@@ -268,7 +268,7 @@
                         {{-- Response Time --}}
                         <div>
                             <p class="text-xs font-medium text-slate-500">
-                                Response Time
+                                Waktu Respon
                             </p>
                             <p
                                 class="mt-1.5 text-sm font-semibold text-slate-900"
@@ -279,7 +279,7 @@
                         {{-- IP --}}
                         <div>
                             <p class="text-xs font-medium text-slate-500">
-                                IP Address
+                                Alamat IP
                             </p>
                             <code
                                 class="mt-1.5 block text-xs text-slate-700"
@@ -290,7 +290,7 @@
                         {{-- Date --}}
                         <div>
                             <p class="text-xs font-medium text-slate-500">
-                                Date
+                                Tanggal
                             </p>
                             <p
                                 class="mt-1.5 text-sm font-medium text-slate-700"
@@ -301,7 +301,7 @@
                         {{-- Time --}}
                         <div>
                             <p class="text-xs font-medium text-slate-500">
-                                Time
+                                Waktu
                             </p>
                             <p
                                 class="mt-1.5 text-sm font-medium text-slate-700"
@@ -320,7 +320,7 @@
                             </div>
                             <div>
                                 <h3 class="text-sm font-semibold text-red-800">
-                                    Error Message
+                                    Pesan Kesalahan
                                 </h3>
                                 <p
                                     class="mt-1 text-sm leading-6 text-red-700"
@@ -335,14 +335,14 @@
                 <div class="rounded-2xl border border-slate-200 bg-white">
                     <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                         <h3 class="font-semibold text-slate-900">
-                            Request Headers
+                            Header Permintaan
                         </h3>
                         <button
                             type="button"
                             @click="copyText(JSON.stringify(headers, null, 2))"
                             class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
                             <x-heroicon-o-clipboard-document class="h-4 w-4" />
-                            Copy
+                            Salin
                         </button>
                     </div>
                     <div class="p-5">
@@ -357,14 +357,14 @@
                 <div class="rounded-2xl border border-slate-200 bg-white">
                     <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                         <h3 class="font-semibold text-slate-900">
-                            Request Body
+                            Isi Permintaan
                         </h3>
                         <button
                             type="button"
                             @click="copyText(JSON.stringify(requestBody, null, 2))"
                             class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
                             <x-heroicon-o-clipboard-document class="h-4 w-4" />
-                            Copy
+                            Salin
                         </button>
                     </div>
                     <div class="p-5">
@@ -379,14 +379,14 @@
                 <div class="rounded-2xl border border-slate-200 bg-white">
                     <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                         <h3 class="font-semibold text-slate-900">
-                            Response Body
+                            Isi Respons
                         </h3>
                         <button
                             type="button"
                             @click="copyText(JSON.stringify(responseBody, null, 2))"
                             class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
                             <x-heroicon-o-clipboard-document class="h-4 w-4" />
-                            Copy
+                            Salin
                         </button>
                     </div>
                     <div class="p-5">
@@ -401,13 +401,13 @@
                 <div class="rounded-2xl border border-slate-200 bg-white">
                     <div class="border-b border-slate-200 px-5 py-4">
                         <h3 class="font-semibold text-slate-900">
-                            Metadata
+                            Informasi Tambahan
                         </h3>
                     </div>
                     <div class="grid gap-4 p-5 sm:grid-cols-2">
                         <div>
                             <p class="text-xs text-slate-500">
-                                Source
+                                Sumber
                             </p>
                             <p class="mt-1 text-sm font-medium text-slate-700">
                                 Admin API
@@ -415,7 +415,7 @@
                         </div>
                         <div>
                             <p class="text-xs text-slate-500">
-                                Environment
+                                Lingkungan
                             </p>
                             <p class="mt-1 text-sm font-medium text-slate-700">
                                 Local
@@ -423,7 +423,7 @@
                         </div>
                         <div>
                             <p class="text-xs text-slate-500">
-                                Authentication
+                                Autentikasi
                             </p>
                             <p class="mt-1 text-sm font-medium text-slate-700">
                                 Bearer Token
@@ -431,7 +431,7 @@
                         </div>
                         <div>
                             <p class="text-xs text-slate-500">
-                                API Version
+                                Versi API
                             </p>
                             <p class="mt-1 text-sm font-medium text-slate-700">
                                 v1
@@ -449,7 +449,7 @@
                 type="button"
                 @click="closeDrawer()"
                 class="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                Close
+                Tutup
             </button>
         </div>
 

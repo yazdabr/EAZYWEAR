@@ -1,17 +1,17 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Dashboard')
+@section('title', 'Dasboard')
 
-@section('page-title', 'Dashboard')
+@section('page-title', 'Dasboard')
 
 @section('content')
 <div class="space-y-6 sm:space-y-8">
 
-    {{-- ================= STATISTICS ================= --}}
+    {{-- ================= STATISTIK ================= --}}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-5">
 
         <x-admin.stat-card
-            title="Products"
+            title="Produk"
             value="128"
             growth="+12%">
             <x-slot:icon>
@@ -20,7 +20,7 @@
         </x-admin.stat-card>
 
         <x-admin.stat-card
-            title="Categories"
+            title="Kategori"
             value="12"
             color="bg-sky-500"
             growth="+4%">
@@ -30,7 +30,7 @@
         </x-admin.stat-card>
 
         <x-admin.stat-card
-            title="Orders"
+            title="Pesanan"
             value="846"
             color="bg-emerald-500"
             growth="+18%">
@@ -40,8 +40,8 @@
         </x-admin.stat-card>
 
         <x-admin.stat-card
-            title="Revenue"
-            value="Rp 24.5M"
+            title="Pendapatan"
+            value="Rp 24,5 Jt"
             color="bg-violet-500"
             growth="+9%">
             <x-slot:icon>
@@ -50,8 +50,8 @@
         </x-admin.stat-card>
 
         <x-admin.stat-card
-            title="Customers"
-            value="1,258"
+            title="Pelanggan"
+            value="1.258"
             color="bg-rose-500"
             growth="+15%">
             <x-slot:icon>
@@ -61,19 +61,19 @@
 
     </div>
 
-    {{-- ================= SALES OVERVIEW & TOP PRODUCTS ================= --}}
+    {{-- ================= RINGKASAN PENJUALAN & PRODUK TERLARIS ================= --}}
     <div class="grid grid-cols-1 gap-6 sm:gap-8 xl:grid-cols-3">
 
-        {{-- ================= SALES CHART ================= --}}
+        {{-- ================= GRAFIK PENJUALAN ================= --}}
         <div class="xl:col-span-2">
             <x-admin.chart-card
-                title="Sales Overview"
-                subtitle="Monthly sales performance"
+                title="Ringkasan Penjualan"
+                subtitle="Performa penjualan bulanan"
                 chartId="salesChart"
                 height="360"/>
         </div>
 
-        {{-- ================= TOP PRODUCTS ================= --}}
+        {{-- ================= PRODUK TERLARIS ================= --}}
         <div>
             <x-admin.top-products />
         </div>

@@ -1,101 +1,39 @@
 @php
-
 $product = [
-
     'image' => asset('images/products/1.png'),
-
     'name' => 'Apex Pro Kit',
-
     'sku' => 'PRD-001',
-
-    'category' => 'Football Jersey',
-
-    'description' => 'Premium custom jersey made with breathable dry-fit fabric and unlimited custom design.',
-
+    'category' => 'Jersey Sepak Bola',
+    'description' => 'Jersey kustom premium terbuat dari kain dry-fit yang bernapas dengan desain tanpa batas.',
     'price' => 149000,
-
     'stock' => 128,
-
-    'status' => 'Active',
-
-    'updated' => '2 Hours Ago',
-
+    'status' => 'Aktif',
+    'updated' => '2 Jam Lalu',
 ];
-
 @endphp
+<tr class="transition duration-200 hover:bg-slate-50">
 
-<tr
-    class="transition duration-200 hover:bg-slate-50">
 
-    {{-- Checkbox --}}
-    <td
-        class="px-6 py-5">
-
-        <input
-            type="checkbox"
-            class="h-4 w-4 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]">
-
-    </td>
-
-    {{-- Product --}}
-    <td
-        class="px-6 py-5">
-
-        <div
-            class="flex items-center gap-4">
-
-            <img
-                src="{{ $product['image'] }}"
-                alt="{{ $product['name'] }}"
-                class="h-16 w-16 rounded-xl border border-slate-200 object-cover">
-
+    {{-- Produk --}}
+    <td class="px-6 py-5">
+        <div class="flex items-center gap-4">
+            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="h-16 w-16 rounded-xl border border-slate-200 object-cover">
             <div>
-
-                <h3
-                    class="font-semibold text-slate-900">
-
-                    {{ $product['name'] }}
-
-                </h3>
-
-                <p
-                    class="mt-1 text-sm text-slate-500">
-
-                    Premium Custom Jersey
-
-                </p>
-
+                <h3 class="font-semibold text-slate-900">{{ $product['name'] }}</h3>
+                <p class="mt-1 text-sm text-slate-500">Jersey Kustom Premium</p>
             </div>
-
         </div>
-
     </td>
 
     {{-- SKU --}}
-    <td
-        class="px-6 py-5">
-
+    <td class="px-6 py-5">
         <div>
-
-            <p
-                class="font-medium text-slate-900">
-
-                {{ $product['sku'] }}
-
-            </p>
-
-            <p
-                class="mt-1 text-sm text-slate-500">
-
-                {{ $product['category'] }}
-
-            </p>
-
+            <p class="font-medium text-slate-900">{{ $product['sku'] }}</p>
+            <p class="mt-1 text-sm text-slate-500">{{ $product['category'] }}</p>
         </div>
-
     </td>
 
-    {{-- Price --}}
+    {{-- Harga --}}
     <td
         class="px-6 py-5 text-center">
 
@@ -108,17 +46,9 @@ $product = [
 
     </td>
 
-    {{-- Stock --}}
-    <td
-        class="px-6 py-5 text-center">
-
-        <span
-            class="inline-flex rounded-lg bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
-
-            {{ $product['stock'] }}
-
-        </span>
-
+    {{-- Stok --}}
+    <td class="px-6 py-5 text-center">
+        <span class="inline-flex rounded-lg bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">{{ $product['stock'] }}</span>
     </td>
 
     {{-- Status --}}
@@ -130,7 +60,7 @@ $product = [
 
     </td>
 
-    {{-- Updated --}}
+    {{-- Diperbarui --}}
     <td
         class="px-6 py-5 text-center">
 
@@ -143,121 +73,157 @@ $product = [
 
     </td>
 
-    {{-- Action --}}
-    <td
-        class="px-6 py-5 text-center">
+    {{-- Aksi --}}
+    <td class="px-6 py-5 text-center">
 
         <div
-            x-data="{ open:false }"
-            class="relative inline-block">
+            x-data="{ open: false }"
+            class="relative inline-block text-left">
 
+            {{-- Tombol Aksi --}}
             <button
-                @click="open=!open"
-                class="rounded-lg p-2 transition hover:bg-slate-100">
+                type="button"
+                @click="open = !open"
+                title="Aksi"
+
+                class="rounded-lg p-2 transition-all duration-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+
+                :class="open ? 'bg-slate-100' : ''">
 
                 <x-heroicon-o-ellipsis-horizontal
-                    class="h-5 w-5 text-slate-500"/>
+                    class="h-5 w-5 text-slate-500" />
 
             </button>
 
+
+            {{-- Dropdown Aksi --}}
             <div
                 x-show="open"
-                @click.outside="open=false"
-                x-transition
-                class="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-2 shadow-xl"
+
+                @click.outside="open = false"
+
+                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+
+                x-transition:leave="transition ease-in duration-100"
+                x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
+
+                class="absolute right-0 top-full z-[80] mt-2 w-44 origin-top-right overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-900/10"
+
                 style="display:none;">
 
+
+                {{-- ================= LIHAT ================= --}}
                 <button
+                    type="button"
 
                     @click="
                         open = false;
 
-                        $dispatch('open-view-product',{
+                        $dispatch('open-view-product', {
 
-                            image:'{{ $product['image'] }}',
+                            image: @js($product['image']),
 
-                            name:'{{ $product['name'] }}',
+                            name: @js($product['name']),
 
-                            category:'{{ $product['category'] }}',
+                            category: @js($product['category']),
 
-                            description:'{{ $product['description'] }}',
+                            description: @js($product['description']),
 
-                            sku:'{{ $product['sku'] }}',
+                            sku: @js($product['sku']),
 
-                            price:'{{ $product['price'] }}',
+                            price: @js($product['price']),
 
-                            stock:'{{ $product['stock'] }}',
+                            stock: @js($product['stock']),
 
-                            updated:'{{ $product['updated'] }}'
+                            status: @js($product['status']),
+
+                            updated: @js($product['updated'])
 
                         });
-
                     "
 
-                    class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50">
 
                     <x-heroicon-o-eye
-                        class="h-4 w-4"/>
+                        class="h-4 w-4 shrink-0 text-slate-500" />
 
-                    View
+                    <span>
+                        Lihat
+                    </span>
 
                 </button>
 
+
+                {{-- ================= UBAH ================= --}}
                 <button
+                    type="button"
 
                     @click="
                         open = false;
 
-                        $dispatch('open-edit-product',{
+                        $dispatch('open-edit-product', {
 
-                            name: '{{ $product['name'] }}',
+                            name: @js($product['name']),
 
-                            category: '{{ $product['category'] }}',
+                            category: @js($product['category']),
 
-                            sku: '{{ $product['sku'] }}',
+                            sku: @js($product['sku']),
 
-                            description: '{{ $product['description'] }}',
+                            description: @js($product['description']),
 
-                            price: '{{ $product['price'] }}',
+                            price: @js($product['price']),
 
-                            stock: '{{ $product['stock'] }}',
+                            stock: @js($product['stock']),
 
-                            image: '{{ $product['image'] }}'
+                            status: @js($product['status']),
+
+                            image: @js($product['image'])
 
                         });
                     "
 
-                    class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50">
 
                     <x-heroicon-o-pencil-square
-                        class="h-4 w-4"/>
+                        class="h-4 w-4 shrink-0 text-slate-500" />
 
-                    Edit
+                    <span>
+                        Ubah
+                    </span>
 
                 </button>
 
+
+                {{-- ================= HAPUS ================= --}}
                 <button
+                    type="button"
 
                     @click="
-                        open=false;
+                        open = false;
 
-                        $dispatch('open-delete-product',{
+                        $dispatch('open-delete-product', {
 
-                            id:'{{ $product['sku'] }}',
+                            id: @js($product['sku']),
 
-                            name:'{{ $product['name'] }}'
+                            name: @js($product['name'])
 
                         });
                     "
 
-                    class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-red-600 transition hover:bg-red-50">
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50">
 
                     <x-heroicon-o-trash
-                        class="h-4 w-4"/>
+                        class="h-4 w-4 shrink-0" />
 
-                    Delete
+                    <span>
+                        Hapus
+                    </span>
 
                 </button>
+
 
             </div>
 

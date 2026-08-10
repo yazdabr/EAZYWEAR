@@ -4,17 +4,17 @@ $products = [
 
     [
         'name' => 'Apex Pro Kit',
-        'category' => 'Football Jersey',
+        'category' => 'Jersey Sepak Bola',
         'price' => 'Rp 149.000',
         'sold' => 154,
         'progress' => 92,
         'image' => asset('images/products/1.png'),
-        'badge' => 'Best Seller',
+        'badge' => 'Terlaris',
     ],
 
     [
         'name' => 'Zenith Elite',
-        'category' => 'Basketball Jersey',
+        'category' => 'Jersey Basket',
         'price' => 'Rp 189.000',
         'sold' => 132,
         'progress' => 80,
@@ -24,7 +24,7 @@ $products = [
 
     [
         'name' => 'Storm Runner',
-        'category' => 'Running Jersey',
+        'category' => 'Jersey Lari',
         'price' => 'Rp 169.000',
         'sold' => 118,
         'progress' => 70,
@@ -34,7 +34,7 @@ $products = [
 
     [
         'name' => 'Champion Series',
-        'category' => 'Volleyball Jersey',
+        'category' => 'Jersey Voli',
         'price' => 'Rp 149.000',
         'sold' => 95,
         'progress' => 58,
@@ -55,14 +55,14 @@ $products = [
         <h3
             class="text-xl font-bold text-slate-900">
 
-            Top Products
+            Produk Terlaris
 
         </h3>
 
         <p
             class="mt-1 text-sm text-slate-500">
 
-            Best selling this month
+            Paling laris bulan ini
 
         </p>
 
@@ -79,12 +79,12 @@ $products = [
                 <div
                     class="flex gap-4">
 
-                    {{-- Image --}}
+                    {{-- Gambar --}}
                     <img
                         src="{{ $product['image'] }}"
                         class="h-16 w-16 rounded-xl object-cover">
 
-                    {{-- Content --}}
+                    {{-- Konten --}}
                     <div class="min-w-0 flex-1">
 
                         <div class="flex items-start justify-between">
@@ -133,13 +133,13 @@ $products = [
                             <span
                                 class="text-xs text-slate-400">
 
-                                {{ $product['sold'] }} Sold
+                                {{ $product['sold'] }} Terjual
 
                             </span>
 
                         </div>
 
-                        {{-- Progress --}}
+                        {{-- Progres --}}
                         <div
                             class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
 

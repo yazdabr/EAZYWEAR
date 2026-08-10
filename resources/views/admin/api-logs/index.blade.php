@@ -1,8 +1,8 @@
 @extends('admin.layouts.app')
 
-@section('title', 'API Logs')
+@section('title', 'Log API')
 
-@section('page-title', 'API Logs')
+@section('page-title', 'Log API')
 
 @section('content')
 <div class="space-y-6">
@@ -14,10 +14,10 @@
         <div class="flex items-center gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-                    API Logs
+                    Log API
                 </h1>
                 <p class="mt-1 text-sm text-slate-500">
-                    Monitor API requests, responses, and system activity.
+                    Pantau permintaan API, respons, dan aktivitas sistem.
                 </p>
             </div>
         </div>
@@ -26,16 +26,16 @@
         <div class="flex flex-col gap-3 sm:flex-row">
             {{-- Refresh --}}
             <button
-                type="button"
+                {{-- type="button"
                 @click="$dispatch('toast',{
                     type:'info',
-                    title:'API Logs Refreshed',
-                    message:'API logs have been refreshed successfully.'
-                })"
+                    title:'Log API Diperbarui',
+                    message:'Log API berhasil diperbarui.'
+                })" --}}
                 class="inline-flex h-[50px] items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 active:scale-[0.98]">
                 <x-heroicon-o-arrow-path class="h-5 w-5" />
                 <span>
-                    Refresh
+                    Muat Ulang
                 </span>
             </button>
 
@@ -45,7 +45,7 @@
                 class="inline-flex h-[50px] items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition-all duration-300 hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18] focus:ring-offset-2 active:scale-[0.98]">
                 <x-heroicon-o-trash class="h-5 w-5" />
                 <span>
-                    Clear Logs
+                    Bersihkan Log
                 </span>
             </button>
         </div>
@@ -61,10 +61,10 @@
                 </div>
                 <div>
                     <p class="text-sm font-semibold text-slate-800">
-                        API Monitoring Active
+                        Monitoring API Aktif
                     </p>
                     <p class="mt-0.5 text-xs text-slate-500">
-                        API requests are being monitored by the system.
+                        Permintaan API sedang dipantau oleh sistem.
                     </p>
                 </div>
             </div>
@@ -72,7 +72,7 @@
             <div class="flex items-center gap-2">
                 <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                 <span class="text-xs font-semibold text-emerald-600">
-                    System Online
+                    Sistem Online
                 </span>
             </div>
         </div>
@@ -86,7 +86,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500">
-                        Total Requests
+                        Total Permintaan
                     </p>
                     <h3 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
                         1,284
@@ -102,7 +102,7 @@
                     +12.4%
                 </span>
                 <span class="text-xs text-slate-400">
-                    vs previous period
+                    dibandingkan periode sebelumnya
                 </span>
             </div>
         </div>
@@ -112,7 +112,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500">
-                        Successful Requests
+                        Permintaan Berhasil
                     </p>
                     <h3 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
                         1,242
@@ -128,7 +128,7 @@
                     96.7%
                 </span>
                 <span class="text-xs text-slate-400">
-                    success rate
+                    tingkat keberhasilan
                 </span>
             </div>
         </div>
@@ -138,7 +138,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500">
-                        Failed Requests
+                        Permintaan Gagal
                     </p>
                     <h3 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
                         42
@@ -153,7 +153,7 @@
                     3.3%
                 </span>
                 <span class="text-xs text-slate-400">
-                    failure rate
+                    tingkat kegagalan
                 </span>
             </div>
         </div>
@@ -163,7 +163,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <p class="text-sm font-medium text-slate-500">
-                        Avg. Response Time
+                        Rata-rata Waktu Respon
                     </p>
                     <h3 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
                         124 ms
@@ -179,7 +179,7 @@
                     -8.2%
                 </span>
                 <span class="text-xs text-slate-400">
-                    response time
+                    waktu respon
                 </span>
             </div>
         </div>
@@ -297,15 +297,14 @@
         <div class="flex flex-col gap-3 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h3 class="text-xl font-semibold text-slate-900">
-                    API Logs
+                    Log API
                 </h3>
                 <p class="mt-1 text-sm text-slate-500">
-                    Recent API requests and system responses.
+                    Permintaan API terbaru dan respons sistem.
                 </p>
             </div>
             <span class="inline-flex w-fit items-center rounded-full bg-[#AE7C18]/10 px-3 py-1.5 text-xs font-semibold text-[#AE7C18]">
-
-{{ count($apiLogs) }} Recent Logs
+                {{ count($apiLogs) }} Log Terbaru
             </span>
         </div>
 
@@ -314,40 +313,21 @@
             <table class="min-w-full">
                 <thead class="border-b border-slate-200 bg-slate-50">
                     <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        <th class="whitespace-nowrap px-6 py-4">
-                            Request ID
-                        </th>
-                        <th class="px-6 py-4 text-center">
-                            Method
-                        </th>
-                        <th class="px-6 py-4">
-                            Endpoint
-                        </th>
-                        <th class="px-6 py-4 text-center">
-                            Status
-                        </th>
-                        <th class="whitespace-nowrap px-6 py-4 text-center">
-                            Response Time
-                        </th>
-                        <th class="whitespace-nowrap px-6 py-4">
-                            IP Address
-                        </th>
-                        <th class="whitespace-nowrap px-6 py-4">
-                            Date / Time
-                        </th>
-                        <th class="px-6 py-4 text-center">
-                            Actions
-                        </th>
+                        <th class="whitespace-nowrap px-6 py-4">ID Permintaan</th>
+                        <th class="px-6 py-4 text-center">Metode</th>
+                        <th class="px-6 py-4">Endpoint</th>
+                        <th class="px-6 py-4 text-center">Status</th>
+                        <th class="whitespace-nowrap px-6 py-4 text-center">Waktu Respon</th>
+                        <th class="whitespace-nowrap px-6 py-4">Alamat IP</th>
+                        <th class="whitespace-nowrap px-6 py-4">Tanggal / Waktu</th>
+                        <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
                 </thead>
 
                 <tbody class="divide-y divide-slate-200">
                     @foreach($apiLogs as $index => $log)
                         <tr
-                            x-show="
-                                {{ $index }} >= startIndex &&
-                                {{ $index }} < endIndex
-                            "
+                            x-show="{{ $index }} >= startIndex && {{ $index }} < endIndex"
                             class="transition hover:bg-slate-50">
 
                             {{-- Request ID --}}
@@ -442,49 +422,46 @@
 
                             {{-- Actions --}}
                             <td class="px-6 py-5 text-center">
-                                <div
-                                    x-data="{ open: false }"
-                                    class="relative inline-block">
-
-                                    {{-- Three Dots --}}
+                                <div x-data="{ open: false }" class="relative inline-block text-left">
+                                    {{-- Tombol Aksi --}}
                                     <button
                                         type="button"
                                         @click="open = !open"
-                                        title="Actions"
-                                        class="rounded-lg p-2 transition hover:bg-slate-100">
+                                        title="Aksi"
+                                        class="rounded-lg p-2 transition-all duration-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+                                        :class="open ? 'bg-slate-100' : ''">
                                         <x-heroicon-o-ellipsis-horizontal class="h-5 w-5 text-slate-500" />
                                     </button>
 
-                                    {{-- Dropdown --}}
+                                    {{-- Dropdown Aksi --}}
                                     <div
                                         x-show="open"
                                         @click.outside="open = false"
-                                        x-transition
-                                        class="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-2 text-left shadow-xl"
+                                        x-transition:enter="transition ease-out duration-150"
+                                        x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
+                                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                        x-transition:leave="transition ease-in duration-100"
+                                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                                        x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
+                                        class="absolute right-0 top-full z-[80] mt-2 w-44 origin-top-right overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 text-left shadow-xl shadow-slate-900/10"
                                         style="display:none;">
 
-                                        {{-- View --}}
+                                        {{-- ================= LIHAT ================= --}}
                                         <button
                                             type="button"
-                                            @click="
-                                                open = false;
-                                                $dispatch('open-api-log', @js($log))
-                                            "
-                                            class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50">
-                                            <x-heroicon-o-eye class="h-4 w-4 text-slate-500" />
-                                            <span>View</span>
+                                            @click="open = false; $dispatch('open-api-log', @js($log));"
+                                            class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                                            <x-heroicon-o-eye class="h-4 w-4 shrink-0 text-slate-500" />
+                                            <span>Lihat</span>
                                         </button>
 
-                                        {{-- Delete --}}
+                                        {{-- ================= HAPUS ================= --}}
                                         <button
                                             type="button"
-                                            @click="
-                                                open = false;
-                                                $dispatch('delete-api-log', @js($log))
-                                            "
-                                            class="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 transition hover:bg-red-50">
-                                            <x-heroicon-o-trash class="h-4 w-4" />
-                                            <span>Delete</span>
+                                            @click="open = false; $dispatch('delete-api-log', @js($log));"
+                                            class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50">
+                                            <x-heroicon-o-trash class="h-4 w-4 shrink-0" />
+                                            <span>Hapus</span>
                                         </button>
                                     </div>
                                 </div>
@@ -500,26 +477,17 @@
 
             {{-- Information --}}
             <p class="text-center text-sm text-slate-500 sm:text-left">
-                Showing
-                <span
-                    class="font-semibold text-slate-700"
-                    x-text="{{ count($apiLogs) }} === 0 ? 0 : startIndex + 1">
-                </span>
-                to
-                <span
-                    class="font-semibold text-slate-700"
-                    x-text="endIndex">
-                </span>
-                of
-                <span class="font-semibold text-slate-700">
-                    {{ count($apiLogs) }}
-                </span>
-                API logs
+                Menampilkan
+                <span class="font-semibold text-slate-700" x-text="{{ count($apiLogs) }} === 0 ? 0 : startIndex + 1"></span>
+                sampai
+                <span class="font-semibold text-slate-700" x-text="endIndex"></span>
+                dari
+                <span class="font-semibold text-slate-700">{{ count($apiLogs) }}</span>
+                log API
             </p>
 
             {{-- Pagination --}}
             <div class="flex items-center justify-center gap-1.5 sm:justify-end">
-
                 {{-- Previous --}}
                 <button
                     type="button"
@@ -550,7 +518,6 @@
                     class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
                     <x-heroicon-o-chevron-right class="h-4 w-4" />
                 </button>
-
             </div>
         </div>
 

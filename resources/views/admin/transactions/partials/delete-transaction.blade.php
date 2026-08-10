@@ -65,8 +65,8 @@
 
                     <span
                         x-text="transaction.status === 'Pending'
-                            ? 'Cancel Transaction'
-                            : 'Delete Transaction'">
+                            ? 'Batalkan Transaksi'
+                            : 'Hapus Transaksi'">
 
                     </span>
 
@@ -74,7 +74,7 @@
 
                 <p class="mt-3 text-center text-sm text-slate-500">
 
-                    Invoice
+                    Faktur
 
                     <span
 
@@ -84,12 +84,12 @@
 
                     </span>
 
-                    will be
+                    akan di
 
                     <span
                         x-text="transaction.status === 'Pending'
-                            ? 'cancelled'
-                            : 'deleted'">
+                            ? 'batalkan'
+                            : 'hapus'">
 
                     </span>.
 
@@ -106,7 +106,7 @@
 
                         <span class="text-slate-500">
 
-                            Customer
+                            Pelanggan
 
                         </span>
 
@@ -151,7 +151,7 @@
 
                     class="flex-1 rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 transition hover:bg-slate-100">
 
-                    Close
+                    Tutup
 
                 </button>
 
@@ -170,17 +170,12 @@
                                     : 'error',
 
                                 title: transaction.status === 'Pending'
-                                    ? 'Transaction Cancelled'
-                                    : 'Transaction Deleted',
+                                ? 'Transaksi Dibatalkan'
+                                : 'Transaksi Dihapus',
 
-                                message: transaction.status === 'Pending'
-                                    ? 'Transaction has been cancelled.'
-                                    : 'Transaction has been deleted.'
-
-                            });
-
-                        },300);
-
+                            message: transaction.status === 'Pending'
+                                ? 'Transaksi telah dibatalkan.'
+                                : 'Transaksi telah dihapus.'
                     "
 
                     class="flex-1 rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700">
@@ -188,8 +183,8 @@
                     <span
 
                         x-text="transaction.status==='Pending'
-                            ? 'Cancel Transaction'
-                            : 'Delete Transaction'">
+                            ? 'Batalkan Transaksi'
+                            : 'Hapus Transaksi'">
 
                     </span>
 

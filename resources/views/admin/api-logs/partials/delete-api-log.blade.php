@@ -18,8 +18,8 @@
             this.closeModal();
             $dispatch('toast', {
                 type: 'error',
-                title: 'Log Deleted',
-                message: 'API log has been deleted successfully.'
+                title: 'Log Dihapus',
+                message: 'Log API berhasil dihapus.'
             });
         }
     }"
@@ -53,10 +53,10 @@
                     </div>
                     <div>
                         <h3 class="text-lg font-bold text-slate-900">
-                            Delete API Log
+                            Hapus Log API
                         </h3>
                         <p class="mt-1 text-xs text-slate-500">
-                            This action cannot be undone.
+                            Tindakan ini tidak dapat dibatalkan.
                         </p>
                     </div>
                 </div>
@@ -65,14 +65,14 @@
             {{-- Content --}}
             <div class="px-6 py-5">
                 <p class="text-sm leading-6 text-slate-600">
-                    Are you sure you want to delete this API log?
+                    Apakah Anda yakin ingin menghapus log API ini?
                 </p>
 
                 <template x-if="log">
                     <div class="mt-4 rounded-xl bg-slate-50 p-4">
                         <div class="flex items-center justify-between gap-4">
                             <span class="text-xs font-medium text-slate-500">
-                                Request ID
+                                ID Permintaan
                             </span>
                             <span
                                 class="break-all text-right text-xs font-semibold text-slate-800"
@@ -99,7 +99,7 @@
                     type="button"
                     @click="closeModal()"
                     class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                    Cancel
+                    Batal
                 </button>
 
                 <button
@@ -107,7 +107,7 @@
                     @click="deleteLog()"
                     class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 active:scale-[0.98]">
                     <x-heroicon-o-trash class="h-4 w-4" />
-                    Delete
+                    Hapus
                 </button>
             </div>
 

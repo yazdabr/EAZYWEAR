@@ -1,100 +1,62 @@
-<div
-    class="flex flex-col items-center justify-between gap-4 sm:flex-row">
+@props(['paginator' => null])
 
-    {{-- Left --}}
-    <div
-        class="text-sm text-slate-500">
+@php
+    $paginator = $paginator ?? $products ?? null;
+@endphp
 
-        Showing
+@if($paginator)
+    <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
+        <div class="text-sm text-slate-500">
+            Menampilkan
+            <span class="font-semibold text-slate-800">{{ $paginator->firstItem() ?? 0 }}</span>
+            sampai
+            <span class="font-semibold text-slate-800">{{ $paginator->lastItem() ?? 0 }}</span>
+            dari
+            <span class="font-semibold text-slate-800">{{ $paginator->total() }}</span>
+            produk
+        </div>
 
-        <span class="font-semibold text-slate-800">
+        <div class="flex items-center gap-2">
+            {{-- Previous --}}
+            @if($paginator->onFirstPage())
+                <span class="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 opacity-40">
+                    <x-heroicon-o-chevron-left class="h-5 w-5"/>
+                </span>
+            @else
+                <a
+                    href="{{ $paginator->previousPageUrl() }}"
+                    class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition duration-200 hover:border-[#AE7C18] hover:bg-[#AE7C18] hover:text-white">
+                    <x-heroicon-o-chevron-left class="h-5 w-5"/>
+                </a>
+            @endif
 
-            1
+            {{-- Pages --}}
+            @foreach($paginator->getUrlRange(1, $paginator->lastPage()) as $page => $url)
+                @if($page == $paginator->currentPage())
+                    <span class="flex h-10 min-w-[40px] items-center justify-center rounded-xl bg-[#AE7C18] px-3 text-sm font-semibold text-white shadow">
+                        {{ $page }}
+                    </span>
+                @else
+                    <a
+                        href="{{ $url }}"
+                        class="flex h-10 min-w-[40px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition duration-200 hover:border-[#AE7C18] hover:text-[#AE7C18]">
+                        {{ $page }}
+                    </a>
+                @endif
+            @endforeach
 
-        </span>
-
-        to
-
-        <span class="font-semibold text-slate-800">
-
-            10
-
-        </span>
-
-        of
-
-        <span class="font-semibold text-slate-800">
-
-            128
-
-        </span>
-
-        results
-
+            {{-- Next --}}
+            @if($paginator->hasMorePages())
+                <a
+                    href="{{ $paginator->nextPageUrl() }}"
+                    class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition duration-200 hover:border-[#AE7C18] hover:bg-[#AE7C18] hover:text-white">
+                    <x-heroicon-o-chevron-right class="h-5 w-5"/>
+                </a>
+            @else
+                <span class="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 opacity-40">
+                    <x-heroicon-o-chevron-right class="h-5 w-5"/>
+                </span>
+            @endif
+        </div>
     </div>
-
-    {{-- Right --}}
-    <div
-        class="flex items-center gap-2">
-
-        {{-- Previous --}}
-        <button
-            class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition duration-200 hover:border-[#AE7C18] hover:bg-[#AE7C18] hover:text-white disabled:cursor-not-allowed disabled:opacity-40">
-
-            <x-heroicon-o-chevron-left
-                class="h-5 w-5"/>
-
-        </button>
-
-        {{-- Page 1 --}}
-        <button
-            class="flex h-10 min-w-[40px] items-center justify-center rounded-xl bg-[#AE7C18] px-3 text-sm font-semibold text-white shadow">
-
-            1
-
-        </button>
-
-        {{-- Page 2 --}}
-        <button
-            class="flex h-10 min-w-[40px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition duration-200 hover:border-[#AE7C18] hover:text-[#AE7C18]">
-
-            2
-
-        </button>
-
-        {{-- Page 3 --}}
-        <button
-            class="flex h-10 min-w-[40px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition duration-200 hover:border-[#AE7C18] hover:text-[#AE7C18]">
-
-            3
-
-        </button>
-
-        {{-- Dots --}}
-        <span
-            class="px-1 text-slate-400">
-
-            ...
-
-        </span>
-
-        {{-- Last --}}
-        <button
-            class="flex h-10 min-w-[40px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition duration-200 hover:border-[#AE7C18] hover:text-[#AE7C18]">
-
-            13
-
-        </button>
-
-        {{-- Next --}}
-        <button
-            class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition duration-200 hover:border-[#AE7C18] hover:bg-[#AE7C18] hover:text-white">
-
-            <x-heroicon-o-chevron-right
-                class="h-5 w-5"/>
-
-        </button>
-
-    </div>
-
-</div>
+@endif

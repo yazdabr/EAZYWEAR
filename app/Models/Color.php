@@ -20,7 +20,11 @@ class Color extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
-
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class, 'color_id');
+    }
+    
     public function productVariants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);

@@ -25,19 +25,13 @@
         {{-- Header Actions --}}
         <div class="flex flex-col gap-3 sm:flex-row">
             {{-- Refresh --}}
-            <button
-                {{-- type="button"
-                @click="$dispatch('toast',{
-                    type:'info',
-                    title:'Log API Diperbarui',
-                    message:'Log API berhasil diperbarui.'
-                })" --}}
-                class="inline-flex h-[50px] items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition-all duration-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 active:scale-[0.98]">
-                <x-heroicon-o-arrow-path class="h-5 w-5" />
-                <span>
-                    Muat Ulang
-                </span>
-            </button>
+                <a
+                    href="{{ route('admin.api-logs') }}"
+                    title="Atur Ulang Filter"
+                    class="inline-flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98]"
+                >
+                    <x-heroicon-o-arrow-path class="h-4 w-4"/>
+                </a>
 
             <button
                 type="button"

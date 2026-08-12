@@ -56,22 +56,33 @@ Route::prefix('admin')
                 'destroy' => 'products.destroy',
         ]);
         // categoris
-        Route::get('/categories',[CategoryController::class,'index'])
-            ->name('categories');
 
-                Route::resource('categories', CategoryController::class)
-                    ->names([
-                        'index' => 'categories',
-                        'create' => 'categories.create',
-                        'store' => 'categories.store',
-                        'show' => 'categories.show',
-                        'edit' => 'categories.edit',
-                        'update' => 'categories.update',
-                        'destroy' => 'categories.destroy',
-                    ]);
+        Route::get('/categories/search', [CategoryController::class, 'search'])
+            ->name('categories.search');
+
+        Route::resource('categories', CategoryController::class)
+            ->names([
+                'index' => 'categories',
+                'create' => 'categories.create',
+                'store' => 'categories.store',
+                'show' => 'categories.show',
+                'edit' => 'categories.edit',
+                'update' => 'categories.update',
+                'destroy' => 'categories.destroy',
+            ]);
+
         // sizes
-        Route::get('/sizes', [SizeController::class, 'index'])
-            ->name('sizes');
+        Route::resource('sizes', SizeController::class)
+            ->names([
+                'index' => 'sizes',
+                'create' => 'sizes.create',
+                'store' => 'sizes.store',
+                'show' => 'sizes.show',
+                'edit' => 'sizes.edit',
+                'update' => 'sizes.update',
+                'destroy' => 'sizes.destroy',
+            ]);
+            
         // transactions
         Route::get('/transactions', [TransactionController::class, 'index'])
             ->name('transactions');

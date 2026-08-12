@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class CategoryController extends Controller
 {
@@ -17,135 +19,180 @@ class CategoryController extends Controller
      */
     public function index(Request $request): View
     {
-        $query = Category::query();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Search
-        |--------------------------------------------------------------------------
-        */
+        $query=Category::withCount('products');
 
         if ($request->filled('search')) {
-            $search = $request->input('search');
+            $search = trim($request->input('search'));
 
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('slug', 'like', "%{$search}%");
-            });
+            $query->where('name', 'like', "%{$search}%");
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Status
-        |--------------------------------------------------------------------------
-        */
-
-        if ($request->filled('status')) {
+        if($request->filled('status')){
             $query->where(
                 'status',
-                $request->input('status') === 'Aktif'
+                $request->input('status')==='Aktif'
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Pagination
-        |--------------------------------------------------------------------------
-        */
-
-        $categories = $query
+        $categories=$query
             ->latest('id')
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.categories.index', [
-            'categories' => $categories,
+        $thisMonthStart=now()->startOfMonth();
+        $lastMonthStart=now()->subMonth()->startOfMonth();
+        $lastMonthEnd=now()->subMonth()->endOfMonth();
+
+        $totalCategories=Category::count();
+
+        $totalCategoriesThisMonth=Category::whereBetween('created_at',[
+            $thisMonthStart,
+            now()
+        ])->count();
+
+        $totalCategoriesLastMonth=Category::whereBetween('created_at',[
+            $lastMonthStart,
+            $lastMonthEnd
+        ])->count();
+
+        $activeCategories=Category::where('status',true)->count();
+
+        $activeCategoriesThisMonth=Category::where('status',true)
+            ->whereBetween('created_at',[
+                $thisMonthStart,
+                now()
+            ])
+            ->count();
+
+        $activeCategoriesLastMonth=Category::where('status',true)
+            ->whereBetween('created_at',[
+                $lastMonthStart,
+                $lastMonthEnd
+            ])
+            ->count();
+
+        $activeProducts=\App\Models\Product::where('status',true)->count();
+
+        $activeProductsThisMonth=\App\Models\Product::where('status',true)
+            ->whereBetween('created_at',[
+                $thisMonthStart,
+                now()
+            ])
+            ->count();
+
+        $activeProductsLastMonth=\App\Models\Product::where('status',true)
+            ->whereBetween('created_at',[
+                $lastMonthStart,
+                $lastMonthEnd
+            ])
+            ->count();
+
+        $categoryGrowth=$this->calculateGrowth(
+            $totalCategoriesThisMonth,
+            $totalCategoriesLastMonth
+        );
+
+        $activeCategoryGrowth=$this->calculateGrowth(
+            $activeCategoriesThisMonth,
+            $activeCategoriesLastMonth
+        );
+
+        $activeProductGrowth=$this->calculateGrowth(
+            $activeProductsThisMonth,
+            $activeProductsLastMonth
+        );
+
+        return view('admin.categories.index',[
+            'categories'=>$categories,
+            'totalCategories'=>$totalCategories,
+            'activeCategories'=>$activeCategories,
+            'activeProducts'=>$activeProducts,
+            'categoryGrowth'=>$categoryGrowth,
+            'activeCategoryGrowth'=>$activeCategoryGrowth,
+            'activeProductGrowth'=>$activeProductGrowth,
         ]);
     }
 
-    /**
-     * Form tambah kategori.
-     */
+    public function search(Request $request): JsonResponse
+    {
+        $search = trim($request->input('search', ''));
+
+        if ($search === '') {
+            return response()->json([
+                'data' => []
+            ]);
+        }
+
+        $categories = Category::query()
+            ->where('name', 'like', '%' . $search . '%')
+            ->orderBy('name')
+            ->limit(10)
+            ->get([
+                'id',
+                'name',
+                'slug',
+            ]);
+
+        return response()->json([
+            'data' => $categories
+        ]);
+    }
+
+    private function calculateGrowth(int $current,int $previous): string
+    {
+        if($previous===0){
+            return $current>0?'+100%':'0%';
+        }
+
+        $growth=(($current-$previous)/$previous)*100;
+
+        return ($growth>=0?'+':'').number_format($growth,1).'%';
+    }
+
     public function create(): View
     {
         return view('admin.categories.create');
     }
 
-    /**
-     * Menyimpan kategori baru.
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:100',
-                'unique:categories,name',
-            ],
-
-            'description' => [
-                'nullable',
-                'string',
-            ],
-
-            'image' => [
-                'nullable',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:2048',
-            ],
-
-            'status' => [
-                'required',
-                'boolean',
-            ],
+            'name' => ['required', 'string', 'max:100', 'unique:categories,name'],
+            'slug' => ['required', 'string', 'max:120', 'unique:categories,slug'],
+            'description' => ['nullable', 'string'],
+            'status' => ['required', 'boolean'],
         ], [
             'name.required' => 'Nama kategori wajib diisi.',
             'name.unique' => 'Nama kategori sudah digunakan.',
             'name.max' => 'Nama kategori maksimal 100 karakter.',
-            'image.image' => 'File harus berupa gambar.',
-            'image.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
-            'image.max' => 'Ukuran gambar maksimal 2 MB.',
+            'slug.required' => 'Slug kategori wajib diisi.',
+            'slug.unique' => 'Slug kategori sudah digunakan.',
+            'slug.max' => 'Slug kategori maksimal 120 karakter.',
             'status.required' => 'Status kategori wajib dipilih.',
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Upload Image
-        |--------------------------------------------------------------------------
-        */
+        $category = DB::transaction(function () use ($validated) {
+            return Category::create([
+                'name' => $validated['name'],
+                'slug' => Str::slug($validated['slug']),
+                'description' => $validated['description'] ?? null,
+                'status' => $validated['status'],
+            ]);
+        });
 
-        $imagePath = null;
-
-        if ($request->hasFile('image')) {
-            $imagePath = $request
-                ->file('image')
-                ->store('categories', 'public');
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori berhasil dibuat.',
+                'data' => $category,
+            ], 201);
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Create Category
-        |--------------------------------------------------------------------------
-        */
-
-        Category::create([
-            'name' => $validated['name'],
-            'slug' => $this->generateUniqueSlug($validated['name']),
-            'description' => $validated['description'] ?? null,
-            'image' => $imagePath,
-            'status' => $validated['status'],
-        ]);
 
         return redirect()
             ->route('admin.categories')
-            ->with('success', 'Kategori berhasil ditambahkan.');
+            ->with('success', 'Kategori berhasil dibuat.');
     }
 
-    /**
-     * Menampilkan detail kategori.
-     */
     public function show(Category $category): View
     {
         $category->loadCount('products');
@@ -155,9 +202,6 @@ class CategoryController extends Controller
         ]);
     }
 
-    /**
-     * Form edit kategori.
-     */
     public function edit(Category $category): View
     {
         return view('admin.categories.edit', [
@@ -165,13 +209,8 @@ class CategoryController extends Controller
         ]);
     }
 
-    /**
-     * Update kategori.
-     */
-    public function update(
-        Request $request,
-        Category $category
-    ): RedirectResponse {
+    public function update(Request $request, Category $category): JsonResponse|RedirectResponse
+    {
         $validated = $request->validate([
             'name' => [
                 'required',
@@ -179,104 +218,74 @@ class CategoryController extends Controller
                 'max:100',
                 'unique:categories,name,' . $category->id,
             ],
-
-            'description' => [
-                'nullable',
-                'string',
-            ],
-
-            'image' => [
-                'nullable',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:2048',
-            ],
-
-            'status' => [
+            'slug' => [
                 'required',
-                'boolean',
+                'string',
+                'max:120',
+                'unique:categories,slug,' . $category->id,
             ],
+            'description' => ['nullable', 'string'],
+            'status' => ['required', 'boolean'],
         ], [
             'name.required' => 'Nama kategori wajib diisi.',
             'name.unique' => 'Nama kategori sudah digunakan.',
             'name.max' => 'Nama kategori maksimal 100 karakter.',
-            'image.image' => 'File harus berupa gambar.',
-            'image.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
-            'image.max' => 'Ukuran gambar maksimal 2 MB.',
+            'slug.required' => 'Slug kategori wajib diisi.',
+            'slug.unique' => 'Slug kategori sudah digunakan.',
+            'slug.max' => 'Slug kategori maksimal 120 karakter.',
             'status.required' => 'Status kategori wajib dipilih.',
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Image
-        |--------------------------------------------------------------------------
-        */
+        DB::transaction(function () use ($validated, $category) {
+            $category->update([
+                'name' => $validated['name'],
+                'slug' => Str::slug($validated['slug']),
+                'description' => $validated['description'] ?? null,
+                'status' => $validated['status'],
+            ]);
+        });
 
-        $imagePath = $category->image;
-
-        if ($request->hasFile('image')) {
-            if (
-                $category->image &&
-                Storage::disk('public')->exists($category->image)
-            ) {
-                Storage::disk('public')->delete($category->image);
-            }
-
-            $imagePath = $request
-                ->file('image')
-                ->store('categories', 'public');
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori berhasil diperbarui.',
+                'data' => $category->fresh(),
+            ], 200);
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Update
-        |--------------------------------------------------------------------------
-        */
-
-        $category->update([
-            'name' => $validated['name'],
-            'slug' => $this->generateUniqueSlug(
-                $validated['name'],
-                $category->id
-            ),
-            'description' => $validated['description'] ?? null,
-            'image' => $imagePath,
-            'status' => $validated['status'],
-        ]);
 
         return redirect()
             ->route('admin.categories')
             ->with('success', 'Kategori berhasil diperbarui.');
     }
 
-    /**
-     * Hapus kategori.
-     */
-    public function destroy(Category $category): RedirectResponse
+    public function destroy(Category $category): JsonResponse|RedirectResponse
     {
-        /*
-        |--------------------------------------------------------------------------
-        | Cegah penghapusan kategori yang masih memiliki produk
-        |--------------------------------------------------------------------------
-        */
-
         if ($category->products()->exists()) {
+            $message = 'Kategori tidak dapat dihapus karena masih digunakan oleh produk.';
+
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 422);
+            }
+
             return redirect()
                 ->route('admin.categories')
-                ->with(
-                    'error',
-                    'Kategori tidak dapat dihapus karena masih memiliki produk.'
-                );
-        }
-
-        if (
-            $category->image &&
-            Storage::disk('public')->exists($category->image)
-        ) {
-            Storage::disk('public')->delete($category->image);
+                ->with('error', $message);
         }
 
         $category->delete();
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Kategori berhasil dihapus.',
+                'data' => [
+                    'id' => $category->id,
+                ],
+            ]);
+        }
 
         return redirect()
             ->route('admin.categories')

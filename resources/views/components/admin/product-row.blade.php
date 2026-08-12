@@ -41,6 +41,12 @@
 
     $firstVariant = $product->variants->first();
 
+    $productSizes = $product->variants
+    ->pluck('size')
+    ->filter()
+    ->unique('id')
+    ->values();
+
     $price = $firstVariant?->price ?? 0;
 
     $stock = $product->variants->sum(function ($variant) {
@@ -192,7 +198,18 @@
                                     price: @js($price),
                                     stock: @js($stock),
                                     status: @js((bool) $product->status),
-                                    image: @js($image)
+                                    image: @js($image),
+                                    size_ids: @js($product->variants->pluck('size_id')->filter()->values()->all()),
+                                    variants: @js(
+                                        $product->variants->mapWithKeys(function ($variant) {
+                                            return [
+                                                $variant->size_id => [
+                                                    'price' => $variant->price,
+                                                    'stock' => $variant->inventory?->stock ?? 0,
+                                                ]
+                                            ];
+                                        })->toArray()
+                                    )
                                 }
                             }));
                         "

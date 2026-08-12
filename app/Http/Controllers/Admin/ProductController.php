@@ -24,16 +24,19 @@ class ProductController extends Controller
         $query = Product::with([
             'category',
             'images',
+            'variants.size',
+            'variants.color',
             'variants.inventory',
         ]);
 
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
+
             $query->where('name', 'like', "%{$search}%");
         }
 
         if ($request->filled('category')) {
-            $query->where('category_id', $request->input('category'));
+            $query->where('category_id', $request->category);
         }
 
         $products = $query
@@ -43,6 +46,10 @@ class ProductController extends Controller
 
         $categories = Category::query()
             ->where('status', true)
+            ->orderBy('name')
+            ->get();
+
+        $sizes = Size::query()
             ->orderBy('name')
             ->get();
 
@@ -57,11 +64,17 @@ class ProductController extends Controller
             $nextNumber = 1;
         }
 
-        $nextProductCode = 'PRD-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        $nextProductCode = 'PRD-' . str_pad(
+            $nextNumber,
+            3,
+            '0',
+            STR_PAD_LEFT
+        );
 
         return view('admin.products.index', [
             'products' => $products,
             'categories' => $categories,
+            'sizes' => $sizes,
             'nextProductCode' => $nextProductCode,
         ]);
     }
@@ -94,40 +107,123 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
+        $sizes = Size::query()
+            ->orderBy('name')
+            ->get();
+
         return view('admin.products.create', [
             'categories' => $categories,
+            'sizes' => $sizes,
         ]);
     }
 
     public function store(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
-            'product_code' => ['required', 'string', 'max:50', 'unique:products,product_code'],
-            'category_id' => ['required', 'exists:categories,id'],
-            'name' => ['required', 'string', 'max:150'],
-            'description' => ['nullable', 'string'],
-            'material' => ['nullable', 'string', 'max:100'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'stock' => ['required', 'integer', 'min:0'],
-            'status' => ['required', 'boolean'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'product_code' => [
+                'required',
+                'string',
+                'max:50',
+                'unique:products,product_code',
+            ],
+
+            'category_id' => [
+                'required',
+                'exists:categories,id',
+            ],
+
+            'name' => [
+                'required',
+                'string',
+                'max:150',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'material' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'status' => [
+                'required',
+                'boolean',
+            ],
+
+            'image' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:10240',
+            ],
+
+            'size_ids' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'size_ids.*' => [
+                'integer',
+                'exists:sizes,id',
+            ],
+
+            'variants' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'variants.*.price' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+
+            'variants.*.stock' => [
+                'required',
+                'integer',
+                'min:0',
+            ],
         ], [
             'product_code.required' => 'Kode produk wajib diisi.',
             'product_code.unique' => 'Kode produk sudah digunakan.',
+
             'category_id.required' => 'Kategori wajib dipilih.',
             'category_id.exists' => 'Kategori tidak ditemukan.',
+
             'name.required' => 'Nama produk wajib diisi.',
-            'price.required' => 'Harga wajib diisi.',
-            'price.numeric' => 'Harga harus berupa angka.',
-            'stock.required' => 'Stok wajib diisi.',
-            'stock.integer' => 'Stok harus berupa angka bulat.',
+            'name.max' => 'Nama produk maksimal 150 karakter.',
+
             'status.required' => 'Status produk wajib dipilih.',
+
             'image.image' => 'File harus berupa gambar.',
             'image.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
             'image.max' => 'Ukuran foto terlalu besar. Maksimal upload adalah 10 MB.',
+
+            'size_ids.required' => 'Minimal satu ukuran produk harus dipilih.',
+            'size_ids.array' => 'Format ukuran tidak valid.',
+            'size_ids.min' => 'Minimal satu ukuran produk harus dipilih.',
+            'size_ids.*.exists' => 'Ukuran produk tidak ditemukan.',
+
+            'variants.required' => 'Data ukuran produk wajib diisi.',
+            'variants.array' => 'Format data ukuran tidak valid.',
+            'variants.min' => 'Minimal satu ukuran produk harus memiliki harga dan stok.',
+
+            'variants.*.price.required' => 'Harga ukuran wajib diisi.',
+            'variants.*.price.numeric' => 'Harga ukuran harus berupa angka.',
+            'variants.*.price.min' => 'Harga ukuran tidak boleh kurang dari 0.',
+
+            'variants.*.stock.required' => 'Stok ukuran wajib diisi.',
+            'variants.*.stock.integer' => 'Stok ukuran harus berupa angka bulat.',
+            'variants.*.stock.min' => 'Stok ukuran tidak boleh kurang dari 0.',
         ]);
 
-        return DB::transaction(function () use ($request, $validated) {
+        $result = DB::transaction(function () use ($request, $validated) {
             $product = Product::create([
                 'product_code' => $validated['product_code'],
                 'category_id' => $validated['category_id'],
@@ -138,32 +234,60 @@ class ProductController extends Controller
                 'status' => $validated['status'],
             ]);
 
-            $size = Size::query()->first();
+            $sizeIds = collect($validated['size_ids'])
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+
+            $variantsData = $validated['variants'] ?? [];
+
             $color = Color::query()->first();
 
-            if (!$size) {
-                throw new \Exception('Tabel sizes belum memiliki data.');
-            }
-
             if (!$color) {
-                throw new \Exception('Tabel colors belum memiliki data.');
+                throw new \Exception(
+                    'Tabel colors belum memiliki data.'
+                );
             }
 
-            $variant = ProductVariant::create([
-                'product_id' => $product->id,
-                'size_id' => $size->id,
-                'color_id' => $color->id,
-                'sku' => $validated['product_code'],
-                'price' => $validated['price'],
-            ]);
+            $sizes = Size::query()
+                ->whereIn('id', $sizeIds)
+                ->orderBy('id')
+                ->get();
 
-            Inventory::create([
-                'product_variant_id' => $variant->id,
-                'stock' => $validated['stock'],
-            ]);
+            foreach ($sizes as $size) {
+                $sizeId = (string) $size->id;
+
+                $variantData = $variantsData[$sizeId]
+                    ?? $variantsData[$size->id]
+                    ?? null;
+
+                if (!$variantData) {
+                    throw new \Exception(
+                        "Data harga dan stok untuk ukuran {$size->name} belum lengkap."
+                    );
+                }
+
+                $sku = $product->product_code . '-' .
+                    strtoupper(Str::slug($size->name));
+
+                $variant = ProductVariant::create([
+                    'product_id' => $product->id,
+                    'size_id' => $size->id,
+                    'color_id' => $color->id,
+                    'sku' => $sku,
+                    'price' => $variantData['price'],
+                ]);
+
+                Inventory::create([
+                    'product_variant_id' => $variant->id,
+                    'stock' => $variantData['stock'],
+                ]);
+            }
 
             if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('products', 'public');
+                $imagePath = $request
+                    ->file('image')
+                    ->store('products', 'public');
 
                 $product->images()->create([
                     'image' => $imagePath,
@@ -172,18 +296,24 @@ class ProductController extends Controller
                 ]);
             }
 
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Produk berhasil ditambahkan.',
-                    'data' => $product
-                ], 200);
-            }
-
-            return redirect()
-                ->route('admin.products')
-                ->with('success', 'Produk berhasil ditambahkan.');
+            return $product;
         });
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Produk berhasil ditambahkan.',
+                'data' => $result->load([
+                    'variants.size',
+                    'variants.color',
+                    'variants.inventory',
+                ]),
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.products')
+            ->with('success', 'Produk berhasil ditambahkan.');
     }
 
     public function show(Product $product): View
@@ -206,6 +336,8 @@ class ProductController extends Controller
         $product->load([
             'category',
             'images',
+            'variants.size',
+            'variants.color',
             'variants.inventory',
         ]);
 
@@ -214,70 +346,239 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
+        $sizes = Size::query()
+            ->orderBy('name')
+            ->get();
+
         return view('admin.products.edit', [
             'product' => $product,
             'categories' => $categories,
+            'sizes' => $sizes,
         ]);
     }
 
-    public function update(Request $request, Product $product): JsonResponse|RedirectResponse
-    {
+    public function update(
+        Request $request,
+        Product $product
+    ): JsonResponse|RedirectResponse {
         $validated = $request->validate([
-            'product_code' => ['required', 'string', 'max:50', 'unique:products,product_code,' . $product->id],
-            'category_id' => ['required', 'exists:categories,id'],
-            'name' => ['required', 'string', 'max:150'],
-            'description' => ['nullable', 'string'],
-            'material' => ['nullable', 'string', 'max:100'],
-            'status' => ['required', 'boolean'],
-            'price' => ['required', 'numeric', 'min:0'],
-            'stock' => ['required', 'integer', 'min:0'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'product_code' => [
+                'required',
+                'string',
+                'max:50',
+                'unique:products,product_code,' . $product->id,
+            ],
+
+            'category_id' => [
+                'required',
+                'exists:categories,id',
+            ],
+
+            'name' => [
+                'required',
+                'string',
+                'max:150',
+            ],
+
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
+            'material' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'status' => [
+                'required',
+                'boolean',
+            ],
+
+            'image' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:10240',
+            ],
+
+            'size_ids' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'size_ids.*' => [
+                'integer',
+                'exists:sizes,id',
+            ],
+
+            'variants' => [
+                'required',
+                'array',
+                'min:1',
+            ],
+
+            'variants.*.price' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+
+            'variants.*.stock' => [
+                'required',
+                'integer',
+                'min:0',
+            ],
         ], [
             'product_code.required' => 'Kode produk wajib diisi.',
             'product_code.unique' => 'Kode produk sudah digunakan.',
+
             'category_id.required' => 'Kategori wajib dipilih.',
             'category_id.exists' => 'Kategori tidak ditemukan.',
+
             'name.required' => 'Nama produk wajib diisi.',
             'name.max' => 'Nama produk maksimal 150 karakter.',
-            'price.required' => 'Harga wajib diisi.',
-            'price.numeric' => 'Harga harus berupa angka.',
-            'price.min' => 'Harga tidak boleh kurang dari 0.',
-            'stock.required' => 'Stok wajib diisi.',
-            'stock.integer' => 'Stok harus berupa angka bulat.',
-            'stock.min' => 'Stok tidak boleh kurang dari 0.',
+
+            'status.required' => 'Status produk wajib dipilih.',
+
             'image.image' => 'File harus berupa gambar.',
             'image.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
             'image.max' => 'Ukuran gambar maksimal 10 MB.',
-            'status.required' => 'Status produk wajib dipilih.',
+
+            'size_ids.required' => 'Minimal satu ukuran produk harus dipilih.',
+            'size_ids.min' => 'Minimal satu ukuran produk harus dipilih.',
+            'size_ids.*.exists' => 'Ukuran produk tidak ditemukan.',
+
+            'variants.required' => 'Data ukuran produk wajib diisi.',
+            'variants.array' => 'Format data ukuran tidak valid.',
+            'variants.min' => 'Minimal satu ukuran produk harus memiliki harga dan stok.',
+
+            'variants.*.price.required' => 'Harga ukuran wajib diisi.',
+            'variants.*.price.numeric' => 'Harga ukuran harus berupa angka.',
+            'variants.*.price.min' => 'Harga ukuran tidak boleh kurang dari 0.',
+
+            'variants.*.stock.required' => 'Stok ukuran wajib diisi.',
+            'variants.*.stock.integer' => 'Stok ukuran harus berupa angka bulat.',
+            'variants.*.stock.min' => 'Stok ukuran tidak boleh kurang dari 0.',
         ]);
 
-        DB::transaction(function () use ($request, $validated, $product) {
+        DB::transaction(function () use (
+            $request,
+            $validated,
+            $product
+        ) {
             $product->update([
                 'product_code' => $validated['product_code'],
                 'category_id' => $validated['category_id'],
                 'name' => $validated['name'],
-                'slug' => $this->generateUniqueSlug($validated['name'], $product->id),
+                'slug' => $this->generateUniqueSlug(
+                    $validated['name'],
+                    $product->id
+                ),
                 'description' => $validated['description'] ?? null,
                 'material' => $validated['material'] ?? null,
                 'status' => $validated['status'],
             ]);
 
-            $variant = $product->variants()->with('inventory')->first();
+            $sizeIds = collect($validated['size_ids'])
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
 
-            if ($variant) {
-                $variant->update([
-                    'price' => $validated['price'],
-                ]);
+            $variantsData = $validated['variants'] ?? [];
 
-                if ($variant->inventory) {
-                    $variant->inventory->update([
-                        'stock' => $validated['stock'],
+            $color = Color::query()->first();
+
+            if (!$color) {
+                throw new \Exception(
+                    'Tabel colors belum memiliki data.'
+                );
+            }
+
+            $sizes = Size::query()
+                ->whereIn('id', $sizeIds)
+                ->orderBy('id')
+                ->get();
+
+            $existingVariants = $product->variants()
+                ->with('inventory')
+                ->get()
+                ->keyBy('size_id');
+
+            foreach ($sizes as $size) {
+                $sizeId = (string) $size->id;
+
+                $variantData = $variantsData[$sizeId]
+                    ?? $variantsData[$size->id]
+                    ?? null;
+
+                if (!$variantData) {
+                    throw new \Exception(
+                        "Data harga dan stok untuk ukuran {$size->name} belum lengkap."
+                    );
+                }
+
+                $sku = $product->product_code . '-' .
+                    strtoupper(Str::slug($size->name));
+
+                $variant = $existingVariants->get($size->id);
+
+                if ($variant) {
+                    $variant->update([
+                        'color_id' => $variant->color_id ?: $color->id,
+                        'sku' => $sku,
+                        'price' => $variantData['price'],
                     ]);
+
+                    if ($variant->inventory) {
+                        $variant->inventory->update([
+                            'stock' => $variantData['stock'],
+                        ]);
+                    } else {
+                        $variant->inventory()->create([
+                            'stock' => $variantData['stock'],
+                        ]);
+                    }
                 } else {
-                    $variant->inventory()->create([
-                        'stock' => $validated['stock'],
+                    $variant = ProductVariant::create([
+                        'product_id' => $product->id,
+                        'size_id' => $size->id,
+                        'color_id' => $color->id,
+                        'sku' => $sku,
+                        'price' => $variantData['price'],
+                    ]);
+
+                    Inventory::create([
+                        'product_variant_id' => $variant->id,
+                        'stock' => $variantData['stock'],
                     ]);
                 }
+            }
+
+            $variantsToRemove = $product->variants()
+                ->whereNotIn('size_id', $sizeIds)
+                ->with([
+                    'inventory.stockMovements',
+                    'transactionItems',
+                ])
+                ->get();
+
+            foreach ($variantsToRemove as $variant) {
+                if ($variant->transactionItems()->exists()) {
+                    continue;
+                }
+
+                if ($variant->inventory) {
+                    $variant->inventory
+                        ->stockMovements()
+                        ->delete();
+
+                    $variant->inventory->delete();
+                }
+
+                $variant->delete();
             }
 
             if ($request->hasFile('image')) {
@@ -285,11 +586,19 @@ class ProductController extends Controller
                     ->where('is_thumbnail', true)
                     ->first();
 
-                if ($oldThumbnail && Storage::disk('public')->exists($oldThumbnail->image)) {
-                    Storage::disk('public')->delete($oldThumbnail->image);
+                if (
+                    $oldThumbnail &&
+                    Storage::disk('public')->exists(
+                        $oldThumbnail->image
+                    )
+                ) {
+                    Storage::disk('public')
+                        ->delete($oldThumbnail->image);
                 }
 
-                $imagePath = $request->file('image')->store('products', 'public');
+                $imagePath = $request
+                    ->file('image')
+                    ->store('products', 'public');
 
                 if ($oldThumbnail) {
                     $oldThumbnail->update([
@@ -306,11 +615,17 @@ class ProductController extends Controller
         });
 
         if ($request->wantsJson()) {
+            $product->load([
+                'variants.size',
+                'variants.color',
+                'variants.inventory',
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Produk berhasil diperbarui.',
-                'data' => $product
-            ], 200);
+                'data' => $product,
+            ]);
         }
 
         return redirect()
@@ -320,7 +635,12 @@ class ProductController extends Controller
 
     public function destroy(Product $product): JsonResponse
     {
-        if ($product->variants()->whereHas('transactionItems')->exists()) {
+        if (
+            $product
+                ->variants()
+                ->whereHas('transactionItems')
+                ->exists()
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Produk tidak dapat dihapus karena sudah digunakan dalam transaksi.',
@@ -335,8 +655,14 @@ class ProductController extends Controller
                 ]);
 
                 foreach ($product->images as $image) {
-                    if ($image->image && Storage::disk('public')->exists($image->image)) {
-                        Storage::disk('public')->delete($image->image);
+                    if (
+                        $image->image &&
+                        Storage::disk('public')->exists(
+                            $image->image
+                        )
+                    ) {
+                        Storage::disk('public')
+                            ->delete($image->image);
                     }
 
                     $image->delete();
@@ -344,7 +670,10 @@ class ProductController extends Controller
 
                 foreach ($product->variants as $variant) {
                     if ($variant->inventory) {
-                        $variant->inventory->stockMovements()->delete();
+                        $variant->inventory
+                            ->stockMovements()
+                            ->delete();
+
                         $variant->inventory->delete();
                     }
 
@@ -359,7 +688,6 @@ class ProductController extends Controller
                 'message' => 'Produk berhasil dihapus.',
                 'id' => $product->id,
             ], 200);
-
         } catch (\Throwable $e) {
             report($e);
 
@@ -382,7 +710,11 @@ class ProductController extends Controller
             Product::where('slug', $slug)
                 ->when(
                     $ignoreId,
-                    fn ($query) => $query->where('id', '!=', $ignoreId)
+                    fn ($query) => $query->where(
+                        'id',
+                        '!=',
+                        $ignoreId
+                    )
                 )
                 ->exists()
         ) {

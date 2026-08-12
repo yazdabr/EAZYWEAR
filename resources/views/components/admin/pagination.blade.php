@@ -1,57 +1,75 @@
-<div class="flex items-center gap-2">
+<div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
 
-    {{-- Previous --}}
-    <button
-        class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-100">
+    {{-- Navigation --}}
+    <div class="flex items-center gap-2">
 
-        <x-heroicon-o-chevron-left class="h-4 w-4" />
+        {{-- Previous --}}
+        @if ($paginator->onFirstPage())
 
-    </button>
+            <span
+                class="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300"
+            >
+                <x-heroicon-o-chevron-left class="h-5 w-5"/>
+            </span>
 
-    {{-- Active --}}
-    <button
-        class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#C99322] font-semibold text-white shadow">
+        @else
 
-        1
+            <a
+                href="{{ $paginator->previousPageUrl() }}"
+                class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition duration-200 hover:border-[#AE7C18] hover:bg-[#AE7C18] hover:text-white"
+            >
+                <x-heroicon-o-chevron-left class="h-5 w-5"/>
+            </a>
 
-    </button>
+        @endif
 
-    {{-- Page --}}
-    <button
-        class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-100">
+        {{-- Page Numbers --}}
+        @foreach ($paginator->getUrlRange(
+            max(1, $paginator->currentPage() - 2),
+            min($paginator->lastPage(), $paginator->currentPage() + 2)
+        ) as $page => $url)
 
-        2
+            @if ($page == $paginator->currentPage())
 
-    </button>
+                <span
+                    class="flex h-10 min-w-[40px] items-center justify-center rounded-xl bg-[#AE7C18] px-3 text-sm font-semibold text-white shadow"
+                >
+                    {{ $page }}
+                </span>
 
-    {{-- Page --}}
-    <button
-        class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-100">
+            @else
 
-        3
+                <a
+                    href="{{ $url }}"
+                    class="flex h-10 min-w-[40px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition duration-200 hover:border-[#AE7C18] hover:text-[#AE7C18]"
+                >
+                    {{ $page }}
+                </a>
 
-    </button>
+            @endif
 
-    <span class="px-2 text-slate-400">
+        @endforeach
 
-        ...
+        {{-- Next --}}
+        @if ($paginator->hasMorePages())
 
-    </span>
+            <a
+                href="{{ $paginator->nextPageUrl() }}"
+                class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition duration-200 hover:border-[#AE7C18] hover:bg-[#AE7C18] hover:text-white"
+            >
+                <x-heroicon-o-chevron-right class="h-5 w-5"/>
+            </a>
 
-    {{-- Last --}}
-    <button
-        class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-100">
+        @else
 
-        13
+            <span
+                class="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300"
+            >
+                <x-heroicon-o-chevron-right class="h-5 w-5"/>
+            </span>
 
-    </button>
+        @endif
 
-    {{-- Next --}}
-    <button
-        class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-100">
-
-        <x-heroicon-o-chevron-right class="h-4 w-4" />
-
-    </button>
+    </div>
 
 </div>

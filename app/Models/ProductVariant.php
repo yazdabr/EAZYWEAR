@@ -2,17 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Inventory;
 
 class ProductVariant extends Model
 {
-    use HasFactory;
-
-    protected $table = 'product_variants';
-
     protected $fillable = [
         'product_id',
         'size_id',
@@ -45,8 +42,10 @@ class ProductVariant extends Model
         return $this->hasOne(Inventory::class, 'product_variant_id');
     }
 
-    public function transactionItems()
+    public function transactionItems(): HasMany
     {
         return $this->hasMany(TransactionItem::class, 'product_variant_id');
     }
+
+    
 }

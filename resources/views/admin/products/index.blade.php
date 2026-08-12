@@ -124,7 +124,7 @@
             </div>          
 
             {{-- Tambah Produk --}}
-            <div class="lg:ml-3">
+            <div class="lg:ml">
                 <button
                     @click="$dispatch('open-create-product')"
                     class="inline-flex h-[50px] w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#AE7C18] px-6 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition-all duration-300 hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18] focus:ring-offset-2 active:scale-[0.98] lg:w-auto">

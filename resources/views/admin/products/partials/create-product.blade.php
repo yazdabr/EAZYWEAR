@@ -87,27 +87,30 @@
         },
 
         syncVariants() {
-            this.form.size_ids = (this.form.size_ids || []).map(id => String(id));
+            if (!this.form.variants) {
+                this.form.variants = {};
+            }
 
             this.form.size_ids.forEach(sizeId => {
-                sizeId = String(sizeId);
+                const id = String(sizeId);
 
-                if (!this.form.variants[sizeId]) {
-                    this.form.variants[sizeId] = {
+                if (!this.form.variants[id]) {
+                    this.form.variants[id] = {
                         price: '',
                         stock: ''
                     };
                 } else {
-                    this.form.variants[sizeId] = {
-                        price: this.form.variants[sizeId].price ?? '',
-                        stock: this.form.variants[sizeId].stock ?? ''
-                    };
+                    this.form.variants[id].price =
+                        this.form.variants[id].price ?? '';
+
+                    this.form.variants[id].stock =
+                        this.form.variants[id].stock ?? '';
                 }
             });
 
-            Object.keys(this.form.variants).forEach(sizeId => {
-                if (!this.form.size_ids.includes(String(sizeId))) {
-                    delete this.form.variants[sizeId];
+            Object.keys(this.form.variants).forEach(id => {
+                if (!this.form.size_ids.includes(String(id))) {
+                    delete this.form.variants[id];
                 }
             });
         },
@@ -124,64 +127,119 @@
             const form = e.target;
             const formData = new FormData(form);
 
+            /*
+            |--------------------------------------------------------------------------
+            | Debug data yang dikirim
+            |--------------------------------------------------------------------------
+            */
+
+            console.log('PRODUCT FORM DATA');
+
+            for (const [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+
             try {
                 const response = await fetch(form.action, {
                     method: 'POST',
+
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
                         'Accept': 'application/json'
                     },
+
                     body: formData
                 });
 
-                const contentType = response.headers.get('content-type') || '';
+                /*
+                |--------------------------------------------------------------------------
+                | Ambil response sebagai text terlebih dahulu
+                |--------------------------------------------------------------------------
+                */
+
                 const responseText = await response.text();
 
-                let data = {};
+                console.log('SERVER STATUS:', response.status);
+                console.log('SERVER RESPONSE:', responseText);
 
-                if (contentType.includes('application/json')) {
-                    try {
-                        data = JSON.parse(responseText);
-                    } catch (error) {
-                        throw new Error(
-                            'Response server tidak dapat diproses.'
-                        );
-                    }
+                let data = null;
+
+                /*
+                |--------------------------------------------------------------------------
+                | Coba parse JSON
+                |--------------------------------------------------------------------------
+                */
+
+                try {
+                    data = responseText
+                        ? JSON.parse(responseText)
+                        : null;
+                } catch (jsonError) {
+                    /*
+                    | Response bukan JSON.
+                    | Jangan langsung menyembunyikan error server.
+                    */
+
+                    console.error(
+                        'SERVER TIDAK MENGEMBALIKAN JSON:',
+                        responseText
+                    );
+
+                    throw new Error(
+                        'Server mengembalikan response yang tidak valid. Status HTTP: ' +
+                        response.status
+                    );
                 }
 
-                if (!response.ok) {
-                    if (response.status === 422 && data.errors) {
+                /*
+                |--------------------------------------------------------------------------
+                | VALIDATION ERROR
+                |--------------------------------------------------------------------------
+                */
+
+                if (response.status === 422) {
+
+                    if (data?.errors) {
+
                         this.errors = Object.keys(data.errors).reduce(
                             (errors, key) => {
-                                errors[key] = data.errors[key][0];
+
+                                errors[key] = Array.isArray(data.errors[key])
+                                    ? data.errors[key][0]
+                                    : data.errors[key];
+
                                 return errors;
+
                             },
                             {}
-                        );
-
-                        throw new Error(
-                            data.message ||
-                            'Mohon periksa kembali data produk.'
-                        );
-                    }
-
-                    if (!contentType.includes('application/json')) {
-                        throw new Error(
-                            'Server mengembalikan response yang tidak sesuai.'
                         );
                     }
 
                     throw new Error(
-                        data.message ||
+                        data?.message ||
+                        'Mohon periksa kembali data produk.'
+                    );
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | ERROR LAIN DARI SERVER
+                |--------------------------------------------------------------------------
+                */
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data?.message ||
                         'Gagal menyimpan data produk.'
                     );
                 }
 
-                if (!contentType.includes('application/json')) {
-                    throw new Error(
-                        'Server mengembalikan response yang tidak sesuai.'
-                    );
-                }
+                /*
+                |--------------------------------------------------------------------------
+                | SUCCESS
+                |--------------------------------------------------------------------------
+                */
 
                 this.closeDrawer();
 
@@ -189,10 +247,14 @@
                     new CustomEvent('toast', {
                         detail: {
                             type: 'success',
-                            title: this.mode === 'create'
-                                ? 'Berhasil Ditambahkan'
-                                : 'Berhasil Diperbarui',
-                            message: data.message ||
+
+                            title:
+                                this.mode === 'create'
+                                    ? 'Berhasil Ditambahkan'
+                                    : 'Berhasil Diperbarui',
+
+                            message:
+                                data?.message ||
                                 (
                                     this.mode === 'create'
                                         ? 'Produk baru berhasil disimpan.'
@@ -211,20 +273,30 @@
                 }, 600);
 
             } catch (error) {
-                console.error('Product Save Error:', error);
+
+                console.error(
+                    'Product Save Error:',
+                    error
+                );
 
                 window.dispatchEvent(
                     new CustomEvent('toast', {
                         detail: {
                             type: 'error',
+
                             title: 'Gagal Menyimpan',
-                            message: error.message ||
+
+                            message:
+                                error.message ||
                                 'Terjadi kesalahan sistem.'
                         }
                     })
                 );
+
             } finally {
+
                 this.loading = false;
+
             }
         },
 
@@ -287,8 +359,21 @@
                     const sizeId = String(variant.size_id);
 
                     variants[sizeId] = {
-                        price: variant.price ?? '',
+                        price: variant.price !== null && variant.price !== undefined && variant.price !== ''
+                            ? parseInt(variant.price)
+                            : '',
                         stock: variant.inventory?.stock ?? variant.stock ?? ''
+                    };
+                });
+            } else if (product.variants && typeof product.variants === 'object') {
+                Object.entries(product.variants).forEach(([sizeId, variant]) => {
+                    variants[String(sizeId)] = {
+                        price: variant?.price !== null &&
+                            variant?.price !== undefined &&
+                            variant?.price !== ''
+                            ? parseInt(variant.price)
+                            : '',
+                        stock: variant?.stock ?? ''
                     };
                 });
             }
@@ -300,7 +385,7 @@
             this.form = {
                 id: product.id || '',
                 name: product.name || '',
-                category_id: product.category_id || '',
+                category_id: product.category_id ? String(product.category_id) : '',
                 product_code: product.product_code || '',
                 description: product.description || '',
                 material: product.material || '',
@@ -318,9 +403,7 @@
                     ? 'Aktif'
                     : 'Tidak Aktif',
                 image: product.image || '',
-                gallery: product.image
-                    ? [product.image]
-                    : [],
+                gallery: product.image ? [product.image] : [],
                 size_ids: sizeIds,
                 variants: variants
             };
@@ -734,13 +817,68 @@
                                     Setiap ukuran memiliki harga dan stok masing-masing.
                                     Perubahan harga atau stok tidak memengaruhi ukuran lainnya.
                                 </p>
-
                             </div>
+                        </div>
+                    </div>
+                </div>
 
+                {{-- STATUS PRODUK --}}
+                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                    <div class="mb-4 flex items-start gap-3 sm:mb-6 sm:gap-4">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 sm:h-11 sm:w-11">
+                            <x-heroicon-o-eye class="h-5 w-5 text-emerald-600"/>
                         </div>
 
+                        <div>
+                            <h3 class="text-base font-semibold text-slate-900">
+                                Status Produk
+                            </h3>
+
+                            <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">
+                                Tentukan status produk yang akan ditampilkan di toko.
+                            </p>
+                        </div>
                     </div>
 
+                    <div class="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+                        <button
+                            type="button"
+                            @click="form.status='Aktif'"
+                            :class="form.status === 'Aktif'
+                                ? 'bg-white text-[#AE7C18] shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'"
+                            class="inline-flex h-[46px] items-center justify-center rounded-lg text-sm font-semibold transition-all duration-200"
+                        >
+                            <span
+                                class="mr-2 h-2 w-2 rounded-full"
+                                :class="form.status === 'Aktif'
+                                    ? 'bg-emerald-500'
+                                    : 'bg-slate-300'"
+                            ></span>
+                            Aktif
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="form.status='Tidak Aktif'"
+                            :class="form.status === 'Tidak Aktif'
+                                ? 'bg-white text-red-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'"
+                            class="inline-flex h-[46px] items-center justify-center rounded-lg text-sm font-semibold transition-all duration-200"
+                        >
+                            <span
+                                class="mr-2 h-2 w-2 rounded-full"
+                                :class="form.status === 'Tidak Aktif'
+                                    ? 'bg-red-500'
+                                    : 'bg-slate-300'"
+                            ></span>
+                            Tidak Aktif
+                        </button>
+                    </div>
+
+                    <p class="mt-2 text-xs text-slate-400 sm:mt-3">
+                        Produk aktif dapat ditampilkan dan dijual di toko.
+                    </p>
                 </div>
 
                     {{-- PRODUCT GALLERY --}}

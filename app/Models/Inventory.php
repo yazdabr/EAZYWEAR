@@ -20,12 +20,6 @@ class Inventory extends Model
         'stock' => 'integer',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
-
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(

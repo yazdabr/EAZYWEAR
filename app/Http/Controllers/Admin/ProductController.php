@@ -119,201 +119,366 @@ class ProductController extends Controller
 
     public function store(Request $request): JsonResponse|RedirectResponse
     {
-        $validated = $request->validate([
-            'product_code' => [
-                'required',
-                'string',
-                'max:50',
-                'unique:products,product_code',
-            ],
+        $sizeIds = collect($request->input('size_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
 
-            'category_id' => [
-                'required',
-                'exists:categories,id',
-            ],
+        /*
+        |--------------------------------------------------------------------------
+        | Ambil hanya variant dari Size yang dipilih
+        |--------------------------------------------------------------------------
+        |
+        | Form memang mengirim semua variants.
+        | Tetapi yang kita proses hanya Size yang dipilih.
+        |
+        */
+        $allVariants = $request->input('variants', []);
 
-            'name' => [
-                'required',
-                'string',
-                'max:150',
-            ],
+        $selectedVariants = collect($sizeIds)
+            ->mapWithKeys(function ($sizeId) use ($allVariants) {
+                $data = $allVariants[$sizeId]
+                    ?? $allVariants[(string) $sizeId]
+                    ?? [];
 
-            'description' => [
-                'nullable',
-                'string',
-            ],
+                return [
+                    $sizeId => $data,
+                ];
+            })
+            ->all();
 
-            'material' => [
-                'nullable',
-                'string',
-                'max:100',
-            ],
-
-            'status' => [
-                'required',
-                'boolean',
-            ],
-
-            'image' => [
-                'nullable',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:10240',
-            ],
-
-            'size_ids' => [
-                'required',
-                'array',
-                'min:1',
-            ],
-
-            'size_ids.*' => [
-                'integer',
-                'exists:sizes,id',
-            ],
-
-            'variants' => [
-                'required',
-                'array',
-                'min:1',
-            ],
-
-            'variants.*.price' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
-            'variants.*.stock' => [
-                'required',
-                'integer',
-                'min:0',
-            ],
-        ], [
-            'product_code.required' => 'Kode produk wajib diisi.',
-            'product_code.unique' => 'Kode produk sudah digunakan.',
-
-            'category_id.required' => 'Kategori wajib dipilih.',
-            'category_id.exists' => 'Kategori tidak ditemukan.',
-
-            'name.required' => 'Nama produk wajib diisi.',
-            'name.max' => 'Nama produk maksimal 150 karakter.',
-
-            'status.required' => 'Status produk wajib dipilih.',
-
-            'image.image' => 'File harus berupa gambar.',
-            'image.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
-            'image.max' => 'Ukuran foto terlalu besar. Maksimal upload adalah 10 MB.',
-
-            'size_ids.required' => 'Minimal satu ukuran produk harus dipilih.',
-            'size_ids.array' => 'Format ukuran tidak valid.',
-            'size_ids.min' => 'Minimal satu ukuran produk harus dipilih.',
-            'size_ids.*.exists' => 'Ukuran produk tidak ditemukan.',
-
-            'variants.required' => 'Data ukuran produk wajib diisi.',
-            'variants.array' => 'Format data ukuran tidak valid.',
-            'variants.min' => 'Minimal satu ukuran produk harus memiliki harga dan stok.',
-
-            'variants.*.price.required' => 'Harga ukuran wajib diisi.',
-            'variants.*.price.numeric' => 'Harga ukuran harus berupa angka.',
-            'variants.*.price.min' => 'Harga ukuran tidak boleh kurang dari 0.',
-
-            'variants.*.stock.required' => 'Stok ukuran wajib diisi.',
-            'variants.*.stock.integer' => 'Stok ukuran harus berupa angka bulat.',
-            'variants.*.stock.min' => 'Stok ukuran tidak boleh kurang dari 0.',
+        /*
+        |--------------------------------------------------------------------------
+        | Buat data request khusus untuk validation
+        |--------------------------------------------------------------------------
+        */
+        $request->merge([
+            'size_ids' => $sizeIds,
+            'variants' => $selectedVariants,
         ]);
 
-        $result = DB::transaction(function () use ($request, $validated) {
-            $product = Product::create([
-                'product_code' => $validated['product_code'],
-                'category_id' => $validated['category_id'],
-                'name' => $validated['name'],
-                'slug' => $this->generateUniqueSlug($validated['name']),
-                'description' => $validated['description'] ?? null,
-                'material' => $validated['material'] ?? null,
-                'status' => $validated['status'],
+        /*
+        |--------------------------------------------------------------------------
+        | Validation
+        |--------------------------------------------------------------------------
+        */
+        try {
+            $validated = $request->validate([
+                'product_code' => [
+                    'required',
+                    'string',
+                    'max:50',
+                    'unique:products,product_code',
+                ],
+
+                'category_id' => [
+                    'required',
+                    'exists:categories,id',
+                ],
+
+                'name' => [
+                    'required',
+                    'string',
+                    'max:150',
+                ],
+
+                'description' => [
+                    'nullable',
+                    'string',
+                ],
+
+                'material' => [
+                    'nullable',
+                    'string',
+                    'max:100',
+                ],
+
+                'status' => [
+                    'required',
+                    'boolean',
+                ],
+
+                'image' => [
+                    'nullable',
+                    'image',
+                    'mimes:jpg,jpeg,png,webp',
+                    'max:10240',
+                ],
+
+                'size_ids' => [
+                    'required',
+                    'array',
+                    'min:1',
+                ],
+
+                'size_ids.*' => [
+                    'integer',
+                    'exists:sizes,id',
+                ],
+
+                'variants' => [
+                    'required',
+                    'array',
+                    'min:1',
+                ],
+
+                'variants.*.price' => [
+                    'required',
+                    'numeric',
+                    'min:0',
+                ],
+
+                'variants.*.stock' => [
+                    'required',
+                    'integer',
+                    'min:0',
+                ],
+            ], [
+                'product_code.required' => 'Kode produk wajib diisi.',
+                'product_code.unique' => 'Kode produk sudah digunakan.',
+
+                'category_id.required' => 'Kategori wajib dipilih.',
+                'category_id.exists' => 'Kategori tidak ditemukan.',
+
+                'name.required' => 'Nama produk wajib diisi.',
+                'name.max' => 'Nama produk maksimal 150 karakter.',
+
+                'status.required' => 'Status produk wajib dipilih.',
+
+                'image.image' => 'File harus berupa gambar.',
+                'image.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
+                'image.max' => 'Ukuran foto terlalu besar. Maksimal upload adalah 10 MB.',
+
+                'size_ids.required' => 'Minimal satu ukuran produk harus dipilih.',
+                'size_ids.array' => 'Format ukuran tidak valid.',
+                'size_ids.min' => 'Minimal satu ukuran produk harus dipilih.',
+                'size_ids.*.exists' => 'Ukuran produk tidak ditemukan.',
+
+                'variants.required' => 'Data ukuran produk wajib diisi.',
+                'variants.array' => 'Format data ukuran tidak valid.',
+                'variants.min' => 'Minimal satu ukuran produk harus memiliki harga dan stok.',
+
+                'variants.*.price.required' => 'Harga ukuran wajib diisi.',
+                'variants.*.price.numeric' => 'Harga ukuran harus berupa angka.',
+                'variants.*.price.min' => 'Harga ukuran tidak boleh kurang dari 0.',
+
+                'variants.*.stock.required' => 'Stok ukuran wajib diisi.',
+                'variants.*.stock.integer' => 'Stok ukuran harus berupa angka bulat.',
+                'variants.*.stock.min' => 'Stok ukuran tidak boleh kurang dari 0.',
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
 
-            $sizeIds = collect($validated['size_ids'])
-                ->map(fn ($id) => (int) $id)
-                ->unique()
-                ->values();
-
-            $variantsData = $validated['variants'] ?? [];
-
-            $color = Color::query()->first();
-
-            if (!$color) {
-                throw new \Exception(
-                    'Tabel colors belum memiliki data.'
-                );
+            /*
+            |--------------------------------------------------------------------------
+            | AJAX / JSON Response
+            |--------------------------------------------------------------------------
+            */
+            if (
+                $request->ajax() ||
+                $request->expectsJson() ||
+                $request->header('Accept') === 'application/json'
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Mohon periksa kembali data produk.',
+                    'errors' => $e->errors(),
+                ], 422);
             }
 
-            $sizes = Size::query()
-                ->whereIn('id', $sizeIds)
-                ->orderBy('id')
-                ->get();
+            throw $e;
+        }
 
-            foreach ($sizes as $size) {
-                $sizeId = (string) $size->id;
+        /*
+        |--------------------------------------------------------------------------
+        | Simpan Product + Variant + Inventory
+        |--------------------------------------------------------------------------
+        */
+        try {
+            $result = DB::transaction(function () use (
+                $request,
+                $validated
+            ) {
+                /*
+                |--------------------------------------------------------------------------
+                | Product
+                |--------------------------------------------------------------------------
+                */
+                $product = Product::create([
+                    'product_code' => $validated['product_code'],
+                    'category_id' => $validated['category_id'],
+                    'name' => $validated['name'],
+                    'slug' => $this->generateUniqueSlug(
+                        $validated['name']
+                    ),
+                    'description' => $validated['description'] ?? null,
+                    'material' => $validated['material'] ?? null,
+                    'status' => $validated['status'],
+                ]);
 
-                $variantData = $variantsData[$sizeId]
-                    ?? $variantsData[$size->id]
-                    ?? null;
+                /*
+                |--------------------------------------------------------------------------
+                | Size
+                |--------------------------------------------------------------------------
+                */
+                $sizeIds = collect($validated['size_ids'])
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->values();
 
-                if (!$variantData) {
+                /*
+                |--------------------------------------------------------------------------
+                | Variant
+                |--------------------------------------------------------------------------
+                */
+                $variantsData = $validated['variants'] ?? [];
+
+                /*
+                |--------------------------------------------------------------------------
+                | Color Default
+                |--------------------------------------------------------------------------
+                */
+                $color = Color::query()->first();
+
+                if (!$color) {
                     throw new \Exception(
-                        "Data harga dan stok untuk ukuran {$size->name} belum lengkap."
+                        'Tabel colors belum memiliki data.'
                     );
                 }
 
-                $sku = $product->product_code . '-' .
-                    strtoupper(Str::slug($size->name));
+                /*
+                |--------------------------------------------------------------------------
+                | Ambil Size yang dipilih
+                |--------------------------------------------------------------------------
+                */
+                $sizes = Size::query()
+                    ->whereIn('id', $sizeIds)
+                    ->orderBy('id')
+                    ->get();
 
-                $variant = ProductVariant::create([
-                    'product_id' => $product->id,
-                    'size_id' => $size->id,
-                    'color_id' => $color->id,
-                    'sku' => $sku,
-                    'price' => $variantData['price'],
-                ]);
+                /*
+                |--------------------------------------------------------------------------
+                | Buat Variant + Inventory
+                |--------------------------------------------------------------------------
+                */
+                foreach ($sizes as $size) {
 
-                Inventory::create([
-                    'product_variant_id' => $variant->id,
-                    'stock' => $variantData['stock'],
-                ]);
+                    $sizeId = (string) $size->id;
+
+                    $variantData = $variantsData[$sizeId]
+                        ?? $variantsData[$size->id]
+                        ?? null;
+
+                    if (!$variantData) {
+                        throw new \Exception(
+                            "Data harga dan stok untuk ukuran {$size->name} belum lengkap."
+                        );
+                    }
+
+                    $sku = $product->product_code . '-' .
+                        strtoupper(Str::slug($size->name));
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Product Variant
+                    |--------------------------------------------------------------------------
+                    */
+                    $variant = ProductVariant::create([
+                        'product_id' => $product->id,
+                        'size_id' => $size->id,
+                        'color_id' => $color->id,
+                        'sku' => $sku,
+                        'price' => $variantData['price'],
+                    ]);
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Inventory
+                    |--------------------------------------------------------------------------
+                    */
+                    Inventory::create([
+                        'product_variant_id' => $variant->id,
+                        'stock' => $variantData['stock'],
+                    ]);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Image
+                |--------------------------------------------------------------------------
+                */
+                if ($request->hasFile('image')) {
+
+                    $imagePath = $request
+                        ->file('image')
+                        ->store('products', 'public');
+
+                    $product->images()->create([
+                        'image' => $imagePath,
+                        'is_thumbnail' => true,
+                        'sort_order' => 1,
+                    ]);
+                }
+
+                return $product;
+            });
+
+            /*
+            |--------------------------------------------------------------------------
+            | JSON Response untuk AJAX
+            |--------------------------------------------------------------------------
+            */
+            if (
+                $request->ajax() ||
+                $request->expectsJson() ||
+                $request->header('Accept') === 'application/json'
+            ) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Produk berhasil ditambahkan.',
+                    'data' => $result->load([
+                        'variants.size',
+                        'variants.color',
+                        'variants.inventory',
+                    ]),
+                ], 201);
             }
 
-            if ($request->hasFile('image')) {
-                $imagePath = $request
-                    ->file('image')
-                    ->store('products', 'public');
+            /*
+            |--------------------------------------------------------------------------
+            | Normal Request
+            |--------------------------------------------------------------------------
+            */
+            return redirect()
+                ->route('admin.products')
+                ->with(
+                    'success',
+                    'Produk berhasil ditambahkan.'
+                );
 
-                $product->images()->create([
-                    'image' => $imagePath,
-                    'is_thumbnail' => true,
-                    'sort_order' => 1,
-                ]);
+        } catch (\Throwable $e) {
+
+            report($e);
+
+            /*
+            |--------------------------------------------------------------------------
+            | JSON Error
+            |--------------------------------------------------------------------------
+            */
+            if (
+                $request->ajax() ||
+                $request->expectsJson() ||
+                $request->header('Accept') === 'application/json'
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 500);
             }
 
-            return $product;
-        });
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Produk berhasil ditambahkan.',
-                'data' => $result->load([
-                    'variants.size',
-                    'variants.color',
-                    'variants.inventory',
-                ]),
-            ]);
+            throw $e;
         }
-
-        return redirect()
-            ->route('admin.products')
-            ->with('success', 'Produk berhasil ditambahkan.');
     }
 
     public function show(Product $product): View
@@ -361,6 +526,32 @@ class ProductController extends Controller
         Request $request,
         Product $product
     ): JsonResponse|RedirectResponse {
+
+            $sizeIds = collect($request->input('size_ids', []))
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        $allVariants = $request->input('variants', []);
+
+        $selectedVariants = collect($sizeIds)
+            ->mapWithKeys(function ($sizeId) use ($allVariants) {
+                $data = $allVariants[$sizeId]
+                    ?? $allVariants[(string) $sizeId]
+                    ?? [];
+
+                return [
+                    $sizeId => $data,
+                ];
+            })
+            ->all();
+
+        $request->merge([
+            'size_ids' => $sizeIds,
+            'variants' => $selectedVariants,
+        ]);
         $validated = $request->validate([
             'product_code' => [
                 'required',

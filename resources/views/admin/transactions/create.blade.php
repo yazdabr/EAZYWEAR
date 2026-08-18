@@ -1,489 +1,511 @@
 @extends('admin.layouts.app')
-
-@section('title', 'Transaksi Baru')
-@section('page-title', 'Transaksi Baru')
+@section('title','Transaksi Baru')
+@section('page-title','Transaksi Baru')
 
 @section('content')
-<div class="space-y-6 md:space-y-8">
-    {{-- Header --}}
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+<div x-data="transactionCreate()" class="space-y-6 md:space-y-8 pb-10">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">Transaksi Baru</h2>
+      <p class="mt-1 text-sm text-slate-500 sm:mt-2 sm:text-base">Buat transaksi manual untuk pelanggan.</p>
+    </div>
+    <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 sm:py-3">
+      <x-heroicon-o-arrow-left class="h-5 w-5"/> Kembali
+    </a>
+  </div>
+
+  {{-- Informasi Pelanggan --}}
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl overflow-hidden">
+    <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
+        <x-heroicon-o-user class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6"/>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-900 sm:text-lg">Informasi Pelanggan</h3>
+        <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Isi informasi pelanggan transaksi.</p>
+      </div>
+    </div>
+    <div class="grid gap-4 p-4 sm:grid-cols-2 sm:gap-6 sm:p-6">
+      <div>
+        <label class="mb-2 block text-sm font-medium text-slate-700">Nama Pelanggan <span class="text-red-500">*</span></label>
+        <input x-model="customer.name" type="text" placeholder="Masukkan nama pelanggan..." class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-medium text-slate-700">Nomor Telepon</label>
+        <input x-model="customer.phone" type="text" placeholder="08xxxxxxxxxx" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-medium text-slate-700">Email</label>
+        <input x-model="customer.email" type="email" placeholder="customer@email.com" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-medium text-slate-700">Tanggal Transaksi</label>
+        <input x-model="transactionDate" type="date" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
+      </div>
+    </div>
+  </div>
+
+  {{-- Pemilihan Produk --}}
+  <div class="relative overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl">
+    <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
+        <x-heroicon-o-cube class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6"/>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-slate-900 sm:text-lg">Pemilihan Produk</h3>
+        {{-- <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Pilih produk dan variant yang akan dibeli.</p> --}}
+      </div>
+    </div>
+    <div class="space-y-5 p-4 sm:p-6">
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {{-- ================= SEARCH PRODUK ================= --}}
+        <div class="relative z-[1000] lg:col-span-6">
+          <label class="mb-2 block text-sm font-medium text-slate-700">Produk</label>
+          <div class="relative w-full sm:w-80">
+            {{-- Input Search --}}
+            <x-admin.search-input name="product_search" placeholder="Ketik nama produk..." autocomplete="off" x-model="productSearch" @input.debounce.300ms="searchProducts()" />
+            {{-- Dropdown --}}
+            <div x-show="showProductResults && productSearch.trim().length >= 2" x-cloak @click.outside="showProductResults = false" class="absolute left-0 right-0 top-full z-[9999] mt-2 max-h-72 overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+              {{-- Loading --}}
+              <template x-if="productSearching">
+                <div class="flex items-center gap-3 px-4 py-4 text-sm text-slate-400">
+                  <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" class="opacity-25" />
+                    <path d="M21 12a9 9 0 0 1-9 9" stroke="currentColor" stroke-width="3" />
+                  </svg>
+                  Mencari produk...
+                </div>
+              </template>
+              {{-- Hasil --}}
+              <template x-for="variant in productResults" :key="variant.id">
+                <button type="button" @click="selectProduct(variant)" class="flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 last:border-none">
+                  {{-- Gambar --}}
+                  <div class="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                    <img :src="variant.image" :alt="variant.product?.name ?? '-'" class="h-full w-full object-cover">
+                  </div>
+                  {{-- Informasi --}}
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-slate-800" x-text="variant.product?.name ?? '-'"></p>
+                    <p class="mt-0.5 truncate text-xs text-slate-400">
+                      Ukuran: <span x-text="variant.size?.name ?? '-'"></span> 
+                      {{-- SKU: <span x-text="variant.sku ?? '-'"></span> --}}
+                    </p>
+                  </div>
+                  {{-- Check jika sudah dipilih --}}
+                  <div x-show="isSelected(variant.id)" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#AE7C18] text-white">
+                    <x-heroicon-o-check class="h-4 w-4"/>
+                  </div>
+                  {{-- Arrow --}}
+                  <x-heroicon-o-chevron-right x-show="!isSelected(variant.id)" class="h-4 w-4 shrink-0 text-slate-400" />
+                </button>
+              </template>
+              {{-- Tidak ditemukan --}}
+              <template x-if="!productSearching && productSearch.trim().length >= 2 && productResults.length === 0">
+                <div class="px-4 py-5 text-center">
+                  <p class="text-sm font-medium text-slate-500">Produk tidak ditemukan.</p>
+                  <p class="mt-1 text-xs text-slate-400">Coba gunakan nama produk yang berbeda.</p>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 lg:contents">
+          <div class="lg:col-span-2">
+            <label class="mb-2 block text-sm font-medium text-slate-700">Stok</label>
+            <input type="text" readonly :value="selectedProducts.length ? selectedProducts[selectedProducts.length-1].stock : 0" class="h-[50px] w-full rounded-xl border border-slate-200 bg-slate-100 px-4 text-sm font-medium text-slate-700">
+          </div>
+          <div class="lg:col-span-2">
+            <label class="mb-2 block text-sm font-medium text-slate-700">Jumlah</label>
+            <input x-model.number="qty" type="number" min="1" class="h-[50px] w-full rounded-xl border border-slate-300 bg-white px-4 text-sm focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
+          </div>
+        </div>
+        <div class="flex items-end lg:col-span-2">
+          <button type="button" @click="addSelectedProducts()" :disabled="selectedProducts.length === 0" class="inline-flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] disabled:cursor-not-allowed disabled:opacity-50">
+            <x-heroicon-o-plus class="h-5 w-5" /> <span>Tambah</span>
+          </button>
+        </div>
+      </div>
+
+      <div x-show="selectedProducts.length" x-cloak class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
+          <div>
+            <p class="text-sm font-bold text-slate-900">Produk Dipilih</p>
+            <p class="mt-0.5 text-xs text-slate-500">Produk akan ditambahkan ke keranjang saat tombol Tambah ditekan.</p>
+          </div>
+          <span
+                class="inline-flex shrink-0 whitespace-nowrap rounded-full bg-[#AE7C18]/10 px-3 py-1 text-xs font-semibold text-[#AE7C18]"
+                x-text="selectedProducts.length + ' Produk'"
+            ></span>
+        </div>
+        <div class="divide-y divide-slate-100">
+          <template x-for="(item,index) in selectedProducts" :key="item.id">
+            <div class="flex items-center gap-3 px-4 py-3">
+              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <img :src="item.image" :alt="item.product?.name" class="h-full w-full object-cover">
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-semibold text-slate-900" x-text="item.product?.name"></p>
+                <p class="mt-1 text-xs text-slate-500">
+                  Ukuran: <span class="font-medium text-slate-700" x-text="item.size?.name"></span>
+                  · Stok: <span class="font-medium text-slate-700" x-text="item.stock"></span>
+                </p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-bold text-[#AE7C18]">Rp <span x-text="formatNumber(item.price)"></span></p>
+              </div>
+              <button type="button" @click="removeSelectedProduct(index)" class="rounded-lg p-2 text-red-500 transition hover:bg-red-50" title="Hapus">
+                <x-heroicon-o-trash class="h-5 w-5"/>
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{-- Keranjang Belanja --}}
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl overflow-hidden">
+    <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+      <div class="flex items-center gap-4">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
+          <x-heroicon-o-shopping-cart class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6"/>
+        </div>
         <div>
-            <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">Transaksi Baru</h2>
-            <p class="mt-1 text-sm text-slate-500 sm:mt-2 sm:text-base">Buat transaksi manual untuk pelanggan walk-in.</p>
+          <h3 class="text-base font-bold text-slate-900 sm:text-lg">Keranjang Belanja</h3>
+          {{-- <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Produk yang akan dimasukkan ke transaksi.</p> --}}
         </div>
-        <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 sm:py-3 sm:text-base">
-            <x-heroicon-o-arrow-left class="h-5 w-5"/>
-            Kembali
-        </a>
+      </div>
+      <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600" x-text="cart.length + ' Item'"></span>
     </div>
 
-    {{-- ================= CUSTOMER INFORMATION ================= --}}
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl">
-        {{-- Header --}}
-        <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
-                <x-heroicon-o-user class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6" />
+    {{-- Tampilan Mobile untuk Keranjang (Card View tanpa Horizontal Scroll) --}}
+    <div class="block md:hidden divide-y divide-slate-100 p-4 space-y-4">
+      <template x-if="cart.length === 0">
+        <div class="py-8 text-center text-sm text-slate-400">Belum ada produk di keranjang.</div>
+      </template>
+      <template x-for="(item, index) in cart" :key="item.variant_id">
+        <div class="rounded-xl border border-slate-200 p-4 bg-slate-50/50 space-y-3 first:mt-0">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex min-w-0 items-center gap-3">
+              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <img :src="item.image" :alt="item.product_name" class="h-full w-full object-cover" loading="lazy">
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-bold text-slate-900 truncate" x-text="item.product_name"></p>
+                <p class="mt-0.5 text-xs text-slate-500">
+                  SKU: <span x-text="item.sku"></span>
+                </p>
+              </div>
             </div>
-            <div>
-                <h3 class="text-base font-bold text-slate-900 sm:text-lg">Informasi Pelanggan</h3>
-                <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">Isi detail pelanggan sebelum membuat transaksi.</p>
-            </div>
-        </div>
-
-        {{-- Body --}}
-        <div class="p-4 sm:p-6">
-            <div class="grid gap-4 sm:gap-6 md:grid-cols-2">
-                {{-- Customer Name --}}
-                <div>
-                    <label class="mb-2 block text-sm font-medium text-slate-700">
-                        Nama Pelanggan <span class="text-red-500">*</span>
-                    </label>
-                    <x-admin.input placeholder="Masukkan nama pelanggan..." />
-                </div>
-
-                {{-- Phone --}}
-                <div>
-                    <label class="mb-2 block text-sm font-medium text-slate-700">Nomor Telepon</label>
-                    <x-admin.input placeholder="08xxxxxxxxxx" />
-                </div>
-
-                {{-- Email --}}
-                <div>
-                    <label class="mb-2 block text-sm font-medium text-slate-700">Email</label>
-                    <x-admin.input type="email" placeholder="customer@email.com" />
-                </div>
-
-                {{-- Transaction Date --}}
-                <div>
-                    <label class="mb-2 block text-sm font-medium text-slate-700">Tanggal Transaksi</label>
-                    <input type="date" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
-                </div>
-            </div>
-
-            {{-- Notes --}}
-            <div class="mt-4 sm:mt-6">
-                <label class="mb-2 block text-sm font-medium text-slate-700">Catatan</label>
-                <x-admin.textarea rows="4" placeholder="Catatan tambahan untuk transaksi ini..." />
-            </div>
-        </div>
-    </div>
-
-{{-- ================= PRODUCT SELECTION ================= --}}
-    <div x-data="{ selectedProduct: true, qty: 1, price: 149000 }" class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl">
-        {{-- Header --}}
-        <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
-                <x-heroicon-o-cube class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6" />
-            </div>
-            <div>
-                <h3 class="text-base font-bold text-slate-900 sm:text-lg">Pemilihan Produk</h3>
-                <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">Cari dan tambahkan produk ke transaksi ini.</p>
-            </div>
-        </div>
-
-        {{-- Body --}}
-        <div class="p-4 sm:p-6 space-y-5">
-            <div class="grid gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-12">
-                {{-- Product --}}
-                <div class="md:col-span-2 lg:col-span-6">
-                    <label class="mb-2 block text-sm font-medium text-slate-700">Produk</label>
-                    <x-admin.search-input placeholder="Cari nama produk atau SKU..." />
-                </div>
-
-                {{-- Size --}}
-                <div class="lg:col-span-2">
-                    <label class="mb-2 block text-sm font-medium text-slate-700">Ukuran</label>
-                    <x-admin.select>
-                        <option>XS</option>
-                        <option>S</option>
-                        <option>M</option>
-                        <option>L</option>
-                        <option selected>XL</option>
-                    </x-admin.select>
-                </div>
-
-                {{-- Qty --}}
-                <div class="lg:col-span-2">
-                    <label class="mb-2 block text-sm font-medium text-slate-700">Jumlah</label>
-                    <input type="number" min="1" x-model="qty" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
-                </div>
-
-                {{-- Button --}}
-                <div class="flex items-end md:col-span-2 lg:col-span-2">
-                    <button class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-5 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] disabled:opacity-50" :disabled="!selectedProduct">
-                        <x-heroicon-o-plus class="h-5 w-5"/>
-                        Tambah Item
-                    </button>
-                </div>
-            </div>
-
-            {{-- PREVIEW PRODUK YANG DIPILIH --}}
-            <template x-if="selectedProduct">
-
-                <div class="mt-4 rounded-2xl border border-[#AE7C18]/30 bg-[#AE7C18]/5 p-4 transition-all">
-
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-                        {{-- Info Produk --}}
-                        <div class="flex items-center gap-3.5">
-
-                            {{-- Gambar Produk --}}
-                            <div class="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
-
-                                <img
-                                    src="{{ asset('images/products/1.png') }}"
-                                    alt="Apex Pro Jersey"
-                                    class="h-full w-full object-cover">
-
-                            </div>
-
-
-                            {{-- Informasi --}}
-                            <div>
-
-                                <div class="flex items-center gap-2">
-
-                                    <h4
-                                        class="font-bold text-slate-900"
-                                        x-text="selectedProduct.name">
-                                    </h4>
-
-                                    <span
-                                        class="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-
-                                        Stok:
-                                        <span x-text="selectedProduct.stock ?? 24"></span>
-
-                                    </span>
-
-                                </div>
-
-
-                                <p class="mt-0.5 text-xs text-slate-500">
-
-                                    SKU:
-
-                                    <span
-                                        class="font-medium text-slate-700"
-                                        x-text="selectedProduct.sku">
-                                    </span>
-
-                                    <span class="mx-1">
-                                        •
-                                    </span>
-
-                                    Kategori:
-
-                                    <span
-                                        class="font-medium text-slate-700"
-                                        x-text="selectedProduct.category">
-                                    </span>
-
-                                </p>
-
-
-                                <p
-                                    class="mt-1 text-xs font-semibold text-[#AE7C18]">
-
-                                    Rp
-                                    <span
-                                        x-text="Number(selectedProduct.price).toLocaleString('id-ID')">
-                                    </span>
-
-                                    <span class="font-normal text-slate-400">
-                                        / pcs
-                                    </span>
-
-                                </p>
-
-                            </div>
-
-                        </div>
-
-
-                        {{-- Ringkasan Item Terpilih --}}
-                        <div
-                            class="flex items-center justify-between gap-6 border-t border-[#AE7C18]/20 pt-3 sm:border-t-0 sm:pt-0">
-
-                            <div class="text-right">
-
-                                <p class="text-xs text-slate-500">
-                                    Subtotal Item
-                                </p>
-
-                                <p
-                                    class="text-base font-bold text-slate-900"
-
-                                    x-text="'Rp ' + (
-                                        Number(selectedProduct.price) * Number(qty)
-                                    ).toLocaleString('id-ID')">
-
-                                </p>
-
-                            </div>
-
-
-                            {{-- Batal Pilih --}}
-                            <button
-                                @click="selectedProduct = null"
-
-                                type="button"
-
-                                title="Batal Pilih"
-
-                                class="rounded-xl border border-slate-200 bg-white p-2 text-slate-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600">
-
-                                <x-heroicon-o-x-mark
-                                    class="h-5 w-5" />
-
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </template>
-        </div>
-    </div>
-
-{{-- ================= SHOPPING CART ================= --}}
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl">
-        {{-- Header --}}
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
-            <div class="flex items-center gap-4">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
-                    <x-heroicon-o-shopping-cart class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6" />
-                </div>
-                <div>
-                    <h3 class="text-base font-bold text-slate-900 sm:text-lg">Keranjang Belanja</h3>
-                    <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">Produk yang ditambahkan ke transaksi ini.</p>
-                </div>
-            </div>
-            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 sm:text-sm">
-                2 Item
-            </span>
-        </div>
-
-        {{-- Table --}}
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm sm:text-base">
-                <thead class="border-b border-slate-200 bg-slate-50">
-                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        <th class="px-4 py-3.5 sm:px-6 sm:py-4">Produk</th>
-                        <th class="px-4 py-3.5 text-center sm:px-6 sm:py-4">Ukuran</th>
-                        <th class="px-4 py-3.5 text-center sm:px-6 sm:py-4">Jumlah</th>
-                        <th class="px-4 py-3.5 text-right sm:px-6 sm:py-4">Harga</th>
-                        <th class="px-4 py-3.5 text-right sm:px-6 sm:py-4">Total</th>
-                        <th class="px-4 py-3.5 text-center sm:px-6 sm:py-4">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-200 whitespace-nowrap">
-                    {{-- Row 1 --}}
-                    <tr class="transition hover:bg-slate-50">
-                        <td class="px-4 py-4 sm:px-6 sm:py-5">
-                            <div class="flex items-center gap-3">
-                                <img src="{{ asset('images/products/1.png') }}" alt="Apex Pro Jersey" class="h-12 w-12 rounded-xl object-cover border border-slate-200 shrink-0">
-                                <div>
-                                    <p class="font-semibold text-slate-900">Apex Pro Jersey</p>
-                                    <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">SKU : PRD-001</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 py-4 text-center sm:px-6 sm:py-5">XL</td>
-                        <td class="px-4 py-4 text-center sm:px-6 sm:py-5">2</td>
-                        <td class="px-4 py-4 text-right sm:px-6 sm:py-5">Rp149.000</td>
-                        <td class="px-4 py-4 text-right font-bold text-[#AE7C18] sm:px-6 sm:py-5">Rp298.000</td>
-                        <td class="px-4 py-4 text-center sm:px-6 sm:py-5">
-                            <button class="rounded-lg p-2 text-red-600 transition hover:bg-red-50">
-                                <x-heroicon-o-trash class="h-5 w-5"/>
-                            </button>
-                        </td>
-                    </tr>
-                    {{-- Row 2 --}}
-                    <tr class="transition hover:bg-slate-50">
-                        <td class="px-4 py-4 sm:px-6 sm:py-5">
-                            <div class="flex items-center gap-3">
-                                <img src="{{ asset('images/products/1.png') }}" alt="Elite Jersey" class="h-12 w-12 rounded-xl object-cover border border-slate-200 shrink-0">
-                                <div>
-                                    <p class="font-semibold text-slate-900">Elite Jersey</p>
-                                    <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">SKU : PRD-002</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 py-4 text-center sm:px-6 sm:py-5">M</td>
-                        <td class="px-4 py-4 text-center sm:px-6 sm:py-5">1</td>
-                        <td class="px-4 py-4 text-right sm:px-6 sm:py-5">Rp199.000</td>
-                        <td class="px-4 py-4 text-right font-bold text-[#AE7C18] sm:px-6 sm:py-5">Rp199.000</td>
-                        <td class="px-4 py-4 text-center sm:px-6 sm:py-5">
-                            <button class="rounded-lg p-2 text-red-600 transition hover:bg-red-50">
-                                <x-heroicon-o-trash class="h-5 w-5"/>
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Footer --}}
-        <div class="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-            <div class="text-sm text-slate-500">
-                Total Produk : <span class="font-semibold text-slate-700">2</span>
-            </div>
-            <div class="text-base font-bold text-[#AE7C18] sm:text-lg">
-                Total Keseluruhan : Rp497.000
-            </div>
-        </div>
-    </div>
-
-    {{-- ================= PAYMENT & SUMMARY ================= --}}
-    <div class="grid gap-6 lg:grid-cols-2">
-        {{-- Payment Method --}}
-        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl">
-            <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
-                    <x-heroicon-o-credit-card class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6" />
-                </div>
-                <div>
-                    <h3 class="text-base font-bold text-slate-900 sm:text-lg">Metode Pembayaran</h3>
-                    <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">Pilih cara pelanggan membayar.</p>
-                </div>
-            </div>
-
-            <div class="space-y-4 p-4 sm:space-y-5 sm:p-6">
-                {{-- Cash --}}
-                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3.5 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 sm:p-4">
-                    <input type="radio" name="payment" checked class="text-[#AE7C18] focus:ring-[#AE7C18]">
-                    <div>
-                        <p class="font-semibold text-slate-900">Tunai</p>
-                        <p class="text-xs text-slate-500 sm:text-sm">Bayar menggunakan tunai.</p>
-                    </div>
-                </label>
-
-                {{-- QRIS --}}
-                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3.5 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 sm:p-4">
-                    <input type="radio" name="payment" class="text-[#AE7C18] focus:ring-[#AE7C18]">
-                    <div>
-                        <p class="font-semibold text-slate-900">QRIS</p>
-                        <p class="text-xs text-slate-500 sm:text-sm">Pindai kode QR.</p>
-                    </div>
-                </label>
-
-                {{-- Transfer --}}
-                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3.5 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 sm:p-4">
-                    <input type="radio" name="payment" class="text-[#AE7C18] focus:ring-[#AE7C18]">
-                    <div>
-                        <p class="font-semibold text-slate-900">Transfer Bank</p>
-                        <p class="text-xs text-slate-500 sm:text-sm">Transfer melalui rekening bank.</p>
-                    </div>
-                </label>
-
-                {{-- EDC --}}
-                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3.5 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 sm:p-4">
-                    <input type="radio" name="payment" class="text-[#AE7C18] focus:ring-[#AE7C18]">
-                    <div>
-                        <p class="font-semibold text-slate-900">EDC</p>
-                        <p class="text-xs text-slate-500 sm:text-sm">Kartu debit / kredit.</p>
-                    </div>
-                </label>
-
-                {{-- Amount Paid --}}
-                <div class="pt-2 sm:pt-3">
-                    <label class="mb-2 block text-sm font-medium text-slate-700">Jumlah Bayar</label>
-                    <input type="number" placeholder="0" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
-                </div>
-
-                {{-- Change --}}
-                <div>
-                    <label class="mb-2 block text-sm font-medium text-slate-700">Kembalian</label>
-                    <input type="text" readonly value="Rp 0" class="w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 font-semibold text-slate-700">
-                </div>
-            </div>
-        </div>
-
-        {{-- ================= ORDER SUMMARY ================= --}}
-        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl">
-            {{-- Header --}}
-            <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 sm:h-12 sm:w-12">
-                    <x-heroicon-o-document-text class="h-5 w-5 text-emerald-600 sm:h-6 sm:w-6" />
-                </div>
-                <div>
-                    <h3 class="text-base font-bold text-slate-900 sm:text-lg">Ringkasan Pesanan</h3>
-                    <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">Tinjau transaksi sebelum menyimpan.</p>
-                </div>
-            </div>
-
-            {{-- Body --}}
-            <div class="space-y-4 p-4 sm:space-y-5 sm:p-6">
-                {{-- Subtotal --}}
-                <div class="flex items-center justify-between text-sm sm:text-base">
-                    <span class="text-slate-600">Subtotal</span>
-                    <span class="font-semibold text-slate-900">Rp497.000</span>
-                </div>
-
-                {{-- Discount --}}
-                <div class="flex items-center justify-between text-sm sm:text-base">
-                    <span class="text-slate-600">Diskon</span>
-                    <span class="font-semibold text-slate-900">Rp0</span>
-                </div>
-
-                {{-- Tax --}}
-                <div class="flex items-center justify-between text-sm sm:text-base">
-                    <span class="text-slate-600">Pajak</span>
-                    <span class="font-semibold text-slate-900">Rp0</span>
-                </div>
-
-                {{-- Shipping --}}
-                <div class="flex items-center justify-between text-sm sm:text-base">
-                    <span class="text-slate-600">Ongkos Kirim</span>
-                    <span class="font-semibold text-slate-900">Rp20.000</span>
-                </div>
-
-                <div class="border-t border-dashed border-slate-300"></div>
-
-                {{-- Grand Total --}}
-                <div class="flex items-center justify-between">
-                    <span class="text-base font-bold text-slate-900 sm:text-lg">Total Keseluruhan</span>
-                    <span class="text-xl font-bold text-[#AE7C18] sm:text-2xl">Rp517.000</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- ================= ACTION BUTTON ================= --}}
-    <div class="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        {{-- Back --}}
-        <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-100">
-            <x-heroicon-o-arrow-left class="h-5 w-5"/>
-            Kembali ke Transaksi
-        </a>
-
-        <div class="flex flex-col gap-3 sm:flex-row">
-            {{-- Reset --}}
-            <button type="reset" class="w-full rounded-xl border border-slate-300 bg-white px-6 py-3 font-medium text-slate-700 transition hover:bg-slate-100 sm:w-auto">
-                Atur Ulang
+            <button type="button" @click="removeItem(index)" class="rounded-lg p-1.5 text-red-600 transition hover:bg-red-50" title="Hapus produk">
+              <x-heroicon-o-trash class="h-5 w-5"/>
             </button>
-
-            {{-- Save --}}
-            <button 
-                @click="
-                    $dispatch('toast', {
-                        type: 'success',
-                        title: 'Transaksi Dibuat',
-                        message: 'Transaksi baru berhasil disimpan.'
-                    });
-                    setTimeout(() => {
-                        window.location = '{{ route('admin.transactions') }}';
-                    }, 900);
-                " 
-                class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-7 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] sm:w-auto"
-            >
-                <x-heroicon-o-check-circle class="h-5 w-5"/>
-                Simpan Transaksi
-            </button>
+          </div>
+          <div class="flex items-center justify-between text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
+            <span>Ukuran: <strong class="text-slate-800" x-text="item.size"></strong></span>
+            <span>Harga: <strong class="text-slate-800">Rp <span x-text="formatNumber(item.price)"></span></strong></span>
+          </div>
+          <div class="flex items-center justify-between pt-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-medium text-slate-600">Jumlah:</span>
+              <input x-model.number="item.qty" @change="updateQty(index)" type="number" min="1" :max="item.stock" class="w-16 rounded-lg border border-slate-300 px-2 py-1 text-center text-sm bg-white">
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-slate-500 block">Total</span>
+              <span class="text-sm font-bold text-[#AE7C18]">Rp <span x-text="formatNumber(item.price * item.qty)"></span></span>
+            </div>
+          </div>
         </div>
+      </template>
     </div>
+
+    {{-- Tampilan Desktop untuk Keranjang (Table Standard) --}}
+    <div class="hidden md:block w-full overflow-x-auto">
+      <table class="w-full min-w-[700px] text-sm">
+        <thead class="border-b border-slate-200 bg-slate-50">
+          <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <th class="px-6 py-4">Produk</th>
+            <th class="px-6 py-4 text-center">Ukuran</th>
+            <th class="px-6 py-4 text-center">Jumlah</th>
+            <th class="px-6 py-4 text-right">Harga</th>
+            <th class="px-6 py-4 text-right">Total</th>
+            <th class="px-6 py-4 text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <template x-if="cart.length === 0">
+            <tr>
+              <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-400">Belum ada produk di keranjang.</td>
+            </tr>
+          </template>
+          <template x-for="(item,index) in cart" :key="item.variant_id">
+            <tr class="hover:bg-slate-50">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <img :src="item.image" :alt="item.product_name" class="h-full w-full object-cover" loading="lazy">
+                  </div>
+                  <div class="min-w-0">
+                    <p class="font-semibold text-slate-900 truncate" x-text="item.product_name"></p>
+                    <p class="text-xs text-slate-500">SKU: <span x-text="item.sku"></span></p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-center" x-text="item.size"></td>
+              <td class="px-6 py-4 text-center">
+                <input x-model.number="item.qty" @change="updateQty(index)" type="number" min="1" :max="item.stock" class="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-center">
+              </td>
+              <td class="px-6 py-4 text-right">Rp <span x-text="formatNumber(item.price)"></span></td>
+              <td class="px-6 py-4 text-right font-bold text-[#AE7C18]">Rp <span x-text="formatNumber(item.price * item.qty)"></span></td>
+              <td class="px-6 py-4 text-center">
+                <button type="button" @click="removeItem(index)" class="rounded-lg p-2 text-red-600 transition hover:bg-red-50">
+                  <x-heroicon-o-trash class="h-5 w-5"/>
+                </button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <span class="text-sm text-slate-500">
+        Total Produk: <span class="font-semibold text-slate-700" x-text="totalQty"></span>
+      </span>
+      <span class="text-base font-bold text-[#AE7C18] sm:text-lg">
+        Total: Rp <span x-text="formatNumber(subtotal)"></span>
+      </span>
+    </div>
+  </div>
+
+  {{-- Metode Pembayaran & Ringkasan Pesanan --}}
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl overflow-hidden">
+      <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
+          <x-heroicon-o-credit-card class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6"/>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900 sm:text-lg">Metode Pembayaran</h3>
+          {{-- <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Pilih metode pembayaran pelanggan.</p> --}}
+        </div>
+      </div>
+      <div class="space-y-3 p-4 sm:p-6">
+        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#AE7C18]">
+          <input type="radio" value="CASH" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
+          <div>
+            <p class="font-semibold text-slate-900 text-sm sm:text-base">Tunai</p>
+            <p class="text-xs text-slate-500">Pembayaran menggunakan uang tunai.</p>
+          </div>
+        </label>
+        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#AE7C18]">
+          <input type="radio" value="QRIS" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
+          <div>
+            <p class="font-semibold text-slate-900 text-sm sm:text-base">QRIS</p>
+            <p class="text-xs text-slate-500">Pembayaran menggunakan QRIS.</p>
+          </div>
+        </label>
+        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#AE7C18]">
+          <input type="radio" value="TRANSFER" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
+          <div>
+            <p class="font-semibold text-slate-900 text-sm sm:text-base">Transfer</p>
+            <p class="text-xs text-slate-500">Pembayaran melalui transfer bank.</p>
+          </div>
+        </label>
+        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#AE7C18]">
+          <input type="radio" value="EDC" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
+          <div>
+            <p class="font-semibold text-slate-900 text-sm sm:text-base">EDC</p>
+            <p class="text-xs text-slate-500">Pembayaran menggunakan kartu.</p>
+          </div>
+        </label>
+        <div class="mt-6 border-t border-slate-200 pt-6">
+          <label class="mb-2 block text-sm font-medium text-slate-700">Sumber Transaksi</label>
+          <select x-model="source" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
+            <option value="Android POS">Android POS</option>
+            <option value="Smart EDC">Smart EDC</option>
+          </select>
+          <p class="mt-2 text-xs text-slate-400">Pilih sumber transaksi sesuai dengan sistem yang digunakan.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl overflow-hidden">
+      <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 sm:h-12 sm:w-12">
+          <x-heroicon-o-document-text class="h-5 w-5 text-emerald-600 sm:h-6 sm:w-6"/>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900 sm:text-lg">Ringkasan Pesanan</h3>
+          <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Periksa total transaksi.</p>
+        </div>
+      </div>
+      <div class="space-y-4 p-4 sm:p-6 text-sm">
+        <div class="flex justify-between">
+          <span class="text-slate-600">Subtotal</span>
+          <span class="font-semibold text-slate-900">Rp <span x-text="formatNumber(subtotal)"></span></span>
+        </div>
+        <div class="flex items-center justify-between gap-4">
+          <span class="text-slate-600">Diskon</span>
+          <input x-model.number="discount" type="number" min="0" class="w-32 rounded-lg border border-slate-300 px-3 py-2 text-right text-sm">
+        </div>
+        <div class="flex items-center justify-between gap-4">
+          <span class="text-slate-600">Ongkos Kirim</span>
+          <input x-model.number="shipping" type="number" min="0" class="w-32 rounded-lg border border-slate-300 px-3 py-2 text-right text-sm">
+        </div>
+        <div class="border-t border-dashed border-slate-300"></div>
+        <div class="flex items-center justify-between pt-2">
+          <span class="text-base font-bold text-slate-900 sm:text-lg">Total Keseluruhan</span>
+          <span class="text-xl font-bold text-[#AE7C18] sm:text-2xl">
+            Rp <span x-text="formatNumber(grandTotal)"></span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{-- Tombol Aksi Bawah --}}
+  <div class="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+    <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
+      <x-heroicon-o-arrow-left class="h-5 w-5" /> Kembali ke Transaksi
+    </a>
+    <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+      <button type="button" @click="resetForm()" class="w-full rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100 sm:w-auto">
+        Atur Ulang
+      </button>
+      <button type="button" @click="submitForm()" :disabled="loading || cart.length === 0 || !customer.name" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+        <x-heroicon-o-check-circle class="h-5 w-5" />
+        Simpan Transaksi
+      </button>
+    </div>
+  </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function transactionCreate() {
+  return {
+    variants: @js($variants->map(function ($variant) {
+      $thumbnail = $variant->product?->images?->where('is_thumbnail', true)->first();
+      $firstImage = $variant->product?->images?->first();
+      $imagePath = $thumbnail?->image ?? $firstImage?->image;
+      
+      if ($imagePath) {
+        $image = (str_starts_with($imagePath, 'http://') || str_starts_with($imagePath, 'https://')) 
+          ? $imagePath 
+          : ((str_starts_with($imagePath, 'images/') || str_starts_with($imagePath, 'storage/')) ? asset($imagePath) : asset('storage/' . $imagePath));
+      } else {
+        $image = asset('images/products/1.png');
+      }
+
+      return [
+        'id' => $variant->id, 'sku' => $variant->sku, 'price' => (float) $variant->price, 'stock' => (int) ($variant->inventory?->stock ?? 0), 'image' => $image,
+        'size' => ['id' => $variant->size?->id, 'name' => $variant->size?->name ?? '-'],
+        'color' => ['id' => $variant->color?->id, 'name' => $variant->color?->name ?? '-'],
+        'product' => ['id' => $variant->product?->id, 'name' => $variant->product?->name ?? '-'],
+      ];
+    })->values()),
+
+    productSearch: '', productResults: [], productSearching: false, showProductResults: false,
+    selectedVariantId: '', selectedVariant: null, selectedProducts: [], qty: 1, cart: [],
+    customer: { name: '', phone: '', email: '' },
+    transactionDate: '{{ now()->format('Y-m-d') }}', paymentMethod: 'CASH', source: 'Android POS', discount: 0, shipping: 0, loading: false,
+
+    get subtotal() { return this.cart.reduce((total, item) => total + (Number(item.price) * Number(item.qty)), 0); },
+    get totalQty() { return this.cart.reduce((total, item) => total + Number(item.qty), 0); },
+    get grandTotal() { return Math.max(0, this.subtotal - Number(this.discount || 0) + Number(this.shipping || 0)); },
+
+    searchProducts() {
+      const keyword = this.productSearch.trim().toLowerCase();
+      if (keyword.length < 2) { this.productResults = []; this.showProductResults = false; return; }
+      this.productSearching = true; this.showProductResults = true;
+      this.productResults = this.variants.filter((variant) => ((variant.product?.name ?? '').toLowerCase().includes(keyword) || (variant.sku ?? '').toLowerCase().includes(keyword)));
+      this.productSearching = false;
+    },
+
+    selectProduct(variant) {
+      const index = this.selectedProducts.findIndex((item) => Number(item.id) === Number(variant.id));
+      if (index !== -1) { this.selectedProducts.splice(index, 1); return; }
+      this.selectedProducts.push({ ...variant });
+      this.selectedVariantId = variant.id; this.selectedVariant = variant; this.qty = 1;
+      this.productSearch = ''; this.productResults = []; this.showProductResults = false;
+    },
+
+    isSelected(id) { return this.selectedProducts.some((item) => Number(item.id) === Number(id)); },
+    removeSelectedProduct(index) { this.selectedProducts.splice(index, 1); },
+
+    addSelectedProducts() {
+      if (this.selectedProducts.length === 0) { this.toast('error', 'Produk Belum Dipilih', 'Silakan pilih minimal satu produk terlebih dahulu.'); return; }
+      const qty = Math.max(1, Number(this.qty || 1));
+      for (const variant of this.selectedProducts) {
+        const stock = Number(variant.stock || 0);
+        if (stock <= 0) { this.toast('error', 'Stok Habis', `${variant.product?.name ?? 'Produk'} sedang tidak memiliki stok.`); return; }
+        if (qty > stock) { this.toast('error', 'Stok Tidak Mencukupi', `${variant.product?.name ?? 'Produk'} hanya memiliki stok ${stock}.`); return; }
+        const existingIndex = this.cart.findIndex((item) => Number(item.variant_id) === Number(variant.id));
+        if (existingIndex !== -1) {
+          const existing = this.cart[existingIndex]; const newQty = Number(existing.qty) + qty;
+          if (newQty > stock) { this.toast('error', 'Stok Tidak Mencukupi', `${variant.product?.name ?? 'Produk'} maksimal ${stock} pcs.`); return; }
+          existing.qty = newQty;
+        } else {
+          this.cart.push({ variant_id: variant.id, product_id: variant.product?.id ?? null, product_name: variant.product?.name ?? '-', sku: variant.sku, image: variant.image, size: variant.size?.name ?? '-', color: variant.color?.name ?? '-', price: Number(variant.price), stock: stock, qty: qty });
+        }
+      }
+      this.selectedProducts = []; this.selectedVariantId = ''; this.selectedVariant = null; this.qty = 1;
+      this.toast('success', 'Produk Ditambahkan', 'Produk berhasil ditambahkan ke keranjang.');
+    },
+
+    updateQty(index) {
+      const item = this.cart[index]; if (!item) return;
+      if (Number(item.qty) < 1) item.qty = 1;
+      if (Number(item.qty) > Number(item.stock)) { item.qty = Number(item.stock); this.toast('error', 'Stok Tidak Mencukupi', 'Jumlah disesuaikan dengan stok yang tersedia.'); }
+    },
+
+    removeItem(index) { this.cart.splice(index, 1); },
+
+    resetForm() {
+      this.productSearch = ''; this.productResults = []; this.productSearching = false; this.showProductResults = false;
+      this.selectedProducts = []; this.selectedVariantId = ''; this.selectedVariant = null; this.qty = 1; this.cart = [];
+      this.customer = { name: '', phone: '', email: '' };
+      this.transactionDate = '{{ now()->format('Y-m-d') }}'; this.paymentMethod = 'CASH'; this.source = 'Android POS'; this.discount = 0; this.shipping = 0;
+    },
+
+    formatNumber(value) { return Number(value || 0).toLocaleString('id-ID'); },
+    
+    toast(type, title, message) { 
+      window.dispatchEvent(new CustomEvent('toast', { detail: { type, title, message } })); 
+    },
+
+    async submitForm() {
+      if (this.loading) return;
+      if (!this.customer.name) { this.toast('error', 'Data Belum Lengkap', 'Nama pelanggan wajib diisi.'); return; }
+      if (this.cart.length === 0) { this.toast('error', 'Keranjang Kosong', 'Tambahkan minimal satu produk.'); return; }
+      this.loading = true;
+      try {
+        const response = await fetch('{{ route('admin.transactions.store') }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json', 'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({
+            customer: this.customer, transaction_date: this.transactionDate, payment_method: this.paymentMethod,
+            source: this.source, discount: Number(this.discount || 0), shipping: Number(this.shipping || 0),
+            items: this.cart.map((item) => ({ product_variant_id: item.variant_id, qty: Number(item.qty) }))
+          })
+        });
+        const contentType = response.headers.get('content-type') || ''; const text = await response.text(); let data = {};
+        if (contentType.includes('application/json')) data = JSON.parse(text);
+        if (!response.ok) throw new Error(data.message || 'Gagal menyimpan transaksi.');
+        this.toast('success', 'Transaksi Berhasil', data.message || 'Transaksi berhasil dibuat.');
+        setTimeout(() => { window.location.href = '{{ route('admin.transactions') }}'; }, 800);
+      } catch (error) {
+        console.error('Create Transaction Error:', error);
+        this.toast('error', 'Gagal Menyimpan', error.message || 'Terjadi kesalahan saat menyimpan transaksi.');
+      } finally { this.loading = false; }
+    }
+  };
+}
+</script>
+@endpush

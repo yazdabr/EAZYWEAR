@@ -7,15 +7,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Size extends Model
 {
-    protected $table = 'sizes';
-
     protected $fillable = [
         'name',
     ];
 
-    public function variants()
+    public function productVariants(): HasMany
     {
-        return $this->hasMany(ProductVariant::class);
+        return $this->hasMany(ProductVariant::class, 'size_id');
     }
-    
 }

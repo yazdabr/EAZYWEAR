@@ -43,6 +43,7 @@
             </div>
         </div>
 
+        {{-- TAMPILAN DESKTOP: Tabel Asli --}}
         <div class="hidden overflow-x-auto md:block">
             <table class="w-full min-w-[650px] text-left">
                 <thead class="border-b border-slate-200 bg-slate-50">
@@ -74,11 +75,25 @@
                                     {{ $size->created_at?->format('d M Y') ?? '-' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-5 text-center">
-                                <div x-data="{ open: false }" class="relative inline-block text-left">
+                            <td class="px-6 py-5 text-center"
+                                x-data="{ 
+                                    open: false, 
+                                    dropUp: false,
+                                    toggleDropdown(event) {
+                                        this.open = !this.open;
+                                        if (this.open) {
+                                            let rect = event.currentTarget.getBoundingClientRect();
+                                            let windowHeight = window.innerHeight;
+                                            this.dropUp = (windowHeight - rect.bottom) < 220;
+                                        }
+                                    }
+                                }"
+                                @resize.window="open = false"
+                            >
+                                <div class="relative inline-block text-left">
                                     <button
                                         type="button"
-                                        @click="open = !open"
+                                        @click="toggleDropdown($event)"
                                         title="Aksi"
                                         class="rounded-lg p-2 transition-all duration-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
                                         :class="open ? 'bg-slate-100' : ''"
@@ -91,12 +106,13 @@
                                         x-cloak
                                         @click.outside="open = false"
                                         x-transition:enter="transition ease-out duration-150"
-                                        x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                        x-transition:enter-start="opacity-0 scale-95"
+                                        x-transition:enter-end="opacity-100 scale-100"
                                         x-transition:leave="transition ease-in duration-100"
-                                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                                        x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
-                                        class="absolute right-0 top-full z-[80] mt-2 w-44 origin-top-right overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-900/10"
+                                        x-transition:leave-start="opacity-100 scale-100"
+                                        x-transition:leave-end="opacity-0 scale-95"
+                                        :class="dropUp ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'"
+                                        class="absolute right-0 z-[999] w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-2xl shadow-slate-900/20"
                                         style="display:none;"
                                     >
                                         <button
@@ -149,6 +165,7 @@
             </table>
         </div>
 
+        {{-- TAMPILAN MOBILE: Berbentuk Card Box (Satu Halaman penuh / Tidak Scroll Samping) --}}
         <div class="divide-y divide-slate-100 md:hidden">
             @forelse($sizes as $size)
                 <div data-size-id="{{ $size->id }}" class="space-y-3 bg-white p-4">
@@ -179,7 +196,7 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                    <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
                         <button
                             type="button"
                             @click="
@@ -325,9 +342,6 @@ function sizeForm() {
 
                 const contentType = response.headers.get('content-type') || '';
                 const responseText = await response.text();
-
-                console.log('Size Response Status:', response.status);
-                console.log('Size Response Type:', contentType);
 
                 let data = {};
 

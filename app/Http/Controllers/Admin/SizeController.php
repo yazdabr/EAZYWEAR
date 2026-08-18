@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Size;
-use Illuminate\Http\Request;
 use App\Models\ProductVariant;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 
@@ -14,7 +14,7 @@ class SizeController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Size::query();
+        $query = Size::withCount('productVariants');
 
         if ($request->filled('search')) {
             $search = trim($request->input('search'));

@@ -87,12 +87,28 @@ Route::prefix('admin')
         Route::get('/transactions', [TransactionController::class, 'index'])
             ->name('transactions');
 
-            Route::get('/transactions/create', [TransactionController::class, 'create'])
-                ->name('transactions.create');
-            
-            Route::get('/transactions/{invoice}/print', function ($invoice) {
-                    return view('admin.transactions.print', compact('invoice'));
-                })->name('transactions.print');
+        Route::get('/transactions/create', [TransactionController::class, 'create'])
+            ->name('transactions.create');
+
+        Route::get('/transactions/customer-search', [TransactionController::class, 'customerSearch'])
+            ->name('transactions.customer-search');    
+
+        Route::post('/transactions', [TransactionController::class, 'store'])
+            ->name('transactions.store');
+
+        Route::patch('/transactions/{transaction}/status', [TransactionController::class, 'updateStatus'])
+            ->name('transactions.update-status');
+
+        Route::patch('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])
+            ->name('transactions.cancel');
+
+        Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])
+            ->name('transactions.destroy');
+
+        Route::get('/transactions/{invoice}/print', function ($invoice) {
+            return view('admin.transactions.print', compact('invoice'));
+        })->name('transactions.print');
+
         // sales reports
         Route::get('/sales-reports', [SalesReportController::class, 'index'])
             ->name('sales-reports');

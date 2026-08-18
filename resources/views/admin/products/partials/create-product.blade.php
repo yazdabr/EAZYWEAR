@@ -40,10 +40,11 @@
                     const id=String(v.size_id);
 
                     result[id]={
-                        price:v.price!==undefined&&v.price!==null?v.price:'',
-                        stock:v.stock!==undefined&&v.stock!==null
-                            ?v.stock
-                            :(v.inventory?.stock!==undefined?v.inventory.stock:'')
+                        // Tambahkan parseInt() di sini untuk menghilangkan desimal
+                        price: v.price !== undefined && v.price !== null ? parseInt(v.price) : '',
+                        stock: v.stock !== undefined && v.stock !== null
+                            ? parseInt(v.stock)
+                            : (v.inventory?.stock !== undefined ? parseInt(v.inventory.stock) : '')
                     };
                 });
             }else if(typeof data==='object'){
@@ -51,10 +52,11 @@
                     const v=data[id]||{};
 
                     result[String(id)]={
-                        price:v.price!==undefined&&v.price!==null?v.price:'',
-                        stock:v.stock!==undefined&&v.stock!==null
-                            ?v.stock
-                            :(v.inventory?.stock!==undefined?v.inventory.stock:'')
+                        // Tambahkan parseInt() di sini untuk menghilangkan desimal
+                        price: v.price !== undefined && v.price !== null ? parseInt(v.price) : '',
+                        stock: v.stock !== undefined && v.stock !== null
+                            ? parseInt(v.stock)
+                            : (v.inventory?.stock !== undefined ? parseInt(v.inventory.stock) : '')
                     };
                 });
             }

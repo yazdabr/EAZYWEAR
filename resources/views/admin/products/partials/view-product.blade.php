@@ -162,19 +162,21 @@
                                         </div>
                                     </div>
 
-                                    <div class="text-right">
+                                    {{-- DESKTOP VIEW: Harga dan Stok di Kanan (Disembunyikan di Mobile) --}}
+                                    <div class="hidden text-right sm:block">
                                         <p class="text-sm font-bold text-[#AE7C18]" x-text="'Rp ' + Number(product.variants[String(sizeId)]?.price || 0).toLocaleString('id-ID')"></p>
                                         <p class="mt-1 text-xs text-slate-500">Stok: <span class="font-semibold text-slate-700" x-text="product.variants[String(sizeId)]?.stock ?? 0"></span></p>
                                     </div>
                                 </div>
 
+                                {{-- MOBILE VIEW: Harga dan Stok dalam Kotak (Hanya Muncul di Mobile) --}}
                                 <div class="mt-3 grid grid-cols-2 gap-2 sm:hidden">
-                                    <div class="rounded-lg bg-white px-3 py-2">
+                                    <div class="rounded-lg border border-slate-100 bg-white px-3 py-2 shadow-sm">
                                         <p class="text-[10px] uppercase tracking-wide text-slate-400">Harga</p>
                                         <p class="mt-0.5 text-xs font-semibold text-[#AE7C18]" x-text="'Rp ' + Number(product.variants[String(sizeId)]?.price || 0).toLocaleString('id-ID')"></p>
                                     </div>
 
-                                    <div class="rounded-lg bg-white px-3 py-2">
+                                    <div class="rounded-lg border border-slate-100 bg-white px-3 py-2 shadow-sm">
                                         <p class="text-[10px] uppercase tracking-wide text-slate-400">Stok</p>
                                         <p class="mt-0.5 text-xs font-semibold text-slate-700" x-text="product.variants[String(sizeId)]?.stock ?? 0"></p>
                                     </div>

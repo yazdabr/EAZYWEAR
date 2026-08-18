@@ -80,7 +80,19 @@
             });
             $status = $product->status ? 'Aktif' : 'Tidak Aktif';
             $updated = $product->updated_at ? $product->updated_at->diffForHumans() : '-';
+
+            // TAMBAHAN WAJIB UNTUK DATA VARIAN MOBILE
+            $sizeIds = $product->variants->pluck('size_id')->filter()->unique()->map(fn ($id) => (string) $id)->values()->toArray();
+            $variantsData = $product->variants->mapWithKeys(fn ($v) => [
+                (string) $v->size_id => [
+                    'size_id' => (string) $v->size_id,
+                    'name' => $v->size?->name ?? '',
+                    'price' => $v->price ?? 0,
+                    'stock' => $v->inventory?->stock ?? $v->stock ?? 0,
+                ]
+            ])->toArray();
         @endphp
+        
         <div data-product-card-id="{{ $product->id }}" class="p-4 space-y-3">
             <div class="flex items-center justify-between gap-3">
                 <div class="flex min-w-0 flex-1 items-center gap-3">
@@ -116,13 +128,37 @@
                 <span class="text-[11px] text-slate-400">Diperbarui</span>
                 <span class="text-[11px] font-medium text-slate-500">{{ $updated }}</span>
             </div>
+            
+            {{-- TOMBOL AKSI MOBILE YANG SUDAH DIPERBARUI --}}
             <div class="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
                 <div class="flex items-center gap-2">
-                    <button type="button" @click="window.dispatchEvent(new CustomEvent('open-view-product', { detail: { id: @js($product->id), image: @js($image), name: @js($product->name), category: @js($categoryName), category_id: @js($product->category_id), product_code: @js($product->product_code), description: @js($product->description), material: @js($product->material), price: @js($price), stock: @js($stock), status: @js($status), updated: @js($updated) } }));" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-100">
+                    
+                    {{-- TOMBOL LIHAT --}}
+                    <button type="button" @click="window.dispatchEvent(new CustomEvent('open-view-product', { 
+                        detail: { 
+                            id: @js($product->id), 
+                            image: @js($image), 
+                            name: @js($product->name), 
+                            category: @js($categoryName), 
+                            category_id: @js($product->category_id), 
+                            product_code: @js($product->product_code), 
+                            description: @js($product->description), 
+                            material: @js($product->material), 
+                            price: @js($price), 
+                            stock: @js($stock), 
+                            status: @js($status), 
+                            updated: @js($updated),
+                            size_ids: @js($sizeIds),     {{-- Data yang tadinya hilang --}}
+                            variants: @js($variantsData) {{-- Data yang tadinya hilang --}}
+                        } 
+                    }));" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-100">
                         <x-heroicon-o-eye class="h-3.5 w-3.5 text-slate-500"/>
                         <span>Lihat</span>
                     </button>
-                    <button type="button" @click="window.dispatchEvent(new CustomEvent('open-edit-product', { detail: {
+                    
+                    {{-- TOMBOL UBAH --}}
+                    <button type="button" @click="window.dispatchEvent(new CustomEvent('open-edit-product', { 
+                        detail: {
                             id: @js($product->id),
                             name: @js($product->name),
                             category_id: @js($product->category_id),
@@ -132,20 +168,17 @@
                             price: @js($price),
                             stock: @js($stock),
                             status: @js((bool) $product->status),
-                            size_ids: @js(
-                                $product->variants
-                                    ->pluck('size_id')
-                                    ->filter()
-                                    ->unique()
-                                    ->values()
-                                    ->all()
-                            ),
+                            size_ids: @js($sizeIds),
+                            variants: @js($variantsData), {{-- Data yang tadinya hilang --}}
                             image: @js($image)
-                        } }));" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-100">
+                        } 
+                    }));" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-100">
                         <x-heroicon-o-pencil-square class="h-3.5 w-3.5 text-slate-500"/>
                         <span>Ubah</span>
                     </button>
                 </div>
+                
+                {{-- TOMBOL HAPUS --}}
                 <button type="button" @click="window.dispatchEvent(new CustomEvent('open-delete-product', { detail: { id: @js($product->id), name: @js($product->name) } }));" class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100/50 active:bg-red-100">
                     <x-heroicon-o-trash class="h-3.5 w-3.5"/>
                     <span>Hapus</span>

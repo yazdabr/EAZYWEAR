@@ -135,17 +135,26 @@ $viewData=[
             <template x-teleport="body">
                 <div x-show="open" @click.outside="open=false" @scroll.window="open=false" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" :style="`top:${topPos}px;left:${leftPos}px;`" class="fixed z-[9999] w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-900/10" style="display:none;">
 
-                <button
-                    type="button"
-                    @click="
-                        open=false;
-                        window.dispatchEvent(new CustomEvent('open-view-product',{
-                            detail:@js($viewData)
-                        }));
-                    "
-                    class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                >
-                    <x-heroicon-o-eye class="h-4 w-4 shrink-0 text-slate-500"/>
+                {{-- LIHAT --}}
+                <button type="button" @click.stop="open = false; window.dispatchEvent(new CustomEvent('open-view-product', {
+                    detail: {
+                        id: @js($product->id), 
+                        image: @js($image), 
+                        name: @js($product->name), 
+                        category: @js($categoryName),
+                        category_id: @js($product->category_id), 
+                        product_code: @js($product->product_code), 
+                        description: @js($product->description),
+                        material: @js($product->material), 
+                        price: @js($price), 
+                        stock: @js($stock), 
+                        status: @js($status),
+                        updated: @js($updated), 
+                        size_ids: @js($sizeIds), 
+                        variants: @js($variantsData)
+                    }
+                }))" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+                    <x-heroicon-o-eye class="h-4 w-4 shrink-0 text-slate-500" />
                     <span>Lihat</span>
                 </button>
 

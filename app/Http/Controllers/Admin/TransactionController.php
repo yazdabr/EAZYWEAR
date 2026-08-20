@@ -464,6 +464,18 @@ class TransactionController extends Controller
         return $invoice;
     }
 
+    public function print($invoice)
+    {
+        $transaction = Transaction::with([
+            'customer',
+            'items.productVariant.product',
+            'items.productVariant.size',
+            'items.productVariant.color',
+        ])->where('invoice_number', $invoice)->firstOrFail();
+
+        return view('admin.transactions.print', compact('transaction'));
+    }
+
     public function updateStatus(Request $request, Transaction $transaction)
     {
         $validated = $request->validate([

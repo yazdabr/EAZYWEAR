@@ -186,7 +186,7 @@
                     target="_blank"
                     class="flex-1 rounded-xl border border-slate-300 px-4 py-2.5 text-center text-xs font-medium text-slate-700 transition hover:bg-slate-100 sm:flex-none sm:px-5 sm:py-3 sm:text-sm"
                 >
-                    Cetak Faktur
+                    Cetak Invoice
                 </a>
 
                 <button

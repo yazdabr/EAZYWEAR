@@ -13,92 +13,59 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         @click="close()"
-        class="fixed inset-0 z-[190] bg-black/40 backdrop-blur-sm">
+        class="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm">
     </div>
 
     {{-- Modal --}}
     <div
         x-show="open"
         x-cloak
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 scale-95 translate-y-2"
-        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-        x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-        class="fixed inset-0 z-[200] flex items-center justify-center p-4"
+        x-transition:enter="transition duration-300 ease-out"
+        x-transition:enter-start="opacity-0 scale-90"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition duration-200 ease-in"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-90"
+        class="fixed inset-0 z-[201] flex items-center justify-center p-4 sm:p-5"
     >
         <div
             @click.stop
-            class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+            class="w-full max-w-sm sm:max-w-md rounded-2xl sm:rounded-3xl bg-white p-6 sm:p-8 shadow-2xl"
         >
-            {{-- Header --}}
-            <div class="flex items-center gap-4 border-b border-slate-200 px-6 py-5">
-                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-100">
-                    <x-heroicon-o-trash class="h-5 w-5 text-red-600"/>
-                </div>
+            <div class="mx-auto flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-red-100">
+                <x-heroicon-o-trash class="h-8 w-8 sm:h-10 sm:w-10 text-red-600" />
+            </div>
 
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900">
-                        Hapus Kategori
-                    </h2>
+            <h2 class="mt-4 sm:mt-6 text-center text-xl sm:text-2xl font-bold text-slate-900">
+                Hapus Kategori?
+            </h2>
 
-                    <p class="mt-1 text-sm text-slate-500">
-                        Konfirmasi penghapusan kategori.
-                    </p>
-                </div>
+            <p class="mt-2 sm:mt-3 text-center text-sm sm:text-base text-slate-500">
+                Apakah Anda yakin ingin menghapus kategori<br class="hidden sm:block" />
+                <span
+                    class="font-semibold text-slate-800"
+                    x-text="product.name">
+                </span>?
+            </p>
 
+            <p class="mt-1 sm:mt-2 text-center text-xs sm:text-sm text-red-500">
+                Tindakan ini tidak dapat dibatalkan.
+            </p>
+
+            {{-- Menampilkan pesan error jika ada --}}
+            <div
+                x-show="error"
+                x-cloak
+                class="mt-4 rounded-xl bg-red-50 p-3 text-center text-sm font-medium text-red-700"
+                x-text="error"
+            ></div>
+
+            <div class="mt-6 sm:mt-8 flex gap-2 sm:gap-3">
                 <button
                     type="button"
                     @click="close()"
                     :disabled="loading"
-                    class="ml-auto rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    <x-heroicon-o-x-mark class="h-5 w-5"/>
-                </button>
-            </div>
-
-            {{-- Body --}}
-            <div class="px-6 py-6">
-                <p class="text-sm leading-6 text-slate-600">
-                    Apakah Anda yakin ingin menghapus kategori
-                    <span
-                        class="font-semibold text-slate-900"
-                        x-text="'“' + product.name + '”'"
-                    ></span>?
-                </p>
-
-                <div class="mt-4 rounded-xl bg-red-50 p-4">
-                    <div class="flex gap-3">
-                        <x-heroicon-o-exclamation-triangle class="mt-0.5 h-5 w-5 shrink-0 text-red-600"/>
-
-                        <p class="text-sm leading-5 text-red-700">
-                            Data kategori yang sudah dihapus tidak dapat dikembalikan.
-                        </p>
-                    </div>
-                </div>
-
-                {{-- Error --}}
-                <div
-                    x-show="error"
-                    x-cloak
-                    class="mt-4 rounded-xl bg-red-50 p-4"
-                >
-                    <p
-                        class="text-sm font-medium text-red-700"
-                        x-text="error">
-                    </p>
-                </div>
-            </div>
-
-            {{-- Footer --}}
-            <div class="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4">
-
-                <button
-                    type="button"
-                    @click="close()"
-                    :disabled="loading"
-                    class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex-1 rounded-xl border border-slate-300 px-4 py-2 sm:px-5 sm:py-3 text-sm sm:text-base font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     Batal
                 </button>
@@ -107,12 +74,11 @@
                     type="button"
                     @click="deleteCategory()"
                     :disabled="loading"
-                    class="inline-flex min-w-[120px] items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 sm:px-5 sm:py-3 text-sm sm:text-base font-semibold text-white shadow-lg shadow-red-500/20 transition-all duration-300 hover:bg-red-700 hover:shadow-xl hover:shadow-red-500/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                     <svg
                         x-show="loading"
                         class="h-4 w-4 animate-spin"
-                        xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
                     >
@@ -124,7 +90,6 @@
                             stroke="currentColor"
                             stroke-width="4">
                         </circle>
-
                         <path
                             class="opacity-75"
                             fill="currentColor"
@@ -132,11 +97,8 @@
                         </path>
                     </svg>
 
-                    <span
-                        x-text="loading ? 'Menghapus...' : 'Hapus'">
-                    </span>
+                    <span x-text="loading ? 'Menghapus...' : 'Hapus'"></span>
                 </button>
-
             </div>
         </div>
     </div>
@@ -149,6 +111,7 @@ function categoryDelete() {
         loading: false,
         error: '',
 
+        // Variabel tetap menggunakan 'product' mengikuti data bawaan dari script Anda agar tidak ada yang error
         product: {
             id: null,
             name: ''
@@ -191,7 +154,6 @@ function categoryDelete() {
                     '/admin/categories/' + this.product.id,
                     {
                         method: 'DELETE',
-
                         headers: {
                             'X-CSRF-TOKEN': csrfToken,
                             'Accept': 'application/json',

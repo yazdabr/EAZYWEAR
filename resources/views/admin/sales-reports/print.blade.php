@@ -93,6 +93,18 @@
             <p class="mt-1 text-sm text-slate-500">
                 Ringkasan kinerja penjualan dan detail transaksi sistem.
             </p>
+            @if($startDate && $endDate)
+                <p class="mt-2 text-xs font-semibold text-[#AE7C18]">
+                    Periode:
+                    {{ $startDate->format('d M Y') }}
+                    -
+                    {{ $endDate->format('d M Y') }}
+                </p>
+            @else
+                <p class="mt-2 text-xs font-semibold text-[#AE7C18]">
+                    Periode: Semua Data
+                </p>
+            @endif
         </div>
 
         {{-- Tombol Cetak --}}
@@ -112,17 +124,17 @@
                 Total Pendapatan
             </p>
             <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-                Rp24.580.000
+                Rp{{ number_format($totalRevenue,0,',','.') }}
             </p>
         </div>
 
         {{-- Jumlah Transaksi --}}
         <div class="print-card rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Jumlah Transaksi
-            </p>
+                Total Transaksi
+            </p>            
             <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-                128
+                {{ number_format($totalTransactions,0,',','.') }}
             </p>
         </div>
 
@@ -130,9 +142,9 @@
         <div class="print-card rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Rata-rata Pesanan
-            </p>
+            </p> 
             <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-                Rp192.031
+                Rp{{ number_format($averageOrderValue,0,',','.') }}
             </p>
         </div>
 
@@ -140,9 +152,9 @@
         <div class="print-card rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Produk Terjual
-            </p>
+            </p> 
             <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-                342
+                {{ number_format($totalProductsSold,0,',','.') }}
             </p>
         </div>
     </div>
@@ -173,41 +185,41 @@
 
                 {{-- Table Body --}}
                 <tbody class="divide-y divide-slate-200 bg-white print:divide-slate-200">
-                    @foreach($reportTransactions as $transaction)
+                    @forelse($reportTransactions as $transaction)
                         <tr class="transition hover:bg-slate-50/50 print:break-inside-avoid">
-                            {{-- Faktur --}}
                             <td class="px-4 py-3 font-semibold text-slate-900 sm:px-6 sm:py-4 print:px-2 print:py-2 print:font-bold">
                                 {{ $transaction['invoice'] }}
                             </td>
 
-                            {{-- Tanggal --}}
                             <td class="px-4 py-3 text-slate-600 sm:px-6 sm:py-4 print:px-2 print:py-2 print:text-slate-800">
                                 {{ $transaction['date'] }}
                             </td>
 
-                            {{-- Pelanggan --}}
                             <td class="px-4 py-3 font-medium text-slate-800 sm:px-6 sm:py-4 print:px-2 print:py-2 print:font-normal">
                                 {{ $transaction['customer'] }}
                             </td>
 
-                            {{-- Pembayaran --}}
                             <td class="px-4 py-3 text-slate-600 sm:px-6 sm:py-4 print:px-2 print:py-2 print:text-slate-800">
                                 {{ $transaction['payment'] }}
                             </td>
 
-                            {{-- Status --}}
                             <td class="px-4 py-3 text-center sm:px-6 sm:py-4 print:px-2 print:py-2">
                                 <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800 print:bg-transparent print:p-0 print:font-semibold print:text-slate-900">
                                     {{ $transaction['status'] }}
                                 </span>
                             </td>
 
-                            {{-- Total --}}
                             <td class="px-4 py-3 text-right font-semibold text-slate-900 sm:px-6 sm:py-4 print:px-2 print:py-2 print:font-bold">
                                 {{ $transaction['total'] }}
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-4 py-10 text-center text-sm text-slate-400">
+                                Tidak ada transaksi pada periode yang dipilih.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

@@ -183,12 +183,106 @@
         </x-admin.stat-card>
     </div>
 
+    {{-- ================= TRANSACTION LIST ================= --}}
     <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div class="overflow-x-auto">
+
+        {{-- ================= MOBILE ================= --}}
+        <div class="block md:hidden">
+            @forelse($transactions as $transaction)
+                @php
+                    $total=(float)($transaction['total'] ?? 0);
+                    $paymentColor=match(strtoupper($transaction['payment'] ?? '')){
+                        'QRIS'=>'bg-violet-100 text-violet-700',
+                        'CASH'=>'bg-emerald-100 text-emerald-700',
+                        'TRANSFER'=>'bg-sky-100 text-sky-700',
+                        'EDC'=>'bg-orange-100 text-orange-700',
+                        default=>'bg-slate-100 text-slate-700'
+                    };
+                @endphp
+
+                <div class="border-b border-slate-200 bg-white p-4 transition hover:bg-slate-50/50 last:border-b-0">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-bold text-slate-900">
+                                {{ $transaction['invoice'] ?? '-' }}
+                            </p>
+                            <p class="mt-0.5 text-xs text-slate-400">
+                                {{ $transaction['date'] ?? '-' }}
+                            </p>
+                        </div>
+
+                        <div class="flex shrink-0 items-center gap-2">
+                            <span class="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold {{ $paymentColor }}">
+                                {{ $transaction['payment'] ?? '-' }}
+                            </span>
+
+                            <x-admin.badge-status status="{{ $transaction['status'] ?? '-' }}"/>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+                        <div class="min-w-0">
+                            <p class="text-[11px] text-slate-400">Pelanggan</p>
+                            <p class="truncate text-sm font-medium text-slate-800">
+                                {{ $transaction['customer'] ?? '-' }}
+                            </p>
+                        </div>
+
+                        <div class="shrink-0 text-right">
+                            <p class="text-[11px] text-slate-400">Total Tagihan</p>
+                            <p class="text-sm font-bold text-[#AE7C18]">
+                                Rp {{ number_format($total,0,',','.') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex justify-end gap-2 border-t border-slate-100 pt-3">
+                        <button
+                            type="button"
+                            @click="window.dispatchEvent(new CustomEvent('open-view-transaction',{
+                                detail:@js($transaction)
+                            }))"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                        >
+                            <x-heroicon-o-eye class="h-3.5 w-3.5 text-slate-500"/>
+                            Lihat
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="window.dispatchEvent(new CustomEvent('open-delete-transaction',{
+                                detail:{
+                                    id:@js($transaction['id'] ?? null),
+                                    invoice:@js($transaction['invoice'] ?? ''),
+                                    customer:@js($transaction['customer'] ?? ''),
+                                    total:@js($total),
+                                    status:@js($transaction['status'] ?? '')
+                                }
+                            }))"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+                        >
+                            <x-heroicon-o-trash class="h-3.5 w-3.5"/>
+                            Hapus
+                        </button>
+                    </div>
+                </div>
+            @empty
+                <div class="px-6 py-14 text-center">
+                    <x-heroicon-o-receipt-percent class="mx-auto h-10 w-10 text-slate-300"/>
+                    <p class="mt-3 font-medium text-slate-600">Tidak ada transaksi</p>
+                    <p class="mt-1 text-sm text-slate-400">
+                        Belum ada transaksi yang sesuai dengan filter.
+                    </p>
+                </div>
+            @endforelse
+        </div>
+
+        {{-- ================= DESKTOP ================= --}}
+        <div class="hidden overflow-x-auto md:block">
             <table class="min-w-full">
                 <thead class="border-b border-slate-200 bg-slate-50">
                     <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        <th class="px-6 py-4">Faktur</th>
+                        <th class="px-6 py-4">Invoice</th>
                         <th class="px-6 py-4">Tanggal</th>
                         <th class="px-6 py-4">Pelanggan</th>
                         <th class="px-6 py-4 text-center">Total</th>
@@ -218,19 +312,27 @@
             </table>
         </div>
 
+        {{-- ================= PAGINATION ================= --}}
         <div class="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-4 py-4 text-center sm:px-6 sm:py-5 md:flex-row md:text-left">
             <p class="text-xs font-medium text-slate-500 sm:text-sm">
                 Menampilkan
-                <span class="font-semibold text-slate-900">{{ $transactions->firstItem() ?? 0 }}</span>
+                <span class="font-semibold text-slate-900">
+                    {{ $transactions->firstItem() ?? 0 }}
+                </span>
                 sampai
-                <span class="font-semibold text-slate-900">{{ $transactions->lastItem() ?? 0 }}</span>
+                <span class="font-semibold text-slate-900">
+                    {{ $transactions->lastItem() ?? 0 }}
+                </span>
                 dari
-                <span class="font-semibold text-slate-900">{{ $transactions->total() }}</span>
+                <span class="font-semibold text-slate-900">
+                    {{ $transactions->total() }}
+                </span>
                 transaksi
             </p>
 
             <x-admin.pagination :paginator="$transactions"/>
         </div>
+
     </div>
 </div>
 @endsection

@@ -174,10 +174,10 @@
 
     {{-- ================= FOOTER ================= --}}
     <div class="px-4 py-4 space-y-1">
-        <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
+        {{-- <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-400 transition-all duration-200 hover:bg-white/5 hover:text-white">
             <x-heroicon-o-user class="h-5 w-5 shrink-0" />
             <span>Profil</span>
-        </a>
+        </a> --}}
 
         <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-red-500 transition-all duration-200 hover:bg-red-500/10">
             <x-heroicon-o-arrow-left-on-rectangle class="h-5 w-5 shrink-0 text-red-500" />

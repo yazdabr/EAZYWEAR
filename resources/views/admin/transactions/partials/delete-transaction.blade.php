@@ -16,84 +16,79 @@
         x-show="open"
         x-cloak
         x-transition
-        class="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6"
+        class="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6"
         style="display:none;"
     >
         <div
             @click.stop
-            class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
+            class="w-full max-w-[320px] sm:max-w-md overflow-x-hidden overflow-y-auto max-h-[90vh] rounded-2xl sm:rounded-3xl bg-white shadow-2xl sm:max-h-none sm:overflow-hidden"
         >
-            <div class="border-b border-slate-200 px-5 py-6 sm:px-8">
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
-                    <x-heroicon-o-exclamation-triangle class="h-7 w-7 text-red-600"/>
+            <!-- Header (Dibuat jauh lebih padat di mobile) -->
+            <div class="border-b border-slate-100 px-4 py-3.5 sm:px-8 sm:py-6 text-center">
+                <div class="mx-auto flex h-9 w-9 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-red-100">
+                    <x-heroicon-o-exclamation-triangle class="h-4 w-4 sm:h-7 sm:w-7 text-red-600"/>
                 </div>
 
-                <h2 class="mt-5 text-center text-xl font-bold text-slate-900 sm:text-2xl">
+                <h2 class="mt-2.5 sm:mt-5 text-sm sm:text-2xl font-bold text-slate-900">
                     <span x-text="isPending() ? 'Batalkan Transaksi' : 'Hapus Transaksi'"></span>
                 </h2>
 
-                <p class="mt-3 text-center text-sm leading-6 text-slate-500">
+                <p class="mt-1 sm:mt-3 text-[11px] sm:text-sm leading-relaxed text-slate-500">
                     Faktur
                     <span
                         class="font-semibold text-slate-700"
                         x-text="transaction.invoice || '-'"
                     ></span>
-
                     <span x-text="isPending() ? 'akan dibatalkan.' : 'akan dihapus secara permanen.'"></span>
                 </p>
             </div>
 
-            <div class="px-5 py-6 sm:px-8">
-                <div class="rounded-2xl bg-slate-50 p-4 sm:p-5">
-                    <div class="flex items-start justify-between gap-4">
-                        <span class="text-sm text-slate-500">
-                            Pelanggan
-                        </span>
-
+            <!-- Body -->
+            <div class="px-4 py-3 sm:px-8 sm:py-6">
+                <!-- Info Box -->
+                <div class="rounded-xl sm:rounded-2xl bg-slate-50 p-3 sm:p-5 space-y-2 sm:space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] sm:text-sm text-slate-500">Pelanggan</span>
                         <span
-                            class="text-right text-sm font-semibold text-slate-900"
+                            class="text-right text-[11px] sm:text-sm font-semibold text-slate-900 truncate max-w-[160px] sm:max-w-none"
                             x-text="transaction.customer || '-'"
                         ></span>
                     </div>
 
-                    <div class="mt-4 flex items-start justify-between gap-4">
-                        <span class="text-sm text-slate-500">
-                            Total
-                        </span>
-
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] sm:text-sm text-slate-500">Total</span>
                         <span
-                            class="text-right text-sm font-semibold text-[#AE7C18]"
+                            class="text-right text-[11px] sm:text-sm font-semibold text-[#AE7C18]"
                             x-text="'Rp ' + Number(transaction.total || 0).toLocaleString('id-ID')"
                         ></span>
                     </div>
 
-                    <div class="mt-4 flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
-                        <span class="text-sm text-slate-500">
-                            Status
-                        </span>
-
+                    <div class="flex items-center justify-between border-t border-slate-200/60 pt-2 sm:pt-4">
+                        <span class="text-[11px] sm:text-sm text-slate-500">Status</span>
                         <span
-                            class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                            class="inline-flex rounded-full px-2 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-semibold"
                             :class="statusClass()"
                             x-text="transaction.status || '-'"
                         ></span>
                     </div>
                 </div>
 
+                <!-- Warning Alert Box -->
                 <div
-                    class="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm leading-5 text-red-700"
+                    class="mt-2.5 sm:mt-4 rounded-xl bg-red-50 px-3 py-2 sm:px-4 sm:py-3 text-[10px] sm:text-sm leading-snug sm:leading-5 text-red-700"
                     x-text="isPending()
                         ? 'Transaksi ini akan diubah menjadi status DIBATALKAN.'
                         : 'Transaksi beserta detail produknya akan dihapus secara permanen.'"
                 ></div>
             </div>
 
-            <div class="flex flex-col-reverse gap-3 border-t border-slate-200 px-5 py-5 sm:flex-row sm:px-8">
+            <!-- Footer Buttons -->
+            <div class="flex flex-col-reverse gap-2 sm:gap-3 border-t border-slate-100 px-4 py-3.5 sm:flex-row sm:px-8 sm:py-5">
                 <button
                     type="button"
                     @click="closeModal()"
                     :disabled="loading"
-                    class="flex-1 rounded-xl border border-slate-300 px-5 py-3 font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="flex-1 rounded-xl border border-slate-300 px-4 py-2 sm:px-5 sm:py-3 text-xs sm:text-base font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     Tutup
                 </button>
@@ -102,7 +97,7 @@
                     type="button"
                     @click="submit()"
                     :disabled="loading"
-                    class="flex-1 rounded-xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    class="flex-1 rounded-xl bg-red-600 px-4 py-2 sm:px-5 sm:py-3 text-xs sm:text-base font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 shadow-sm"
                 >
                     <span
                         x-show="!loading"
@@ -115,27 +110,13 @@
                         class="inline-flex items-center justify-center gap-2"
                     >
                         <svg
-                            class="h-4 w-4 animate-spin"
+                            class="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin"
                             viewBox="0 0 24 24"
                             fill="none"
                         >
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                                stroke="currentColor"
-                                stroke-width="3"
-                                class="opacity-30"
-                            ></circle>
-
-                            <path
-                                d="M21 12a9 9 0 0 0-9-9"
-                                stroke="currentColor"
-                                stroke-width="3"
-                                stroke-linecap="round"
-                            ></path>
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" class="opacity-30"></circle>
+                            <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
                         </svg>
-
                         Memproses...
                     </span>
                 </button>
@@ -167,8 +148,6 @@ function transactionDelete(){
                 total:data?.total ?? 0,
                 status:String(data?.status ?? '').toUpperCase()
             };
-
-            console.log('DELETE TRANSACTION DATA:',this.transaction);
 
             this.open=true;
         },

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Faktur - {{ $invoice }}</title>
+    <title>Invoice - {{ $transaction->invoice_number }}</title>
     @vite(['resources/css/app.css'])
 
     <style>
@@ -52,7 +52,7 @@
                 <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
             </span>
             <div>
-                <p class="text-sm font-semibold text-slate-800">Pratinjau Faktur Pembayaran</p>
+                <p class="text-sm font-semibold text-slate-800">Pratinjau Invoice Pembayaran</p>
                 <p class="text-xs text-slate-500">Siap dicetak atau disimpan ke PDF</p>
             </div>
         </div>
@@ -61,7 +61,7 @@
                 onclick="window.print()" 
                 class="inline-flex items-center gap-2 rounded-xl bg-[#AE7C18] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#AE7C18]/20 transition-all hover:bg-[#96690F] active:scale-95 cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Cetak Faktur
+                Cetak Invoice
             </button>
         </div>
     </div>
@@ -76,13 +76,25 @@
         <div class="flex flex-col sm:flex-row justify-between items-start gap-6 pb-8 border-b border-slate-100">
             <div>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-3xl font-black tracking-tight text-slate-900">FAKTUR</h1>
+                    <h1 class="text-3xl font-black tracking-tight text-slate-900">Invoice</h1>
+                    @php
+                        $statusLabel = match (strtoupper($transaction->status ?? '')) {
+                            'PAID' => 'DIBAYAR',
+                            'COMPLETED' => 'SELESAI',
+                            'CANCELLED' => 'DIBATALKAN',
+                            'PENDING' => 'PENDING',
+                            default => $transaction->status ?? '-',
+                        };
+                    @endphp
+
                     <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                        LUNAS
+                        {{ $statusLabel }}
                     </span>
                 </div>
-                <p class="mt-2 text-sm font-bold tracking-wider text-[#AE7C18] uppercase">#{{ $invoice }}</p>
+                <p class="mt-2 text-sm font-bold tracking-wider text-[#AE7C18] uppercase">
+                    #{{ $transaction->invoice_number }}
+                </p>
             </div>
 
             <div class="text-left sm:text-right">
@@ -100,29 +112,45 @@
         <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div class="bg-slate-50/80 rounded-2xl p-5 border border-slate-100">
                 <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Ditagihkan Kepada</p>
-                <h3 class="text-base font-bold text-slate-900">John Doe</h3>
-                <p class="text-xs text-slate-600 mt-1">0812-3456-7890</p>
-                <p class="text-xs text-slate-600">john.doe@email.com</p>
-                <p class="text-xs text-slate-500 mt-2 pt-2 border-t border-slate-200/60">Jl. Veteran Km. 5.5, Banjarmasin Timur</p>
+                <h3 class="text-base font-bold text-slate-900">
+                    {{ $transaction->customer?->name ?? '-' }}
+                </h3>
+
+                <p class="mt-1 text-xs text-slate-600">
+                    {{ $transaction->customer?->phone ?? '-' }}
+                </p>
+
+                <p class="text-xs text-slate-600">
+                    {{ $transaction->customer?->email ?? '-' }}
+                </p>
+
+                <p class="mt-2 border-t border-slate-200/60 pt-2 text-xs text-slate-500">
+                    {{ $transaction->customer?->address ?? '-' }}
+                </p>
             </div>
 
             <div class="bg-slate-50/80 rounded-2xl p-5 border border-slate-100 flex flex-col justify-between">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Tanggal Faktur</p>
-                        <p class="text-xs font-bold text-slate-900">07 Aug 2026</p>
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Tanggal Invoice</p>
+                        <p class="text-xs font-bold text-slate-900">
+                            {{ $transaction->transaction_date?->format('d M Y') ?? '-' }}
+                        </p>
                     </div>
                     <div>
                         <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">No. Transaksi</p>
-                        <p class="text-xs font-bold text-slate-900">TRX-89201</p>
+                        <p class="text-xs font-bold text-slate-900">
+                            {{ $transaction->invoice_number }}
+                        </p>
                     </div>
                 </div>
                 <div class="mt-4 pt-3 border-t border-slate-200/60 flex justify-between items-center">
                     <div>
                         <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Metode Pembayaran</p>
-                        <p class="text-xs font-bold text-slate-900 mt-0.5">Bank Transfer (BCA)</p>
+                        <p class="mt-0.5 text-xs font-bold text-slate-900">
+                            {{ $transaction->payment_method ?? '-' }}
+                        </p>
                     </div>
-                    <span class="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-medium">Verifikasi Otomatis</span>
                 </div>
             </div>
         </div>
@@ -140,36 +168,46 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs sm:text-sm">
-                    {{-- Row 1 --}}
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="py-4 px-3">
-                            <div>
-                                <p class="font-bold text-slate-900">Apex Pro Jersey</p>
-                                <p class="text-[11px] text-slate-400">SKU: PRD-001</p>
-                            </div>
-                        </td>
-                        <td class="py-4 px-3 text-center">
-                            <span class="inline-block bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded text-xs">XL</span>
-                        </td>
-                        <td class="py-4 px-3 text-center font-semibold text-slate-700">2</td>
-                        <td class="py-4 px-3 text-right text-slate-600">Rp 149.000</td>
-                        <td class="py-4 px-3 text-right font-bold text-slate-900">Rp 298.000</td>
-                    </tr>
-                    {{-- Row 2 --}}
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="py-4 px-3">
-                            <div>
-                                <p class="font-bold text-slate-900">Elite Match Jersey</p>
-                                <p class="text-[11px] text-slate-400">SKU: PRD-002</p>
-                            </div>
-                        </td>
-                        <td class="py-4 px-3 text-center">
-                            <span class="inline-block bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded text-xs">M</span>
-                        </td>
-                        <td class="py-4 px-3 text-center font-semibold text-slate-700">1</td>
-                        <td class="py-4 px-3 text-right text-slate-600">Rp 199.000</td>
-                        <td class="py-4 px-3 text-right font-bold text-slate-900">Rp 199.000</td>
-                    </tr>
+                    @forelse($transaction->items as $item)
+                        @php
+                            $variant = $item->productVariant;
+                            $product = $variant?->product;
+                        @endphp
+
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-3 py-4">
+                                <div>
+                                    <p class="font-bold text-slate-900">
+                                        {{ $product?->name ?? '-' }}
+                                    </p>
+                                </div>
+                            </td>
+
+                            <td class="px-3 py-4 text-center">
+                                <span class="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">
+                                    {{ $variant?->size?->name ?? '-' }}
+                                </span>
+                            </td>
+
+                            <td class="px-3 py-4 text-center font-semibold text-slate-700">
+                                {{ $item->qty }}
+                            </td>
+
+                            <td class="px-3 py-4 text-right text-slate-600">
+                                Rp {{ number_format($item->price, 0, ',', '.') }}
+                            </td>
+
+                            <td class="px-3 py-4 text-right font-bold text-slate-900">
+                                Rp {{ number_format($item->subtotal, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-3 py-8 text-center text-slate-400">
+                                Tidak ada produk dalam transaksi.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -194,19 +232,32 @@
             <div class="w-full sm:w-72 space-y-2.5">
                 <div class="flex justify-between text-xs text-slate-600">
                     <span>Subtotal Produk</span>
-                    <span class="font-semibold text-slate-900">Rp 497.000</span>
+                    <span class="font-semibold text-slate-900">
+                        Rp {{ number_format($transaction->subtotal, 0, ',', '.') }}
+                    </span>
                 </div>
+
                 <div class="flex justify-between text-xs text-slate-600">
                     <span>Ongkos Kirim</span>
-                    <span class="font-semibold text-slate-900">Rp 20.000</span>
+                    <span class="font-semibold text-slate-900">
+                        Rp {{ number_format($transaction->shipping, 0, ',', '.') }}
+                    </span>
                 </div>
+
                 <div class="flex justify-between text-xs text-slate-600">
                     <span>Diskon</span>
-                    <span class="font-semibold text-emerald-600">-Rp 0</span>
+                    <span class="font-semibold text-emerald-600">
+                        -Rp {{ number_format($transaction->discount, 0, ',', '.') }}
+                    </span>
                 </div>
-                <div class="border-t border-slate-200 pt-3 flex justify-between items-baseline">
-                    <span class="text-sm font-bold text-slate-900">Total Bayar</span>
-                    <span class="text-xl font-black text-[#AE7C18]">Rp 517.000</span>
+
+                <div class="flex items-baseline justify-between border-t border-slate-200 pt-3">
+                    <span class="text-sm font-bold text-slate-900">
+                        Total Bayar
+                    </span>
+                    <span class="text-xl font-black text-[#AE7C18]">
+                        Rp {{ number_format($transaction->total, 0, ',', '.') }}
+                    </span>
                 </div>
             </div>
         </div>
@@ -214,7 +265,7 @@
         {{-- Footer Note --}}
         <div class="mt-12 pt-6 border-t border-slate-100 text-center page-break-inside-avoid">
             <p class="text-xs font-bold text-slate-800">Terima kasih telah berbelanja di Jersey Store!</p>
-            <p class="text-[11px] text-slate-400 mt-0.5">Faktur ini diterbitkan secara otomatis dan sah tanpa tanda tangan basah.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Invoice ini diterbitkan secara otomatis dan sah tanpa tanda tangan basah.</p>
         </div>
 
     </div>

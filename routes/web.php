@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ApiLogController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
 
+
 /*
 |--------------------------------------------------------------------------
 | Website
@@ -27,7 +28,7 @@ Route::view('/about', 'pages.about')
 Route::view('/contact', 'pages.contact')
     ->name('contact');
 
-
+Route::view('/login', 'auth.login')->name('login');
 /*
 |--------------------------------------------------------------------------
 | Admin
@@ -105,16 +106,15 @@ Route::prefix('admin')
         Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])
             ->name('transactions.destroy');
 
-        Route::get('/transactions/{invoice}/print', function ($invoice) {
-            return view('admin.transactions.print', compact('invoice'));
-        })->name('transactions.print');
+        Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])
+            ->name('transactions.print');
 
         // sales reports
         Route::get('/sales-reports', [SalesReportController::class, 'index'])
-            ->name('sales-reports');
+                ->name('sales-reports');
 
-            Route::get('/sales-reports/print', [SalesReportController::class, 'print'])
-                ->name('sales-reports.print');
+        Route::get('/sales-reports/print',[SalesReportController::class,'print'])
+            ->name('sales-reports.print');
         // api logs
         Route::get('/api-logs', [ApiLogController::class, 'index'])
             ->name('api-logs');

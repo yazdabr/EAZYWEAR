@@ -1,21 +1,21 @@
-<section class="bg-white py-24">
+<section class="bg-white py-12 sm:py-20 lg:py-24 overflow-hidden">
 
     <x-ui.container>
 
-        <div class="grid items-center gap-20 lg:grid-cols-2">
+        <div class="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
 
-            {{-- LEFT --}}
-            <x-ui.reveal animation="right">
+            {{-- LEFT: Animasi Berurutan --}}
+            <div class="flex flex-col">
 
-                <div>
+                {{-- 1. Label --}}
+                <x-ui.reveal animation="right" :delay="0">
 
-                    {{-- Label --}}
-                    <div class="mb-6 flex items-center gap-3">
+                    <div class="mb-3 flex items-center gap-2.5 sm:mb-6 sm:gap-3">
 
-                        <div class="h-px w-12 bg-[#AE7C18]"></div>
+                        <div class="h-px w-8 bg-[#AE7C18] sm:w-12"></div>
 
                         <span
-                            class="text-xs font-semibold uppercase tracking-[0.3em] text-[#AE7C18]">
+                            class="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs sm:tracking-[0.3em]">
 
                             OUR LEGACY
 
@@ -23,9 +23,13 @@
 
                     </div>
 
-                    {{-- Heading --}}
+                </x-ui.reveal>
+
+                {{-- 2. Heading --}}
+                <x-ui.reveal animation="right" :delay="100">
+
                     <h2
-                        class="text-4xl font-bold leading-tight lg:text-5xl">
+                        class="text-2xl font-bold leading-tight sm:text-4xl lg:text-5xl">
 
                         Driven by
 
@@ -37,77 +41,78 @@
 
                     </h2>
 
-                    {{-- Paragraph --}}
-                    <p
-                        class="mt-8 leading-8 text-gray-600">
+                </x-ui.reveal>
 
-                        Founded in the heart of South Jakarta, Eazywear Indonesia
-                        began with a simple observation: Indonesian athletes
-                        deserved gear that matched their ambition.
+                {{-- 3. Paragraphs --}}
+                <x-ui.reveal animation="right" :delay="200">
 
-                        We bridged the gap between local craftsmanship and
-                        international-quality sportswear through premium materials,
-                        precision manufacturing, and unlimited customization.
+                    <div class="mt-4 space-y-3 text-xs leading-relaxed text-gray-600 sm:mt-8 sm:space-y-6 sm:text-base sm:leading-8">
 
-                    </p>
-
-                    <p
-                        class="mt-6 leading-8 text-gray-600">
-
-                        Today, we proudly serve schools, universities,
-                        communities, companies, and professional sports teams
-                        across Indonesia.
-
-                        Every jersey is produced with meticulous attention to
-                        detail, ensuring every customer receives apparel that is
-                        comfortable, durable, and built to perform.
-
-                    </p>
-
-                </div>
-
-            </x-ui.reveal>
-
-            {{-- RIGHT --}}
-            <x-ui.reveal
-                animation="left"
-                delay="150">
-
-                <div class="relative">
-
-                    {{-- Image --}}
-                    <img
-                        src="{{ asset('images/about/df.png') }}"
-                        alt="Eazywear Story"
-                        width="700"
-                        height="900"
-                        loading="eager"
-                        decoding="sync"
-                        class="w-full rounded-3xl shadow-2xl">
-
-                    {{-- Floating Badge --}}
-                    <div
-                        class="absolute -bottom-6 -left-2 rounded-2xl bg-[#AE7C18] px-6 py-5 text-white shadow-xl">
-
-                        <h3
-                            class="text-4xl font-bold">
-
-                            8+
-
-                        </h3>
-
-                        <p
-                            class="mt-1 text-xs uppercase tracking-[0.25em]">
-
-                            Years of Craft
-
+                        <p>
+                            Founded in South Jakarta, Eazywear Indonesia began with a simple observation: Indonesian athletes deserved gear that matched their ambition.
                         </p>
+
+                        <p>
+                            We bridged the gap between local craftsmanship and international-quality sportswear through premium materials, precision manufacturing, and custom designs.
+                        </p>
+
+                        <p class="hidden sm:block">
+                            Today, we proudly serve schools, communities, and professional teams across Indonesia with meticulous attention to detail and durability.
+                        </p>
+
+                    </div>
+
+                </x-ui.reveal>
+
+            </div>
+
+            {{-- RIGHT: Gambar & Floating Badge --}}
+            <div class="relative flex justify-center lg:block">
+
+                <div class="relative mx-auto w-full max-w-[240px] sm:max-w-md lg:max-w-none">
+
+                    {{-- Image Reveal --}}
+                    <x-ui.reveal animation="left" :delay="150">
+
+                        <img
+                            src="{{ asset('images/about/df.png') }}"
+                            alt="Eazywear Story"
+                            loading="eager"
+                            decoding="sync"
+                            class="h-auto w-full rounded-2xl object-cover shadow-xl sm:rounded-3xl sm:shadow-2xl">
+
+                    </x-ui.reveal>
+
+                    {{-- Floating Badge: Animasi Pop/Scale Terpisah setelah Gambar --}}
+                    <div class="absolute -bottom-3 -left-3 z-10 sm:-bottom-6 sm:-left-4">
+
+                        <x-ui.reveal animation="scale" :delay="350">
+
+                            <div
+                                class="flex items-center gap-2 rounded-xl bg-[#AE7C18] px-3 py-2 text-white shadow-md sm:gap-3.5 sm:rounded-2xl sm:px-6 sm:py-4 sm:shadow-xl">
+
+                                <div class="flex h-6 w-6 items-center justify-center rounded-lg bg-white/20 sm:h-11 sm:w-11 sm:rounded-xl">
+                                    <x-heroicon-s-sparkles class="h-3.5 w-3.5 text-white sm:h-6 sm:w-6" />
+                                </div>
+
+                                <div>
+                                    <p class="text-[9px] font-bold leading-tight uppercase tracking-wider sm:text-base">
+                                        100% Premium
+                                    </p>
+                                    <p class="text-[7px] font-medium uppercase tracking-widest text-white/80 sm:text-xs">
+                                        Custom Sportswear
+                                    </p>
+                                </div>
+
+                            </div>
+
+                        </x-ui.reveal>
 
                     </div>
 
                 </div>
 
-            </x-ui.reveal>
+            </div>
 
         </div>
 

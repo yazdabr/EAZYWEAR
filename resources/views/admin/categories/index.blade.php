@@ -4,36 +4,32 @@
 @section('page-title','Kategori')
 
 @section('content')
-<div class="space-y-5 sm:space-y-6 md:space-y-8">
+<div class="space-y-4 sm:space-y-6 md:space-y-8">
     {{-- ================= HEADER KATEGORI ================= --}}
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
         {{-- ================= JUDUL ================= --}}
-        <div class="shrink-0">
-            <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
-                Kategori
-            </h1>
-
-            <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">
-                Kelola dan atur semua kategori produk untuk toko Anda.
-            </p>
+        <div class="shrink-0 flex items-center justify-between sm:block">
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
+                    Kategori
+                </h1>
+                <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">
+                    Kelola dan atur semua kategori produk untuk toko Anda.
+                </p>
+            </div>
         </div>
-
 
         {{-- ================= TOOLBAR ================= --}}
         <div class="w-full lg:w-auto">
 
             {{-- ================================================= --}}
-            {{-- DESKTOP / TABLET --}}
+            {{-- DESKTOP (lg:flex) --}}
             {{-- ================================================= --}}
-            <div class="hidden md:flex md:items-center md:justify-end md:gap-4">
+            <div class="hidden lg:flex lg:items-center lg:gap-4">
 
-                {{-- ================= SEARCH ================= --}}
-                <div
-                    x-data="categorySearch()"
-                    class="relative w-72 lg:w-80"
-                >
-
+                {{-- SEARCH DESKTOP --}}
+                <div x-data="categorySearch()" class="relative w-[320px] shrink-0">
                     <x-admin.search-input
                         name="search"
                         placeholder="Cari kategori..."
@@ -43,236 +39,122 @@
                         @input.debounce.300ms="searchCategories()"
                     />
 
-
-                    {{-- ================= DROPDOWN SEARCH ================= --}}
+                    {{-- Dropdown Search Desktop --}}
                     <div
                         x-show="showResults && results.length"
                         x-cloak
                         @click.outside="showResults = false"
-
                         class="absolute left-0 right-0 z-[100] mt-2 max-h-60 overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
                     >
-
-                        <template
-                            x-for="category in results"
-                            :key="category.id"
-                        >
-
+                        <template x-for="category in results" :key="category.id">
                             <button
                                 type="button"
                                 @click="selectCategory(category)"
-
-                                class="flex w-full items-center justify-between border-b border-slate-100 px-4 py-3 text-left transition last:border-none hover:bg-slate-50"
+                                class="flex w-full items-center justify-between border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 last:border-none"
                             >
-
                                 <div class="min-w-0 pr-2">
-
-                                    <p
-                                        class="truncate text-sm font-semibold text-slate-800"
-                                        x-text="category.name"
-                                    ></p>
-
-                                    <p
-                                        class="mt-0.5 truncate text-xs text-slate-400"
-                                        x-text="category.slug"
-                                    ></p>
-
+                                    <p class="truncate text-sm font-semibold text-slate-800" x-text="category.name"></p>
+                                    <p class="mt-0.5 truncate text-xs text-slate-400" x-text="category.slug"></p>
                                 </div>
-
-
-                                <x-heroicon-o-chevron-right
-                                    class="h-4 w-4 shrink-0 text-slate-400"
-                                />
-
+                                <x-heroicon-o-chevron-right class="h-4 w-4 shrink-0 text-slate-400"/>
                             </button>
-
                         </template>
-
                     </div>
 
-
-                    {{-- ================= TIDAK DITEMUKAN ================= --}}
+                    {{-- Tidak Ditemukan --}}
                     <div
                         x-show="showResults && search.trim() && !results.length && !loading"
                         x-cloak
                         @click.outside="showResults = false"
-
                         class="absolute left-0 right-0 z-[100] mt-2 rounded-xl border border-slate-200 bg-white p-4 text-center shadow-xl"
                     >
-
-                        <p class="text-sm font-medium text-slate-600">
-                            Kategori tidak ditemukan
-                        </p>
-
-                        <p class="mt-1 text-xs text-slate-400">
-                            Coba gunakan nama kategori lain.
-                        </p>
-
+                        <p class="text-sm font-medium text-slate-600">Kategori tidak ditemukan</p>
+                        <p class="mt-1 text-xs text-slate-400">Coba gunakan nama kategori lain.</p>
                     </div>
-
                 </div>
 
-
-                {{-- ================= RESET ================= --}}
+                {{-- RESET DESKTOP --}}
                 <a
                     href="{{ route('admin.categories') }}"
                     title="Atur Ulang Filter"
-
                     class="inline-flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98]"
                 >
-
                     <x-heroicon-o-arrow-path class="h-4 w-4"/>
-
                 </a>
 
-
-                {{-- ================= TAMBAH KATEGORI ================= --}}
+                {{-- TAMBAH KATEGORI DESKTOP --}}
                 <button
                     type="button"
-
                     @click="$dispatch('open-create-category')"
-
-                    class="inline-flex h-[50px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#AE7C18] px-5 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition-all duration-300 hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18] focus:ring-offset-2 active:scale-[0.98]"
+                    class="inline-flex h-[50px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#AE7C18] px-6 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition-all duration-300 hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18] focus:ring-offset-2 active:scale-[0.98]"
                 >
-
                     <x-heroicon-o-plus class="h-5 w-5"/>
-
-                    <span>
-                        Tambah Kategori
-                    </span>
-
+                    <span>Tambah Kategori</span>
                 </button>
-
             </div>
 
-
             {{-- ================================================= --}}
-            {{-- MOBILE --}}
+            {{-- MOBILE / TABLET OPTIMIZED (lg:hidden) --}}
             {{-- ================================================= --}}
-            <div class="flex flex-col gap-3 md:hidden">
+            <div class="flex flex-col gap-2.5 lg:hidden">
+                <div class="flex items-center gap-2">
 
-                {{-- ================= SEARCH MOBILE ================= --}}
-                <div
-                    x-data="categorySearch()"
-                    class="relative w-full"
-                >
+                    {{-- SEARCH BAR COMPACT --}}
+                    <div x-data="categorySearch()" class="relative min-w-0 flex-1">
+                        <x-admin.search-input
+                            name="search"
+                            placeholder="Cari..."
+                            autocomplete="off"
+                            x-model="search"
+                            @focus="searchCategories()"
+                            @input.debounce.300ms="searchCategories()"
+                        />
 
-                    <x-admin.search-input
-                        name="search"
-                        placeholder="Cari kategori..."
-                        autocomplete="off"
-                        x-model="search"
-                        @focus="searchCategories()"
-                        @input.debounce.300ms="searchCategories()"
-                    />
-
-
-                    {{-- Dropdown --}}
-                    <div
-                        x-show="showResults && results.length"
-                        x-cloak
-                        @click.outside="showResults = false"
-
-                        class="absolute left-0 right-0 z-[100] mt-2 max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl"
-                    >
-
-                        <template
-                            x-for="category in results"
-                            :key="category.id"
+                        {{-- Dropdown Search Mobile --}}
+                        <div
+                            x-show="showResults && results.length"
+                            x-cloak
+                            @click.outside="showResults = false"
+                            class="absolute left-0 right-0 z-[100] mt-2 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl"
                         >
+                            <template x-for="category in results" :key="category.id">
+                                <button
+                                    type="button"
+                                    @click="selectCategory(category)"
+                                    class="flex w-full items-center justify-between border-b border-slate-100 px-3.5 py-2.5 text-left transition hover:bg-slate-50 last:border-none"
+                                >
+                                    <div class="min-w-0 pr-2">
+                                        <p class="truncate text-xs font-semibold text-slate-800" x-text="category.name"></p>
+                                        <p class="text-[10px] text-slate-400" x-text="category.slug"></p>
+                                    </div>
+                                    <x-heroicon-o-chevron-right class="h-3.5 w-3.5 shrink-0 text-slate-400"/>
+                                </button>
+                            </template>
+                        </div>
 
-                            <button
-                                type="button"
-                                @click="selectCategory(category)"
-
-                                class="flex w-full items-center justify-between border-b border-slate-100 px-4 py-3 text-left transition last:border-none hover:bg-slate-50"
-                            >
-
-                                <div class="min-w-0 pr-2">
-
-                                    <p
-                                        class="truncate text-sm font-semibold text-slate-800"
-                                        x-text="category.name"
-                                    ></p>
-
-                                    <p
-                                        class="mt-0.5 truncate text-xs text-slate-400"
-                                        x-text="category.slug"
-                                    ></p>
-
-                                </div>
-
-                                <x-heroicon-o-chevron-right
-                                    class="h-4 w-4 shrink-0 text-slate-400"
-                                />
-
-                            </button>
-
-                        </template>
-
+                        {{-- Tidak ditemukan --}}
+                        <div
+                            x-show="showResults && search.trim() && !results.length && !loading"
+                            x-cloak
+                            @click.outside="showResults = false"
+                            class="absolute left-0 right-0 z-[100] mt-2 rounded-xl border border-slate-200 bg-white p-4 text-center shadow-xl"
+                        >
+                            <p class="text-xs font-medium text-slate-600">Kategori tidak ditemukan</p>
+                        </div>
                     </div>
 
-
-                    {{-- Tidak ditemukan --}}
-                    <div
-                        x-show="showResults && search.trim() && !results.length && !loading"
-                        x-cloak
-
-                        class="absolute left-0 right-0 z-[100] mt-2 rounded-xl border border-slate-200 bg-white p-4 text-center shadow-xl"
-                    >
-
-                        <p class="text-sm font-medium text-slate-600">
-                            Kategori tidak ditemukan
-                        </p>
-
-                        <p class="mt-1 text-xs text-slate-400">
-                            Coba gunakan nama kategori lain.
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                {{-- ================= MOBILE ACTION ================= --}}
-                <div class="flex items-center gap-3">
-
-                    {{-- Reset --}}
+                    {{-- RESET FILTER BUTTON --}}
                     <a
                         href="{{ route('admin.categories') }}"
                         title="Atur Ulang Filter"
-
-                        class="inline-flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98]"
+                        class="inline-flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition active:scale-95"
                     >
-
                         <x-heroicon-o-arrow-path class="h-4 w-4"/>
-
                     </a>
-
-
-                    {{-- Tambah --}}
-                    <button
-                        type="button"
-
-                        @click="$dispatch('open-create-category')"
-
-                        class="inline-flex h-[50px] flex-1 items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-5 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition-all duration-300 hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18] focus:ring-offset-2 active:scale-[0.98]"
-                    >
-
-                        <x-heroicon-o-plus class="h-5 w-5"/>
-
-                        <span>
-                            Tambah Kategori
-                        </span>
-
-                    </button>
-
                 </div>
-
             </div>
 
         </div>
-
     </div>
 
     {{-- ================= STATS ================= --}}
@@ -311,7 +193,7 @@
     {{-- ================= DATA VIEW (TABEL & KARTU MOBILE) ================= --}}
     <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl overflow-hidden">
         
-        {{-- 1. DESKTOP/TABLET TABLE VIEW (Ditampilkan pada layar md ke atas) --}}
+        {{-- 1. DESKTOP/TABLET TABLE VIEW --}}
         <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead class="border-b border-slate-200 bg-slate-50">
@@ -343,7 +225,7 @@
             </table>
         </div>
 
-        {{-- 2. MOBILE CARD VIEW (Khusus Layar HP < md) --}}
+        {{-- 2. MOBILE CARD VIEW --}}
         <div class="block md:hidden divide-y divide-slate-100">
             @forelse($categories as $category)
                 <div class="p-4 space-y-3 bg-white">
@@ -373,9 +255,8 @@
                         </div>
                     </div>
 
-                    {{-- Tombol Aksi Mobile (Lihat & Ubah di Kiri, Hapus di Kanan) --}}
+                    {{-- Tombol Aksi Mobile --}}
                     <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
-                        {{-- Pojok Kiri: Lihat & Ubah --}}
                         <div class="flex items-center gap-2">
                             <button
                                 type="button"
@@ -391,7 +272,7 @@
                                         created:@js($category->created_at?->format('d M Y'))
                                     });
                                 "
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 active:bg-slate-100"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-100 active:scale-95"
                             >
                                 <x-heroicon-o-eye class="h-3.5 w-3.5 text-slate-500"/>
                                 <span>Lihat</span>
@@ -409,14 +290,13 @@
                                         image:@js($category->image)
                                     });
                                 "
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 active:bg-slate-100"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:bg-slate-100 active:scale-95"
                             >
                                 <x-heroicon-o-pencil-square class="h-3.5 w-3.5 text-slate-500"/>
                                 <span>Ubah</span>
                             </button>
                         </div>
 
-                        {{-- Pojok Kanan: Hapus --}}
                         <div>
                             <button
                                 type="button"
@@ -430,7 +310,7 @@
                                         })
                                     );
                                 "
-                                class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100/50 active:bg-red-100"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100/50 active:bg-red-100 active:scale-95"
                             >
                                 <x-heroicon-o-trash class="h-3.5 w-3.5"/>
                                 <span>Hapus</span>
@@ -463,6 +343,16 @@
         </div>
     </div>
 </div>
+
+{{-- FLOATING ACTION BUTTON (FAB) KHUSUS MOBILE --}}
+<button
+    type="button"
+    @click="$dispatch('open-create-category')"
+    class="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#AE7C18] text-white shadow-xl shadow-[#AE7C18]/40 transition hover:bg-[#96690F] active:scale-95 lg:hidden"
+    aria-label="Tambah Kategori"
+>
+    <x-heroicon-o-plus class="h-6 w-6"/>
+</button>
 
 @include('admin.categories.partials.create-category')
 @include('admin.categories.partials.view-category')

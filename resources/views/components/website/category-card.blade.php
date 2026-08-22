@@ -6,9 +6,10 @@
 
 <a
     href="{{ $href }}"
-    class="group block overflow-hidden rounded-3xl bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+    class="group block overflow-hidden rounded-2xl bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:rounded-3xl sm:hover:-translate-y-2 sm:hover:shadow-2xl">
 
-    <div class="aspect-[4/5] overflow-hidden">
+    {{-- Aspect ratio disesuaikan agar tidak terlalu tinggi di mobile --}}
+    <div class="aspect-[16/10] overflow-hidden sm:aspect-[4/5]">
 
         <img
             src="{{ asset($image) }}"
@@ -17,18 +18,18 @@
 
     </div>
 
-    <div class="flex items-center justify-between p-6">
+    <div class="flex items-center justify-between p-4 sm:p-6">
 
-        <h3 class="text-xl font-bold text-gray-900">
+        <h3 class="text-base font-bold text-gray-900 sm:text-xl">
 
             {{ $title }}
 
         </h3>
 
         <div
-            class="flex h-10 w-10 items-center justify-center rounded-full bg-[#AE7C18] text-white transition group-hover:rotate-45">
+            class="flex h-8 w-8 items-center justify-center rounded-full bg-[#AE7C18] text-white transition group-hover:rotate-45 sm:h-10 sm:w-10">
 
-            <x-heroicon-o-arrow-up-right class="h-5 w-5"/>
+            <x-heroicon-o-arrow-up-right class="h-4 w-4 sm:h-5 sm:w-5"/>
 
         </div>
 

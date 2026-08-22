@@ -1,83 +1,69 @@
-<section class="bg-white py-28">
-
+<section class="bg-white py-12 sm:py-20 lg:py-28">
     <x-ui.container>
+        @php
+            $featuredProducts = \App\Models\Product::with([
+                'images',
+                'variants',
+                'category'
+            ])
+            ->whereIn('id', [43, 45, 46])
+            ->get();
+        @endphp
 
         {{-- Heading --}}
         <x-ui.reveal>
-
-            <div class="mb-16 text-center">
-
-                <p
-                    class="mb-4 font-semibold uppercase tracking-[0.3em] text-[#AE7C18]">
-
+            <div class="mb-8 text-center sm:mb-14 lg:mb-16">
+                <p class="mb-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:mb-3 sm:text-xs lg:tracking-[0.3em]">
                     FEATURED PRODUCTS
-
                 </p>
 
-                <h2
-                    class="text-4xl font-bold lg:text-5xl">
-
+                <h2 class="text-2xl font-bold leading-tight sm:text-4xl lg:text-5xl">
                     Our Best Collections
-
                 </h2>
 
-                <p
-                    class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600">
+                <p class="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-gray-600 sm:mt-6 sm:text-base sm:leading-8 lg:text-lg">
+                    {{-- Ringkas Khusus Mobile --}}
+                    <span class="block sm:hidden">
+                        Discover our most popular custom apparel, crafted with premium materials and exceptional detail.
+                    </span>
 
-                    Discover our most popular custom sportswear, crafted with premium
-                    materials, modern printing technology, and exceptional attention
-                    to detail.
-
+                    {{-- Versi Lengkap Desktop --}}
+                    <span class="hidden sm:inline">
+                        Discover our most popular custom apparel, crafted with premium materials,
+                        modern printing technology, and exceptional attention to detail.
+                    </span>
                 </p>
-
             </div>
-
         </x-ui.reveal>
 
         {{-- Product Grid --}}
-        <div class="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+        <div class="mx-auto grid max-w-6xl gap-4 sm:gap-8 md:grid-cols-3">
+            @foreach($featuredProducts as $product)
+                @php
+                    $thumbnail = $product->images
+                        ->where('is_thumbnail', true)
+                        ->sortBy('sort_order')
+                        ->first();
 
-            {{-- Product 1 --}}
-            <x-ui.reveal
-                :index="0">
+                    $image = $thumbnail
+                        ? asset('storage/' . $thumbnail->image)
+                        : asset('images/products/placeholder.png');
 
-                <x-website.product-card
-                    title="Football Jersey"
-                    category="Jersey"
-                    image="images/products/adsy.png"
-                    price="149.000"
-                    href="{{ route('product.detail', ['product' => 1]) }}" />
+                    $price = $product->variants->min('price') ?? 0;
 
-            </x-ui.reveal>
+                    $category = $product->category?->name ?? 'Product';
+                @endphp
 
-            {{-- Product 2 --}}
-            <x-ui.reveal
-                :index="1">
-
-                <x-website.product-card
-                    title="Training Hoodie"
-                    category="Jacket"
-                    image="images/products/fortis.png"
-                    price="189.000"
-                    href="{{ route('product.detail', ['product' => 2]) }}" />
-
-            </x-ui.reveal>
-
-            {{-- Product 3 --}}
-            <x-ui.reveal
-                :index="2">
-
-                <x-website.product-card
-                    title="Basketball Jersey"
-                    category="Jersey"
-                    image="images/products/sujud.png"
-                    price="159.000"
-                    href="{{ route('product.detail', ['product' => 3]) }}" />
-
-            </x-ui.reveal>
-
+                <x-ui.reveal :index="$loop->index">
+                    <x-website.product-card
+                        :title="$product->name"
+                        :category="$category"
+                        :image="$image"
+                        :price="number_format($price, 0, ',', '.')"
+                        :href="route('product.detail', ['product' => $product->id])"
+                    />
+                </x-ui.reveal>
+            @endforeach
         </div>
-
     </x-ui.container>
-
 </section>

@@ -1,79 +1,42 @@
-<section class="bg-gray-50 py-28">
-
+<section class="bg-gray-50 py-12 sm:py-20 lg:py-28">
     <x-ui.container>
-
         {{-- Heading --}}
         <x-ui.reveal>
-
-            <div class="mb-16 text-center">
-
+            <div class="mb-8 text-center sm:mb-14 lg:mb-16">
                 <div>
-
-                    <p
-                        class="mb-3 font-semibold uppercase tracking-[0.3em] text-[#AE7C18]">
-
+                    <p class="mb-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:mb-3 sm:text-xs lg:tracking-[0.3em]">
                         PRODUCT CATEGORIES
-
                     </p>
-
-                    <h2
-                        class="text-4xl font-bold lg:text-5xl">
-
+                    <h2 class="text-2xl font-bold leading-tight sm:text-4xl lg:text-5xl">
                         Find Your Style
-
                     </h2>
-
                 </div>
-
             </div>
-
         </x-ui.reveal>
 
         {{-- Category Grid --}}
-        <div class="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
-
-            {{-- Jersey --}}
+        <div class="mx-auto grid max-w-4xl gap-4 sm:gap-8 md:grid-cols-2">
+            {{-- Kaos Jersey --}}
             <x-ui.reveal delay="100">
-
                 <x-website.category-card
-                    title="Jersey"
+                    title="Kaos Jersey"
                     image="images/categories/adsy.png"
-                    href="#" />
-
+                    href="{{ route('catalog', [
+                        'category' => \App\Models\Category::where('name', 'Kaos Jersey')->value('id')
+                    ]) }}"
+                />
             </x-ui.reveal>
 
-            {{-- Jacket --}}
+            {{-- Kaos Polo --}}
             <x-ui.reveal delay="200">
-
                 <x-website.category-card
-                    title="Jacket"
+                    title="Kaos Polo"
                     image="images/categories/fortis.png"
-                    href="#" />
-
+                    href="{{ route('catalog', [
+                        'category' => \App\Models\Category::where('name', 'Kaos Polo')->value('id')
+                    ]) }}"
+                />
             </x-ui.reveal>
-
-            {{-- T-Shirt --}}
-            <x-ui.reveal delay="300">
-
-                <x-website.category-card
-                    title="T-Shirt"
-                    image="images/categories/sujud.png"
-                    href="#" />
-
-            </x-ui.reveal>
-
-            {{-- Pants --}}
-            <x-ui.reveal delay="400">
-
-                <x-website.category-card
-                    title="Pants"
-                    image="images/categories/fortis.png"
-                    href="#" />
-
-            </x-ui.reveal>
-
         </div>
-
     </x-ui.container>
-
 </section>

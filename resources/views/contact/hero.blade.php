@@ -4,7 +4,7 @@
     {{-- 1. Full PNG Background Layer (Transparan & Cover) --}}
     <div class="pointer-events-none absolute inset-0 z-0">
         <img 
-            src="{{ asset('images/hero/bg.png') }}" 
+            src="{{ asset('images/front/bg.png') }}" 
             alt="Hero Background" 
             class="h-full w-full object-cover object-right opacity-15 mix-blend-multiply"
         >
@@ -15,20 +15,20 @@
     <x-ui.container>
 
         <div
-            class="relative z-10 flex min-h-[45vh] items-center py-20 lg:min-h-[55vh] lg:py-28">
+            class="relative z-10 flex min-h-0 items-center py-10 sm:py-16 lg:min-h-[55vh] lg:py-28">
 
             <div class="max-w-2xl">
 
                 {{-- Small Label --}}
                 <div
-                    class="hero-label mb-5 flex items-center gap-3">
+                    class="hero-label mb-3 flex items-center gap-2.5 sm:mb-5 sm:gap-3">
 
                     <div
-                        class="h-px w-10 bg-[#AE7C18] lg:w-12">
+                        class="h-px w-6 bg-[#AE7C18] sm:w-10 lg:w-12">
                     </div>
 
                     <span
-                        class="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#AE7C18] sm:text-xs lg:tracking-[0.35em]">
+                        class="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs lg:tracking-[0.35em]">
 
                         CONTACT PRECISION
 
@@ -38,7 +38,7 @@
 
                 {{-- Heading --}}
                 <h1
-                    class="hero-title text-4xl font-extrabold leading-tight text-secondary sm:text-5xl lg:text-6xl">
+                    class="hero-title text-2xl font-extrabold leading-tight text-secondary sm:text-5xl lg:text-6xl">
 
                     GET IN
 
@@ -52,12 +52,20 @@
 
                 {{-- Description --}}
                 <p
-                    class="hero-description mt-6 max-w-xl text-base leading-8 text-gray-700 lg:text-lg">
+                    class="hero-description mt-3 max-w-xl text-xs leading-relaxed text-gray-700 sm:mt-6 sm:text-base sm:leading-8 lg:text-lg">
 
-                    We'd love to hear from you. Whether you have questions
-                    about custom jerseys, pricing, production, or partnership
-                    opportunities, our team is ready to provide the right
-                    solution for your needs.
+                    {{-- Ringkas Khusus Mobile --}}
+                    <span class="block sm:hidden">
+                        Have questions about custom jerseys, pricing, or orders? Our team is ready to help you.
+                    </span>
+
+                    {{-- Versi Lengkap Desktop --}}
+                    <span class="hidden sm:inline">
+                        We'd love to hear from you. Whether you have questions
+                        about custom jerseys, pricing, production, or partnership
+                        opportunities, our team is ready to provide the right
+                        solution for your needs.
+                    </span>
 
                 </p>
 

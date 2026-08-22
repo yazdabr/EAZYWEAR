@@ -1,21 +1,21 @@
-<section class="bg-white py-28">
+<section class="bg-white py-12 sm:py-20 lg:py-28">
 
     <x-ui.container>
 
         {{-- Heading --}}
         <x-ui.reveal>
 
-            <div class="mb-20 text-center">
+            <div class="mb-10 text-center sm:mb-16 lg:mb-20">
 
                 <p
-                    class="mb-4 font-semibold uppercase tracking-[0.3em] text-[#AE7C18]">
+                    class="mb-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:mb-3 sm:text-xs lg:tracking-[0.3em]">
 
                     HOW IT WORKS
 
                 </p>
 
                 <h2
-                    class="text-4xl font-bold lg:text-5xl">
+                    class="text-2xl font-bold leading-tight sm:text-4xl lg:text-5xl">
 
                     Seamless Production
 
@@ -28,13 +28,18 @@
         {{-- Timeline --}}
         <div class="relative">
 
-            {{-- Line --}}
+            {{-- Line Desktop Horizontal --}}
             <div
                 class="absolute left-0 right-0 top-10 hidden h-[2px] bg-gray-300 lg:block">
             </div>
 
+            {{-- Line Mobile Vertical --}}
             <div
-                class="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
+                class="absolute bottom-6 left-6 top-6 w-[2px] bg-gray-200 sm:left-8 lg:hidden">
+            </div>
+
+            <div
+                class="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-5">
 
                 {{-- Step 1 --}}
                 <x-ui.reveal

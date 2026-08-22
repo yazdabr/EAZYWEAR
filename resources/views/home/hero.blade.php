@@ -1,6 +1,6 @@
 <section
     class="relative overflow-hidden bg-cover bg-center bg-no-repeat"
-    style="background-image: url('{{ asset('images/hero/bg.png') }}');">
+    style="background-image: url('{{ asset('images/front/bg.png') }}');">
 
     {{-- Overlay --}}
     <div
@@ -13,21 +13,21 @@
         <x-ui.container>
 
             <div
-                class="flex min-h-[85vh] items-center py-16 sm:min-h-[90vh] lg:min-h-[92vh]">
+                class="flex min-h-[60vh] items-center py-12 sm:min-h-[90vh] sm:py-16 lg:min-h-[92vh]">
 
                 <div
                     class="max-w-xl lg:max-w-2xl">
 
                     {{-- Small Label --}}
                     <div
-                        class="hero-label mb-5 flex items-center gap-3">
+                        class="hero-label mb-3 flex items-center gap-2.5 sm:mb-5 sm:gap-3">
 
                         <div
-                            class="h-px w-10 bg-[#AE7C18] lg:w-12">
+                            class="h-px w-6 bg-[#AE7C18] sm:w-10 lg:w-12">
                         </div>
 
                         <span
-                            class="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#AE7C18] sm:text-xs lg:tracking-[0.3em]">
+                            class="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs lg:tracking-[0.3em]">
 
                             Engineered For Performance
 
@@ -37,14 +37,14 @@
 
                     {{-- Heading --}}
                     <h1
-                        class="hero-title text-4xl font-extrabold leading-tight text-secondary sm:text-5xl lg:text-7xl">
+                        class="hero-title text-2xl font-extrabold leading-tight text-secondary sm:text-5xl lg:text-7xl">
 
                         Custom Jerseys
 
                         <br>
 
                         <span
-                            class="block italic text-[#AE7C18] lg:inline">
+                            class="inline italic text-[#AE7C18]">
 
                             Built for Champions
 
@@ -54,20 +54,29 @@
 
                     {{-- Description --}}
                     <p
-                        class="hero-description mt-6 max-w-lg text-base leading-8 text-gray-700 lg:mt-8 lg:max-w-xl lg:text-lg">
+                        class="hero-description mt-3 max-w-lg text-xs leading-relaxed text-gray-700 sm:mt-6 sm:text-base sm:leading-8 lg:mt-8 lg:max-w-xl lg:text-lg">
 
-                        Premium custom jerseys for football, futsal,
-                        basketball, volleyball, cycling, esports,
-                        padel, schools, companies, and communities.
+                        {{-- Ringkas Khusus Mobile --}}
+                        <span class="block sm:hidden">
+                            Premium custom sportswear for teams, schools, companies, and communities.
+                        </span>
+
+                        {{-- Versi Lengkap Desktop --}}
+                        <span class="hidden sm:inline">
+                            Premium custom jerseys for football, futsal,
+                            basketball, volleyball, cycling, esports,
+                            padel, schools, companies, and communities.
+                        </span>
 
                     </p>
 
                     {{-- Button --}}
                     <div
-                        class="hero-buttons mt-10 flex flex-col gap-4 sm:flex-row lg:mt-12">
+                        class="hero-buttons mt-5 flex items-center gap-2.5 sm:mt-10 sm:gap-4 lg:mt-12">
 
                         <x-ui.button
-                            href="/catalog">
+                            href="/catalog"
+                            class="!px-4 !py-2.5 !text-xs sm:!px-6 sm:!py-3.5 sm:!text-sm">
 
                             Explore Catalog
 
@@ -75,7 +84,8 @@
 
                         <x-ui.button
                             href="/contact"
-                            variant="outline">
+                            variant="outline"
+                            class="!px-4 !py-2.5 !text-xs sm:!px-6 sm:!py-3.5 sm:!text-sm">
 
                             Contact Us
 

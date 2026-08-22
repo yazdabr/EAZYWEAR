@@ -1,36 +1,41 @@
-<section class="bg-white py-28">
+<section class="bg-white py-12 sm:py-20 lg:py-28">
 
     <x-ui.container>
 
         {{-- Heading --}}
         <x-ui.reveal>
 
-            <div class="mb-16 text-center">
+            <div class="mb-8 text-center sm:mb-14 lg:mb-16">
 
                 <p
-                    class="mb-4 font-semibold uppercase tracking-[0.3em] text-[#AE7C18]">
+                    class="mb-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:mb-3 sm:text-xs lg:tracking-[0.3em]">
 
                     TESTIMONIALS
 
                 </p>
 
                 <h2
-                    class="mx-auto max-w-3xl text-4xl font-bold leading-tight lg:text-5xl">
+                    class="mx-auto max-w-3xl text-2xl font-bold leading-tight sm:text-4xl lg:text-5xl">
 
                     Trusted by Over 500+ Teams
-
-                    <br>
-
-                    in Indonesia
+                    <span class="inline sm:block">in Indonesia</span>
 
                 </h2>
 
                 <p
-                    class="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600">
+                    class="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-gray-600 sm:mt-6 sm:text-base sm:leading-8 lg:text-lg">
 
-                    Hear what our customers have to say about the quality,
-                    service, and experience of working with Eazywear for their
-                    custom sportswear needs.
+                    {{-- Ringkas Khusus Mobile --}}
+                    <span class="block sm:hidden">
+                        Hear what our customers have to say about the quality, service, and experience of working with Eazywear.
+                    </span>
+
+                    {{-- Versi Lengkap Desktop --}}
+                    <span class="hidden sm:inline">
+                        Hear what our customers have to say about the quality,
+                        service, and experience of working with Eazywear for their
+                        custom sportswear needs.
+                    </span>
 
                 </p>
 
@@ -39,7 +44,7 @@
         </x-ui.reveal>
 
         {{-- Testimonials --}}
-        <div class="grid gap-8 lg:grid-cols-3">
+        <div class="grid gap-4 sm:gap-8 lg:grid-cols-3">
 
             {{-- Testimonial 1 --}}
             <x-ui.reveal

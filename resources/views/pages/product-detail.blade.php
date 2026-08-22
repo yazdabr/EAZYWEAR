@@ -1,6 +1,6 @@
 @extends('layouts.website')
 
-@section('title', 'Product Detail')
+@section('title', $product->name)
 
 @section('content')
 

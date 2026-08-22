@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Admin Panel</title>
     @vite(['resources/css/app.css'])
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        }
+
+        input[type="password"]::-webkit-credentials-auto-fill-button {
+            display: none !important;
+        }
+    </style>
 </head>
 
 <body class="relative min-h-screen font-sans antialiased text-slate-900 selection:bg-[#AE7C18] selection:text-white">
@@ -47,39 +61,59 @@
 
             <form
                 method="POST"
-                action="#"
+                action="{{ route('login.store') }}"
                 class="space-y-3.5 sm:space-y-5"
             >
                 @csrf
 
+                @if($errors->any())
+                    <div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-[9px] text-red-600 sm:rounded-xl sm:px-4 sm:py-3 sm:text-xs">
+                        <div class="flex items-start gap-2">
+                            <x-heroicon-o-exclamation-circle class="mt-0.5 h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4"/>
+                            <div>
+                                @foreach($errors->all() as $error)
+                                    <p>{{ $error }}</p>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- EMAIL --}}
                 <div>
                     <label
-                        for="email"
+                        for="username"
                         class="mb-1.5 block text-[8px] font-semibold uppercase tracking-wider text-slate-600 sm:mb-2 sm:text-xs"
                     >
-                        Email
+                        Username
                     </label>
 
                     <div class="relative">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <x-heroicon-o-envelope class="h-3 w-3 text-slate-400 sm:h-4 sm:w-4"/>
+                            <x-heroicon-o-user class="h-3 w-3 text-slate-400 sm:h-4 sm:w-4"/>
                         </div>
 
                         <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            autocomplete="email"
+                            id="username"
+                            name="username"
+                            type="text"
+                            autocomplete="username"
                             required
-                            placeholder="nama@domain.com"
+                            value="{{ old('username') }}"
+                            placeholder="Masukkan username"
                             class="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 px-9 text-[10px] text-slate-700 transition focus:border-[#AE7C18] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-12 sm:rounded-xl sm:px-11 sm:text-sm"
                         >
                     </div>
+
+                    @error('username')
+                        <p class="mt-1.5 text-[9px] text-red-500 sm:text-xs">
+                            {{ $message }}
+                        </p>
+                    @enderror
                 </div>
 
                 {{-- PASSWORD --}}
-                <div x-data="{ show:false }">
+                <div>
                     <div class="mb-1.5 flex items-center justify-between sm:mb-2">
                         <label
                             for="password"
@@ -87,13 +121,6 @@
                         >
                             Password
                         </label>
-
-                        <a
-                            href="#"
-                            class="text-[8px] font-medium text-[#AE7C18] transition hover:underline sm:text-xs"
-                        >
-                            Lupa password?
-                        </a>
                     </div>
 
                     <div class="relative">
@@ -104,7 +131,7 @@
                         <input
                             id="password"
                             name="password"
-                            :type="show ? 'text' : 'password'"
+                            type="password"
                             autocomplete="current-password"
                             required
                             placeholder="••••••••"
@@ -113,17 +140,12 @@
 
                         <button
                             type="button"
-                            @click="show=!show"
-                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 transition hover:text-slate-600"
+                            id="toggle-password"
+                            class="absolute inset-y-0 right-0 z-10 flex w-9 items-center justify-center text-slate-400 transition hover:text-slate-600 sm:w-11"
+                            aria-label="Tampilkan password"
                         >
                             <x-heroicon-o-eye
-                                x-show="!show"
-                                class="h-3 w-3 sm:h-4 sm:w-4"
-                            />
-
-                            <x-heroicon-o-eye-slash
-                                x-show="show"
-                                x-cloak
+                                id="password-eye"
                                 class="h-3 w-3 sm:h-4 sm:w-4"
                             />
                         </button>
@@ -132,13 +154,15 @@
 
                 {{-- REMEMBER --}}
                 <div class="flex items-center">
-                    <label class="flex cursor-pointer items-center gap-1.5">
+                    <label for="remember" class="flex cursor-pointer items-center gap-1.5">
                         <input
+                            id="remember"
                             type="checkbox"
                             name="remember"
+                            value="1"
+                            @checked(old('remember'))
                             class="h-3 w-3 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18] sm:h-4 sm:w-4"
                         >
-
                         <span class="text-[8px] font-medium text-slate-600 sm:text-xs">
                             Ingat saya di perangkat ini
                         </span>
@@ -170,6 +194,25 @@
             © {{ date('Y') }} Sales Management System. All rights reserved.
         </p>
     </div>
+    
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const password = document.getElementById('password');
+    const toggle = document.getElementById('toggle-password');
+    const eye = document.getElementById('password-eye');
 
+    if (!password || !toggle || !eye) return;
+
+    toggle.addEventListener('click', function () {
+        const isPassword = password.type === 'password';
+
+        password.type = isPassword ? 'text' : 'password';
+
+        eye.outerHTML = isPassword
+            ? `<svg id="password-eye" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-3 w-3 sm:h-4 sm:w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.577 3.01 9.964 7.178.047.14.047.294 0 .434C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.577-3.01-9.964-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`
+            : `<svg id="password-eye" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-3 w-3 sm:h-4 sm:w-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.85-.395M6.228 6.228A10.451 10.451 0 0112 4.5c4.756 0 8.774 3.162 10.066 7.5a10.52 10.52 0 01-4.293 5.348M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243L9.879 9.879"/></svg>`;
+    });
+});
+</script>
 </body>
 </html>

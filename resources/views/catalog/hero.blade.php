@@ -3,7 +3,7 @@
     {{-- 1. Full PNG Background Layer (Transparan & Cover) --}}
     <div class="pointer-events-none absolute inset-0 z-0">
         <img 
-            src="{{ asset('images/hero/bg.png') }}" 
+            src="{{ asset('images/front/bg.png') }}" 
             alt="Hero Background" 
             class="h-full w-full object-cover object-right opacity-15 mix-blend-multiply"
         >
@@ -17,27 +17,35 @@
 
     {{-- 4. Hero Content --}}
     <x-ui.container>
-        <div class="relative z-10 flex min-h-[45vh] items-center py-20 lg:min-h-[55vh] lg:py-28">
+        <div class="relative z-10 flex min-h-0 items-center py-10 sm:py-16 lg:min-h-[55vh] lg:py-28">
             <div class="max-w-2xl">
 
                 {{-- Small Label --}}
-                <div class="hero-label mb-5 flex items-center gap-3">
-                    <div class="h-px w-10 bg-[#AE7C18] lg:w-12"></div>
-                    <span class="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#AE7C18] sm:text-xs lg:tracking-[0.35em]">
+                <div class="hero-label mb-3 flex items-center gap-2.5 sm:mb-5 sm:gap-3">
+                    <div class="h-px w-6 bg-[#AE7C18] sm:w-10 lg:w-12"></div>
+                    <span class="text-[9px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs lg:tracking-[0.35em]">
                         THE EQUIPMENT OF EXCELLENCE
                     </span>
                 </div>
 
                 {{-- Heading --}}
-                <h1 class="hero-title text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+                <h1 class="hero-title text-2xl font-extrabold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
                     CATALOG
                 </h1>
 
                 {{-- Description --}}
-                <p class="hero-description mt-6 max-w-xl text-base leading-8 text-slate-700 lg:text-lg">
-                    Browse our premium custom sportswear collection,
-                    engineered for the technical pursuit of excellence
-                    in every discipline.
+                <p class="hero-description mt-3 max-w-xl text-xs leading-relaxed text-slate-700 sm:mt-6 sm:text-base sm:leading-8 lg:text-lg">
+                    {{-- Ringkas Khusus Mobile --}}
+                    <span class="block sm:hidden">
+                        Explore our custom sportswear collection engineered for performance and excellence.
+                    </span>
+
+                    {{-- Versi Lengkap Desktop --}}
+                    <span class="hidden sm:inline">
+                        Browse our premium custom sportswear collection,
+                        engineered for the technical pursuit of excellence
+                        in every discipline.
+                    </span>
                 </p>
 
             </div>

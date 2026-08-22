@@ -3,45 +3,30 @@
     'subtitle' => 'Overview of sales performance',
     'chartId',
     'height' => '340',
+    'data' => [],
 ])
 
-<div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-lg">
-
-    {{-- ================= HEADER ================= --}}
-    <div class="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+<div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:shadow-md sm:rounded-3xl">
+    {{-- Card Header --}}
+    <div class="flex items-center justify-between border-b border-slate-100 p-4 sm:p-6">
         <div>
-            <h2 class="text-lg font-bold text-slate-900 sm:text-xl">{{ $title }}</h2>
-            <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">{{ $subtitle }}</p>
+            <h2 class="text-base font-bold text-slate-900 sm:text-xl">{{ $title }}</h2>
+            <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">{{ $subtitle }}</p>
         </div>
 
-        {{-- Filter --}}
-        <div x-data="{ active: 'Monthly' }" class="flex w-full rounded-xl bg-slate-100 p-1 sm:w-auto">
-            <button @click="active='Mingguan'" 
-                :class="active==='Mingguan' ? 'bg-white shadow text-slate-900' : 'text-slate-500'" 
-                class="flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition sm:flex-none sm:px-4 sm:py-2 sm:text-sm">
-                Mingguan
-            </button>
-            <button @click="active='Bulanan'" 
-                :class="active==='Bulanan' ? 'bg-[#AE7C18] text-white shadow' : 'text-slate-500'" 
-                class="flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition sm:flex-none sm:px-4 sm:py-2 sm:text-sm">
+        <div class="flex rounded-lg bg-slate-100 p-1">
+            <span class="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-slate-900 shadow-sm sm:px-3 sm:py-1.5">
                 Bulanan
-            </button>
-            <button @click="active='Tahunan'" 
-                :class="active==='Tahunan' ? 'bg-white shadow text-slate-900' : 'text-slate-500'" 
-                class="flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition sm:flex-none sm:px-4 sm:py-2 sm:text-sm">
-                Tahunan
-            </button>
+            </span>
         </div>
     </div>
 
-    {{-- ================= CHART ================= --}}
-    <div class="p-3 sm:p-6">
-        <div id="{{ $chartId }}" style="height: {{ $height }}px;"></div>
+    {{-- Chart Area --}}
+    <div class="p-2 sm:p-6">
+        <div id="{{ $chartId }}" class="w-full"></div>
     </div>
-
 </div>
 
-{{-- ================= APEX ================= --}}
 @once
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 @endonce
@@ -49,61 +34,89 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    if (document.querySelector('#{{ $chartId }}')) {
-        const options = {
-            chart: {
-                type: 'area',
-                height: {{ $height }},
-                toolbar: { show: false },
-                zoom: { enabled: false }
-            },
-            series: [{
-                name: 'Sales',
-                data: [120, 180, 160, 220, 260, 310, 280, 340, 390, 430, 470, 520]
-            }],
-            xaxis: {
-                categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                labels: {
-                    style: { colors: '#94A3B8', fontSize: '11px' }
-                }
-            },
-            yaxis: {
-                labels: {
-                    style: { colors: '#94A3B8', fontSize: '11px' }
-                }
-            },
-            stroke: {
-                curve: 'smooth',
-                width: 3
-            },
-            colors: ['#AE7C18'],
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.45,
-                    opacityTo: 0.02,
-                    stops: [0, 100]
-                }
-            },
-            grid: {
-                borderColor: '#E2E8F0',
-                strokeDashArray: 6
-            },
-            markers: {
-                size: 4,
-                hover: { size: 6 }
-            },
-            tooltip: { theme: 'light' },
-            dataLabels: { enabled: false },
-            legend: { show: false }
-        };
+    const element = document.querySelector('#{{ $chartId }}');
+    if (!element) return;
 
-        new ApexCharts(
-            document.querySelector("#{{ $chartId }}"),
-            options
-        ).render();
-    }
+    const chartData = @json($data);
+    const isMobile = window.innerWidth < 640;
+
+    const options = {
+        chart: {
+            type: 'area',
+            height: isMobile ? 260 : {{ $height }},
+            toolbar: { show: false },
+            zoom: { enabled: false },
+            sparkline: { enabled: false }
+        },
+        series: [{
+            name: 'Penjualan',
+            data: chartData.map(item => item.total)
+        }],
+        xaxis: {
+            categories: chartData.map(item => item.label),
+            labels: {
+                style: {
+                    colors: '#94A3B8',
+                    fontSize: isMobile ? '10px' : '11px'
+                }
+            }
+        },
+        yaxis: {
+            labels: {
+                style: {
+                    colors: '#94A3B8',
+                    fontSize: isMobile ? '10px' : '11px'
+                },
+                formatter: function (value) {
+                    if (value >= 1000000) {
+                        return (value / 1000000).toFixed(1) + ' Jt';
+                    }
+                    if (value >= 1000) {
+                        return (value / 1000).toFixed(0) + ' Rb';
+                    }
+                    return value;
+                }
+            }
+        },
+        stroke: {
+            curve: 'smooth',
+            width: isMobile ? 2.5 : 3
+        },
+        colors: ['#AE7C18'],
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.4,
+                opacityTo: 0.05,
+                stops: [0, 100]
+            }
+        },
+        grid: {
+            borderColor: '#F1F5F9',
+            strokeDashArray: 5,
+            padding: {
+                left: isMobile ? 0 : 10,
+                right: isMobile ? 0 : 10
+            }
+        },
+        markers: {
+            size: isMobile ? 3 : 4,
+            hover: { size: 6 }
+        },
+        tooltip: {
+            theme: 'light',
+            y: {
+                formatter: function (value) {
+                    return 'Rp ' + Number(value).toLocaleString('id-ID');
+                }
+            }
+        },
+        dataLabels: { enabled: false },
+        legend: { show: false }
+    };
+
+    new ApexCharts(element, options).render();
 });
 </script>
 @endpush

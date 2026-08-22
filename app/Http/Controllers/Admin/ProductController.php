@@ -507,4 +507,78 @@ class ProductController extends Controller
 
         return $slug;
     }
+
+    public function catalog(Request $request)
+    {
+        $products = Product::with(['category', 'images', 'variants'])
+            ->where('status', true)
+            ->when($request->search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('product_code', 'like', "%{$search}%");
+                });
+            })
+            ->when($request->category, function ($query, $category) {
+                $query->where('category_id', $category);
+            })
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+
+        $categories = Category::orderBy('name')->get();
+
+        return view('pages.catalog', compact('products', 'categories'));
+    }
+
+    public function productDetail(Product $product): View
+    {
+        $product->load([
+            'category',
+            'images',
+            'variants.size',
+            'variants.color',
+            'variants.inventory',
+        ]);
+
+        abort_unless($product->status, 404);
+
+        $product->setAttribute(
+            'thumbnail',
+            $product->images
+                ->where('is_thumbnail', true)
+                ->sortBy('sort_order')
+                ->first()
+        );
+
+        $product->setAttribute(
+            'gallery_images',
+            $product->images
+                ->sortBy('sort_order')
+                ->values()
+        );
+
+        $product->setAttribute(
+            'available_sizes',
+            $product->variants
+                ->filter(fn ($variant) => $variant->size)
+                ->map(function ($variant) {
+                    return [
+                        'id' => $variant->id,
+                        'size_id' => $variant->size_id,
+                        'name' => $variant->size->name,
+                        'price' => (int) $variant->price,
+                        'stock' => (int) ($variant->inventory?->stock ?? 0),
+                    ];
+                })
+                ->values()
+                ->all()
+        );
+
+        $product->setAttribute(
+            'starting_price',
+            (int) $product->variants->min('price')
+        );
+
+        return view('pages.product-detail', compact('product'));
+    }
 }

@@ -28,7 +28,7 @@ document.addEventListener('alpine:init', () => {
         startY: 0,
 
         show(product) {
-            this.productId = product.id ?? null;
+            this.productId = product.id ?? null;.0
             this.productUrl = product.url ?? '#';
             this.title = product.title ?? '';
             this.series = product.series ?? '';

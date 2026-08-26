@@ -49,15 +49,15 @@
                     <div class="mt-4 space-y-3 text-xs leading-relaxed text-gray-600 sm:mt-8 sm:space-y-6 sm:text-base sm:leading-8">
 
                         <p>
-                            Founded in South Jakarta, Eazywear Indonesia began with a simple observation: Indonesian athletes deserved gear that matched their ambition.
+                            Based in Banjarmasin, Eazywear Indonesia is built around a simple belief: every team, community, and organization deserves sportswear that matches their ambition.
                         </p>
 
                         <p>
-                            We bridged the gap between local craftsmanship and international-quality sportswear through premium materials, precision manufacturing, and custom designs.
+                            We combine local craftsmanship with quality materials, precision manufacturing, and custom designs to create sportswear that is comfortable, durable, and made to perform.
                         </p>
 
                         <p class="hidden sm:block">
-                            Today, we proudly serve schools, communities, and professional teams across Indonesia with meticulous attention to detail and durability.
+                            Today, Eazywear serves teams, schools, communities, companies, and organizations across Indonesia with a commitment to quality, detail, and reliable service.
                         </p>
 
                     </div>

@@ -52,10 +52,10 @@
                 :index="0">
 
                 <x-website.testimonial-card
-                    name="Rizky Ramadhan"
-                    position="Captain, FC Jakarta Tigers"
+                    name="M Rizky Ananda"
+                    position="Sports Enthusiast"
                     image="images/testimonials/fortis.png"
-                    quote="The quality of the material surpassed our expectations. Eazywear handled our custom design perfectly, and the delivery was ahead of schedule."/>
+                    quote="Kualitas jersey & desain nya sangat bagus & jgn diragukan lagi"/>
 
             </x-ui.reveal>
 
@@ -65,10 +65,10 @@
                 :index="1">
 
                 <x-website.testimonial-card
-                    name="Santi Wijaya"
-                    position="HR Manager, Tech Corp Indonesia"
-                    image="images/testimonials/fortis.png"
-                    quote="Ordering jerseys for our corporate tournament was a breeze. The team at Eazywear was very responsive to our branding requirements."/>
+                    name="Hadi Yani"
+                    position="Sports Enthusiast"
+                    image="images/testimonials/tala.png"
+                    quote="Saya pernah buat baju di sana. Bagi yang ingin bikin baju bisa langsung datang ke jln ayani km 11 200jalan asang permai Handil Dua Banyu Hirang"/>
 
             </x-ui.reveal>
 
@@ -78,10 +78,10 @@
                 :index="2">
 
                 <x-website.testimonial-card
-                    name="Bambang S."
+                    name="Akmal Nurdin"
                     position="Founder, Garuda Esports"
-                    image="images/testimonials/fortis.png"
-                    quote="The colors are vibrant and don't fade after washing. We've been using their jerseys for two seasons now and they still look new."/>
+                    image="images/testimonials/kuin.png"
+                    quote="Produk jerseynya menggunakan bahan yang premium jdinya bagus 👍👍👍"/>
 
             </x-ui.reveal>
 

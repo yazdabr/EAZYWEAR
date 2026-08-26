@@ -1,19 +1,14 @@
 <section class="bg-white py-12 sm:py-20 lg:py-28">
+
     <x-ui.container>
-        @php
-            $featuredProducts = \App\Models\Product::with([
-                'images',
-                'variants',
-                'category'
-            ])
-            ->whereIn('id', [43, 45, 46])
-            ->get();
-        @endphp
 
         {{-- Heading --}}
         <x-ui.reveal>
             <div class="mb-8 text-center sm:mb-14 lg:mb-16">
-                <p class="mb-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:mb-3 sm:text-xs lg:tracking-[0.3em]">
+
+                <p
+                    class="mb-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:mb-3 sm:text-xs lg:tracking-[0.3em]"
+                >
                     FEATURED PRODUCTS
                 </p>
 
@@ -21,49 +16,92 @@
                     Our Best Collections
                 </h2>
 
-                <p class="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-gray-600 sm:mt-6 sm:text-base sm:leading-8 lg:text-lg">
+                <p
+                    class="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-gray-600 sm:mt-6 sm:text-base sm:leading-8 lg:text-lg"
+                >
                     {{-- Ringkas Khusus Mobile --}}
                     <span class="block sm:hidden">
-                        Discover our most popular custom apparel, crafted with premium materials and exceptional detail.
+                        Our premium collections are coming soon.
                     </span>
 
                     {{-- Versi Lengkap Desktop --}}
                     <span class="hidden sm:inline">
-                        Discover our most popular custom apparel, crafted with premium materials,
-                        modern printing technology, and exceptional attention to detail.
+                        Discover our upcoming collection of premium custom apparel,
+                        crafted with exceptional attention to detail.
                     </span>
                 </p>
+
             </div>
         </x-ui.reveal>
 
         {{-- Product Grid --}}
         <div class="mx-auto grid max-w-6xl gap-4 sm:gap-8 md:grid-cols-3">
-            @foreach($featuredProducts as $product)
-                @php
-                    $thumbnail = $product->images
-                        ->where('is_thumbnail', true)
-                        ->sortBy('sort_order')
-                        ->first();
 
-                    $image = $thumbnail
-                        ? asset('storage/' . $thumbnail->image)
-                        : asset('images/products/placeholder.png');
+            {{-- Product 1 --}}
+            <x-ui.reveal delay="100">
+                <div
+                    class="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl bg-slate-300"
+                >
+                    <div class="text-center">
+                        <span
+                            class="block text-2xl font-bold uppercase tracking-[0.2em] text-white sm:text-3xl"
+                        >
+                            Soon
+                        </span>
 
-                    $price = $product->variants->min('price') ?? 0;
+                        <span
+                            class="mt-2 block text-[10px] font-medium uppercase tracking-[0.25em] text-slate-100 sm:text-xs"
+                        >
+                            Premium Collection
+                        </span>
+                    </div>
+                </div>
+            </x-ui.reveal>
 
-                    $category = $product->category?->name ?? 'Product';
-                @endphp
+            {{-- Product 2 --}}
+            <x-ui.reveal delay="200">
+                <div
+                    class="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl bg-slate-300"
+                >
+                    <div class="text-center">
+                        <span
+                            class="block text-2xl font-bold uppercase tracking-[0.2em] text-white sm:text-3xl"
+                        >
+                            Soon
+                        </span>
 
-                <x-ui.reveal :index="$loop->index">
-                    <x-website.product-card
-                        :title="$product->name"
-                        :category="$category"
-                        :image="$image"
-                        :price="number_format($price, 0, ',', '.')"
-                        :href="route('product.detail', ['product' => $product->id])"
-                    />
-                </x-ui.reveal>
-            @endforeach
+                        <span
+                            class="mt-2 block text-[10px] font-medium uppercase tracking-[0.25em] text-slate-100 sm:text-xs"
+                        >
+                            Premium Collection
+                        </span>
+                    </div>
+                </div>
+            </x-ui.reveal>
+
+            {{-- Product 3 --}}
+            <x-ui.reveal delay="300">
+                <div
+                    class="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl bg-slate-300"
+                >
+                    <div class="text-center">
+                        <span
+                            class="block text-2xl font-bold uppercase tracking-[0.2em] text-white sm:text-3xl"
+                        >
+                            Soon
+                        </span>
+
+                        <span
+                            class="mt-2 block text-[10px] font-medium uppercase tracking-[0.25em] text-slate-100 sm:text-xs"
+                        >
+                            Premium Collection
+                        </span>
+                    </div>
+                </div>
+            </x-ui.reveal>
+
         </div>
+
     </x-ui.container>
+
 </section>

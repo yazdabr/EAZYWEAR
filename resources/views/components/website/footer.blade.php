@@ -35,25 +35,25 @@
 
                 {{-- Categories Accordion --}}
                 <details class="group py-3">
-                    <summary class="flex cursor-pointer items-center justify-between text-xs font-bold uppercase tracking-wider text-[#AE7C18]">
+
+                    <summary
+                        class="flex cursor-pointer items-center justify-between text-xs font-bold uppercase tracking-wider text-[#AE7C18]"
+                    >
                         <span>Categories</span>
-                        <x-heroicon-o-chevron-down class="h-4 w-4 transition-transform duration-200 group-open:rotate-180 text-slate-400" />
+
+                        <x-heroicon-o-chevron-down
+                            class="h-4 w-4 text-slate-400 transition-transform duration-200 group-open:rotate-180"
+                        />
                     </summary>
-                    @php
-                        $footerCategories = \App\Models\Category::whereIn('name', [
-                            'Kaos Jersey',
-                            'Kaos Polo',
-                        ])->orderBy('name')->get();
-                    @endphp
+
                     <ul class="mt-3 space-y-2.5 pl-1 text-xs text-slate-300">
-                        @foreach($footerCategories as $category)
-                            <li>
-                                <a href="{{ route('catalog', ['category' => $category->id]) }}" class="hover:text-white">
-                                    {{ $category->name }}
-                                </a>
-                            </li>
-                        @endforeach
+                        <li>
+                            <span class="text-slate-400">
+                                Soon
+                            </span>
+                        </li>
                     </ul>
+
                 </details>
 
                 {{-- Location & Contact Accordion --}}
@@ -93,18 +93,19 @@
 
                 {{-- Products --}}
                 <div>
+
                     <h3 class="mb-3 text-xs font-bold uppercase tracking-widest text-[#AE7C18]">
                         Categories
                     </h3>
+
                     <ul class="space-y-2 text-xs font-medium text-slate-300">
-                        @foreach($footerCategories as $category)
-                            <li>
-                                <a href="{{ route('catalog', ['category' => $category->id]) }}" class="hover:text-white transition">
-                                    {{ $category->name }}
-                                </a>
-                            </li>
-                        @endforeach
+                        <li>
+                            <span class="text-slate-400">
+                                Soon
+                            </span>
+                        </li>
                     </ul>
+
                 </div>
 
                 {{-- Location --}}

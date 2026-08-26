@@ -3,7 +3,7 @@
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
         {{-- Mobile Background --}}
         <img
-            src="{{ asset('images/front/bg.png') }}"
+            src="{{ asset('images/front/bg.jpg') }}"
             alt=""
             class="absolute inset-y-0 right-[-35%] h-full w-[180%] max-w-none object-cover object-right sm:hidden"
         >
@@ -17,7 +17,7 @@
 
         {{-- Overlay --}}
         <div class="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/20"></div>
-    </div>
+    </div>  
 
     {{-- Content --}}
     <div class="relative z-10">

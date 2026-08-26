@@ -4,7 +4,7 @@
     {{-- 1. Full PNG Background Layer (Transparan & Cover) --}}
     <div class="pointer-events-none absolute inset-0 z-0">
         <img 
-            src="{{ asset('images/front/bg.png') }}" 
+            src="{{ asset('images/front/fixbglagi.png') }}" 
             alt="Hero Background" 
             class="h-full w-full object-cover object-right opacity-15 mix-blend-multiply"
         >

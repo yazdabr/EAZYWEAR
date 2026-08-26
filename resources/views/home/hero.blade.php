@@ -3,7 +3,7 @@
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
         {{-- Mobile Background --}}
         <img
-            src="{{ asset('images/front/fixbg.png') }}"
+            src="{{ asset('images/front/fixbglagi.png') }}"
             alt=""
             class="absolute inset-y-0 right-[-35%] h-full w-[180%] max-w-none object-cover object-right sm:hidden"
         >

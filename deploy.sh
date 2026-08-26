@@ -20,12 +20,23 @@ echo "[3/4] Syncing public assets..."
 PUBLIC_DIR="$(pwd)/public"
 PUBLIC_HTML="$(cd ../../public_html && pwd)"
 
-rsync -a "$PUBLIC_DIR/images/" "$PUBLIC_HTML/images/"
-rsync -a "$PUBLIC_DIR/icons/" "$PUBLIC_HTML/icons/"
-rsync -a "$PUBLIC_DIR/fonts/" "$PUBLIC_HTML/fonts/"
-rsync -a "$PUBLIC_DIR/build/" "$PUBLIC_HTML/build/"
+sync_directory() {
+    SOURCE="$1"
+    DESTINATION="$2"
 
-echo "Public assets synced successfully."
+    if [ -d "$SOURCE" ]; then
+        mkdir -p "$DESTINATION"
+        rsync -a "$SOURCE/" "$DESTINATION/"
+        echo "Synced: $SOURCE"
+    else
+        echo "Skipped: $SOURCE (directory not found)"
+    fi
+}
+
+sync_directory "$PUBLIC_DIR/images" "$PUBLIC_HTML/images"
+sync_directory "$PUBLIC_DIR/icons" "$PUBLIC_HTML/icons"
+sync_directory "$PUBLIC_DIR/fonts" "$PUBLIC_HTML/fonts"
+sync_directory "$PUBLIC_DIR/build" "$PUBLIC_HTML/build"
 
 echo ""
 echo "[4/4] Clearing Laravel cache..."

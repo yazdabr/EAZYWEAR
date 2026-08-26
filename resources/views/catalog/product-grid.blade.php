@@ -19,7 +19,7 @@
 
                     <div class="col-span-2 py-16 text-center">
                         <p class="text-gray-500">
-                            No products found.
+                            Soon.
                         </p>
                     </div>
 
@@ -46,7 +46,7 @@
 
                     <div class="col-span-full py-16 text-center">
                         <p class="text-gray-500">
-                            No products found.
+                            Soon.
                         </p>
                     </div>
 

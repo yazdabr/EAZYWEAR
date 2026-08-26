@@ -525,7 +525,9 @@ class ProductController extends Controller
             ->paginate(12)
             ->withQueryString();
 
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::where('status', true)
+            ->orderBy('name')
+            ->get();
 
         return view('pages.catalog', compact('products', 'categories'));
     }

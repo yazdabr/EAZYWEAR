@@ -4,30 +4,42 @@
 @section('page-title', 'Transaksi')
 
 @section('content')
-<div class="space-y-8">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+<div class="space-y-5 sm:space-y-8">
+    {{-- HEADER --}}
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-3xl font-bold text-slate-900">Transaksi</h2>
-            <p class="mt-2 text-slate-500">Kelola semua transaksi dan pembayaran pelanggan.</p>
+            <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">Transaksi</h2>
+            <p class="mt-1 text-xs text-slate-500 sm:text-sm">Kelola semua transaksi dan pembayaran pelanggan.</p>
         </div>
 
-        <a href="{{ route('admin.transactions.create') }}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F]">
+        {{-- TOMBOL DEKSTOP --}}
+        <a href="{{ route('admin.transactions.create') }}" class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex">
             <x-heroicon-o-plus class="h-5 w-5"/>
             Transaksi Baru
         </a>
     </div>
 
-    <form method="GET" action="{{ route('admin.transactions') }}" class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div class="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
+    {{-- FLOATING ACTION BUTTON (FAB) KHUSUS MOBILE --}}
+    <a
+        href="{{ route('admin.transactions.create') }}"
+        class="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#AE7C18] text-white shadow-xl shadow-[#AE7C18]/40 transition hover:bg-[#96690F] active:scale-95 lg:hidden"
+        aria-label="Tambah Transaksi"
+    >
+        <x-heroicon-o-plus class="h-6 w-6"/>
+    </a>
+
+    {{-- FILTER FORM --}}
+    <form method="GET" action="{{ route('admin.transactions') }}" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6">
+        <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3 sm:mb-5 sm:pb-4">
             <div>
-                <h3 class="text-xl font-semibold text-slate-800">Filter Data</h3>
+                <h3 class="text-base font-semibold text-slate-800 sm:text-xl">Filter Data</h3>
             </div>
-            <span class="text-xs text-slate-400">Filter berdasarkan pelanggan dan kriteria transaksi</span>
+            <span class="text-[11px] text-slate-400 sm:text-xs">Filter pelanggan & kriteria</span>
         </div>
 
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-12">
+        <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-12 sm:gap-4">
             <div class="md:col-span-2 lg:col-span-4">
-                <label class="mb-1.5 block text-xs font-medium text-slate-600">Cari Pelanggan</label>
+                <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">Cari Pelanggan</label>
 
                 <div x-data="transactionCustomerSearch()" class="relative w-full">
                     <x-admin.search-input
@@ -65,14 +77,12 @@
                             >
                                 <div class="min-w-0 pr-2">
                                     <p class="truncate text-sm font-semibold text-slate-800" x-text="customer.name"></p>
-
                                     <p
                                         x-show="customer.email"
                                         class="mt-0.5 truncate text-xs text-slate-400"
                                         x-text="customer.email"
                                     ></p>
                                 </div>
-
                                 <x-heroicon-o-chevron-right class="h-4 w-4 shrink-0 text-slate-400"/>
                             </button>
                         </template>
@@ -87,14 +97,13 @@
             </div>
 
             <div class="md:col-span-2 lg:col-span-8">
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-end">
-                    <div class="w-full sm:w-52">
-                        <label class="mb-1.5 block text-xs font-medium text-slate-600">Bulan</label>
-
+                <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-end sm:justify-end sm:gap-4">
+                    <div class="col-span-1 w-full sm:w-52">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">Bulan</label>
                         <select
                             name="month"
                             onchange="this.form.submit()"
-                            class="h-[50px] w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+                            class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
                         >
                             <option value="">Semua Bulan</option>
                             <option value="1" @selected(request('month') == '1')>Januari</option>
@@ -112,16 +121,14 @@
                         </select>
                     </div>
 
-                    <div class="w-full sm:w-40">
-                        <label class="mb-1.5 block text-xs font-medium text-slate-600">Tahun</label>
-
+                    <div class="col-span-1 w-full sm:w-40">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">Tahun</label>
                         <select
                             name="year"
                             onchange="this.form.submit()"
-                            class="h-[50px] w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+                            class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
                         >
                             <option value="">Semua Tahun</option>
-
                             @for($year = now()->year; $year >= now()->year - 5; $year--)
                                 <option value="{{ $year }}" @selected(request('year') == $year)>
                                     {{ $year }}
@@ -130,13 +137,14 @@
                         </select>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="col-span-2 flex items-center justify-end sm:col-span-1">
                         <a
                             href="{{ route('admin.transactions') }}"
                             title="Atur Ulang Filter"
-                            class="inline-flex h-[50px] w-[50px] items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98]"
+                            class="inline-flex h-[42px] w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98] sm:h-[50px] sm:w-[50px]"
                         >
                             <x-heroicon-o-arrow-path class="h-4 w-4"/>
+                            <span class="ml-2 text-xs font-medium sm:hidden">Reset Filter</span>
                         </a>
                     </div>
                 </div>
@@ -145,7 +153,7 @@
     </form>
 
     {{-- ================= STATISTICS ================= --}}
-    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         <x-admin.stat-card
             title="Total Transaksi"
             value="{{ number_format($totalTransactions, 0, ',', '.') }}"
@@ -154,7 +162,7 @@
             :neutral="$transactionGrowth['neutral']"
         >
             <x-slot:icon>
-                <x-heroicon-o-receipt-percent class="h-7 w-7"/>
+                <x-heroicon-o-receipt-percent class="h-6 w-6 sm:h-7 sm:w-7"/>
             </x-slot:icon>
         </x-admin.stat-card>
 
@@ -166,7 +174,7 @@
             :neutral="$revenueGrowth['neutral']"
         >
             <x-slot:icon>
-                <x-heroicon-o-banknotes class="h-7 w-7"/>
+                <x-heroicon-o-banknotes class="h-6 w-6 sm:h-7 sm:w-7"/>
             </x-slot:icon>
         </x-admin.stat-card>
 
@@ -178,16 +186,16 @@
             :neutral="$completedGrowth['neutral']"
         >
             <x-slot:icon>
-                <x-heroicon-o-check-badge class="h-7 w-7"/>
+                <x-heroicon-o-check-badge class="h-6 w-6 sm:h-7 sm:w-7"/>
             </x-slot:icon>
         </x-admin.stat-card>
     </div>
 
     {{-- ================= TRANSACTION LIST ================= --}}
-    <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl">
 
         {{-- ================= MOBILE ================= --}}
-        <div class="block md:hidden">
+        <div class="divide-y divide-slate-100 block md:hidden">
             @forelse($transactions as $transaction)
                 @php
                     $total=(float)($transaction['total'] ?? 0);
@@ -200,49 +208,51 @@
                     };
                 @endphp
 
-                <div class="border-b border-slate-200 bg-white p-4 transition hover:bg-slate-50/50 last:border-b-0">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <p class="font-bold text-slate-900">
+                <div class="p-4 transition hover:bg-slate-50/60 active:bg-slate-50">
+                    {{-- Baris 1: Invoice & Status --}}
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <p class="text-sm font-bold text-slate-900">
                                 {{ $transaction['invoice'] ?? '-' }}
                             </p>
-                            <p class="mt-0.5 text-xs text-slate-400">
+                            <p class="mt-0.5 text-[11px] text-slate-400">
                                 {{ $transaction['date'] ?? '-' }}
                             </p>
                         </div>
 
-                        <div class="flex shrink-0 items-center gap-2">
-                            <span class="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold {{ $paymentColor }}">
+                        <div class="flex shrink-0 items-center gap-1.5">
+                            <span class="inline-flex rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $paymentColor }}">
                                 {{ $transaction['payment'] ?? '-' }}
                             </span>
-
                             <x-admin.badge-status status="{{ $transaction['status'] ?? '-' }}"/>
                         </div>
                     </div>
 
-                    <div class="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
-                        <div class="min-w-0">
-                            <p class="text-[11px] text-slate-400">Pelanggan</p>
-                            <p class="truncate text-sm font-medium text-slate-800">
+                    {{-- Baris 2: Detail Pelanggan & Total --}}
+                    <div class="mt-3 flex items-center justify-between rounded-xl bg-slate-50 p-2.5">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-[10px] uppercase font-semibold text-slate-400">Pelanggan</p>
+                            <p class="truncate text-xs font-medium text-slate-800">
                                 {{ $transaction['customer'] ?? '-' }}
                             </p>
                         </div>
 
                         <div class="shrink-0 text-right">
-                            <p class="text-[11px] text-slate-400">Total Tagihan</p>
-                            <p class="text-sm font-bold text-[#AE7C18]">
+                            <p class="text-[10px] uppercase font-semibold text-slate-400">Total Tagihan</p>
+                            <p class="text-xs font-bold text-[#AE7C18]">
                                 Rp {{ number_format($total,0,',','.') }}
                             </p>
                         </div>
                     </div>
 
-                    <div class="mt-3 flex justify-end gap-2 border-t border-slate-100 pt-3">
+                    {{-- Baris 3: Tombol Aksi --}}
+                    <div class="mt-3 flex items-center justify-end gap-2">
                         <button
                             type="button"
                             @click="window.dispatchEvent(new CustomEvent('open-view-transaction',{
                                 detail:@js($transaction)
                             }))"
-                            class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                            class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
                         >
                             <x-heroicon-o-eye class="h-3.5 w-3.5 text-slate-500"/>
                             Lihat
@@ -259,18 +269,18 @@
                                     status:@js($transaction['status'] ?? '')
                                 }
                             }))"
-                            class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100"
+                            class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-2 text-xs font-medium text-red-600 transition hover:bg-red-100 active:scale-95"
+                            aria-label="Hapus Transaksi"
                         >
                             <x-heroicon-o-trash class="h-3.5 w-3.5"/>
-                            Hapus
                         </button>
                     </div>
                 </div>
             @empty
-                <div class="px-6 py-14 text-center">
+                <div class="px-6 py-12 text-center">
                     <x-heroicon-o-receipt-percent class="mx-auto h-10 w-10 text-slate-300"/>
                     <p class="mt-3 font-medium text-slate-600">Tidak ada transaksi</p>
-                    <p class="mt-1 text-sm text-slate-400">
+                    <p class="mt-1 text-xs text-slate-400">
                         Belum ada transaksi yang sesuai dengan filter.
                     </p>
                 </div>

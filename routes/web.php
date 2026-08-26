@@ -165,5 +165,8 @@ Route::prefix('admin')
 
             Route::get('/sales-reports/print', [SalesReportController::class, 'print'])
                 ->name('sales-reports.print');
+
+            Route::get('/sales-reports/export', [SalesReportController::class, 'export'])
+                ->name('sales-reports.export');
         });
     });

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\SalesReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SalesReportController extends Controller
 {
@@ -310,6 +312,16 @@ class SalesReportController extends Controller
         return collect($months)
             ->sortKeys()
             ->values();
+    }
+
+    public function export(Request $request)
+    {
+        $filename = 'laporan-penjualan-' . now()->format('Y-m-d-His') . '.xlsx';
+
+        return Excel::download(
+            new SalesReportExport($request),
+            $filename
+        );
     }
 
     public function print(Request $request)

@@ -3,20 +3,22 @@
 @section('page-title','Transaksi Baru')
 
 @section('content')
-<div x-data="transactionCreate()" class="space-y-6 md:space-y-8 pb-10">
+{{-- Menambahkan pb-36 di mobile agar konten bawah tidak pernah tertutup sticky footer --}}
+<div x-data="transactionCreate()" class="space-y-6 md:space-y-8 pb-36 md:pb-10">
+  {{-- Header --}}
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
-      <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">Transaksi Baru</h2>
-      <p class="mt-1 text-sm text-slate-500 sm:mt-2 sm:text-base">Buat transaksi manual untuk pelanggan.</p>
+      <h2 class="text-xl font-bold text-slate-900 sm:text-3xl">Transaksi Baru</h2>
+      <p class="mt-1 text-xs text-slate-500 sm:mt-2 sm:text-base">Buat transaksi manual untuk pelanggan.</p>
     </div>
-    <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 sm:py-3">
+    <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 sm:px-5 sm:py-3">
       <x-heroicon-o-arrow-left class="h-5 w-5"/> Kembali
     </a>
   </div>
 
   {{-- Informasi Pelanggan --}}
   <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl overflow-hidden">
-    <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+    <div class="flex items-center gap-3 border-b border-slate-200 px-4 py-3.5 sm:gap-4 sm:px-6 sm:py-5">
       <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
         <x-heroicon-o-user class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6"/>
       </div>
@@ -25,48 +27,47 @@
         <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Isi informasi pelanggan transaksi.</p>
       </div>
     </div>
-    <div class="grid gap-4 p-4 sm:grid-cols-2 sm:gap-6 sm:p-6">
+    <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:gap-6 sm:p-6">
       <div>
-        <label class="mb-2 block text-sm font-medium text-slate-700">Nama Pelanggan <span class="text-red-500">*</span></label>
+        <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">Nama Pelanggan <span class="text-red-500">*</span></label>
         <input x-model="customer.name" type="text" placeholder="Masukkan nama pelanggan..." class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
       </div>
       <div>
-        <label class="mb-2 block text-sm font-medium text-slate-700">Nomor Telepon</label>
+        <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">Nomor Telepon</label>
         <input x-model="customer.phone" type="text" placeholder="08xxxxxxxxxx" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
       </div>
       <div>
-        <label class="mb-2 block text-sm font-medium text-slate-700">Email</label>
+        <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">Email</label>
         <input x-model="customer.email" type="email" placeholder="customer@email.com" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
       </div>
       <div>
-        <label class="mb-2 block text-sm font-medium text-slate-700">Tanggal Transaksi</label>
+        <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">Tanggal Transaksi</label>
         <input x-model="transactionDate" type="date" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
       </div>
     </div>
   </div>
 
   {{-- Pemilihan Produk --}}
-  <div class="relative overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl">
-    <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl">
+    <div class="flex items-center gap-3 border-b border-slate-200 px-4 py-3.5 sm:gap-4 sm:px-6 sm:py-5">
       <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
         <x-heroicon-o-cube class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6"/>
       </div>
       <div>
         <h3 class="text-base font-bold text-slate-900 sm:text-lg">Pemilihan Produk</h3>
-        {{-- <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Pilih produk dan variant yang akan dibeli.</p> --}}
+        <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Cari dan pilih varian produk.</p>
       </div>
     </div>
-    <div class="space-y-5 p-4 sm:p-6">
+    <div class="space-y-4 p-4 sm:space-y-5 sm:p-6">
       <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {{-- ================= SEARCH PRODUK ================= --}}
-        <div class="relative z-[1000] lg:col-span-6">
-          <label class="mb-2 block text-sm font-medium text-slate-700">Produk</label>
-          <div class="relative w-full sm:w-80">
-            {{-- Input Search --}}
+        {{-- SEARCH PRODUK --}}
+        <div class="relative lg:col-span-6">
+          <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">Cari Produk</label>
+          <div class="relative w-full">
             <x-admin.search-input name="product_search" placeholder="Ketik nama produk..." autocomplete="off" x-model="productSearch" @input.debounce.300ms="searchProducts()" />
-            {{-- Dropdown --}}
+            
+            {{-- Dropdown Hasil Pencarian --}}
             <div x-show="showProductResults && productSearch.trim().length >= 2" x-cloak @click.outside="showProductResults = false" class="absolute left-0 right-0 top-full z-[9999] mt-2 max-h-72 overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-              {{-- Loading --}}
               <template x-if="productSearching">
                 <div class="flex items-center gap-3 px-4 py-4 text-sm text-slate-400">
                   <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -76,84 +77,82 @@
                   Mencari produk...
                 </div>
               </template>
-              {{-- Hasil --}}
+              
               <template x-for="variant in productResults" :key="variant.id">
                 <button type="button" @click="selectProduct(variant)" class="flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 last:border-none">
-                  {{-- Gambar --}}
                   <div class="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
                     <img :src="variant.image" :alt="variant.product?.name ?? '-'" class="h-full w-full object-cover">
                   </div>
-                  {{-- Informasi --}}
                   <div class="min-w-0 flex-1">
                     <p class="truncate text-sm font-semibold text-slate-800" x-text="variant.product?.name ?? '-'"></p>
                     <p class="mt-0.5 truncate text-xs text-slate-400">
-                      Ukuran: <span x-text="variant.size?.name ?? '-'"></span> 
-                      {{-- SKU: <span x-text="variant.sku ?? '-'"></span> --}}
+                      Ukuran: <span x-text="variant.size?.name ?? '-'"></span>
+                      · Stok: <span x-text="variant.stock"></span>
                     </p>
                   </div>
-                  {{-- Check jika sudah dipilih --}}
                   <div x-show="isSelected(variant.id)" class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#AE7C18] text-white">
                     <x-heroicon-o-check class="h-4 w-4"/>
                   </div>
-                  {{-- Arrow --}}
                   <x-heroicon-o-chevron-right x-show="!isSelected(variant.id)" class="h-4 w-4 shrink-0 text-slate-400" />
                 </button>
               </template>
-              {{-- Tidak ditemukan --}}
+              
               <template x-if="!productSearching && productSearch.trim().length >= 2 && productResults.length === 0">
                 <div class="px-4 py-5 text-center">
                   <p class="text-sm font-medium text-slate-500">Produk tidak ditemukan.</p>
-                  <p class="mt-1 text-xs text-slate-400">Coba gunakan nama produk yang berbeda.</p>
+                  {{-- <p class="mt-1 text-xs text-slate-400">Coba gunakan nama atau SKU lain.</p> --}}
                 </div>
               </template>
             </div>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-4 lg:contents">
+
+        {{-- STOK DAN JUMLAH --}}
+        <div class="grid grid-cols-2 gap-3 lg:contents">
           <div class="lg:col-span-2">
-            <label class="mb-2 block text-sm font-medium text-slate-700">Stok</label>
-            <input type="text" readonly :value="selectedProducts.length ? selectedProducts[selectedProducts.length-1].stock : 0" class="h-[50px] w-full rounded-xl border border-slate-200 bg-slate-100 px-4 text-sm font-medium text-slate-700">
+            <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">Stok Tersedia</label>
+            <input type="text" readonly :value="selectedProducts.length ? selectedProducts[selectedProducts.length-1].stock : 0" class="h-[46px] sm:h-[50px] w-full rounded-xl border border-slate-200 bg-slate-100 px-4 text-sm font-medium text-slate-700">
           </div>
           <div class="lg:col-span-2">
-            <label class="mb-2 block text-sm font-medium text-slate-700">Jumlah</label>
-            <input x-model.number="qty" type="number" min="1" class="h-[50px] w-full rounded-xl border border-slate-300 bg-white px-4 text-sm focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
+            <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">Jumlah</label>
+            <input x-model.number="qty" type="number" min="1" class="h-[46px] sm:h-[50px] w-full rounded-xl border border-slate-300 bg-white px-4 text-sm focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
           </div>
         </div>
+
+        {{-- TOMBOL TAMBAH --}}
         <div class="flex items-end lg:col-span-2">
-          <button type="button" @click="addSelectedProducts()" :disabled="selectedProducts.length === 0" class="inline-flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] disabled:cursor-not-allowed disabled:opacity-50">
+          <button type="button" @click="addSelectedProducts()" :disabled="selectedProducts.length === 0" class="inline-flex h-[46px] sm:h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] disabled:cursor-not-allowed disabled:opacity-50">
             <x-heroicon-o-plus class="h-5 w-5" /> <span>Tambah</span>
           </button>
         </div>
       </div>
 
+      {{-- DAFTAR PRODUK YANG DIPILIH SEMENTARA --}}
       <div x-show="selectedProducts.length" x-cloak class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
           <div>
-            <p class="text-sm font-bold text-slate-900">Produk Dipilih</p>
-            <p class="mt-0.5 text-xs text-slate-500">Produk akan ditambahkan ke keranjang saat tombol Tambah ditekan.</p>
+            <p class="text-xs sm:text-sm font-bold text-slate-900">Produk Dipilih</p>
+            <p class="mt-0.5 text-[11px] sm:text-xs text-slate-500">Tekan Tambah untuk memasukkan ke keranjang.</p>
           </div>
-          <span
-                class="inline-flex shrink-0 whitespace-nowrap rounded-full bg-[#AE7C18]/10 px-3 py-1 text-xs font-semibold text-[#AE7C18]"
-                x-text="selectedProducts.length + ' Produk'"
-            ></span>
+          <span class="inline-flex shrink-0 whitespace-nowrap rounded-full bg-[#AE7C18]/10 px-3 py-1 text-xs font-semibold text-[#AE7C18]" x-text="selectedProducts.length + ' Produk'"></span>
         </div>
         <div class="divide-y divide-slate-100">
           <template x-for="(item,index) in selectedProducts" :key="item.id">
             <div class="flex items-center gap-3 px-4 py-3">
-              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div class="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white sm:h-14 sm:w-14">
                 <img :src="item.image" :alt="item.product?.name" class="h-full w-full object-cover">
               </div>
               <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-semibold text-slate-900" x-text="item.product?.name"></p>
-                <p class="mt-1 text-xs text-slate-500">
+                <p class="truncate text-xs font-semibold text-slate-900 sm:text-sm" x-text="item.product?.name"></p>
+                <p class="mt-0.5 text-[11px] sm:text-xs text-slate-500">
                   Ukuran: <span class="font-medium text-slate-700" x-text="item.size?.name"></span>
                   · Stok: <span class="font-medium text-slate-700" x-text="item.stock"></span>
                 </p>
               </div>
               <div class="text-right">
-                <p class="text-sm font-bold text-[#AE7C18]">Rp <span x-text="formatNumber(item.price)"></span></p>
+                <p class="text-xs font-bold text-[#AE7C18] sm:text-sm">Rp <span x-text="formatNumber(item.price)"></span></p>
               </div>
-              <button type="button" @click="removeSelectedProduct(index)" class="rounded-lg p-2 text-red-500 transition hover:bg-red-50" title="Hapus">
+              <button type="button" @click="removeSelectedProduct(index)" class="rounded-lg p-1.5 text-red-500 transition hover:bg-red-50" title="Hapus">
                 <x-heroicon-o-trash class="h-5 w-5"/>
               </button>
             </div>
@@ -165,53 +164,56 @@
 
   {{-- Keranjang Belanja --}}
   <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl overflow-hidden">
-    <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
-      <div class="flex items-center gap-4">
+    <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3.5 sm:px-6 sm:py-5">
+      <div class="flex items-center gap-3 sm:gap-4">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
           <x-heroicon-o-shopping-cart class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6"/>
         </div>
         <div>
           <h3 class="text-base font-bold text-slate-900 sm:text-lg">Keranjang Belanja</h3>
-          {{-- <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Produk yang akan dimasukkan ke transaksi.</p> --}}
         </div>
       </div>
       <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600" x-text="cart.length + ' Item'"></span>
     </div>
 
-    {{-- Tampilan Mobile untuk Keranjang (Card View tanpa Horizontal Scroll) --}}
-    <div class="block md:hidden divide-y divide-slate-100 p-4 space-y-4">
+    {{-- Mobile View --}}
+    <div class="block md:hidden p-3 space-y-3">
       <template x-if="cart.length === 0">
-        <div class="py-8 text-center text-sm text-slate-400">Belum ada produk di keranjang.</div>
+        <div class="py-8 text-center text-xs text-slate-400">Belum ada produk di keranjang.</div>
       </template>
       <template x-for="(item, index) in cart" :key="item.variant_id">
-        <div class="rounded-xl border border-slate-200 p-4 bg-slate-50/50 space-y-3 first:mt-0">
-          <div class="flex items-start justify-between gap-2">
+        <div class="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm space-y-3">
+          <div class="flex items-start justify-between gap-3">
             <div class="flex min-w-0 items-center gap-3">
-              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
                 <img :src="item.image" :alt="item.product_name" class="h-full w-full object-cover" loading="lazy">
               </div>
               <div class="min-w-0">
-                <p class="text-sm font-bold text-slate-900 truncate" x-text="item.product_name"></p>
-                <p class="mt-0.5 text-xs text-slate-500">
-                  SKU: <span x-text="item.sku"></span>
-                </p>
+                <p class="text-xs font-bold text-slate-900 truncate" x-text="item.product_name"></p>
+                {{-- <p class="mt-0.5 text-[11px] text-slate-500">SKU: <span class="font-medium text-slate-700" x-text="item.sku"></span></p> --}}
+                <div class="mt-1 flex items-center gap-2 text-[11px] text-slate-600">
+                  <span class="rounded bg-slate-100 px-1.5 py-0.5 font-medium">Ukuran: <strong class="text-slate-800" x-text="item.size"></strong></span>
+                </div>
               </div>
             </div>
-            <button type="button" @click="removeItem(index)" class="rounded-lg p-1.5 text-red-600 transition hover:bg-red-50" title="Hapus produk">
+            <button type="button" @click="removeItem(index)" class="rounded-xl p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 transition" title="Hapus produk">
               <x-heroicon-o-trash class="h-5 w-5"/>
             </button>
           </div>
-          <div class="flex items-center justify-between text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
-            <span>Ukuran: <strong class="text-slate-800" x-text="item.size"></strong></span>
-            <span>Harga: <strong class="text-slate-800">Rp <span x-text="formatNumber(item.price)"></span></strong></span>
-          </div>
-          <div class="flex items-center justify-between pt-1">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-medium text-slate-600">Jumlah:</span>
-              <input x-model.number="item.qty" @change="updateQty(index)" type="number" min="1" :max="item.stock" class="w-16 rounded-lg border border-slate-300 px-2 py-1 text-center text-sm bg-white">
+
+          <div class="flex items-center justify-between border-t border-slate-100 pt-3">
+            <div class="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
+              <button type="button" @click="if(item.qty > 1) { item.qty--; updateQty(index); }" class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm active:bg-slate-100 disabled:opacity-40" :disabled="item.qty <= 1">
+                <x-heroicon-o-minus class="h-3.5 w-3.5" />
+              </button>
+              <input x-model.number="item.qty" @change="updateQty(index)" type="number" min="1" :max="item.stock" class="w-10 border-0 bg-transparent text-center text-xs font-bold text-slate-800 focus:ring-0 p-0">
+              <button type="button" @click="if(item.qty < item.stock) { item.qty++; updateQty(index); }" class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-600 shadow-sm active:bg-slate-100 disabled:opacity-40" :disabled="item.qty >= item.stock">
+                <x-heroicon-o-plus class="h-3.5 w-3.5" />
+              </button>
             </div>
+
             <div class="text-right">
-              <span class="text-xs text-slate-500 block">Total</span>
+              <span class="text-[10px] text-slate-400 block uppercase font-medium">Subtotal</span>
               <span class="text-sm font-bold text-[#AE7C18]">Rp <span x-text="formatNumber(item.price * item.qty)"></span></span>
             </div>
           </div>
@@ -219,7 +221,7 @@
       </template>
     </div>
 
-    {{-- Tampilan Desktop untuk Keranjang (Table Standard) --}}
+    {{-- Desktop View: Table-based --}}
     <div class="hidden md:block w-full overflow-x-auto">
       <table class="w-full min-w-[700px] text-sm">
         <thead class="border-b border-slate-200 bg-slate-50">
@@ -247,7 +249,7 @@
                   </div>
                   <div class="min-w-0">
                     <p class="font-semibold text-slate-900 truncate" x-text="item.product_name"></p>
-                    <p class="text-xs text-slate-500">SKU: <span x-text="item.sku"></span></p>
+                    {{-- <p class="text-xs text-slate-500">SKU: <span x-text="item.sku"></span></p> --}}
                   </div>
                 </div>
               </td>
@@ -268,70 +270,73 @@
       </table>
     </div>
 
-    <div class="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-      <span class="text-sm text-slate-500">
+    <div class="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <span class="text-xs text-slate-500 sm:text-sm">
         Total Produk: <span class="font-semibold text-slate-700" x-text="totalQty"></span>
       </span>
-      <span class="text-base font-bold text-[#AE7C18] sm:text-lg">
+      <span class="text-sm font-bold text-[#AE7C18] sm:text-lg">
         Total: Rp <span x-text="formatNumber(subtotal)"></span>
       </span>
     </div>
   </div>
 
-  {{-- Metode Pembayaran & Ringkasan Pesanan --}}
+  {{-- Metode Pembayaran & Ringkasan --}}
   <div class="grid gap-6 lg:grid-cols-2">
+    {{-- Metode Pembayaran --}}
     <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl overflow-hidden">
-      <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+      <div class="flex items-center gap-3 border-b border-slate-200 px-4 py-3.5 sm:gap-4 sm:px-6 sm:py-5">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
           <x-heroicon-o-credit-card class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6"/>
         </div>
         <div>
           <h3 class="text-base font-bold text-slate-900 sm:text-lg">Metode Pembayaran</h3>
-          {{-- <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Pilih metode pembayaran pelanggan.</p> --}}
         </div>
       </div>
       <div class="space-y-3 p-4 sm:p-6">
-        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#AE7C18]">
-          <input type="radio" value="CASH" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
-          <div>
-            <p class="font-semibold text-slate-900 text-sm sm:text-base">Tunai</p>
-            <p class="text-xs text-slate-500">Pembayaran menggunakan uang tunai.</p>
-          </div>
-        </label>
-        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#AE7C18]">
-          <input type="radio" value="QRIS" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
-          <div>
-            <p class="font-semibold text-slate-900 text-sm sm:text-base">QRIS</p>
-            <p class="text-xs text-slate-500">Pembayaran menggunakan QRIS.</p>
-          </div>
-        </label>
-        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#AE7C18]">
-          <input type="radio" value="TRANSFER" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
-          <div>
-            <p class="font-semibold text-slate-900 text-sm sm:text-base">Transfer</p>
-            <p class="text-xs text-slate-500">Pembayaran melalui transfer bank.</p>
-          </div>
-        </label>
-        <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-[#AE7C18]">
-          <input type="radio" value="EDC" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
-          <div>
-            <p class="font-semibold text-slate-900 text-sm sm:text-base">EDC</p>
-            <p class="text-xs text-slate-500">Pembayaran menggunakan kartu.</p>
-          </div>
-        </label>
-        <div class="mt-6 border-t border-slate-200 pt-6">
-          <label class="mb-2 block text-sm font-medium text-slate-700">Sumber Transaksi</label>
-          <select x-model="source" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
+        <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-2 sm:gap-3">
+          <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200 p-3 transition hover:border-[#AE7C18]">
+            <input type="radio" value="CASH" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
+            <div>
+              <p class="font-semibold text-slate-900 text-xs sm:text-sm">Tunai</p>
+              <p class="text-[10px] sm:text-[11px] text-slate-500">Uang tunai</p>
+            </div>
+          </label>
+          <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200 p-3 transition hover:border-[#AE7C18]">
+            <input type="radio" value="QRIS" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
+            <div>
+              <p class="font-semibold text-slate-900 text-xs sm:text-sm">QRIS</p>
+              <p class="text-[10px] sm:text-[11px] text-slate-500">Scan QR</p>
+            </div>
+          </label>
+          <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200 p-3 transition hover:border-[#AE7C18]">
+            <input type="radio" value="TRANSFER" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
+            <div>
+              <p class="font-semibold text-slate-900 text-xs sm:text-sm">Transfer</p>
+              <p class="text-[10px] sm:text-[11px] text-slate-500">Bank</p>
+            </div>
+          </label>
+          <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border border-slate-200 p-3 transition hover:border-[#AE7C18]">
+            <input type="radio" value="EDC" x-model="paymentMethod" class="text-[#AE7C18] focus:ring-[#AE7C18]">
+            <div>
+              <p class="font-semibold text-slate-900 text-xs sm:text-sm">EDC</p>
+              <p class="text-[10px] sm:text-[11px] text-slate-500">Kartu</p>
+            </div>
+          </label>
+        </div>
+        
+        <div class="mt-4 border-t border-slate-200 pt-4 sm:mt-6 sm:pt-6">
+          <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">Sumber Transaksi</label>
+          <select x-model="source" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-xs sm:text-sm font-medium text-slate-700 transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
             <option value="Android POS">Android POS</option>
             <option value="Smart EDC">Smart EDC</option>
           </select>
-          <p class="mt-2 text-xs text-slate-400">Pilih sumber transaksi sesuai dengan sistem yang digunakan.</p>
         </div>
       </div>
     </div>
 
+    {{-- Ringkasan Pesanan --}}
     <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl overflow-hidden">
-      <div class="flex items-center gap-4 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
+      <div class="flex items-center gap-3 border-b border-slate-200 px-4 py-3.5 sm:gap-4 sm:px-6 sm:py-5">
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 sm:h-12 sm:w-12">
           <x-heroicon-o-document-text class="h-5 w-5 text-emerald-600 sm:h-6 sm:w-6"/>
         </div>
@@ -340,23 +345,23 @@
           <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Periksa total transaksi.</p>
         </div>
       </div>
-      <div class="space-y-4 p-4 sm:p-6 text-sm">
-        <div class="flex justify-between">
+      <div class="space-y-4 p-4 sm:p-6 text-xs sm:text-sm">
+        <div class="flex justify-between items-center">
           <span class="text-slate-600">Subtotal</span>
           <span class="font-semibold text-slate-900">Rp <span x-text="formatNumber(subtotal)"></span></span>
         </div>
         <div class="flex items-center justify-between gap-4">
           <span class="text-slate-600">Diskon</span>
-          <input x-model.number="discount" type="number" min="0" class="w-32 rounded-lg border border-slate-300 px-3 py-2 text-right text-sm">
+          <input x-model.number="discount" type="number" min="0" class="w-28 sm:w-32 rounded-lg border border-slate-300 px-3 py-2 text-right text-xs sm:text-sm">
         </div>
         <div class="flex items-center justify-between gap-4">
           <span class="text-slate-600">Ongkos Kirim</span>
-          <input x-model.number="shipping" type="number" min="0" class="w-32 rounded-lg border border-slate-300 px-3 py-2 text-right text-sm">
+          <input x-model.number="shipping" type="number" min="0" class="w-28 sm:w-32 rounded-lg border border-slate-300 px-3 py-2 text-right text-xs sm:text-sm">
         </div>
         <div class="border-t border-dashed border-slate-300"></div>
-        <div class="flex items-center justify-between pt-2">
-          <span class="text-base font-bold text-slate-900 sm:text-lg">Total Keseluruhan</span>
-          <span class="text-xl font-bold text-[#AE7C18] sm:text-2xl">
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-sm font-bold text-slate-900 sm:text-lg">Total Keseluruhan</span>
+          <span class="text-lg font-bold text-[#AE7C18] sm:text-2xl">
             Rp <span x-text="formatNumber(grandTotal)"></span>
           </span>
         </div>
@@ -364,19 +369,38 @@
     </div>
   </div>
 
-  {{-- Tombol Aksi Bawah --}}
-  <div class="flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
-    <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
-      <x-heroicon-o-arrow-left class="h-5 w-5" /> Kembali ke Transaksi
+  {{-- Tombol Aksi Bawah Standard (Desktop) --}}
+  <div class="hidden md:flex flex-col-reverse gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+    <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-xs sm:text-sm font-medium text-slate-700 transition hover:bg-slate-100">
+      <x-heroicon-o-arrow-left class="h-4 w-4 sm:h-5 sm:w-5" /> Kembali
     </a>
-    <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-      <button type="button" @click="resetForm()" class="w-full rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100 sm:w-auto">
+    <div class="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row">
+      <button type="button" @click="resetForm()" class="w-full rounded-xl border border-slate-300 bg-white px-5 py-3 text-xs sm:text-sm font-medium text-slate-700 transition hover:bg-slate-100 sm:w-auto">
         Atur Ulang
       </button>
-      <button type="button" @click="submitForm()" :disabled="loading || cart.length === 0 || !customer.name" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
-        <x-heroicon-o-check-circle class="h-5 w-5" />
+      <button type="button" @click="submitForm()" :disabled="loading || cart.length === 0 || !customer.name" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+        <x-heroicon-o-check-circle class="h-4 w-4 sm:h-5 sm:w-5" />
         Simpan Transaksi
       </button>
+    </div>
+  </div>
+
+  {{-- Diperbesar: Floating Footer khusus Mobile --}}
+  <div class="fixed bottom-0 left-0 right-0 z-[500] border-t border-slate-200/80 bg-white/95 px-4 py-4 backdrop-blur-md md:hidden shadow-[0_-8px_20px_rgba(0,0,0,0.08)]">
+    <div class="flex items-center justify-between gap-3">
+      <div class="min-w-0 flex-1">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Pembayaran</p>
+        <p class="text-lg font-black text-[#AE7C18] truncate">Rp <span x-text="formatNumber(grandTotal)"></span></p>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" @click="resetForm()" class="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition active:scale-95 active:bg-slate-100" title="Atur Ulang">
+          <x-heroicon-o-arrow-path class="h-6 w-6"/>
+        </button>
+        <button type="button" @click="submitForm()" :disabled="loading || cart.length === 0 || !customer.name" class="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#AE7C18] px-5 text-sm font-bold text-white shadow-lg shadow-[#AE7C18]/30 transition active:scale-95 active:bg-[#96690F] disabled:opacity-50">
+          <x-heroicon-o-check-circle class="h-5 w-5" />
+          <span>Simpan</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>

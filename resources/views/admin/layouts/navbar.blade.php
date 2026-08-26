@@ -1,4 +1,4 @@
-<header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
+<header class="fixed inset-x-0 top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-xl lg:sticky lg:inset-x-auto lg:top-0">
     <div class="flex h-[85px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <div class="flex items-center gap-3 sm:gap-4">
             <button

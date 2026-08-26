@@ -2,8 +2,8 @@
 <html
     lang="{{ str_replace('_', '-', app()->getLocale()) }}"
     x-data="{ sidebarOpen: false }"
-    class="h-full scroll-smooth">
-
+    class="h-full scroll-smooth"
+>
 <head>
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -35,16 +35,15 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         @click="sidebarOpen=false"
-        class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden">
-    </div>
+        class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+    ></div>
 
     {{-- ================= SIDEBAR ================= --}}
     <aside
         class="fixed inset-y-0 left-0 z-50 w-[260px] -translate-x-full transform transition-transform duration-300 ease-in-out lg:translate-x-0"
-        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
-
+        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+    >
         @include('admin.layouts.sidebar')
-
     </aside>
 
     {{-- ================= CONTENT ================= --}}
@@ -54,7 +53,7 @@
         @include('admin.layouts.navbar')
 
         {{-- Main Content --}}
-        <main class="p-6 lg:p-8">
+        <main class="p-6 pt-[109px] sm:p-6 sm:pt-[109px] lg:p-8 lg:pt-8">
             @yield('content')
         </main>
 
@@ -63,8 +62,8 @@
     {{-- ================= TOAST ================= --}}
     <div
         id="toast-container"
-        class="fixed right-6 top-6 z-[9999] space-y-3">
-    </div>
+        class="fixed right-6 top-6 z-[9999] space-y-3"
+    ></div>
 
     @stack('scripts')
 

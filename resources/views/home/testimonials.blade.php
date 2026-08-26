@@ -79,7 +79,7 @@
 
                 <x-website.testimonial-card
                     name="Akmal Nurdin"
-                    position="Founder, Garuda Esports"
+                    position="Sports Enthusiast"
                     image="images/testimonials/kuin.png"
                     quote="Produk jerseynya menggunakan bahan yang premium jdinya bagus 👍👍👍"/>
 

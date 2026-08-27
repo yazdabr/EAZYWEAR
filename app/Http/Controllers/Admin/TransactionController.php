@@ -75,9 +75,17 @@ class TransactionController extends Controller
                 'date' => $transaction->transaction_date
                     ? $transaction->transaction_date->format('d M Y H:i')
                     : '-',
-                'customer' => $transaction->customer?->name ?? '-',
-                'customer_phone' => $transaction->customer?->phone ?? '-',
-                'customer_email' => $transaction->customer?->email ?? '-',
+                'customer' => $transaction->shipping_name
+                    ?? $transaction->customer?->name
+                    ?? '-',
+
+                'customer_phone' => $transaction->shipping_phone
+                    ?? $transaction->customer?->phone
+                    ?? '-',
+
+                'customer_email' => $transaction->shipping_email
+                    ?? $transaction->customer?->email
+                    ?? '-',
                 'payment' => $transaction->payment_method ?? '-',
                 'status' => $transaction->status ?? 'PENDING',
                 'subtotal' => (float) $transaction->subtotal,

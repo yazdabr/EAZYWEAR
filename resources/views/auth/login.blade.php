@@ -177,6 +177,15 @@
                     <span>Masuk ke Dashboard</span>
                     <x-heroicon-o-arrow-right class="h-3 w-3 sm:h-4 sm:w-4"/>
                 </button>
+
+                {{-- *BACK TO HOMEPAGE* --}}
+                <a
+                    href="{{ route('home') }}"
+                    class="mt-2 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-600 transition hover:border-[#AE7C18] hover:text-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-12 sm:rounded-xl sm:px-5 sm:text-sm"
+                >
+                    <x-heroicon-o-arrow-left class="h-3 w-3 sm:h-4 sm:w-4"/>
+                    <span>Kembali ke Homepage</span>
+                </a>
             </form>
 
             {{-- SECURITY --}}

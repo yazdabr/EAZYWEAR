@@ -103,22 +103,122 @@
                         type="text"
                         name="search"
                         value="{{ request('search') }}"
-                        placeholder="Cari produk..."
+                        placeholder="Search Products..."
                         autocomplete="off"
                         class="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm font-medium text-gray-700 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-2 focus:ring-[#AE7C18]/10"
                     >
                 </form>
 
-                {{-- Login --}}
+                {{-- Mobile Cart --}}
+                @php
+                    $cartCount = collect(session('cart', []))->sum('qty');
+                @endphp
+
                 <a
-                    href="{{ route('login') }}"
-                    class="flex w-full items-center justify-center rounded-xl bg-[#AE7C18] py-3 text-center text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/25 transition hover:bg-[#96690F] active:scale-[0.98]"
+                    id="navbar-cart"
+                    href="{{ route('cart.index') }}"
+                    @click="open = false"
+                    class="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98]"
                 >
-                    Login / Masuk
+                    <x-heroicon-o-shopping-cart class="h-5 w-5"/>
+
+                    <span>
+                        Cart
+                        @if($cartCount > 0)
+                            ({{ $cartCount }})
+                        @endif
+                    </span>
                 </a>
             </div>
         </div>
     </div>
+
+    {{-- ================= MOBILE FLOATING CART ================= --}}
+    @php
+        $floatingCart = collect(session('cart', []));
+
+        $floatingCartCount = $floatingCart->sum('qty');
+
+        $floatingCartTotal = $floatingCart->sum(function ($item) {
+            return (float) $item['price'] * (int) $item['qty'];
+        });
+    @endphp
+
+    @if(
+        $floatingCartCount > 0 &&
+        !request()->routeIs('cart.index') &&
+        !request()->routeIs('checkout.index')
+    )
+
+        <div
+            x-data="{
+                visible: true
+            }"
+            x-show="visible"
+            x-transition:enter="transition ease-out duration-500"
+            x-transition:enter-start="translate-y-20 opacity-0 scale-95"
+            x-transition:enter-end="translate-y-0 opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="translate-y-0 opacity-100 scale-100"
+            x-transition:leave-end="translate-y-20 opacity-0 scale-95"
+            class="fixed inset-x-4 bottom-4 z-[1100] lg:hidden"
+            style="display: none;"
+        >
+
+            <a
+                href="{{ route('cart.index') }}"
+                class="flex min-h-[64px] items-center gap-3 rounded-2xl bg-slate-900 px-4 py-3 text-white shadow-[0_12px_35px_rgba(0,0,0,0.22)] ring-1 ring-black/5 transition active:scale-[0.98]"
+            >
+
+                {{-- Cart Icon --}}
+                <div class="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
+
+                    <x-heroicon-o-shopping-cart class="h-6 w-6"/>
+
+                    <span
+                        class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-slate-900 shadow-sm"
+                    >
+                        {{ $floatingCartCount > 99 ? '99+' : $floatingCartCount }}
+                    </span>
+
+                </div>
+
+                {{-- Info --}}
+                <div class="min-w-0 flex-1">
+
+                    <p class="text-[11px] font-medium text-white/80">
+                        Keranjang
+                    </p>
+
+                    <p class="truncate text-sm font-bold text-white">
+                        {{ $floatingCartCount }} item
+                    </p>
+
+                </div>
+
+                {{-- Total --}}
+                <div class="text-right">
+
+                    <p class="text-[10px] font-medium text-white/70">
+                        Total
+                    </p>
+
+                    <p class="text-sm font-bold text-white">
+                        Rp {{ number_format($floatingCartTotal, 0, ',', '.') }}
+                    </p>
+
+                </div>
+
+                {{-- Arrow --}}
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15">
+                    <x-heroicon-o-arrow-right class="h-4 w-4"/>
+                </div>
+
+            </a>
+
+        </div>
+
+    @endif
 
     {{-- ================= HEADER ================= --}}
     <header
@@ -169,79 +269,91 @@
                 {{-- Desktop Right --}}
                 <div class="hidden items-center gap-4 lg:flex">
 
-{{-- Search --}}
-<form
-    method="GET"
-    action="{{ route('catalog') }}"
-    class="relative"
-    x-data="{
-        search: @js(request('search', '')),
-        focused: false
-    }"
->
-    <div
-        x-cloak
-        :class="focused ? 'w-40' : 'w-28'"
-        class="{{ request('search') ? 'w-40' : 'w-28' }} flex items-center rounded-full border border-gray-300 transition-all duration-300 focus-within:border-[#AE7C18] focus-within:ring-2 focus-within:ring-[#AE7C18]/10"
-    >
-        <x-heroicon-o-magnifying-glass
-            class="ml-4 h-5 w-5 shrink-0 text-gray-500"
-        />
-
-        <input
-            type="text"
-            name="search"
-            x-model="search"
-            @focus="focused = true"
-            @input="focused = search.length > 0"
-            placeholder="Search"
-            autocomplete="off"
-            class="search-navbar-input w-full min-w-0 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-gray-500"
-        >
-
-        {{-- Clear --}}
-        <button
-            type="button"
-            x-show="search.length > 0"
-            x-cloak
-            @click="search = ''; focused = false"
-            class="mr-3 shrink-0 text-xs font-semibold text-slate-400 transition hover:text-[#AE7C18]"
-        >
-            Clear
-        </button>
-    </div>
-</form>
-
-<style>
-    .search-navbar-input,
-    .search-navbar-input:hover,
-    .search-navbar-input:focus,
-    .search-navbar-input:active {
-        border: 0 !important;
-        outline: none !important;
-        box-shadow: none !important;
-        background: transparent !important;
-        appearance: none !important;
-        -webkit-appearance: none !important;
-    }
-
-    .search-navbar-input:focus {
-        border: 0 !important;
-        outline: none !important;
-        box-shadow: none !important;
-    }
-
-    [x-cloak] {
-        display: none !important;
-    }
-</style>
-
-                    {{-- Login --}}
-                    <a
-                        href="{{ route('login') }}"
-                        class="flex h-10 w-10 items-center justify-center rounded-full bg-[#AE7C18] text-white transition hover:bg-[#96690F]"
+                {{-- Search --}}
+                <form
+                    method="GET"
+                    action="{{ route('catalog') }}"
+                    class="relative"
+                    x-data="{
+                        search: @js(request('search', '')),
+                        focused: false
+                    }"
+                >
+                    <div
+                        x-cloak
+                        :class="focused ? 'w-40' : 'w-28'"
+                        class="{{ request('search') ? 'w-40' : 'w-28' }} flex items-center rounded-full border border-gray-300 transition-all duration-300 focus-within:border-[#AE7C18] focus-within:ring-2 focus-within:ring-[#AE7C18]/10"
                     >
-                        <x-heroicon-o-user class="h-5 w-5"/>
+                        <x-heroicon-o-magnifying-glass
+                            class="ml-4 h-5 w-5 shrink-0 text-gray-500"
+                        />
+
+                        <input
+                            type="text"
+                            name="search"
+                            x-model="search"
+                            @focus="focused = true"
+                            @input="focused = search.length > 0"
+                            placeholder="Search"
+                            autocomplete="off"
+                            class="search-navbar-input w-full min-w-0 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-gray-500"
+                        >
+
+                        {{-- Clear --}}
+                        <button
+                            type="button"
+                            x-show="search.length > 0"
+                            x-cloak
+                            @click="search = ''; focused = false"
+                            class="mr-3 shrink-0 text-xs font-semibold text-slate-400 transition hover:text-[#AE7C18]"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                </form>
+
+                    <style>
+                        .search-navbar-input,
+                        .search-navbar-input:hover,
+                        .search-navbar-input:focus,
+                        .search-navbar-input:active {
+                            border: 0 !important;
+                            outline: none !important;
+                            box-shadow: none !important;
+                            background: transparent !important;
+                            appearance: none !important;
+                            -webkit-appearance: none !important;
+                        }
+
+                        .search-navbar-input:focus {
+                            border: 0 !important;
+                            outline: none !important;
+                            box-shadow: none !important;
+                        }
+
+                        [x-cloak] {
+                            display: none !important;
+                        }
+                    </style>
+
+                    {{-- Cart --}}
+                    @php
+                        $cartCount = collect(session('cart', []))->sum('qty');
+                    @endphp
+
+                    <a
+                        id="navbar-cart"
+                        href="{{ route('cart.index') }}"
+                        class="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#AE7C18] text-white transition hover:bg-[#96690F]"
+                        aria-label="Keranjang"
+                    >
+                        <x-heroicon-o-shopping-cart class="h-5 w-5"/>
+
+                        @if($cartCount > 0)
+                            <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-sm">
+                                {{ $cartCount > 99 ? '99+' : $cartCount }}
+                            </span>
+                        @endif
                     </a>
                 </div>
 

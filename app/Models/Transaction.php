@@ -22,6 +22,16 @@ class Transaction extends Model
         'total',
         'status',
         'source',
+
+        'shipping_name',
+        'shipping_email',
+        'shipping_phone',
+        'shipping_address',
+        'shipping_district',
+        'shipping_city',
+        'shipping_province',
+        'shipping_postal_code',
+        'shipping_method',
     ];
 
     protected $casts = [
@@ -31,12 +41,6 @@ class Transaction extends Model
         'shipping' => 'decimal:2',
         'total' => 'decimal:2',
     ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
 
     public function customer(): BelongsTo
     {

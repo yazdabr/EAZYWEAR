@@ -1,129 +1,101 @@
 @php
     $images = $product->gallery_images;
-
     $imageUrls = $images->map(function ($image) {
         return asset('storage/' . $image->image);
     })->values()->all();
 
     if (empty($imageUrls)) {
-        $imageUrls = [
-            asset('images/products/placeholder.png')
-        ];
+        $imageUrls = [asset('images/products/placeholder.png')];
     }
 
     $startingPrice = $product->starting_price ?? 0;
-
-    $whatsappMessage = 'Halo Eazywear, saya ingin bertanya tentang produk ' . $product->name . '.';
-
+    $whatsappMessage = 'Hello Eazywear, I would like to inquire about ' . $product->name . '.';
     $whatsappUrl = 'https://wa.me/6285754431105?text=' . urlencode($whatsappMessage);
 @endphp
 
-<section
-    x-data="galleryProduct()"
-    class="bg-white py-14"
->
+<section x-data="galleryProduct()" class="bg-white py-6 sm:py-10 lg:py-14">
     <x-ui.container>
-        <div class="grid gap-16 lg:grid-cols-2">
-
+        <div class="grid gap-6 sm:gap-10 lg:grid-cols-2 lg:gap-16">
             {{-- ================= GALLERY ================= --}}
             <div>
-
-                <div class="overflow-hidden rounded-3xl shadow-xl">
-                    <img
-                        :src="currentImage"
-                        alt="{{ $product->name }}"
-                        class="aspect-square w-full object-cover transition duration-500"
-                    >
+                <div class="overflow-hidden rounded-2xl shadow-md sm:rounded-3xl sm:shadow-xl">
+                    <img id="main-product-image" :src="currentImage" alt="{{ $product->name }}" class="aspect-square w-full object-cover transition duration-500">
                 </div>
-
                 @if(count($imageUrls) > 1)
-                    <div class="mt-5 flex flex-wrap gap-4">
+                    <div class="mt-3 flex flex-wrap gap-2.5 sm:mt-5 sm:gap-4">
                         <template x-for="image in images" :key="image">
-                            <button
-                                type="button"
-                                @click="currentImage = image"
-                                class="overflow-hidden rounded-xl border-2 transition"
-                                :class="currentImage === image
-                                    ? 'border-[#AE7C18]'
-                                    : 'border-gray-200 hover:border-[#AE7C18]'"
-                            >
-                                <img
-                                    :src="image"
-                                    alt="{{ $product->name }}"
-                                    class="h-20 w-20 object-cover sm:h-24 sm:w-24"
-                                >
+                            <button type="button" @click="currentImage = image" class="overflow-hidden rounded-lg border-2 transition sm:rounded-xl" :class="currentImage === image ? 'border-[#AE7C18]' : 'border-gray-200 hover:border-[#AE7C18]'">
+                                <img :src="image" alt="{{ $product->name }}" class="h-14 w-14 object-cover sm:h-24 sm:w-24">
                             </button>
                         </template>
                     </div>
                 @endif
-
-                {{-- ================= WHATSAPP MOBILE ================= --}}
-                <div class="mt-6 lg:hidden">
-                    <a
-                        href="{{ $whatsappUrl }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex w-full items-center justify-center gap-3 rounded-full border-2 border-[#AE7C18] px-6 py-4 text-lg font-semibold text-[#AE7C18] transition-all duration-300 hover:bg-[#AE7C18] hover:text-white hover:shadow-lg"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-6 w-6"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path d="M20.52 3.48A11.86 11.86 0 0012.05 0C5.5 0 .17 5.33.17 11.88c0 2.1.55 4.15 1.59 5.96L0 24l6.35-1.67a11.88 11.88 0 005.7 1.45h.01c6.55 0 11.88-5.33 11.88-11.88 0-3.17-1.23-6.15-3.42-8.42zm-8.47 18.3h-.01a9.87 9.87 0 01-5.03-1.38l-.36-.21-3.77.99 1.01-3.67-.23-.38a9.84 9.84 0 01-1.51-5.25c0-5.45 4.44-9.88 9.9-9.88 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 012.9 6.98c0 5.46-4.44 9.9-9.89 9.9zm5.43-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.66.15-.2.3-.76.97-.93 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.8-1.68-2.1-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.66-.5h-.56c-.2 0-.52.08-.8.37-.27.3-1.04 1.02-1.04 2.5s1.07 2.9 1.22 3.1c.15.2 2.1 3.2 5.08 4.49.71.3 1.27.48 1.7.62.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.42.25-.69.25-1.28.17-1.42-.08-.13-.27-.2-.57-.35z"/>
-                        </svg>
-
-                        <span>Tanyakan Produk</span>
-                    </a>
-                </div>
             </div>
 
-            {{-- ================= PRODUCT INFO ================= --}}
-            <div>
-
-                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-[#AE7C18]">
-                    {{ $product->category?->name ?? 'PRODUCT' }}
-                    @if($product->material)
-                        // {{ $product->material }}
-                    @endif
-                </p>
-
-                <h1 class="mt-3 text-4xl font-bold sm:text-5xl">
-                    {{ $product->name }}
-                </h1>
-
-                <h2 class="mt-4 text-3xl font-bold text-[#AE7C18] sm:text-4xl">
-                    Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}
-                </h2>
-
-                @if($product->description)
-                    <p class="mt-8 text-lg leading-8 text-gray-600">
-                        {{ $product->description }}
+            {{-- PRODUCT INFO --}}
+            <div class="flex h-full flex-col">
+                {{-- PRODUCT HEADER --}}
+                <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs sm:tracking-[0.3em]">
+                        {{ $product->category?->name ?? 'PRODUCT' }}
+                        @if($product->material)
+                            // {{ $product->material }}
+                        @endif
                     </p>
-                @endif
 
-                {{-- ================= SIZE ================= --}}
+                    <h1 class="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:mt-2 sm:text-4xl lg:text-5xl">
+                        {{ $product->name }}
+                    </h1>
+
+                    <h2 class="mt-2 text-xl font-bold text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">
+                        Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}
+                    </h2>
+
+                    @if($product->description)
+                        <p class="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 sm:mt-4 sm:text-base lg:text-lg lg:leading-7">
+                            {{ $product->description }}
+                        </p>
+                    @endif
+                </div>
+
+                {{-- SIZE / VARIANT --}}
                 @if(count($product->available_sizes))
                     <div
-                        class="mt-10"
+                        class="mt-5 sm:mt-7"
                         x-data="{
-                            selectedSize: {{ $product->available_sizes[0]['size_id'] ?? 'null' }}
+                            selectedVariant: {{ $product->available_sizes[0]['id'] ?? 'null' }},
+                            selectedPrice: {{ $product->available_sizes[0]['price'] ?? 0 }},
+                            selectedStock: {{ $product->available_sizes[0]['stock'] ?? 0 }}
                         }"
                     >
-                        <div class="mb-4 flex items-center justify-between">
-                            <h3 class="font-semibold uppercase">
+                        <div class="mb-2 flex items-center justify-between sm:mb-3">
+                            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-900 sm:text-sm">
                                 Available Sizes
                             </h3>
+
+                            <span
+                                class="text-xs text-gray-500 sm:text-sm"
+                                x-show="selectedStock > 0"
+                            >
+                                Stock:
+                                <span
+                                    x-text="selectedStock"
+                                    class="font-semibold text-slate-800"
+                                ></span>
+                            </span>
                         </div>
 
-                        <div class="flex flex-wrap gap-3">
+                        <div class="flex flex-wrap gap-2 sm:gap-2.5">
                             @foreach($product->available_sizes as $size)
                                 <button
                                     type="button"
-                                    @click="selectedSize = {{ $size['size_id'] }}"
-                                    class="h-11 min-w-[54px] rounded-full border px-4 transition"
-                                    :class="selectedSize === {{ $size['size_id'] }}
+                                    @click="
+                                        selectedVariant = {{ $size['id'] }};
+                                        selectedPrice = {{ $size['price'] }};
+                                        selectedStock = {{ $size['stock'] }};
+                                    "
+                                    class="h-9 min-w-[44px] rounded-full border px-3 text-xs transition sm:h-10 sm:min-w-[50px] sm:px-4 sm:text-sm"
+                                    x-bind:class="selectedVariant === {{ $size['id'] }}
                                         ? 'border-[#AE7C18] bg-[#AE7C18] text-white'
                                         : 'border-gray-300 hover:border-[#AE7C18]'"
                                 >
@@ -131,55 +103,88 @@
                                 </button>
                             @endforeach
                         </div>
+
+                        <div class="mt-2.5 sm:mt-3">
+                            <p class="text-xs text-gray-500 sm:text-sm">
+                                Selected price
+                            </p>
+
+                            <p
+                                class="text-xl font-bold text-[#AE7C18] sm:text-2xl"
+                                x-text="'Rp ' + Number(selectedPrice).toLocaleString('id-ID')"
+                            ></p>
+                        </div>
+
+                        {{-- ADD TO CART --}}
+                        <form
+                            method="POST"
+                            action="{{ route('cart.add') }}"
+                            class="mt-4 sm:mt-5"
+                            @submit.prevent="addToCartAnimation($event)"
+                        >
+                            @csrf
+
+                            <input
+                                type="hidden"
+                                name="variant_id"
+                                x-model="selectedVariant"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="qty"
+                                value="1"
+                            >
+
+                            <button
+                                type="submit"
+                                x-bind:disabled="selectedStock <= 0"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base"
+                            >
+                                <x-heroicon-o-shopping-cart class="h-5 w-5"/>
+
+                                <span x-show="selectedStock > 0">
+                                    Add to Cart
+                                </span>
+
+                                <span x-show="selectedStock <= 0">
+                                    Out of Stock
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                @else
+                    <div class="mt-5 rounded-xl bg-gray-100 p-4 text-center sm:mt-7 sm:rounded-2xl sm:p-5">
+                        <p class="text-xs font-semibold text-gray-600 sm:text-base">
+                            Product currently unavailable.
+                        </p>
                     </div>
                 @endif
 
-                {{-- ================= PRODUCT FEATURES ================= --}}
-                <div class="mt-10 grid gap-4 sm:grid-cols-2">
+                {{-- PRODUCT FEATURES --}}
+                <div class="mt-auto pt-5 sm:pt-7">
+                    <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                        <div class="rounded-xl bg-[#AE7C18] p-3.5 text-white sm:rounded-2xl sm:p-4">
+                            <h4 class="text-xs font-semibold sm:text-base">
+                                {{ $product->material ?: 'Premium Material' }}
+                            </h4>
 
-                    <div class="rounded-2xl bg-[#AE7C18] p-5 text-white">
-                        <h4 class="font-semibold">
-                            {{ $product->material ?: 'Premium Material' }}
-                        </h4>
+                            <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">
+                                Premium quality material for comfortable use.
+                            </p>
+                        </div>
 
-                        <p class="mt-2 text-sm">
-                            Premium quality material for comfortable use.
-                        </p>
+                        <div class="rounded-xl bg-[#AE7C18] p-3.5 text-white sm:rounded-2xl sm:p-4">
+                            <h4 class="text-xs font-semibold sm:text-base">
+                                Production Time
+                            </h4>
+
+                            <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">
+                                10–14 Working Days
+                            </p>
+                        </div>
                     </div>
-
-                    <div class="rounded-2xl bg-[#AE7C18] p-5 text-white">
-                        <h4 class="font-semibold">
-                            Production Time
-                        </h4>
-
-                        <p class="mt-2 text-sm">
-                            10–14 Working Days
-                        </p>
-                    </div>
-
                 </div>
-
-                {{-- ================= WHATSAPP DESKTOP ================= --}}
-                <div class="mt-10 hidden lg:block">
-                    <a
-                        href="{{ $whatsappUrl }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex w-full items-center justify-center gap-3 rounded-full border-2 border-[#AE7C18] px-6 py-4 text-lg font-semibold text-[#AE7C18] transition-all duration-300 hover:bg-[#AE7C18] hover:text-white hover:shadow-lg"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-6 w-6"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path d="M20.52 3.48A11.86 11.86 0 0012.05 0C5.5 0 .17 5.33.17 11.88c0 2.1.55 4.15 1.59 5.96L0 24l6.35-1.67a11.88 11.88 0 005.7 1.45h.01c6.55 0 11.88-5.33 11.88-11.88 0-3.17-1.23-6.15-3.42-8.42zm-8.47 18.3h-.01a9.87 9.87 0 01-5.03-1.38l-.36-.21-3.77.99 1.01-3.67-.23-.38a9.84 9.84 0 01-1.51-5.25c0-5.45 4.44-9.88 9.9-9.88 2.64 0 5.12 1.03 6.99 2.9a9.82 9.82 0 012.9 6.98c0 5.46-4.44 9.9-9.89 9.9zm5.43-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.66.15-.2.3-.76.97-.93 1.17-.17.2-.35.22-.65.07-.3-.15-1.27-.47-2.42-1.5-.9-.8-1.5-1.8-1.68-2.1-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.48-.5-.66-.5h-.56c-.2 0-.52.08-.8.37-.27.3-1.04 1.02-1.04 2.5s1.07 2.9 1.22 3.1c.15.2 2.1 3.2 5.08 4.49.71.3 1.27.48 1.7.62.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.42.25-.69.25-1.28.17-1.42-.08-.13-.27-.2-.57-.35z"/>
-                        </svg>
-
-                        <span>Tanyakan Produk</span>
-                    </a>
-                </div>
-
             </div>
         </div>
     </x-ui.container>
@@ -190,6 +195,101 @@ function galleryProduct() {
     return {
         images: @js($imageUrls),
         currentImage: @js($imageUrls[0] ?? asset('images/products/placeholder.png')),
+
+        addToCartAnimation(event) {
+            const form = event.target;
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const cartCandidates = [
+                document.getElementById('navbar-cart'),
+                document.querySelector('[aria-label="Cart"]'),
+                document.querySelector('[aria-label="Keranjang"]')
+            ];
+
+            const cart = cartCandidates.find((element) => {
+                if (!element) return false;
+                const rect = element.getBoundingClientRect();
+                const style = window.getComputedStyle(element);
+                return (
+                    rect.width > 0 &&
+                    rect.height > 0 &&
+                    style.display !== 'none' &&
+                    style.visibility !== 'hidden'
+                );
+            });
+
+            if (!cart) {
+                HTMLFormElement.prototype.submit.call(form);
+                return;
+            }
+
+            const button = form.querySelector('button[type="submit"]');
+            if (!button) {
+                HTMLFormElement.prototype.submit.call(form);
+                return;
+            }
+
+            const buttonRect = button.getBoundingClientRect();
+            const cartRect = cart.getBoundingClientRect();
+
+            const startX = buttonRect.left + (buttonRect.width / 2);
+            const startY = buttonRect.top + (buttonRect.height / 2);
+
+            const endX = cartRect.left + (cartRect.width / 2);
+            const endY = cartRect.top + (cartRect.height / 2);
+
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+
+            const dot = document.createElement('div');
+            dot.style.position = 'fixed';
+            dot.style.left = `${startX - 11}px`;
+            dot.style.top = `${startY - 11}px`;
+            dot.style.width = '22px';
+            dot.style.height = '22px';
+            dot.style.borderRadius = '9999px';
+            dot.style.backgroundColor = '#0F172A'; // Dark slate matching the button
+            dot.style.boxShadow = '0 4px 16px rgba(15, 23, 42, 0.40), 0 0 0 5px rgba(15, 23, 42, 0.10)';
+            dot.style.zIndex = '999999';
+            dot.style.pointerEvents = 'none';
+
+            document.body.appendChild(dot);
+
+            const animation = dot.animate(
+                [
+                    { transform: 'translate3d(0, 0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate3d(${deltaX * 0.45}px, ${deltaY * 0.45}px, 0) scale(1.15)`, opacity: 1 },
+                    { transform: `translate3d(${deltaX * 0.80}px, ${deltaY * 0.80}px, 0) scale(0.95)`, opacity: 0.95 },
+                    { transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(0.45)`, opacity: 0.15 }
+                ],
+                {
+                    duration: 1000,
+                    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+                    fill: 'forwards'
+                }
+            );
+
+            setTimeout(() => {
+                cart.animate(
+                    [
+                        { transform: 'scale(1)' },
+                        { transform: 'scale(1.12)' },
+                        { transform: 'scale(0.97)' },
+                        { transform: 'scale(1.04)' },
+                        { transform: 'scale(1)' }
+                    ],
+                    { duration: 420, easing: 'ease-out' }
+                );
+            }, 820);
+
+            setTimeout(() => {
+                dot.remove();
+                HTMLFormElement.prototype.submit.call(form);
+            }, 1050);
+        }
     }
 }
 </script>

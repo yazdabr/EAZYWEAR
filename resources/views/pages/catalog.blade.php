@@ -1,9 +1,19 @@
 @extends('layouts.website')
 
-@section('title', 'Catalog')
+@section('title', 'Catalog | Eazywear Indonesia')
+
+@section('meta_description', 'Explore the Eazywear Indonesia catalog for custom sportswear, jerseys, teamwear, and apparel designed for teams, communities, schools, and businesses.')
+
+@section('canonical', url('/catalog'))
+
+@section('og_title', 'Catalog | Eazywear Indonesia')
+
+@section('og_description', 'Explore Eazywear Indonesia custom sportswear, jerseys, teamwear, and apparel.')
+
+@section('og_url', url('/catalog'))
 
 @section('content')
-<div>
+<div x-data="quickView">
     @include('catalog.hero')
     @include('catalog.search-filter')
     @include('catalog.product-grid')

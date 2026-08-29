@@ -115,10 +115,12 @@ $contacts = [
                         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18] text-white sm:h-12 sm:w-12">
                             <x-heroicon-o-clock class="h-5 w-5 sm:h-6 sm:w-6"/>
                         </div>
+
                         <div>
-                            <h3 class="text-[10px] font-bold uppercase tracking-widest text-[#AE7C18] sm:text-xs">
+                            <h2 class="text-[10px] font-bold uppercase tracking-widest text-[#AE7C18] sm:text-xs">
                                 Schedule
-                            </h3>
+                            </h2>
+
                             <p class="text-sm font-semibold text-white sm:text-base">
                                 Business Hours
                             </p>
@@ -133,6 +135,7 @@ $contacts = [
 
                         <div class="flex items-center justify-between text-slate-300">
                             <span>Sunday</span>
+
                             <span class="inline-flex items-center rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-medium text-rose-400 sm:px-2.5 sm:text-xs">
                                 Closed
                             </span>
@@ -140,7 +143,6 @@ $contacts = [
                     </div>
                 </div>
             </x-ui.reveal>
-
         </div>
     </x-ui.container>
 </section>

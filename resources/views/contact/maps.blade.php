@@ -11,9 +11,9 @@
                             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#AE7C18] opacity-75"></span>
                             <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#AE7C18]"></span>
                         </span>
-                        <span class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
                             Our Location
-                        </span>
+                        </h2>
                     </div>
                     <span class="text-xs font-medium text-slate-500">
                         Banjar, South Kalimantan

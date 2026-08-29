@@ -6,6 +6,7 @@
             src="{{ asset('images/front/fixbglagi.webp') }}"
             alt=""
             fetchpriority="high"
+            loading="eager"
             decoding="async"
             class="absolute inset-y-0 right-[-35%] h-full w-[180%] max-w-none object-cover object-right sm:hidden"
         >
@@ -15,6 +16,7 @@
             src="{{ asset('images/front/fixbglagi.webp') }}"
             alt=""
             fetchpriority="high"
+            loading="eager"
             decoding="async"
             class="absolute inset-0 hidden h-full w-full object-cover object-right sm:block"
         >

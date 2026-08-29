@@ -36,7 +36,7 @@
         $siteUrl = rtrim(config('app.url'), '/');
         $pageTitle = trim($__env->yieldContent('title')) ?: 'Eazywear Indonesia';
         $pageDescription = trim($__env->yieldContent('meta_description')) ?: 'Eazywear Indonesia menyediakan custom sportswear, jersey, teamwear, dan apparel berkualitas.';
-        $canonicalUrl = trim($__env->yieldContent('canonical')) ?: url()->current();
+        $canonicalUrl = trim($__env->yieldContent('canonical')) ?: $siteUrl;
         $logoUrl = asset('images/hero/logoweb.png');
 
         $organizationSchema = [
@@ -78,6 +78,24 @@
             ],
             'inLanguage' => 'id-ID',
         ];
+
+        $localBusinessSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'ClothingStore',
+            '@id' => $siteUrl . '/#localbusiness',
+            'name' => 'Eazywear Indonesia',
+            'url' => $siteUrl,
+            'logo' => $logoUrl,
+            'image' => $logoUrl,
+            'telephone' => '+6285754431105',
+            'address' => [
+                '@type' => 'PostalAddress',
+                'streetAddress' => 'Jl. Asang Permai No.Km 11.200, Mekar Raya, Kertak Hanyar',
+                'addressLocality' => 'Banjar',
+                'addressRegion' => 'Kalimantan Selatan',
+                'addressCountry' => 'ID',
+            ],
+        ];
     @endphp
 
     <script type="application/ld+json">
@@ -91,6 +109,13 @@
     <script type="application/ld+json">
         {!! json_encode($webPageSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
     </script>
+
+    <script type="application/ld+json">
+        {!! json_encode($localBusinessSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
+    </script>
+
+    {{-- Schema tambahan dari masing-masing halaman --}}
+    @stack('schema')
 
     {{-- ================= ASSETS ================= --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])

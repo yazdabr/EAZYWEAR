@@ -1,16 +1,42 @@
 @extends('layouts.website')
 
 @section('title', 'Catalog | Eazywear Indonesia')
-
 @section('meta_description', 'Explore the Eazywear Indonesia catalog for custom sportswear, jerseys, teamwear, and apparel designed for teams, communities, schools, and businesses.')
 
-@section('canonical', url('/catalog'))
+@section('canonical', rtrim(config('app.url'), '/') . '/catalog')
 
 @section('og_title', 'Catalog | Eazywear Indonesia')
-
 @section('og_description', 'Explore Eazywear Indonesia custom sportswear, jerseys, teamwear, and apparel.')
+@section('og_url', rtrim(config('app.url'), '/') . '/catalog')
 
-@section('og_url', url('/catalog'))
+@push('schema')
+@php
+    $siteUrl = rtrim(config('app.url'), '/');
+
+    $breadcrumbSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'BreadcrumbList',
+        'itemListElement' => [
+            [
+                '@type' => 'ListItem',
+                'position' => 1,
+                'name' => 'Home',
+                'item' => $siteUrl,
+            ],
+            [
+                '@type' => 'ListItem',
+                'position' => 2,
+                'name' => 'Catalog',
+                'item' => $siteUrl . '/catalog',
+            ],
+        ],
+    ];
+@endphp
+
+<script type="application/ld+json">
+{!! json_encode($breadcrumbSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endpush
 
 @section('content')
 <div x-data="quickView">

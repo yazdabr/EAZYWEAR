@@ -7,7 +7,11 @@
     @include('catalog.hero')
     @include('catalog.search-filter')
     @include('catalog.product-grid')
-    @include('catalog.pagination')
+
+    @if($products->count() > 0)
+        @include('catalog.pagination')
+    @endif
+
     @include('catalog.quick-view-modal')
 </div>
 @endsection
@@ -28,7 +32,7 @@ document.addEventListener('alpine:init', () => {
         startY: 0,
 
         show(product) {
-            this.productId = product.id ?? null;.0
+            this.productId = product.id ?? null;
             this.productUrl = product.url ?? '#';
             this.title = product.title ?? '';
             this.series = product.series ?? '';

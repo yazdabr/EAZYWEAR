@@ -20,6 +20,7 @@ use App\Http\Controllers\SitemapController;
 */
 
 Route::view('/', 'pages.home')->name('home');
+
 Route::get('/catalog', [ProductController::class, 'catalog'])
     ->name('catalog');
 
@@ -50,11 +51,14 @@ Route::post('/checkout', [CheckoutController::class, 'store'])
 Route::get('/checkout/success', [CheckoutController::class, 'success'])
     ->name('checkout.success');
 
-Route::view('/about', 'pages.about')->name('about');
+Route::view('/about', 'pages.about')
+    ->name('about');
 
-Route::view('/contact', 'pages.contact')->name('contact');
+Route::view('/contact', 'pages.contact')
+    ->name('contact');
 
-Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])
+    ->name('sitemap');
 
 /*
 |--------------------------------------------------------------------------

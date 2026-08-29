@@ -16,13 +16,31 @@
                     </x-ui.reveal>
 
                 @empty
+                    <div class="col-span-2 py-20 text-center">
+                        <div class="mx-auto max-w-xl">
 
-                    <div class="col-span-2 py-16 text-center">
-                        <p class="text-gray-500">
-                            Soon.
-                        </p>
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[#AE7C18]">
+                                Eazywear Catalog
+                            </p>
+
+                            <h2 class="mt-3 text-2xl font-bold text-slate-900">
+                                Our collection is coming soon.
+                            </h2>
+
+                            <p class="mt-4 text-sm leading-7 text-slate-500">
+                                We are currently preparing our custom sportswear collection.
+                                Contact us for custom teamwear, jerseys, and apparel.
+                            </p>
+
+                            <a
+                                href="{{ route('contact') }}"
+                                class="mt-6 inline-flex items-center rounded-full bg-[#AE7C18] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F]"
+                            >
+                                Contact Eazywear
+                            </a>
+
+                        </div>
                     </div>
-
                 @endforelse
 
             </div>
@@ -43,13 +61,31 @@
                     </x-ui.reveal>
 
                 @empty
+                    <div class="col-span-full py-20 text-center">
+                        <div class="mx-auto max-w-xl">
 
-                    <div class="col-span-full py-16 text-center">
-                        <p class="text-gray-500">
-                            Soon.
-                        </p>
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[#AE7C18]">
+                                Eazywear Catalog
+                            </p>
+
+                            <h2 class="mt-3 text-2xl font-bold text-slate-900">
+                                Our collection is coming soon.
+                            </h2>
+
+                            <p class="mt-4 text-sm leading-7 text-slate-500">
+                                We are currently preparing our custom sportswear collection.
+                                Contact us for custom teamwear, jerseys, and apparel.
+                            </p>
+
+                            <a
+                                href="{{ route('contact') }}"
+                                class="mt-6 inline-flex items-center rounded-full bg-[#AE7C18] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F]"
+                            >
+                                Contact Eazywear
+                            </a>
+
+                        </div>
                     </div>
-
                 @endforelse
 
             </div>

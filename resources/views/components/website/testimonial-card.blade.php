@@ -35,7 +35,7 @@
 
         <img
             src="{{ asset($image) }}"
-            alt="{{ $name }}"
+            alt="Photo of {{ $name }}"
             class="h-10 w-10 rounded-full object-cover sm:h-14 sm:w-14">
 
         <div>

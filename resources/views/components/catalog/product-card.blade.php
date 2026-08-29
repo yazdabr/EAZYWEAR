@@ -6,7 +6,9 @@
         ->sortBy('sort_order')
         ->first();
 
-    $image = $thumbnail
+    $hasImage = (bool) $thumbnail;
+
+    $image = $hasImage
         ? asset('storage/' . $thumbnail->image)
         : asset('images/products/placeholder.png');
 
@@ -29,8 +31,9 @@
     >
         <img
             src="{{ $image }}"
-            alt="{{ $product->name }}"
+            alt="{{ $hasImage ? $product->name . ' - Eazywear Indonesia' : 'Product image coming soon - Eazywear Indonesia' }}"
             loading="lazy"
+            decoding="async"
             class="aspect-[4/5] w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         >
 

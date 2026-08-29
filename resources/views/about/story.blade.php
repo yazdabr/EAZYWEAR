@@ -52,7 +52,7 @@
                     {{-- Image Reveal --}}
                     <x-ui.reveal animation="left" :delay="150">
                         <img
-                            src="{{ asset('images/about/df.png') }}"
+                            src="{{ asset('images/about/df.webp') }}"
                             alt="Eazywear Story"
                             loading="eager"
                             decoding="sync"

@@ -3,15 +3,19 @@
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
         {{-- Mobile Background --}}
         <img
-            src="{{ asset('images/front/fixbglagi.png') }}"
+            src="{{ asset('images/front/fixbglagi.webp') }}"
             alt=""
+            fetchpriority="high"
+            decoding="async"
             class="absolute inset-y-0 right-[-35%] h-full w-[180%] max-w-none object-cover object-right sm:hidden"
         >
 
         {{-- Desktop Background --}}
         <img
-            src="{{ asset('images/front/bg.png') }}"
+            src="{{ asset('images/front/fixbglagi.webp') }}"
             alt=""
+            fetchpriority="high"
+            decoding="async"
             class="absolute inset-0 hidden h-full w-full object-cover object-right sm:block"
         >
 

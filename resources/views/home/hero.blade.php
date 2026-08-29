@@ -17,13 +17,14 @@
 
         {{-- Overlay --}}
         <div class="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/20"></div>
-    </div>  
+    </div>
 
     {{-- Content --}}
     <div class="relative z-10">
         <x-ui.container>
             <div class="flex min-h-[60vh] items-center py-12 sm:min-h-[90vh] sm:py-16 lg:min-h-[92vh]">
                 <div class="max-w-xl lg:max-w-2xl">
+
                     {{-- Small Label --}}
                     <div class="hero-label mb-3 flex items-center gap-2.5 sm:mb-5 sm:gap-3">
                         <div class="h-px w-6 bg-[#AE7C18] sm:w-10 lg:w-12"></div>
@@ -33,7 +34,7 @@
                         </span>
                     </div>
 
-                    {{-- Heading --}}
+                    {{-- Main Heading --}}
                     <h1 class="hero-title text-2xl font-extrabold leading-tight text-secondary sm:text-5xl lg:text-7xl">
                         Custom Jerseys
                         <br>
@@ -55,23 +56,24 @@
                         </span>
                     </p>
 
-                    {{-- Button --}}
+                    {{-- Internal Links --}}
                     <div class="hero-buttons mt-5 flex items-center gap-2.5 sm:mt-10 sm:gap-4 lg:mt-12">
                         <x-ui.button
-                            href="/catalog"
+                            :href="route('catalog')"
                             class="!px-4 !py-2.5 !text-xs sm:!px-6 sm:!py-3.5 sm:!text-sm"
                         >
                             Explore Catalog
                         </x-ui.button>
 
                         <x-ui.button
-                            href="/contact"
+                            :href="route('contact')"
                             variant="outline"
                             class="!px-4 !py-2.5 !text-xs sm:!px-6 sm:!py-3.5 sm:!text-sm"
                         >
                             Contact Us
                         </x-ui.button>
                     </div>
+
                 </div>
             </div>
         </x-ui.container>

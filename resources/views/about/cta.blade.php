@@ -1,16 +1,13 @@
 <section
     class="relative overflow-hidden bg-cover bg-center bg-no-repeat py-12 sm:py-20 lg:py-28"
-    style="background-image: url('{{ asset('images/cta/bg.png') }}');">
-
+    style="background-image: url('{{ asset('images/cta/bg.png') }}');"
+>
     {{-- Backdrop overlay tipis untuk kontras teks di mobile --}}
     <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] sm:bg-transparent sm:backdrop-blur-none"></div>
 
     <div class="relative z-10">
-
         <x-ui.container>
-
             <x-ui.reveal animation="scale">
-
                 <div class="mx-auto max-w-4xl text-center text-gray-900">
 
                     {{-- Label --}}
@@ -35,31 +32,45 @@
                     </p>
 
                     {{-- Buttons Wrapper --}}
-                    <div class="mt-6 flex flex-col justify-center gap-2.5 sm:mt-12 sm:flex-row sm:gap-5">
+                    <div class="mt-6 flex flex-col items-center justify-center gap-2.5 sm:mt-12 sm:flex-row sm:gap-5">
 
+                        {{-- Catalog --}}
                         <x-ui.button
                             :href="route('catalog')"
-                            class="w-full sm:w-auto">
+                            class="w-full sm:w-auto"
+                        >
                             Browse Catalog
                         </x-ui.button>
 
+                        {{-- WhatsApp --}}
                         <x-ui.button
                             href="https://wa.me/6285754431105"
                             target="_blank"
                             rel="noopener noreferrer"
                             variant="outline"
-                            class="w-full sm:w-auto">
-                            Contact Us  
+                            class="w-full sm:w-auto"
+                        >
+                            WhatsApp Us
                         </x-ui.button>
 
                     </div>
 
+                    {{-- Internal Contact Link --}}
+                    <div class="mt-4 sm:mt-5">
+                        <a
+                            href="{{ route('contact') }}"
+                            class="group inline-flex items-center gap-2 text-xs font-semibold text-gray-700 transition-colors duration-300 hover:text-[#AE7C18] sm:text-sm"
+                        >
+                            Learn more about contacting Eazywear
+
+                            <x-heroicon-o-arrow-right
+                                class="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                            />
+                        </a>
+                    </div>
+
                 </div>
-
             </x-ui.reveal>
-
         </x-ui.container>
-
     </div>
-
 </section>

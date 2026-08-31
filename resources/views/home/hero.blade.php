@@ -1,28 +1,28 @@
 <section class="relative overflow-hidden bg-white">
     {{-- Background --}}
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
-        {{-- Mobile Background --}}
-        <img
-            src="{{ asset('images/front/fixbglagi.webp') }}"
-            alt=""
-            fetchpriority="high"
-            loading="eager"
-            decoding="async"
-            class="absolute inset-y-0 right-[-35%] h-full w-[180%] max-w-none object-cover object-right sm:hidden"
-        >
 
-        {{-- Desktop Background --}}
-        <img
-            src="{{ asset('images/front/fixbglagi.webp') }}"
-            alt=""
-            fetchpriority="high"
-            loading="eager"
-            decoding="async"
-            class="absolute inset-0 hidden h-full w-full object-cover object-right sm:block"
-        >
+        <picture>
+            {{-- Mobile: versi khusus 90 KB --}}
+            <source
+                media="(max-width: 639px)"
+                srcset="{{ asset('images/front/fixbglagi-mobile.webp') }}"
+            >
+
+            {{-- Desktop: versi 449 KB --}}
+            <img
+                src="{{ asset('images/front/fixbglagi.webp') }}"
+                alt=""
+                fetchpriority="high"
+                loading="eager"
+                decoding="async"
+                class="absolute inset-0 h-full w-full object-cover object-right"
+            >
+        </picture>
 
         {{-- Overlay --}}
         <div class="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/20"></div>
+
     </div>
 
     {{-- Content --}}

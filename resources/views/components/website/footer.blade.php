@@ -5,7 +5,7 @@
             <div class="flex flex-col items-center justify-between gap-2 border-b border-slate-800 pb-3 text-center sm:flex-row sm:gap-6 sm:pb-8 sm:text-left">
                 <div class="space-y-1 sm:space-y-2">
                     <img
-                        src="{{ asset('images/hero/logoo.png') }}"
+                        src="{{ asset('images/hero/logoo.webp') }}"
                         alt="Eazywear"
                         class="mx-auto h-5 w-auto brightness-0 invert sm:mx-0 sm:h-6"
                     >

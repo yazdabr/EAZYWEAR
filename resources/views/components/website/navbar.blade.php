@@ -5,7 +5,7 @@
             {{-- Logo & Close --}}
             <div class="flex items-center justify-between border-b border-gray-100 pb-4">
                 <a href="{{ route('home') }}" aria-label="Eazywear Indonesia - Home">
-                    <img src="{{ asset('images/hero/logo-navbar.webp') }}" alt="Eazywear" width="450" height="318" class="h-9 w-auto object-contain">
+                    <img src="{{ asset('images/hero/logo-navbar-small.webp') }}" alt="Eazywear" width="450" height="318" class="h-9 w-auto object-contain">
                 </a>
                 <button @click="open=false" type="button" aria-label="Close navigation menu" aria-controls="mobile-menu" :aria-expanded="open.toString()" class="group rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none">
                     <x-heroicon-o-x-mark class="h-6 w-6 transition group-hover:rotate-90"/>
@@ -72,7 +72,7 @@
             <nav aria-label="Main navigation" class="flex h-20 items-center justify-between">
                 {{-- Logo --}}
                 <a href="{{ route('home') }}" aria-label="Eazywear Indonesia - Home" class="shrink-0">
-                    <img src="{{ asset('images/hero/logo-navbar.webp') }}" alt="Eazywear" width="450" height="318" class="h-16 w-auto object-contain">
+                    <img src="{{ asset('images/hero/logo-navbar-small.webp') }}" alt="Eazywear" width="450" height="318" class="h-16 w-auto object-contain">
                 </a>
                 {{-- Desktop Menu --}}
                 <ul class="hidden items-center gap-10 lg:flex">

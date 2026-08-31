@@ -38,7 +38,7 @@
         <div class="mb-4 text-center sm:mb-7">
             <div class="inline-flex h-10 items-center justify-center sm:h-14">
                 <img
-                    src="{{ asset('images/hero/logoo.png') }}"
+                    src="{{ asset('images/hero/logoo.webp') }}"
                     alt="Logo"
                     class="h-full w-auto object-contain drop-shadow-[0_3px_8px_rgba(0,0,0,0.35)]"
                 >

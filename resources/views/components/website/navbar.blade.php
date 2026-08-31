@@ -88,8 +88,8 @@
                         <div x-cloak :class="focused?'w-40':'w-28'" class="{{ request('search')?'w-40':'w-28' }} flex items-center rounded-full border border-gray-300 transition-all duration-300 focus-within:border-[#AE7C18] focus-within:ring-2 focus-within:ring-[#AE7C18]/10">
                             <x-heroicon-o-magnifying-glass class="ml-4 h-5 w-5 shrink-0 text-gray-500" aria-hidden="true"/>
                             <label for="desktop-search" class="sr-only">Search products</label>
-                            <input id="desktop-search" type="text" name="search" x-model="search" @focus="focused=true" @input="focused=search.length>0" placeholder="Search" autocomplete="off" class="search-navbar-input w-full min-w-0 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-gray-500">
-                            <button type="button" x-show="search.length>0" x-cloak @click="search='';focused=false" aria-label="Clear search" class="mr-3 shrink-0 text-xs font-semibold text-slate-400 transition hover:text-[#AE7C18]">Clear</button>
+                            <input id="desktop-search" type="text" name="search" x-model="search" @focus="focused=true" @input="focused=search.length>0" placeholder="Search" autocomplete="off" class="search-navbar-input w-full min-w-0 border-0 !border-0 bg-transparent px-3 py-2 text-sm outline-none !outline-none ring-0 !ring-0 shadow-none !shadow-none focus:border-0 focus:!border-0 focus:outline-none focus:!outline-none focus:ring-0 focus:!ring-0 focus:shadow-none focus:!shadow-none active:border-0 active:outline-none active:ring-0 active:shadow-none placeholder:text-gray-500">
+                            <button type="button" x-show="search.length>0" x-cloak @click="search='';focused=false" aria-label="Clear search" class="mr-3 shrink-0 border-0 text-xs font-semibold text-slate-400 transition hover:text-[#AE7C18] focus:border-0 focus:outline-none focus:ring-0">Clear</button>
                         </div>
                     </form>
                     {{-- Cart --}}
@@ -109,3 +109,26 @@
         </x-ui.container>
     </header>
 </div>
+
+<style>
+.search-navbar-input,
+.search-navbar-input:hover,
+.search-navbar-input:focus,
+.search-navbar-input:active,
+.search-navbar-input:focus-visible {
+    border:0!important;
+    outline:0!important;
+    box-shadow:none!important;
+    ring:0!important;
+    background:transparent!important;
+    -webkit-appearance:none!important;
+    appearance:none!important;
+}
+.search-navbar-input::-webkit-search-decoration,
+.search-navbar-input::-webkit-search-cancel-button,
+.search-navbar-input::-webkit-search-results-button,
+.search-navbar-input::-webkit-search-results-decoration {
+    -webkit-appearance:none;
+    appearance:none;
+}
+</style>

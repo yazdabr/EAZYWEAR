@@ -13,6 +13,7 @@
 >
     {{-- ================= MOBILE MENU ================= --}}
     <div
+        id="mobile-menu"
         x-show="open"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0"
@@ -45,6 +46,9 @@
                 <button
                     @click="open = false"
                     type="button"
+                    aria-label="Close navigation menu"
+                    aria-controls="mobile-menu"
+                    :aria-expanded="open.toString()"
                     class="group rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none"
                 >
                     <x-heroicon-o-x-mark class="h-6 w-6 transition group-hover:rotate-90"/>
@@ -361,6 +365,9 @@
                 <button
                     @click="open = true"
                     type="button"
+                    aria-label="Open navigation menu"
+                    aria-controls="mobile-menu"
+                    :aria-expanded="open.toString()"
                     class="lg:hidden"
                 >
                     <x-heroicon-o-bars-3 class="h-8 w-8"/>

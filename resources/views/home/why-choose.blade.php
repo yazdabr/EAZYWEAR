@@ -3,7 +3,7 @@
         {{-- Heading --}}
         <x-ui.reveal>
             <div class="mb-8 text-center sm:mb-14 lg:mb-16">
-                <p class="mb-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:mb-4 sm:text-xs lg:tracking-[0.3em]">
+                <p class="mb-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#8A620F] sm:mb-4 sm:text-xs lg:tracking-[0.3em]">
                     WHY CHOOSE EAZYWEAR
                 </p>
 

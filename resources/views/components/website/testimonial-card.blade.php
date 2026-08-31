@@ -43,12 +43,12 @@
 
         <div>
 
-            <h4
+            <p
                 class="text-xs font-bold text-gray-900 sm:text-base">
 
                 {{ $name }}
 
-            </h4>
+            </p>
 
             <p
                 class="text-[10px] text-gray-500 sm:text-sm">

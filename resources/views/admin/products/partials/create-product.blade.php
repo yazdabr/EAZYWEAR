@@ -85,17 +85,49 @@
     toggleBodyScroll(){document.body.classList.toggle('overflow-hidden',this.open);},
     closeDrawer(){if(this.loading)return;this.open=false;},
     openCreate(){
-        this.mode='create';this.errors={};
-        this.form={id:'',name:'',category_id:'',product_code:'{{ $nextProductCode }}',description:'',material:'',price:'',stock:'',status:'Aktif',image:'',gallery:[],size_ids:[],variants:{@foreach($sizes as $size)'{{ $size->id }}':{price:'',stock:''},@endforeach}};
+        this.mode='create';
+        this.errors={};
+        this.form={
+            id:'',
+            name:'',
+            category_id:'',
+            product_code:'{{ $nextProductCode }}',
+            description:'',
+            material:'',
+            price:'',
+            stock:'',
+            status:'Aktif',
+            image:'',
+            gallery:[],
+            size_ids:[],
+            variants:{@foreach($sizes as $size)'{{ $size->id }}':{price:'',stock:''},@endforeach}
+        };
         this.open=true;
         this.$nextTick(()=>window.dispatchEvent(new CustomEvent('product-gallery-update',{detail:{images:[]}})));
     },
     openEdit(product){
-        this.mode='edit';this.errors={};
+        this.mode='edit';
+        this.errors={};
         const variants=this.normalizeVariants(product?.variants||{});
         let sizeIds=this.normalizeSizeIds(product?.size_ids||[],variants);
-        this.form={id:product?.id||'',name:product?.name||'',category_id:product?.category_id?String(product.category_id):'',product_code:product?.product_code||'',description:product?.description||'',material:product?.material||'',price:product?.price!==''&&product?.price!==null&&product?.price!==undefined?parseInt(product.price):'',stock:product?.stock!==''&&product?.stock!==null&&product?.stock!==undefined?parseInt(product.stock):'',status:product?.status===true||product?.status===1||product?.status==='1'?'Aktif':'Tidak Aktif',image:product?.image||'',gallery:product?.image?[product.image]:[],size_ids:sizeIds,variants:variants};
-        this.syncVariants();this.open=true;
+        const gallery=Array.isArray(product?.images)?product.images.slice(0,5):[];
+        this.form={
+            id:product?.id||'',
+            name:product?.name||'',
+            category_id:product?.category_id?String(product.category_id):'',
+            product_code:product?.product_code||'',
+            description:product?.description||'',
+            material:product?.material||'',
+            price:product?.price!==''&&product?.price!==null&&product?.price!==undefined?parseInt(product.price):'',
+            stock:product?.stock!==''&&product?.stock!==null&&product?.stock!==undefined?parseInt(product.stock):'',
+            status:product?.status===true||product?.status===1||product?.status==='1'?'Aktif':'Tidak Aktif',
+            image:gallery[0]||'',
+            gallery:gallery,
+            size_ids:sizeIds,
+            variants:variants
+        };
+        this.syncVariants();
+        this.open=true;
         this.$nextTick(()=>window.dispatchEvent(new CustomEvent('product-gallery-update',{detail:{images:this.form.gallery}})));
     }
 }" x-effect="toggleBodyScroll()" @keydown.escape.window="closeDrawer()" x-on:open-create-product.window="openCreate()" x-on:open-edit-product.window="openEdit($event.detail)">

@@ -106,25 +106,32 @@
             $status = $product->status ? 'Aktif' : 'Tidak Aktif';
             $updated = $product->updated_at ? $product->updated_at->diffForHumans() : '-';
 
-            // Payload Diselaraskan
-            $editData = [
-                'id' => $product->id,
-                'name' => $product->name,
-                'category_id' => $product->category_id,
-                'product_code' => $product->product_code,
-                'description' => $product->description,
-                'material' => $product->material,
-                'price' => (int) $price,
-                'stock' => (int) $stock,
-                'status' => (bool) $product->status,
-                'image' => $image,
-                'size_ids' => $sizeIds,
-                'variants' => $variantsData,
+            $galleryImages=$product->images->sortBy('sort_order')->take(5)->map(function($galleryImage){
+                $path=$galleryImage->image;
+                $url=(str_starts_with($path,'http://')||str_starts_with($path,'https://'))?$path:((str_starts_with($path,'images/')||str_starts_with($path,'storage/'))?asset($path):asset('storage/'.$path));
+                return ['id'=>$galleryImage->id,'url'=>$url];
+            })->values()->all();
+
+            $editData=[
+                'id'=>$product->id,
+                'name'=>$product->name,
+                'category_id'=>$product->category_id,
+                'product_code'=>$product->product_code,
+                'description'=>$product->description,
+                'material'=>$product->material,
+                'price'=>(int)$price,
+                'stock'=>(int)$stock,
+                'status'=>(bool)$product->status,
+                'image'=>$image,
+                'images'=>$galleryImages,
+                'size_ids'=>$sizeIds,
+                'variants'=>$variantsData,
             ];
 
-            $viewData = [
-                'id' => $product->id,
-                'image' => $image,
+            $viewData=[
+                'id'=>$product->id,
+                'image'=>$image,
+                'images'=>$galleryImages,
                 'name' => $product->name,
                 'category' => $categoryName,
                 'category_id' => $product->category_id,

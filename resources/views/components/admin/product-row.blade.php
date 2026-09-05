@@ -4,7 +4,6 @@
 $thumbnail=$product->images->where('is_thumbnail',true)->first();
 $firstImage=$product->images->first();
 $imagePath=$thumbnail?->image??$firstImage?->image;
-
 if($imagePath){
     $image=(str_starts_with($imagePath,'http://')||str_starts_with($imagePath,'https://'))
         ?$imagePath
@@ -14,6 +13,11 @@ if($imagePath){
 }else{
     $image=asset('images/products/1.png');
 }
+$galleryImages=$product->images->sortBy('sort_order')->take(5)->map(function($galleryImage){
+    $path=$galleryImage->image;
+    $url=(str_starts_with($path,'http://')||str_starts_with($path,'https://'))?$path:((str_starts_with($path,'images/')||str_starts_with($path,'storage/'))?asset($path):asset('storage/'.$path));
+    return ['id'=>$galleryImage->id,'url'=>$url];
+})->values()->all();
 
 $category=$product->category;
 
@@ -70,6 +74,7 @@ $editData=[
     'stock'=>(int)$stock,
     'status'=>(bool)$product->status,
     'image'=>$image,
+    'images'=>$galleryImages,
     'size_ids'=>$sizeIds,
     'variants'=>$variantsData,
 ];
@@ -77,6 +82,7 @@ $editData=[
 $viewData=[
     'id'=>$product->id,
     'image'=>$image,
+    'images'=>$galleryImages,
     'name'=>$product->name,
     'category'=>$categoryName,
     'category_id'=>$product->category_id,
@@ -137,21 +143,22 @@ $viewData=[
 
                 {{-- LIHAT --}}
                 <button type="button" @click.stop="open = false; window.dispatchEvent(new CustomEvent('open-view-product', {
-                    detail: {
-                        id: @js($product->id), 
-                        image: @js($image), 
-                        name: @js($product->name), 
-                        category: @js($categoryName),
-                        category_id: @js($product->category_id), 
-                        product_code: @js($product->product_code), 
-                        description: @js($product->description),
-                        material: @js($product->material), 
-                        price: @js($price), 
-                        stock: @js($stock), 
-                        status: @js($status),
-                        updated: @js($updated), 
-                        size_ids: @js($sizeIds), 
-                        variants: @js($variantsData)
+                    detail:{
+                    id:@js($product->id),
+                    image:@js($image),
+                    images:@js($galleryImages),
+                    name:@js($product->name),
+                    category:@js($categoryName),
+                    category_id:@js($product->category_id),
+                    product_code:@js($product->product_code),
+                    description:@js($product->description),
+                    material:@js($product->material),
+                    price:@js($price),
+                    stock:@js($stock),
+                    status:@js($status),
+                    updated:@js($updated),
+                    size_ids:@js($sizeIds),
+                    variants:@js($variantsData)
                     }
                 }))" class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50">
                     <x-heroicon-o-eye class="h-4 w-4 shrink-0 text-slate-500" />

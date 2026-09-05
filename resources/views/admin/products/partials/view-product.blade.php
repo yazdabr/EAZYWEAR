@@ -1,48 +1,49 @@
 <div x-data="{
     open: false,
-    product: {
-        id: null,
-        image: '',
-        name: '',
-        category: '',
-        category_id: '',
-        description: '',
-        product_code: '',
-        material: '',
-        price: 0,
-        stock: 0,
-        status: 'Aktif',
-        updated: '',
-        size_ids: [],
-        variants: {}
+    product:{
+        id:null,
+        image:'',
+        images:[],
+        name:'',
+        category:'',
+        category_id:'',
+        description:'',
+        product_code:'',
+        material:'',
+        price:0,
+        stock:0,
+        status:'Aktif',
+        updated:'',
+        size_ids:[],
+        variants:{}
     },
     
     toggleBodyScroll() {
         document.body.classList.toggle('overflow-hidden', this.open);
     },
 
-    openView(data) {
-        const sizeIds = Array.isArray(data?.size_ids) ? data.size_ids.map(id => Number(id)) : [];
-        const variants = data?.variants && typeof data.variants === 'object' ? data.variants : {};
-
-        this.product = {
-            id: data?.id ?? null,
-            image: data?.image ?? '',
-            name: data?.name ?? '',
-            category: data?.category ?? '',
-            category_id: data?.category_id ?? '',
-            description: data?.description ?? '',
-            product_code: data?.product_code ?? data?.sku ?? '',
-            material: data?.material ?? '',
-            price: Number(data?.price ?? 0),
-            stock: Number(data?.stock ?? 0),
-            status: data?.status ?? 'Aktif',
-            updated: data?.updated ?? '',
-            size_ids: sizeIds,
-            variants: variants
+    openView(data){
+        const sizeIds=Array.isArray(data?.size_ids)?data.size_ids.map(id=>Number(id)):[];
+        const variants=data?.variants&&typeof data.variants==='object'?data.variants:{};
+        const images=Array.isArray(data?.images)?data.images.slice(0,5):(data?.image?[data.image]:[]);
+        this.product={
+            id:data?.id??null,
+            image:images[0]??data?.image??'',
+            images:images,
+            name:data?.name??'',
+            category:data?.category??'',
+            category_id:data?.category_id??'',
+            description:data?.description??'',
+            product_code:data?.product_code??data?.sku??'',
+            material:data?.material??'',
+            price:Number(data?.price??0),
+            stock:Number(data?.stock??0),
+            status:data?.status??'Aktif',
+            updated:data?.updated??'',
+            size_ids:sizeIds,
+            variants:variants
         };
-
-        this.open = true;
+        this.open=true;
         this.toggleBodyScroll();
     },
 
@@ -51,27 +52,26 @@
         this.toggleBodyScroll();
     },
 
-    editProduct() {
-        const editData = {
-            id: this.product.id,
-            name: this.product.name,
-            category_id: this.product.category_id,
-            product_code: this.product.product_code,
-            description: this.product.description,
-            material: this.product.material,
-            price: Number(this.product.price ?? 0),
-            stock: Number(this.product.stock ?? 0),
-            status: this.product.status === 'Aktif',
-            image: this.product.image,
-            size_ids: Array.isArray(this.product.size_ids) ? this.product.size_ids.map(id => Number(id)) : [],
-            variants: this.product.variants && typeof this.product.variants === 'object' ? JSON.parse(JSON.stringify(this.product.variants)) : {}
+    editProduct(){
+        const editData={
+            id:this.product.id,
+            name:this.product.name,
+            category_id:this.product.category_id,
+            product_code:this.product.product_code,
+            description:this.product.description,
+            material:this.product.material,
+            price:Number(this.product.price??0),
+            stock:Number(this.product.stock??0),
+            status:this.product.status==='Aktif',
+            image:this.product.image,
+            images:Array.isArray(this.product.images)?[...this.product.images]:[],
+            size_ids:Array.isArray(this.product.size_ids)?this.product.size_ids.map(id=>Number(id)):[],
+            variants:this.product.variants&&typeof this.product.variants==='object'?JSON.parse(JSON.stringify(this.product.variants)):{}
         };
-
         this.closeView();
-
-        setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('open-edit-product', { detail: editData }));
-        }, 300);
+        setTimeout(()=>{
+            window.dispatchEvent(new CustomEvent('open-edit-product',{detail:editData}));
+        },300);
     }
 }" 
 x-on:open-view-product.window="openView($event.detail)"
@@ -127,16 +127,25 @@ x-on:open-view-product.window="openView($event.detail)"
             <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm space-y-6">
 
                 {{-- IMAGE WITH FALLBACK --}}
-                <div class="relative aspect-square w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
-                    <template x-if="product.image">
-                        <img :src="product.image" class="h-full w-full object-cover object-center" alt="Foto Produk">
-                    </template>
-                    <template x-if="!product.image">
-                        <div class="flex h-full w-full flex-col items-center justify-center text-slate-400">
-                            <x-heroicon-o-photo class="h-12 w-12 stroke-1" />
-                            <span class="mt-2 text-xs font-medium">Tidak ada gambar</span>
-                        </div>
-                    </template>
+                <div>
+                    <div class="relative aspect-square w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
+                        <template x-if="product.image">
+                            <img :src="product.image" class="h-full w-full object-cover object-center transition duration-300" alt="Foto Produk">
+                        </template>
+                        <template x-if="!product.image">
+                            <div class="flex h-full w-full flex-col items-center justify-center text-slate-400">
+                                <x-heroicon-o-photo class="h-12 w-12 stroke-1" />
+                                <span class="mt-2 text-xs font-medium">Tidak ada gambar</span>
+                            </div>
+                        </template>
+                    </div>
+                    <div x-show="product.images.length>1" x-cloak class="mt-3 grid grid-cols-4 gap-2.5">
+                        <template x-for="(image,index) in product.images.slice(1,5)" :key="image">
+                            <button type="button" @click="product.image=image" class="relative overflow-hidden rounded-lg border-2 transition" :class="product.image===image?'border-[#AE7C18]':'border-slate-200 hover:border-[#AE7C18]'">
+                                <img :src="image" :alt="'Foto Produk '+(index+2)" width="200" height="200" loading="lazy" decoding="async" class="aspect-square w-full object-cover">
+                            </button>
+                        </template>
+                    </div>
                 </div>
 
                 {{-- TITLE & CATEGORY --}}

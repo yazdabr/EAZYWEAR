@@ -146,7 +146,8 @@ class ProductController extends Controller
                 'description' => ['nullable', 'string'],
                 'material' => ['nullable', 'string', 'max:100'],
                 'status' => ['required', 'boolean'],
-                'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+                'image' => ['nullable', 'array', 'max:5'],
+                'image.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
                 'size_ids' => ['required', 'array', 'min:1'],
                 'size_ids.*' => ['integer', 'exists:sizes,id'],
                 'variants' => ['required', 'array', 'min:1'],
@@ -160,9 +161,11 @@ class ProductController extends Controller
                 'name.required' => 'Nama produk wajib diisi.',
                 'name.max' => 'Nama produk maksimal 150 karakter.',
                 'status.required' => 'Status produk wajib dipilih.',
-                'image.image' => 'File harus berupa gambar.',
-                'image.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
-                'image.max' => 'Ukuran foto terlalu besar. Maksimal upload adalah 10 MB.',
+                'image.array' => 'Format galeri gambar tidak valid.',
+                'image.max' => 'Maksimal 5 foto produk.',
+                'image.*.image' => 'File harus berupa gambar.',
+                'image.*.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
+                'image.*.max' => 'Ukuran setiap foto maksimal 10 MB.',
                 'size_ids.required' => 'Minimal satu ukuran produk harus dipilih.',
                 'size_ids.array' => 'Format ukuran tidak valid.',
                 'size_ids.min' => 'Minimal satu ukuran produk harus dipilih.',
@@ -235,12 +238,14 @@ class ProductController extends Controller
                 }
 
                 if ($request->hasFile('image')) {
-                    $imagePath = $request->file('image')->store('products', 'public');
-                    $product->images()->create([
-                        'image' => $imagePath,
-                        'is_thumbnail' => true,
-                        'sort_order' => 1,
-                    ]);
+                    foreach ($request->file('image') as $index => $file) {
+                        $imagePath = $file->store('products', 'public');
+                        $product->images()->create([
+                            'image' => $imagePath,
+                            'is_thumbnail' => $index === 0,
+                            'sort_order' => $index + 1,
+                        ]);
+                    }
                 }
 
                 return $product;
@@ -300,7 +305,10 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'material' => ['nullable', 'string', 'max:100'],
             'status' => ['required', 'boolean'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'image' => ['nullable', 'array', 'max:5'],
+            'image.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'existing_images' => ['nullable', 'array', 'max:5'],
+            'existing_images.*' => ['string'],
             'size_ids' => ['required', 'array', 'min:1'],
             'size_ids.*' => ['integer', 'exists:sizes,id'],
             'variants' => ['required', 'array', 'min:1'],
@@ -314,9 +322,11 @@ class ProductController extends Controller
             'name.required' => 'Nama produk wajib diisi.',
             'name.max' => 'Nama produk maksimal 150 karakter.',
             'status.required' => 'Status produk wajib dipilih.',
-            'image.image' => 'File harus berupa gambar.',
-            'image.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
-            'image.max' => 'Ukuran gambar maksimal 10 MB.',
+            'image.array' => 'Format galeri gambar tidak valid.',
+            'image.max' => 'Maksimal 5 foto produk.',
+            'image.*.image' => 'File harus berupa gambar.',
+            'image.*.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
+            'image.*.max' => 'Ukuran setiap foto maksimal 10 MB.',
             'size_ids.required' => 'Minimal satu ukuran produk harus dipilih.',
             'size_ids.min' => 'Minimal satu ukuran produk harus dipilih.',
             'size_ids.*.exists' => 'Ukuran produk tidak ditemukan.',
@@ -410,29 +420,43 @@ class ProductController extends Controller
                 $variant->delete();
             }
 
-            if ($request->hasFile('image')) {
-                $oldThumbnail = $product->images()->where('is_thumbnail', true)->first();
-
-                if ($oldThumbnail && Storage::disk('public')->exists($oldThumbnail->image)) {
-                    Storage::disk('public')->delete($oldThumbnail->image);
+            $existingImages=$request->input('existing_images',[]);
+            $existingImages=array_values(array_unique(array_filter($existingImages)));
+            $oldImages=$product->images()->orderBy('sort_order')->get();
+            $keptImages=[];
+            foreach($oldImages as $oldImage){
+                if(in_array((string)$oldImage->id,$existingImages,true)){
+                    $keptImages[]=$oldImage;
+                }else{
+                    if($oldImage->image&&Storage::disk('public')->exists($oldImage->image)){
+                        Storage::disk('public')->delete($oldImage->image);
+                    }
+                    $oldImage->delete();
                 }
-
-                $imagePath = $request->file('image')->store('products', 'public');
-
-                if ($oldThumbnail) {
-                    $oldThumbnail->update(['image' => $imagePath]);
-                } else {
-                    $product->images()->create([
-                        'image' => $imagePath,
-                        'is_thumbnail' => true,
-                        'sort_order' => 1,
-                    ]);
-                }
+            }
+            $newFiles=$request->file('image',[]);
+            $totalImages=count($keptImages)+count($newFiles);
+            if($totalImages>5){
+                throw new \Exception('Maksimal 5 foto produk.');
+            }
+            foreach($keptImages as $index=>$image){
+                $image->update([
+                    'is_thumbnail'=>$index===0,
+                    'sort_order'=>$index+1,
+                ]);
+            }
+            foreach($newFiles as $index=>$file){
+                $imagePath=$file->store('products','public');
+                $product->images()->create([
+                    'image'=>$imagePath,
+                    'is_thumbnail'=>count($keptImages)+$index===0,
+                    'sort_order'=>count($keptImages)+$index+1,
+                ]);
             }
         });
 
-        if ($request->wantsJson()) {
-            $product->load(['variants.size', 'variants.color', 'variants.inventory']);
+        if($request->wantsJson()){
+            $product->load(['images','variants.size','variants.color','variants.inventory']);
 
             return response()->json([
                 'success' => true,

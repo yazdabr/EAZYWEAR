@@ -9,7 +9,7 @@
     }
 
     $startingPrice = $product->starting_price ?? 0;
-    $whatsappMessage = 'Hello Eazywear, I would like to inquire about ' . $product->name . '.';
+    $whatsappMessage = 'Halo Eazywear, saya tertarik dengan produk ' . $product->name . '. Saya ingin menanyakan harga dan detail produk.';
     $whatsappUrl = 'https://wa.me/6285754431105?text=' . urlencode($whatsappMessage);
 @endphp
 
@@ -119,7 +119,7 @@
                                 ></p>
                             </div>
 
-                            {{-- ADD TO CART --}}
+                            {{-- 
                             <form
                                 method="POST"
                                 action="{{ route('cart.add') }}"
@@ -156,6 +156,18 @@
                                     </span>
                                 </button>
                             </form>
+                            --}}
+
+                            {{-- TANYAKAN PRODUK --}}
+                            <a
+                                href="{{ $whatsappUrl }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-[0.98] sm:mt-5 sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base"
+                            >
+                                <x-heroicon-o-chat-bubble-left-right class="h-5 w-5"/>
+                                <span>Tanyakan Produk</span>
+                            </a>
                         </div>
                     @else
                         <div class="mt-5 rounded-xl bg-gray-100 p-4 text-center sm:mt-7 sm:rounded-2xl sm:p-5">

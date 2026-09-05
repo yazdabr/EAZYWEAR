@@ -130,7 +130,11 @@ x-on:open-view-product.window="openView($event.detail)"
                 <div>
                     <div class="relative aspect-square w-full overflow-hidden rounded-xl border border-slate-100 bg-slate-100">
                         <template x-if="product.image">
-                            <img :src="product.image" class="h-full w-full object-cover object-center transition duration-300" alt="Foto Produk">
+                            <img
+                                :src="product.image.url || product.image"
+                                class="h-full w-full object-cover object-center transition duration-300"
+                                alt="Foto Produk"
+                            >
                         </template>
                         <template x-if="!product.image">
                             <div class="flex h-full w-full flex-col items-center justify-center text-slate-400">
@@ -139,13 +143,26 @@ x-on:open-view-product.window="openView($event.detail)"
                             </div>
                         </template>
                     </div>
-                    <div x-show="product.images.length>1" x-cloak class="mt-3 grid grid-cols-4 gap-2.5">
-                        <template x-for="(image,index) in product.images.slice(1,5)" :key="image">
-                            <button type="button" @click="product.image=image" class="relative overflow-hidden rounded-lg border-2 transition" :class="product.image===image?'border-[#AE7C18]':'border-slate-200 hover:border-[#AE7C18]'">
-                                <img :src="image" :alt="'Foto Produk '+(index+2)" width="200" height="200" loading="lazy" decoding="async" class="aspect-square w-full object-cover">
-                            </button>
-                        </template>
-                    </div>
+                        <div x-show="product.images.length>1" x-cloak class="mt-3 grid grid-cols-4 gap-2.5">
+                            <template x-for="(image,index) in product.images.slice(1,5)" :key="'gallery-'+(image.id||index)">
+                                <button
+                                    type="button"
+                                    @click="product.image=image"
+                                    class="relative overflow-hidden rounded-lg border-2 transition"
+                                    :class="product.image?.id===image?.id?'border-[#AE7C18]':'border-slate-200 hover:border-[#AE7C18]'"
+                                >
+                                    <img
+                                        :src="image.url"
+                                        :alt="'Foto Produk '+(index+2)"
+                                        width="200"
+                                        height="200"
+                                        loading="lazy"
+                                        decoding="async"
+                                        class="aspect-square w-full object-cover"
+                                    >
+                                </button>
+                            </template>
+                        </div>
                 </div>
 
                 {{-- TITLE & CATEGORY --}}

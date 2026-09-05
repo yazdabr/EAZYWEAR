@@ -23,6 +23,7 @@ class Transaction extends Model
         'status',
         'source',
 
+        // Shipping snapshot
         'shipping_name',
         'shipping_email',
         'shipping_phone',

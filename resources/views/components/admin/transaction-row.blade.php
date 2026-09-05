@@ -129,6 +129,14 @@
                             customer:@js($transaction['customer'] ?? ''),
                             customer_phone:@js($transaction['customer_phone'] ?? ''),
                             customer_email:@js($transaction['customer_email'] ?? ''),
+
+                            shipping_address:@js($transaction['shipping_address'] ?? ''),
+                            shipping_district:@js($transaction['shipping_district'] ?? ''),
+                            shipping_city:@js($transaction['shipping_city'] ?? ''),
+                            shipping_province:@js($transaction['shipping_province'] ?? ''),
+                            shipping_postal_code:@js($transaction['shipping_postal_code'] ?? ''),
+                            shipping_method:@js($transaction['shipping_method'] ?? ''),
+
                             payment:@js($transaction['payment'] ?? ''),
                             status:@js($transaction['status'] ?? 'PENDING'),
                             subtotal:@js($transaction['subtotal'] ?? 0),

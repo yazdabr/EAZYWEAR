@@ -64,6 +64,26 @@
                         <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:text-xs">Email</p>
                         <p class="mt-0.5 text-sm font-semibold text-slate-900 sm:mt-1 sm:text-base break-all" x-text="transaction.email"></p>
                     </div>
+                    <div class="col-span-2">
+                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:text-xs">
+                            Alamat Pengiriman
+                        </p>
+
+                        <p
+                            class="mt-0.5 text-sm font-semibold leading-5 text-slate-900 sm:mt-1 sm:text-base sm:leading-6"
+                            x-text="transaction.address"
+                        ></p>
+
+                        <p
+                            class="mt-0.5 text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6"
+                            x-text="transaction.location"
+                        ></p>
+
+                        <p
+                            class="mt-1 text-xs font-medium text-slate-500 sm:text-sm"
+                            x-text="'Pengiriman: ' + transaction.shippingMethod"
+                        ></p>
+                    </div>
                 </div>
             </div>
 
@@ -79,12 +99,30 @@
                                 <p class="text-sm font-semibold text-slate-900 leading-snug" x-text="item.name"></p>
                                 <span class="shrink-0 text-sm font-bold text-slate-900" x-text="item.total"></span>
                             </div>
-                            <div class="mt-2 flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-200/60">
-                                <div class="flex items-center gap-2">
-                                    <span class="rounded bg-slate-200/60 px-1.5 py-0.5 text-[11px]" x-text="'Ukuran: ' + (item.size || '-')"></span>
-                                    <span class="rounded bg-slate-200/60 px-1.5 py-0.5 text-[11px]" x-text="'Warna: ' + (item.color || '-')"></span>
+                            <div class="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/60 pt-2 text-xs text-slate-500">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span
+                                        class="rounded bg-slate-200/60 px-1.5 py-0.5 uppercase text-[11px]"
+                                        x-text="'Ukuran: ' + (item.size || '-')"
+                                    ></span>
+
+                                    <span
+                                        class="rounded bg-slate-200/60 px-1.5 py-0.5 uppercase text-[11px]"
+                                        x-text="'Warna: ' + (item.color || '-')"
+                                    ></span>
+
+                                    <template x-if="item.custom_name">
+                                        <span
+                                            class="rounded bg-[#AE7C18]/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-[#AE7C18]"
+                                            x-text="'Nama Jersey: ' + item.custom_name"
+                                        ></span>
+                                    </template>
                                 </div>
-                                <span class="font-medium text-slate-700" x-text="item.qty + 'x'"></span>
+
+                                <span
+                                    class="font-medium text-slate-700"
+                                    x-text="item.qty + 'x'"
+                                ></span>
                             </div>
                         </div>
                     </template>
@@ -112,7 +150,17 @@
                             <template x-for="(item,index) in transaction.items" :key="index">
                                 <tr>
                                     <td class="py-4">
-                                        <p class="font-medium text-slate-900 text-base" x-text="item.name"></p>
+                                        <p
+                                            class="font-medium text-slate-900 text-base"
+                                            x-text="item.name"
+                                        ></p>
+
+                                        <template x-if="item.custom_name">
+                                            <p
+                                                class="mt-1 text-xs font-semibold uppercase tracking-wide text-[#AE7C18]"
+                                                x-text="'Nama Jersey: ' + item.custom_name"
+                                            ></p>
+                                        </template>
                                     </td>
                                     <td class="py-4 text-base text-slate-600" x-text="item.size"></td>
                                     <td class="py-4 text-base text-slate-600" x-text="item.color"></td>
@@ -244,6 +292,9 @@ function transactionView(){
             customer:'',
             phone:'',
             email:'',
+            address:'',
+            location:'',
+            shippingMethod:'',
             payment:'',
             status:'Pending',
             subtotal:0,
@@ -263,6 +314,18 @@ function transactionView(){
                 customer:data?.customer ?? '',
                 phone:data?.phone ?? data?.customer_phone ?? '-',
                 email:data?.email ?? data?.customer_email ?? '-',
+
+                address:data?.shipping_address ?? '-',
+
+                location:[
+                    data?.shipping_district,
+                    data?.shipping_city,
+                    data?.shipping_province,
+                    data?.shipping_postal_code
+                ].filter(Boolean).join(', ') || '-',
+
+                shippingMethod:data?.shipping_method ?? '-',
+
                 payment:data?.payment ?? '-',
                 status:String(data?.status ?? 'PENDING').toUpperCase(),
                 subtotal:data?.subtotal ?? 0,

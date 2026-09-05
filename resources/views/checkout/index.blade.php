@@ -153,10 +153,15 @@
                                                 {{ $item['product_name'] }}
                                             </p>
 
-                                            <div class="mt-0.5 flex gap-2 text-[10px] text-gray-500 sm:text-[11px]">
+                                            <div class="mt-0.5 flex flex-wrap gap-x-2 text-[10px] text-gray-500 sm:text-[11px]">
                                                 <span>Size: {{ $item['size_name'] }}</span>
                                                 <span>× {{ $item['qty'] }}</span>
                                             </div>
+                                            @if(!empty($item['custom_name']))
+                                                <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 sm:text-[11px]">
+                                                    Nama Jersey: {{ $item['custom_name'] }}
+                                                </p>
+                                            @endif
 
                                             <p class="mt-0.5 text-xs font-semibold text-[#AE7C18] sm:text-sm">
                                                 Rp {{ number_format($item['price'] * $item['qty'], 0, ',', '.') }}

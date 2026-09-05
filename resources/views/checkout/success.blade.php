@@ -99,6 +99,11 @@
                                         @endif
                                         <span>Qty: {{ $item->qty }}</span>
                                     </div>
+                                    @if(!empty($item->custom_name))
+                                        <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 sm:text-xs">
+                                            Nama: {{ $item->custom_name }}
+                                        </p>
+                                    @endif
                                 </div>
                                 <p class="shrink-0 font-semibold text-slate-900">
                                     Rp {{ number_format($item->subtotal, 0, ',', '.') }}

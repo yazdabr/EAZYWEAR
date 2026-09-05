@@ -71,10 +71,18 @@ class TransactionController extends Controller
         $transactions->through(function ($transaction) {
             return [
                 'id' => $transaction->id,
+
                 'invoice' => $transaction->invoice_number,
+
                 'date' => $transaction->transaction_date
                     ? $transaction->transaction_date->format('d M Y H:i')
                     : '-',
+
+                /*
+                |--------------------------------------------------------------------------
+                | CUSTOMER
+                |--------------------------------------------------------------------------
+                */
                 'customer' => $transaction->shipping_name
                     ?? $transaction->customer?->name
                     ?? '-',
@@ -86,29 +94,90 @@ class TransactionController extends Controller
                 'customer_email' => $transaction->shipping_email
                     ?? $transaction->customer?->email
                     ?? '-',
-                'payment' => $transaction->payment_method ?? '-',
-                'status' => $transaction->status ?? 'PENDING',
-                'subtotal' => (float) $transaction->subtotal,
-                'discount' => (float) $transaction->discount,
-                'shipping' => (float) $transaction->shipping,
-                'total' => (float) $transaction->total,
-                'source' => $transaction->source,
-                'items' => $transaction->items->map(function ($item) {
-                    $variant = $item->productVariant;
 
-                    return [
-                        'id' => $item->id,
-                        'name' => $variant?->product?->name ?? '-',
-                        'size' => $variant?->size?->name ?? '-',
-                        'color' => $variant?->color?->name ?? '-',
-                        'qty' => (int) $item->qty,
-                        'price' => (float) $item->price,
-                        'subtotal' => (float) $item->subtotal,
-                        'total' => (float) $item->subtotal,
-                    ];
-                })->values()->toArray(),
+                /*
+                |--------------------------------------------------------------------------
+                | SHIPPING SNAPSHOT
+                |--------------------------------------------------------------------------
+                | Data diambil dari transaksi, bukan dari customer,
+                | supaya alamat historis tidak berubah ketika customer berubah.
+                |--------------------------------------------------------------------------
+                */
+                'shipping_address' => $transaction->shipping_address ?? '-',
+
+                'shipping_district' => $transaction->shipping_district ?? '-',
+
+                'shipping_city' => $transaction->shipping_city ?? '-',
+
+                'shipping_province' => $transaction->shipping_province ?? '-',
+
+                'shipping_postal_code' => $transaction->shipping_postal_code ?? '-',
+
+                'shipping_method' => $transaction->shipping_method ?? '-',
+
+                /*
+                |--------------------------------------------------------------------------
+                | PAYMENT & TOTAL
+                |--------------------------------------------------------------------------
+                */
+                'payment' => $transaction->payment_method ?? '-',
+
+                'status' => $transaction->status ?? 'PENDING',
+
+                'subtotal' => (float) $transaction->subtotal,
+
+                'discount' => (float) $transaction->discount,
+
+                'shipping' => (float) $transaction->shipping,
+
+                'total' => (float) $transaction->total,
+
+                'source' => $transaction->source,
+
+                /*
+                |--------------------------------------------------------------------------
+                | TRANSACTION ITEMS
+                |--------------------------------------------------------------------------
+                */
+                'items' => $transaction->items
+                    ->map(function ($item) {
+                        $variant = $item->productVariant;
+
+                        return [
+                            'id' => $item->id,
+
+                            'name' => $variant?->product?->name ?? '-',
+
+                            'size' => $variant?->size?->name ?? '-',
+
+                            'color' => $variant?->color?->name ?? '-',
+
+                            /*
+                            |--------------------------------------------------------------------------
+                            | CUSTOM JERSEY NAME
+                            |--------------------------------------------------------------------------
+                            */
+                            'custom_name' => $item->custom_name ?? '',
+
+                            'qty' => (int) $item->qty,
+
+                            'price' => (float) $item->price,
+
+                            'subtotal' => (float) $item->subtotal,
+
+                            'total' => (float) $item->subtotal,
+                        ];
+                    })
+                    ->values()
+                    ->toArray(),
             ];
         });
+
+        /*
+        |--------------------------------------------------------------------------
+        | STATISTICS
+        |--------------------------------------------------------------------------
+        */
 
         $totalTransactions = Transaction::count();
 
@@ -117,6 +186,7 @@ class TransactionController extends Controller
         $completedOrders = Transaction::where('status', 'PAID')->count();
 
         $currentMonth = Carbon::now()->startOfMonth();
+
         $previousMonth = Carbon::now()->subMonth()->startOfMonth();
 
         $currentTransactions = Transaction::whereBetween('transaction_date', [
@@ -142,12 +212,16 @@ class TransactionController extends Controller
         $currentCompleted = Transaction::whereBetween('transaction_date', [
             $currentMonth->copy()->startOfMonth(),
             $currentMonth->copy()->endOfMonth(),
-        ])->where('status', 'PAID')->count();
+        ])
+            ->where('status', 'PAID')
+            ->count();
 
         $previousCompleted = Transaction::whereBetween('transaction_date', [
             $previousMonth->copy()->startOfMonth(),
             $previousMonth->copy()->endOfMonth(),
-        ])->where('status', 'PAID')->count();
+        ])
+            ->where('status', 'PAID')
+            ->count();
 
         $calculateGrowth = function ($current, $previous) {
             if ((float) $previous === 0.0) {
@@ -169,8 +243,12 @@ class TransactionController extends Controller
             $growth = (($current - $previous) / $previous) * 100;
 
             return [
-                'value' => ($growth >= 0 ? '+' : '') . number_format($growth, 1, ',', '.') . '%',
+                'value' => ($growth >= 0 ? '+' : '')
+                    . number_format($growth, 1, ',', '.')
+                    . '%',
+
                 'positive' => $growth >= 0,
+
                 'neutral' => false,
             ];
         };

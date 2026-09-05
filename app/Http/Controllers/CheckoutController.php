@@ -11,7 +11,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -72,49 +71,41 @@ class CheckoutController extends Controller
                 'string',
                 'max:150',
             ],
-
             'email' => [
                 'required',
                 'email',
                 'max:150',
             ],
-
             'phone' => [
                 'required',
                 'string',
                 'max:30',
             ],
-
             'shipping_address' => [
                 'required',
                 'string',
                 'max:1000',
             ],
-
             'shipping_district' => [
                 'required',
                 'string',
                 'max:100',
             ],
-
             'shipping_city' => [
                 'required',
                 'string',
                 'max:100',
             ],
-
             'shipping_province' => [
                 'required',
                 'string',
                 'max:100',
             ],
-
             'shipping_postal_code' => [
                 'required',
                 'string',
                 'max:10',
             ],
-
             'shipping_method' => [
                 'required',
                 'string',
@@ -122,7 +113,6 @@ class CheckoutController extends Controller
                     'courier',
                 ]),
             ],
-
             'payment_method' => [
                 'required',
                 'string',
@@ -143,7 +133,6 @@ class CheckoutController extends Controller
 
         try {
             $transaction = DB::transaction(function () use ($validated, $cart) {
-
                 /*
                 |--------------------------------------------------------------------------
                 | 1. Customer
@@ -173,13 +162,31 @@ class CheckoutController extends Controller
                 $subtotal = 0;
 
                 foreach ($cart as $cartItem) {
-
                     $variantId = (int) ($cartItem['variant_id'] ?? 0);
                     $qty = (int) ($cartItem['qty'] ?? 0);
+                    $customName = trim((string) ($cartItem['custom_name'] ?? ''));
 
                     if ($variantId <= 0 || $qty <= 0) {
                         throw ValidationException::withMessages([
                             'cart' => 'Data keranjang tidak valid.',
+                        ]);
+                    }
+
+                    if ($customName === '') {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Nama jersey belum diisi untuk salah satu produk.',
+                        ]);
+                    }
+
+                    if (mb_strlen($customName) > 20) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Nama jersey maksimal 20 karakter.',
+                        ]);
+                    }
+
+                    if (!preg_match('/^[\pL\s]+$/u', $customName)) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
                         ]);
                     }
 
@@ -238,6 +245,7 @@ class CheckoutController extends Controller
                         'qty' => $qty,
                         'price' => $price,
                         'subtotal' => $itemSubtotal,
+                        'custom_name' => trim($cartItem['custom_name'] ?? ''),
                     ];
                 }
 
@@ -277,7 +285,6 @@ class CheckoutController extends Controller
                     'total' => $total,
                     'status' => 'PENDING',
                     'source' => 'Website',
-
                     'shipping_name' => $validated['name'],
                     'shipping_email' => $validated['email'],
                     'shipping_phone' => $validated['phone'],
@@ -295,10 +302,10 @@ class CheckoutController extends Controller
                 |--------------------------------------------------------------------------
                 */
                 foreach ($items as $item) {
-
                     TransactionItem::create([
                         'transaction_id' => $transaction->id,
                         'product_variant_id' => $item['variant']->id,
+                        'custom_name' => $item['custom_name'],
                         'qty' => $item['qty'],
                         'price' => $item['price'],
                         'subtotal' => $item['subtotal'],

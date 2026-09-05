@@ -38,16 +38,13 @@
                 <div>
                     <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs sm:tracking-[0.3em]">
                         {{ $product->category?->name ?? 'PRODUCT' }}
-                        @if($product->material)
-                            // {{ $product->material }}
-                        @endif
                     </p>
 
-                    <h1 class="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:mt-2 sm:text-4xl lg:text-5xl">
+                    <h1 class="mt-3 text-2xl font-bold leading-none tracking-tight text-slate-900 sm:mt-4 sm:text-4xl sm:leading-tight lg:text-5xl">
                         {{ $product->name }}
                     </h1>
 
-                    <h2 class="mt-2 text-xl font-bold text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">
+                    <h2 class="mt-1 text-xl font-bold leading-none text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">
                         Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}
                     </h2>
 
@@ -61,7 +58,7 @@
                 {{-- SIZE / VARIANT --}}
                 @if(count($product->available_sizes))
                     <div
-                        class="mt-5 sm:mt-7"
+                        class="mt-4 sm:mt-7"
                         x-data="{
                             selectedVariant: {{ $product->available_sizes[0]['id'] ?? 'null' }},
                             selectedPrice: {{ $product->available_sizes[0]['price'] ?? 0 }},

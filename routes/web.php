@@ -24,7 +24,7 @@ Route::view('/', 'pages.home')->name('home');
 Route::get('/catalog', [ProductController::class, 'catalog'])
     ->name('catalog');
 
-Route::get('/catalog/product/{product}', [ProductController::class, 'productDetail'])
+Route::get('/catalog/product/{product:slug}', [ProductController::class, 'productDetail'])
     ->name('product.detail');
 
 Route::get('/cart', [CartController::class, 'index'])

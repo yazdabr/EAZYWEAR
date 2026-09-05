@@ -14,7 +14,7 @@
 
     $price = $product->variants->min('price') ?? 0;
     $category = $product->category?->name ?? 'Product';
-    $detailUrl = route('product.detail', ['product' => $product->id]);
+    $detailUrl = route('product.detail', ['product' => $product->slug]);
 @endphp
 
 <div class="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-100 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg lg:rounded-2xl">

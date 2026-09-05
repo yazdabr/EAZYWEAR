@@ -9,26 +9,23 @@
     }
 
     $startingPrice = $product->starting_price ?? 0;
-    $whatsappMessage = 'Halo Eazywear, saya tertarik dengan produk ' . $product->name . '. Saya ingin menanyakan harga dan detail produk.';
+    $whatsappMessage = 'Hello Eazywear, I would like to inquire about ' . $product->name . '.';
     $whatsappUrl = 'https://wa.me/6285754431105?text=' . urlencode($whatsappMessage);
 @endphp
 
 <section x-data="galleryProduct()" class="bg-white py-6 sm:py-10 lg:py-14">
     <x-ui.container>
-        <div class="grid gap-6 sm:gap-10 lg:grid-cols-2 lg:gap-16 items-stretch">
+        <div class="grid gap-6 sm:gap-10 lg:grid-cols-2 lg:gap-16">
             {{-- ================= GALLERY ================= --}}
-            <div class="flex flex-row gap-3 sm:gap-4 items-stretch h-full">
-                {{-- Main Product Image --}}
-                <div class="flex-1 overflow-hidden rounded-2xl shadow-md sm:rounded-3xl sm:shadow-xl relative aspect-square">
-                    <img id="main-product-image" :src="currentImage" alt="{{ $product->name }}" class="h-full w-full object-cover transition duration-500">
+            <div>
+                <div class="overflow-hidden rounded-2xl shadow-md sm:rounded-3xl sm:shadow-xl">
+                    <img id="main-product-image" :src="currentImage" alt="{{ $product->name }}" class="aspect-square w-full object-cover transition duration-500">
                 </div>
-
-                {{-- Side Thumbnails --}}
-                @if(count($imageUrls) > 1)
-                    <div class="flex w-16 sm:w-20 md:w-24 shrink-0 flex-col gap-2.5 sm:gap-3 overflow-y-auto pr-1 max-h-full">
-                        <template x-for="(image, index) in images" :key="index">
-                            <button type="button" @click="currentImage = image" class="overflow-hidden rounded-lg border-2 transition sm:rounded-xl shrink-0" :class="currentImage === image ? 'border-[#AE7C18] ring-2 ring-[#AE7C18]/20' : 'border-gray-200 hover:border-[#AE7C18]'">
-                                <img :src="image" alt="{{ $product->name }}" width="100" height="100" loading="lazy" decoding="async" class="aspect-square w-full object-cover">
+                @if(count($imageUrls)>1)
+                    <div class="mt-3 grid grid-cols-4 gap-2.5 sm:mt-5 sm:gap-4">
+                        <template x-for="(image,index) in images.slice(1,5)" :key="image">
+                            <button type="button" @click="currentImage=image" class="overflow-hidden rounded-lg border-2 transition sm:rounded-xl" :class="currentImage===image?'border-[#AE7C18]':'border-gray-200 hover:border-[#AE7C18]'">
+                                <img :src="image" alt="{{ $product->name }}" width="200" height="200" loading="lazy" decoding="async" class="aspect-square w-full object-cover">
                             </button>
                         </template>
                     </div>
@@ -36,150 +33,149 @@
             </div>
 
             {{-- PRODUCT INFO --}}
-            <div class="flex h-full flex-col justify-between">
-                {{-- PRODUCT HEADER & OPTIONS --}}
+            <div class="flex h-full flex-col">
+                {{-- PRODUCT HEADER --}}
                 <div>
-                    <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs sm:tracking-[0.3em]">
-                            {{ $product->category?->name ?? 'PRODUCT' }}
-                            @if($product->material)
-                                // {{ $product->material }}
-                            @endif
-                        </p>
-
-                        <h1 class="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:mt-2 sm:text-4xl lg:text-5xl">
-                            {{ $product->name }}
-                        </h1>
-
-                        <h2 class="mt-2 text-xl font-bold text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">
-                            Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}
-                        </h2>
-
-                        @if($product->description)
-                            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 sm:mt-4 sm:text-base lg:text-lg lg:leading-7">
-                                {{ $product->description }}
-                            </p>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs sm:tracking-[0.3em]">
+                        {{ $product->category?->name ?? 'PRODUCT' }}
+                        @if($product->material)
+                            // {{ $product->material }}
                         @endif
-                    </div>
+                    </p>
 
-                    {{-- SIZE / VARIANT --}}
-                    @if(count($product->available_sizes))
-                        <div
-                            class="mt-5 sm:mt-7"
-                            x-data="{
-                                selectedVariant: {{ $product->available_sizes[0]['id'] ?? 'null' }},
-                                selectedPrice: {{ $product->available_sizes[0]['price'] ?? 0 }},
-                                selectedStock: {{ $product->available_sizes[0]['stock'] ?? 0 }}
-                            }"
-                        >
-                            <div class="mb-2 flex items-center justify-between sm:mb-3">
-                                <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-900 sm:text-sm">
-                                    Available Sizes
-                                </h3>
+                    <h1 class="mt-1.5 text-2xl font-bold tracking-tight text-slate-900 sm:mt-2 sm:text-4xl lg:text-5xl">
+                        {{ $product->name }}
+                    </h1>
 
-                                <span
-                                    class="text-xs text-gray-500 sm:text-sm"
-                                    x-show="selectedStock > 0"
-                                >
-                                    Stock:
-                                    <span
-                                        x-text="selectedStock"
-                                        class="font-semibold text-slate-800"
-                                    ></span>
-                                </span>
-                            </div>
+                    <h2 class="mt-2 text-xl font-bold text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">
+                        Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}
+                    </h2>
 
-                            <div class="flex flex-wrap gap-2 sm:gap-2.5">
-                                @foreach($product->available_sizes as $size)
-                                    <button
-                                        type="button"
-                                        @click="
-                                            selectedVariant = {{ $size['id'] }};
-                                            selectedPrice = {{ $size['price'] }};
-                                            selectedStock = {{ $size['stock'] }};
-                                        "
-                                        class="h-9 min-w-[44px] rounded-full border px-3 text-xs transition sm:h-10 sm:min-w-[50px] sm:px-4 sm:text-sm"
-                                        x-bind:class="selectedVariant === {{ $size['id'] }}
-                                            ? 'border-[#AE7C18] bg-[#AE7C18] text-white'
-                                            : 'border-gray-300 hover:border-[#AE7C18]'"
-                                    >
-                                        {{ $size['name'] }}
-                                    </button>
-                                @endforeach
-                            </div>
-
-                            <div class="mt-2.5 sm:mt-3">
-                                <p class="text-xs text-gray-500 sm:text-sm">
-                                    Selected price
-                                </p>
-
-                                <p
-                                    class="text-xl font-bold text-[#AE7C18] sm:text-2xl"
-                                    x-text="'Rp ' + Number(selectedPrice).toLocaleString('id-ID')"
-                                ></p>
-                            </div>
-
-                            {{-- 
-                            <form
-                                method="POST"
-                                action="{{ route('cart.add') }}"
-                                class="mt-4 sm:mt-5"
-                                @submit.prevent="addToCartAnimation($event)"
-                            >
-                                @csrf
-
-                                <input
-                                    type="hidden"
-                                    name="variant_id"
-                                    x-model="selectedVariant"
-                                >
-
-                                <input
-                                    type="hidden"
-                                    name="qty"
-                                    value="1"
-                                >
-
-                                <button
-                                    type="submit"
-                                    x-bind:disabled="selectedStock <= 0"
-                                    class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base"
-                                >
-                                    <x-heroicon-o-shopping-cart class="h-5 w-5"/>
-
-                                    <span x-show="selectedStock > 0">
-                                        Add to Cart
-                                    </span>
-
-                                    <span x-show="selectedStock <= 0">
-                                        Out of Stock
-                                    </span>
-                                </button>
-                            </form>
-                            --}}
-
-                            {{-- TANYAKAN PRODUK --}}
-                            <a
-                                href="{{ $whatsappUrl }}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-[0.98] sm:mt-5 sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base"
-                            >
-                                <x-heroicon-o-chat-bubble-left-right class="h-5 w-5"/>
-                                <span>Tanyakan Produk</span>
-                            </a>
-                        </div>
-                    @else
-                        <div class="mt-5 rounded-xl bg-gray-100 p-4 text-center sm:mt-7 sm:rounded-2xl sm:p-5">
-                            <p class="text-xs font-semibold text-gray-600 sm:text-base">
-                                Product currently unavailable.
-                            </p>
-                        </div>
+                    @if($product->description)
+                        <p class="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 sm:mt-4 sm:text-base lg:text-lg lg:leading-7">
+                            {{ $product->description }}
+                        </p>
                     @endif
                 </div>
 
+                {{-- SIZE / VARIANT --}}
+                @if(count($product->available_sizes))
+                    <div
+                        class="mt-5 sm:mt-7"
+                        x-data="{
+                            selectedVariant: {{ $product->available_sizes[0]['id'] ?? 'null' }},
+                            selectedPrice: {{ $product->available_sizes[0]['price'] ?? 0 }},
+                            selectedStock: {{ $product->available_sizes[0]['stock'] ?? 0 }}
+                        }"
+                    >
+                        <div class="mb-2 flex items-center justify-between sm:mb-3">
+                            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-900 sm:text-sm">
+                                Available Sizes
+                            </h3>
+
+                            <span
+                                class="text-xs text-gray-500 sm:text-sm"
+                                x-show="selectedStock > 0"
+                            >
+                                Stock:
+                                <span
+                                    x-text="selectedStock"
+                                    class="font-semibold text-slate-800"
+                                ></span>
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 sm:gap-2.5">
+                            @foreach($product->available_sizes as $size)
+                                <button
+                                    type="button"
+                                    @click="
+                                        selectedVariant = {{ $size['id'] }};
+                                        selectedPrice = {{ $size['price'] }};
+                                        selectedStock = {{ $size['stock'] }};
+                                    "
+                                    class="h-9 min-w-[44px] rounded-full border px-3 text-xs transition sm:h-10 sm:min-w-[50px] sm:px-4 sm:text-sm"
+                                    x-bind:class="selectedVariant === {{ $size['id'] }}
+                                        ? 'border-[#AE7C18] bg-[#AE7C18] text-white'
+                                        : 'border-gray-300 hover:border-[#AE7C18]'"
+                                >
+                                    {{ $size['name'] }}
+                                </button>
+                            @endforeach
+                        </div>
+
+                        <div class="mt-2.5 sm:mt-3">
+                            <p class="text-xs text-gray-500 sm:text-sm">
+                                Selected price
+                            </p>
+
+                            <p
+                                class="text-xl font-bold text-[#AE7C18] sm:text-2xl"
+                                x-text="'Rp ' + Number(selectedPrice).toLocaleString('id-ID')"
+                            ></p>
+                        </div>
+
+                        {{-- ================= ADD TO CART - DINONAKTIFKAN SEMENTARA ================= --}}
+                        {{--
+                        <form
+                            method="POST"
+                            action="{{ route('cart.add') }}"
+                            class="mt-4 sm:mt-5"
+                            @submit.prevent="addToCartAnimation($event)"
+                        >
+                            @csrf
+
+                            <input
+                                type="hidden"
+                                name="variant_id"
+                                x-model="selectedVariant"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="qty"
+                                value="1"
+                            >
+
+                            <button
+                                type="submit"
+                                x-bind:disabled="selectedStock <= 0"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base"
+                            >
+                                <x-heroicon-o-shopping-cart class="h-5 w-5"/>
+
+                                <span x-show="selectedStock > 0">
+                                    Add to Cart
+                                </span>
+
+                                <span x-show="selectedStock <= 0">
+                                    Out of Stock
+                                </span>
+                            </button>
+                        </form>
+                        --}}
+
+                        {{-- ================= TANYAKAN PRODUK ================= --}}
+                        <a
+                            href="{{ $whatsappUrl }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-[0.98] sm:mt-5 sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base"
+                        >
+                            <x-heroicon-o-chat-bubble-left-right class="h-5 w-5"/>
+                            <span>Tanyakan Produk</span>
+                        </a>
+                    </div>
+                @else
+                    <div class="mt-5 rounded-xl bg-gray-100 p-4 text-center sm:mt-7 sm:rounded-2xl sm:p-5">
+                        <p class="text-xs font-semibold text-gray-600 sm:text-base">
+                            Product currently unavailable.
+                        </p>
+                    </div>
+                @endif
+
                 {{-- PRODUCT FEATURES --}}
-                <div class="pt-5 sm:pt-7">
+                <div class="mt-auto pt-5 sm:pt-7">
                     <div class="grid grid-cols-2 gap-3 sm:gap-4">
                         <div class="rounded-xl bg-[#AE7C18] p-3.5 text-white sm:rounded-2xl sm:p-4">
                             <h4 class="text-xs font-semibold sm:text-base">
@@ -223,7 +219,6 @@ function galleryProduct() {
             const cartCandidates = [
                 document.getElementById('navbar-cart'),
                 document.querySelector('[aria-label="Cart"]'),
-                document.querySelector('[aria-[#AE7C18]]'),
                 document.querySelector('[aria-label="Keranjang"]')
             ];
 
@@ -269,7 +264,7 @@ function galleryProduct() {
             dot.style.width = '22px';
             dot.style.height = '22px';
             dot.style.borderRadius = '9999px';
-            dot.style.backgroundColor = '#0F172A';
+            dot.style.backgroundColor = '#0F172A'; // Dark slate matching the button
             dot.style.boxShadow = '0 4px 16px rgba(15, 23, 42, 0.40), 0 0 0 5px rgba(15, 23, 42, 0.10)';
             dot.style.zIndex = '999999';
             dot.style.pointerEvents = 'none';

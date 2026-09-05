@@ -9,7 +9,7 @@
     }
 
     $startingPrice = $product->starting_price ?? 0;
-    $whatsappMessage = 'Hello Eazywear, I would like to inquire about ' . $product->name . '.';
+    $whatsappMessage = 'Halo Eazywear, saya tertarik dengan produk ' . $product->name . '. Saya ingin menanyakan harga dan detail produk.';
     $whatsappUrl = 'https://wa.me/6285754431105?text=' . urlencode($whatsappMessage);
 @endphp
 

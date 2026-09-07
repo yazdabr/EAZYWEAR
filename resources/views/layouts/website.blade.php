@@ -127,10 +127,10 @@
     @stack('head')
 </head>
 
-<body class="bg-white text-gray-900">
+<body class="flex min-h-screen flex-col bg-white text-gray-900">
     <x-website.navbar />
 
-    <main class="pt-20">
+    <main class="flex-1 bg-gray-50 pt-20">
         @yield('content')
     </main>
 

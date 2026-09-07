@@ -3,7 +3,7 @@
 @section('title', 'Shopping Cart')
 
 @section('content')
-<section class="bg-gray-50 py-8 sm:py-14 lg:py-20">
+<section class="py-8 sm:py-14 lg:py-20">
     <x-ui.container>
         <div class="mb-6 sm:mb-8">
             <p class="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#AE7C18] sm:text-xs">

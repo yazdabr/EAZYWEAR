@@ -153,7 +153,7 @@
                                 form="add-to-cart-form"
                                 maxlength="20"
                                 autocomplete="off"
-                                placeholder="e.g. EAZYWEAR"
+                                placeholder="e.g. BARITO PUTERA"
                                 pattern="[A-Za-zÀ-ÿ\s]+"
                                 title="Jersey name may only contain letters and spaces."
                                 required

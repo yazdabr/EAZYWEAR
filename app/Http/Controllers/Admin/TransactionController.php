@@ -21,7 +21,7 @@ class TransactionController extends Controller
     {
         $query = Transaction::with([
             'customer',
-            'items.productVariant.product',
+            'items.productVariant.product.images',
             'items.productVariant.size',
             'items.productVariant.color',
         ]);
@@ -139,37 +139,26 @@ class TransactionController extends Controller
                 | TRANSACTION ITEMS
                 |--------------------------------------------------------------------------
                 */
-                'items' => $transaction->items
-                    ->map(function ($item) {
-                        $variant = $item->productVariant;
+                'items' => $transaction->items->map(function ($item) {
+                    $variant = $item->productVariant;
+                    $product = $variant?->product;
+                    $image = $product?->images?->sortBy([
+                        ['is_thumbnail', 'desc'],
+                        ['sort_order', 'asc'],
+                    ])->first();
 
-                        return [
-                            'id' => $item->id,
-
-                            'name' => $variant?->product?->name ?? '-',
-
-                            'size' => $variant?->size?->name ?? '-',
-
-                            'color' => $variant?->color?->name ?? '-',
-
-                            /*
-                            |--------------------------------------------------------------------------
-                            | CUSTOM JERSEY NAME
-                            |--------------------------------------------------------------------------
-                            */
-                            'custom_name' => $item->custom_name ?? '',
-
-                            'qty' => (int) $item->qty,
-
-                            'price' => (float) $item->price,
-
-                            'subtotal' => (float) $item->subtotal,
-
-                            'total' => (float) $item->subtotal,
-                        ];
-                    })
-                    ->values()
-                    ->toArray(),
+                    return [
+                        'id' => $item->id,
+                        'name' => $product?->name ?? '-',
+                        'image' => $image?->image ? asset('storage/' . $image->image) : null,
+                        'size' => $variant?->size?->name ?? '-',
+                        'custom_name' => $item->custom_name ?? '',
+                        'qty' => (int) $item->qty,
+                        'price' => (float) $item->price,
+                        'subtotal' => (float) $item->subtotal,
+                        'total' => (float) $item->subtotal,
+                    ];
+                })->values()->toArray(),
             ];
         });
 
@@ -180,11 +169,9 @@ class TransactionController extends Controller
         */
 
         $totalTransactions = Transaction::count();
-
         $totalRevenue = Transaction::sum('total');
-
         $completedOrders = Transaction::where('status', 'PAID')->count();
-
+        $pendingTransactions = Transaction::where('status', 'PENDING')->count();
         $currentMonth = Carbon::now()->startOfMonth();
 
         $previousMonth = Carbon::now()->subMonth()->startOfMonth();
@@ -273,6 +260,7 @@ class TransactionController extends Controller
             'totalTransactions' => $totalTransactions,
             'totalRevenue' => $totalRevenue,
             'completedOrders' => $completedOrders,
+            'pendingTransactions' => $pendingTransactions,
             'transactionGrowth' => $transactionGrowth,
             'revenueGrowth' => $revenueGrowth,
             'completedGrowth' => $completedGrowth,
@@ -344,6 +332,37 @@ class TransactionController extends Controller
                 'email',
                 'max:255',
             ],
+
+            'shipping_data.address' => [
+                'required',
+                'string',
+            ],
+            'shipping_data.district' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'shipping_data.city' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'shipping_data.province' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+            'shipping_data.postal_code' => [
+                'required',
+                'string',
+                'max:10',
+            ],
+            'shipping_data.method' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
             'transaction_date' => [
                 'required',
                 'date',
@@ -353,14 +372,7 @@ class TransactionController extends Controller
                 'string',
                 'max:50',
             ],
-            'source' => [
-                'required',
-                Rule::in([
-                    'Android POS',
-                    'Smart EDC',
-                    'API',
-                ]),
-            ],
+
             'discount' => [
                 'nullable',
                 'numeric',
@@ -371,6 +383,7 @@ class TransactionController extends Controller
                 'numeric',
                 'min:0',
             ],
+
             'items' => [
                 'required',
                 'array',
@@ -378,6 +391,7 @@ class TransactionController extends Controller
             ],
             'items.*.product_variant_id' => [
                 'required',
+                'integer',
                 'exists:product_variants,id',
             ],
             'items.*.qty' => [
@@ -385,11 +399,34 @@ class TransactionController extends Controller
                 'integer',
                 'min:1',
             ],
+            'items.*.custom_name' => [
+                'required',
+                'string',
+                'max:20',
+                'regex:/^[\pL\s]+$/u',
+            ],
+        ], [
+            'customer.name.required' => 'Nama pelanggan wajib diisi.',
+            'customer.email.email' => 'Format email tidak valid.',
+
+            'shipping_data.address.required' => 'Alamat pengiriman wajib diisi.',
+            'shipping_data.district.required' => 'Kecamatan wajib diisi.',
+            'shipping_data.city.required' => 'Kota atau kabupaten wajib diisi.',
+            'shipping_data.province.required' => 'Provinsi wajib diisi.',
+            'shipping_data.postal_code.required' => 'Kode pos wajib diisi.',
+            'shipping_data.method.required' => 'Metode pengiriman wajib diisi.',
+
+            'items.required' => 'Minimal satu produk harus dipilih.',
+            'items.min' => 'Minimal satu produk harus dipilih.',
+            'items.*.custom_name.required' => 'Nama jersey wajib diisi.',
+            'items.*.custom_name.max' => 'Nama jersey maksimal 20 karakter.',
+            'items.*.custom_name.regex' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
         ]);
 
         try {
             $transaction = DB::transaction(function () use ($validated) {
                 $customerData = $validated['customer'];
+                $shippingData = $validated['shipping_data'];
 
                 $customer = null;
 
@@ -413,12 +450,6 @@ class TransactionController extends Controller
                         'phone' => $customerData['phone'] ?? null,
                         'email' => $customerData['email'] ?? null,
                     ]);
-                } else {
-                    $customer->update([
-                        'name' => $customerData['name'],
-                        'phone' => $customerData['phone'] ?? $customer->phone,
-                        'email' => $customerData['email'] ?? $customer->email,
-                    ]);
                 }
 
                 $items = [];
@@ -428,7 +459,6 @@ class TransactionController extends Controller
                     $variant = ProductVariant::with([
                         'product',
                         'size',
-                        'color',
                     ])
                         ->lockForUpdate()
                         ->findOrFail($item['product_variant_id']);
@@ -461,6 +491,20 @@ class TransactionController extends Controller
                         ]);
                     }
 
+                    $customName = trim($item['custom_name']);
+
+                    if ($customName === '') {
+                        throw ValidationException::withMessages([
+                            'items' => 'Nama jersey wajib diisi.',
+                        ]);
+                    }
+
+                    if (!preg_match('/^[\pL\s]+$/u', $customName)) {
+                        throw ValidationException::withMessages([
+                            'items' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
+                        ]);
+                    }
+
                     $price = (float) $variant->price;
                     $itemSubtotal = $price * $qty;
 
@@ -472,6 +516,7 @@ class TransactionController extends Controller
                         'qty' => $qty,
                         'price' => $price,
                         'subtotal' => $itemSubtotal,
+                        'custom_name' => $customName,
                     ];
                 }
 
@@ -498,13 +543,27 @@ class TransactionController extends Controller
                     'shipping' => $shipping,
                     'total' => $total,
                     'status' => 'PENDING',
-                    'source' => $validated['source'],
+
+                    // Sumber transaksi selalu Website
+                    'source' => 'Website',
+
+                    // Shipping snapshot
+                    'shipping_name' => $customerData['name'],
+                    'shipping_email' => $customerData['email'] ?? null,
+                    'shipping_phone' => $customerData['phone'] ?? null,
+                    'shipping_address' => $shippingData['address'],
+                    'shipping_district' => $shippingData['district'],
+                    'shipping_city' => $shippingData['city'],
+                    'shipping_province' => $shippingData['province'],
+                    'shipping_postal_code' => $shippingData['postal_code'],
+                    'shipping_method' => $shippingData['method'],
                 ]);
 
                 foreach ($items as $item) {
                     TransactionItem::create([
                         'transaction_id' => $transaction->id,
                         'product_variant_id' => $item['variant']->id,
+                        'custom_name' => $item['custom_name'],
                         'qty' => $item['qty'],
                         'price' => $item['price'],
                         'subtotal' => $item['subtotal'],
@@ -554,7 +613,7 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::with([
             'customer',
-            'items.productVariant.product',
+            'items.productVariant.product.images',
             'items.productVariant.size',
             'items.productVariant.color',
         ])->where('invoice_number', $invoice)->firstOrFail();

@@ -95,42 +95,28 @@
                 <div class="space-y-3 sm:hidden">
                     <template x-for="(item, index) in transaction.items" :key="index">
                         <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-                            <div class="flex items-start justify-between gap-2">
-                                <p class="text-sm font-semibold text-slate-900 leading-snug" x-text="item.name"></p>
-                                <span class="shrink-0 text-sm font-bold text-slate-900" x-text="item.total"></span>
-                            </div>
-                            <div class="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/60 pt-2 text-xs text-slate-500">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span
-                                        class="rounded bg-slate-200/60 px-1.5 py-0.5 uppercase text-[11px]"
-                                        x-text="'Ukuran: ' + (item.size || '-')"
-                                    ></span>
-
-                                    <span
-                                        class="rounded bg-slate-200/60 px-1.5 py-0.5 uppercase text-[11px]"
-                                        x-text="'Warna: ' + (item.color || '-')"
-                                    ></span>
-
-                                    <template x-if="item.custom_name">
-                                        <span
-                                            class="rounded bg-[#AE7C18]/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-[#AE7C18]"
-                                            x-text="'Nama Jersey: ' + item.custom_name"
-                                        ></span>
-                                    </template>
+                            <div class="flex items-start gap-3">
+                                <div class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                                    <img :src="item.image || '/images/products/placeholder.png'" :alt="item.name" class="h-full w-full object-cover" loading="lazy">
                                 </div>
-
-                                <span
-                                    class="font-medium text-slate-700"
-                                    x-text="item.qty + 'x'"
-                                ></span>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <p class="text-sm font-semibold leading-snug text-slate-900" x-text="item.name"></p>
+                                        <span class="shrink-0 text-sm font-bold text-slate-900" x-text="formatCurrency(item.total)"></span>
+                                    </div>
+                                    <div class="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-200/60 pt-2 text-xs text-slate-500">
+                                        <span class="rounded bg-slate-200/60 px-1.5 py-0.5 text-[11px] uppercase" x-text="'Ukuran: ' + (item.size || '-')"></span>
+                                        <template x-if="item.custom_name">
+                                            <span class="rounded bg-[#AE7C18]/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-[#AE7C18]" x-text="'Nama Jersey: ' + item.custom_name"></span>
+                                        </template>
+                                        <span class="font-medium text-slate-700" x-text="item.qty + 'x'"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </template>
-
                     <template x-if="!transaction.items.length">
-                        <div class="py-6 text-center text-xs text-slate-400">
-                            Tidak ada produk pada transaksi ini.
-                        </div>
+                        <div class="py-6 text-center text-xs text-slate-400">Tidak ada produk pada transaksi ini.</div>
                     </template>
                 </div>
 
@@ -141,38 +127,34 @@
                             <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
                                 <th class="pb-3">Produk</th>
                                 <th class="pb-3">Ukuran</th>
-                                <th class="pb-3">Warna</th>
                                 <th class="pb-3 text-center">Jumlah</th>
-                                <th class="pb-3 text-right">Total</th>
+                                <th class="pb-3 text-right">Total</th>  
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             <template x-for="(item,index) in transaction.items" :key="index">
                                 <tr>
                                     <td class="py-4">
-                                        <p
-                                            class="font-medium text-slate-900 text-base"
-                                            x-text="item.name"
-                                        ></p>
-
-                                        <template x-if="item.custom_name">
-                                            <p
-                                                class="mt-1 text-xs font-semibold uppercase tracking-wide text-[#AE7C18]"
-                                                x-text="'Nama Jersey: ' + item.custom_name"
-                                            ></p>
-                                        </template>
+                                        <div class="flex items-center gap-3">
+                                            <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                                                <img :src="item.image || '/images/products/placeholder.png'" :alt="item.name" class="h-full w-full object-cover" loading="lazy">
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-base font-medium text-slate-900" x-text="item.name"></p>
+                                                <template x-if="item.custom_name">
+                                                    <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-[#AE7C18]" x-text="'Nama Jersey: ' + item.custom_name"></p>
+                                                </template>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="py-4 text-base text-slate-600" x-text="item.size"></td>
-                                    <td class="py-4 text-base text-slate-600" x-text="item.color"></td>
                                     <td class="py-4 text-center text-base text-slate-600" x-text="item.qty"></td>
-                                    <td class="py-4 text-right text-base font-semibold text-slate-900" x-text="item.total"></td>
+                                    <td class="py-4 text-right text-base font-semibold text-slate-900" x-text="formatCurrency(item.total)"></td>
                                 </tr>
                             </template>
                             <template x-if="!transaction.items.length">
                                 <tr>
-                                    <td colspan="5" class="py-8 text-center text-sm text-slate-400">
-                                        Tidak ada produk pada transaksi ini.
-                                    </td>
+                                    <td colspan="4" class="py-8 text-center text-sm text-slate-400">Tidak ada produk pada transaksi ini.</td>
                                 </tr>
                             </template>
                         </tbody>
@@ -214,17 +196,17 @@
                     <div class="space-y-2.5 sm:space-y-4">
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-slate-500">Subtotal</span>
-                            <span class="font-medium text-slate-900" x-text="'Rp ' + Number(transaction.subtotal || 0).toLocaleString('id-ID')"></span>
+                            <span class="font-medium text-slate-900" x-text="formatCurrency(transaction.subtotal)"></span>
                         </div>
 
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-slate-500">Diskon</span>
-                            <span class="font-medium text-slate-900" x-text="'Rp ' + Number(transaction.discount || 0).toLocaleString('id-ID')"></span>
+                            <span class="font-medium text-slate-900" x-text="formatCurrency(transaction.discount)"></span>
                         </div>
 
                         <div class="flex items-center justify-between text-xs sm:text-sm">
                             <span class="text-slate-500">Ongkos Kirim</span>
-                            <span class="font-medium text-slate-900" x-text="'Rp ' + Number(transaction.shipping || 0).toLocaleString('id-ID')"></span>
+                            <span class="font-medium text-slate-900" x-text="formatCurrency(transaction.shipping)"></span>
                         </div>
 
                         <div class="border-t border-dashed border-slate-300 pt-2.5 sm:pt-4">
@@ -283,6 +265,9 @@
 <script>
 function transactionView(){
     return {
+        formatCurrency(value){
+            return 'Rp. ' + Number(value || 0).toLocaleString('id-ID');
+        },
         open:false,
         loading:false,
         transaction:{

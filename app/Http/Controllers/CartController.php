@@ -54,7 +54,8 @@ class CartController extends Controller
         }
 
         $cart = $request->session()->get('cart', []);
-        $cartKey = (string) $variant->id;
+        $customName = trim($validated['custom_name']);
+        $cartKey = $variant->id . '-' . sha1(mb_strtolower($customName));
 
         $currentQty = $cart[$cartKey]['qty'] ?? 0;
         $newQty = $currentQty + (int) $validated['qty'];
@@ -76,6 +77,7 @@ class CartController extends Controller
             : asset('images/products/placeholder.png');
 
         $cart[$cartKey] = [
+            'cart_key' => $cartKey,
             'variant_id' => $variant->id,
             'product_id' => $variant->product_id,
             'product_name' => $variant->product->name,
@@ -85,7 +87,7 @@ class CartController extends Controller
             'color_name' => $variant->color?->name ?? null,
             'sku' => $variant->sku,
             'price' => (float) $variant->price,
-            'qty' => $newQty,
+            'qty' => $validated['qty'],
             'stock' => $stock,
             'image' => $image,
             'custom_name' => $customName,
@@ -99,70 +101,32 @@ class CartController extends Controller
         );
     }
 
-    public function update(Request $request, string $variantId): RedirectResponse
+    public function update(Request $request, string $key): RedirectResponse
     {
         $validated = $request->validate([
             'qty' => ['required', 'integer', 'min:1'],
         ]);
-
         $cart = $request->session()->get('cart', []);
-        $variantId = (string) $variantId;
-
-        if (!isset($cart[$variantId])) {
-            return redirect()
-                ->route('cart.index')
-                ->with('error', 'Item tidak ditemukan di keranjang.');
+        if (!isset($cart[$key])) {
+            return back()->with('error', 'Item keranjang tidak ditemukan.');
         }
-
-        $variant = ProductVariant::with('inventory')->findOrFail($variantId);
-        $stock = (int) ($variant->inventory?->stock ?? 0);
-        $qty = (int) $validated['qty'];
-
-        if ($stock <= 0) {
-            unset($cart[$variantId]);
-            $request->session()->put('cart', $cart);
-
-            return redirect()
-                ->route('cart.index')
-                ->with('error', 'Produk sudah tidak tersedia.');
+        $stock = (int) ($cart[$key]['stock'] ?? 0);
+        if ($validated['qty'] > $stock) {
+            return back()->with('error', 'Jumlah produk melebihi stok tersedia.');
         }
-
-        if ($qty > $stock) {
-            return back()->with(
-                'error',
-                'Jumlah melebihi stok yang tersedia.'
-            );
-        }
-
-        $cart[$variantId]['qty'] = $qty;
-        $cart[$variantId]['stock'] = $stock;
-
-        if (!isset($cart[$variantId]['custom_name'])) {
-            $cart[$variantId]['custom_name'] = '';
-        }
-
+        $cart[$key]['qty'] = $validated['qty'];
         $request->session()->put('cart', $cart);
-
-        return back()->with(
-            'success',
-            'Jumlah produk berhasil diperbarui.'
-        );
+        return back()->with('success', 'Keranjang berhasil diperbarui.');
     }
 
-    public function remove(Request $request, string $variantId): RedirectResponse
+    public function remove(Request $request, string $key): RedirectResponse
     {
         $cart = $request->session()->get('cart', []);
-        $variantId = (string) $variantId;
-
-        if (isset($cart[$variantId])) {
-            unset($cart[$variantId]);
+        if (isset($cart[$key])) {
+            unset($cart[$key]);
             $request->session()->put('cart', $cart);
         }
-
-        return back()->with(
-            'success',
-            'Produk dihapus dari keranjang.'
-        );
+        return back()->with('success', 'Produk berhasil dihapus dari keranjang.');
     }
 
     public function clear(Request $request): RedirectResponse

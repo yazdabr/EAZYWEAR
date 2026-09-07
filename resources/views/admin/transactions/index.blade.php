@@ -153,41 +153,18 @@
     </form>
 
     {{-- ================= STATISTICS ================= --}}
-    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
-        <x-admin.stat-card
-            title="Total Transaksi"
-            value="{{ number_format($totalTransactions, 0, ',', '.') }}"
-            growth="{{ $transactionGrowth['value'] }}"
-            :positive="$transactionGrowth['positive']"
-            :neutral="$transactionGrowth['neutral']"
-        >
-            <x-slot:icon>
-                <x-heroicon-o-receipt-percent class="h-6 w-6 sm:h-7 sm:w-7"/>
-            </x-slot:icon>
+    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <x-admin.stat-card title="Total Transaksi" value="{{ number_format($totalTransactions, 0, ',', '.') }}" growth="{{ $transactionGrowth['value'] }}" :positive="$transactionGrowth['positive']" :neutral="$transactionGrowth['neutral']">
+            <x-slot:icon><x-heroicon-o-receipt-percent class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
         </x-admin.stat-card>
-
-        <x-admin.stat-card
-            title="Total Pendapatan"
-            value="Rp {{ number_format($totalRevenue, 0, ',', '.') }}"
-            growth="{{ $revenueGrowth['value'] }}"
-            :positive="$revenueGrowth['positive']"
-            :neutral="$revenueGrowth['neutral']"
-        >
-            <x-slot:icon>
-                <x-heroicon-o-banknotes class="h-6 w-6 sm:h-7 sm:w-7"/>
-            </x-slot:icon>
+        <x-admin.stat-card title="Transaksi Pending" value="{{ number_format($pendingTransactions, 0, ',', '.') }}" growth="Belum dibayar" :positive="false" :neutral="true">
+            <x-slot:icon><x-heroicon-o-clock class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
         </x-admin.stat-card>
-
-        <x-admin.stat-card
-            title="Pesanan Selesai"
-            value="{{ number_format($completedOrders, 0, ',', '.') }}"
-            growth="{{ $completedGrowth['value'] }}"
-            :positive="$completedGrowth['positive']"
-            :neutral="$completedGrowth['neutral']"
-        >
-            <x-slot:icon>
-                <x-heroicon-o-check-badge class="h-6 w-6 sm:h-7 sm:w-7"/>
-            </x-slot:icon>
+        <x-admin.stat-card title="Total Pendapatan" value="Rp {{ number_format($totalRevenue, 0, ',', '.') }}" growth="{{ $revenueGrowth['value'] }}" :positive="$revenueGrowth['positive']" :neutral="$revenueGrowth['neutral']">
+            <x-slot:icon><x-heroicon-o-banknotes class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
+        </x-admin.stat-card>
+        <x-admin.stat-card title="Pesanan Selesai" value="{{ number_format($completedOrders, 0, ',', '.') }}" growth="{{ $completedGrowth['value'] }}" :positive="$completedGrowth['positive']" :neutral="$completedGrowth['neutral']">
+            <x-slot:icon><x-heroicon-o-check-badge class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
         </x-admin.stat-card>
     </div>
 

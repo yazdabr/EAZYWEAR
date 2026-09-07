@@ -35,7 +35,7 @@ class CheckoutController extends Controller
 
         $shippingMethods = [
             [
-                'value' => 'courier',
+                'value' => 'Kurir',
                 'name' => 'Kurir',
                 'description' => 'Pengiriman ke alamat yang Anda masukkan.',
             ],
@@ -110,7 +110,7 @@ class CheckoutController extends Controller
                 'required',
                 'string',
                 Rule::in([
-                    'courier',
+                    'Kurir',
                 ]),
             ],
             'payment_method' => [

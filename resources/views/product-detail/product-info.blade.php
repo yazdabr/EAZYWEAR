@@ -221,7 +221,7 @@
                             href="{{ $whatsappUrl }}"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-[0.98] sm:mt-5 sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base"
+                            class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98] sm:mt-5 sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base"
                         >
                             <x-heroicon-o-chat-bubble-left-right class="h-5 w-5"/>
                             <span>Tanyakan Produk</span>

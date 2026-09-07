@@ -99,12 +99,12 @@
 
             <div class="text-left sm:text-right">
                 <div class="inline-flex items-center gap-2 mb-1">
-                    <span class="h-6 w-6 rounded-lg bg-[#AE7C18] flex items-center justify-center text-white font-bold text-xs">J</span>
-                    <h2 class="text-xl font-bold text-slate-900 tracking-tight">Jersey Store</h2>
+                    <span class="h-6 w-6 rounded-lg bg-[#AE7C18] flex items-center justify-center text-white font-bold text-xs">E</span>
+                    <h2 class="text-xl font-bold text-slate-900 tracking-tight">EazyWear</h2>
                 </div>
-                <p class="text-xs text-slate-500">Jl. Ahmad Yani No. 123, Banjarmasin</p>
-                <p class="text-xs text-slate-500">Kalsel, Indonesia 70234</p>
-                <p class="text-xs text-slate-500 mt-1">support@jerseystore.com • 0811-5000-123</p>
+                <p class="text-xs text-slate-500">Jl. Asang Permai No.Km 11.200, Mekar Raya</p>
+                <p class="text-xs text-slate-500">Kertak Hanyar, Banjar, Kalsel</p>
+                <p class="text-xs text-slate-500 mt-1">+62 857 5443 1105</p>
             </div>
         </div>
 
@@ -113,19 +113,27 @@
             <div class="bg-slate-50/80 rounded-2xl p-5 border border-slate-100">
                 <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Ditagihkan Kepada</p>
                 <h3 class="text-base font-bold text-slate-900">
-                    {{ $transaction->customer?->name ?? '-' }}
+                    {{ $transaction->shipping_name ?? $transaction->customer?->name ?? '-' }}
                 </h3>
-
                 <p class="mt-1 text-xs text-slate-600">
-                    {{ $transaction->customer?->phone ?? '-' }}
+                    {{ $transaction->shipping_phone ?? $transaction->customer?->phone ?? '-' }}
                 </p>
-
                 <p class="text-xs text-slate-600">
-                    {{ $transaction->customer?->email ?? '-' }}
+                    {{ $transaction->shipping_email ?? $transaction->customer?->email ?? '-' }}
                 </p>
-
                 <p class="mt-2 border-t border-slate-200/60 pt-2 text-xs text-slate-500">
-                    {{ $transaction->customer?->address ?? '-' }}
+                    {{ $transaction->shipping_address ?? '-' }}
+                </p>
+                <p class="mt-1 text-xs text-slate-500">
+                    {{ collect([
+                        $transaction->shipping_district,
+                        $transaction->shipping_city,
+                        $transaction->shipping_province,
+                        $transaction->shipping_postal_code
+                    ])->filter()->implode(', ') }}
+                </p>
+                <p class="mt-1 text-xs font-semibold text-slate-700">
+                    Pengiriman: {{ $transaction->shipping_method ?? '-' }}
                 </p>
             </div>
 
@@ -176,10 +184,26 @@
 
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-3 py-4">
-                                <div>
-                                    <p class="font-bold text-slate-900">
-                                        {{ $product?->name ?? '-' }}
-                                    </p>
+                                <div class="flex items-center gap-3">
+                                    @php
+                                        $image = $product?->images
+                                            ?->sortBy([
+                                                ['is_thumbnail', 'desc'],
+                                                ['sort_order', 'asc'],
+                                            ])
+                                            ->first();
+                                    @endphp
+
+                                    <div class="min-w-0">
+                                        <p class="font-bold text-slate-900">
+                                            {{ $product?->name ?? '-' }}
+                                        </p>
+                                        @if($item->custom_name)
+                                            <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-[#AE7C18]">
+                                                Nama Jersey: {{ $item->custom_name }}
+                                            </p>
+                                        @endif
+                                    </div>
                                 </div>
                             </td>
 
@@ -264,7 +288,7 @@
 
         {{-- Footer Note --}}
         <div class="mt-12 pt-6 border-t border-slate-100 text-center page-break-inside-avoid">
-            <p class="text-xs font-bold text-slate-800">Terima kasih telah berbelanja di Jersey Store!</p>
+            <p class="text-xs font-bold text-slate-800">Terima kasih telah berbelanja di EazyWear!</p>
             <p class="text-[11px] text-slate-400 mt-0.5">Invoice ini diterbitkan secara otomatis dan sah tanpa tanda tangan basah.</p>
         </div>
 

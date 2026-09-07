@@ -16,6 +16,15 @@
         </div>
 
         <div class="flex items-center gap-3 sm:gap-6">
+            <a
+                href="{{ route('home') }}"
+                class="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 sm:px-4"
+                title="Kembali ke Website"
+            >
+                <x-heroicon-o-arrow-left class="h-5 w-5"/>
+                <span class="hidden sm:inline">Kembali ke Web</span>
+            </a>
+
             <div class="hidden h-10 w-px bg-slate-200 sm:block"></div>
 
             <div x-data="{ open: false }" class="relative">

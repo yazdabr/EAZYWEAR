@@ -33,11 +33,9 @@ Route::get('/cart', [CartController::class, 'index'])
 Route::post('/cart/add', [CartController::class, 'add'])
     ->name('cart.add');
 
-Route::patch('/cart/{variant}/update', [CartController::class, 'update'])
-    ->name('cart.update');
+Route::patch('/cart/{key}', [CartController::class, 'update'])->name('cart.update');
 
-Route::delete('/cart/{variant}', [CartController::class, 'remove'])
-    ->name('cart.remove');
+Route::delete('/cart/{key}', [CartController::class, 'remove'])->name('cart.remove');
 
 Route::delete('/cart', [CartController::class, 'clear'])
     ->name('cart.clear');

@@ -12,163 +12,42 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index()
-    {
-        $now = Carbon::now();
-        $currentStart = $now->copy()->startOfMonth();
-        $previousStart = $now->copy()->subMonth()->startOfMonth();
-        $previousEnd = $now->copy()->subMonth()->endOfMonth();
+public function index()
+{
+    $totalProducts = Product::count();
+    $totalCategories = Category::count();
+    $totalCustomers = Customer::count();
 
-        $totalProducts = Product::count();
-        $totalCategories = Category::count();
-        $totalCustomers = Customer::count();
+    $totalOrders = Transaction::whereIn('status', [
+        'PAID',
+        'COMPLETED',
+    ])->count();
 
-        $totalOrders = Transaction::whereIn('status', [
-            'PAID',
-            'COMPLETED',
-        ])->count();
+    $pendingOrders = Transaction::where('status', 'PENDING')->count();
 
-        $totalRevenue = Transaction::whereIn('status', [
-            'PAID',
-            'COMPLETED',
-        ])->sum('total');
+    $totalRevenue = Transaction::whereIn('status', [
+        'PAID',
+        'COMPLETED',
+    ])->sum('total');
 
-        $currentProducts = Product::whereBetween('created_at', [
-            $currentStart,
-            $now,
-        ])->count();
+    $salesChart = $this->getSalesChart();
 
-        $previousProducts = Product::whereBetween('created_at', [
-            $previousStart,
-            $previousEnd,
-        ])->count();
+    $topProducts = $this->getTopProducts();
 
-        $currentCategories = Category::whereBetween('created_at', [
-            $currentStart,
-            $now,
-        ])->count();
+    $topProductsMax = $topProducts->max('total_qty') ?? 0;
 
-        $previousCategories = Category::whereBetween('created_at', [
-            $previousStart,
-            $previousEnd,
-        ])->count();
-
-        $currentOrders = Transaction::whereIn('status', [
-            'PAID',
-            'COMPLETED',
-        ])->whereBetween('transaction_date', [
-            $currentStart,
-            $now,
-        ])->count();
-
-        $previousOrders = Transaction::whereIn('status', [
-            'PAID',
-            'COMPLETED',
-        ])->whereBetween('transaction_date', [
-            $previousStart,
-            $previousEnd,
-        ])->count();
-
-        $currentRevenue = Transaction::whereIn('status', [
-            'PAID',
-            'COMPLETED',
-        ])->whereBetween('transaction_date', [
-            $currentStart,
-            $now,
-        ])->sum('total');
-
-        $previousRevenue = Transaction::whereIn('status', [
-            'PAID',
-            'COMPLETED',
-        ])->whereBetween('transaction_date', [
-            $previousStart,
-            $previousEnd,
-        ])->sum('total');
-
-        $currentCustomers = Customer::whereBetween('created_at', [
-            $currentStart,
-            $now,
-        ])->count();
-
-        $previousCustomers = Customer::whereBetween('created_at', [
-            $previousStart,
-            $previousEnd,
-        ])->count();
-
-        $growthProducts = $this->calculateGrowth(
-            $currentProducts,
-            $previousProducts
-        );
-
-        $growthCategories = $this->calculateGrowth(
-            $currentCategories,
-            $previousCategories
-        );
-
-        $growthOrders = $this->calculateGrowth(
-            $currentOrders,
-            $previousOrders
-        );
-
-        $growthRevenue = $this->calculateGrowth(
-            $currentRevenue,
-            $previousRevenue
-        );
-
-        $growthCustomers = $this->calculateGrowth(
-            $currentCustomers,
-            $previousCustomers
-        );
-
-        $salesChart = $this->getSalesChart();
-
-        $topProducts = $this->getTopProducts();
-
-        $topProductsMax = $topProducts->max('total_qty') ?? 0;
-
-        return view('admin.dashboard.index', compact(
-            'totalProducts',
-            'totalCategories',
-            'totalOrders',
-            'totalRevenue',
-            'totalCustomers',
-            'growthProducts',
-            'growthCategories',
-            'growthOrders',
-            'growthRevenue',
-            'growthCustomers',
-            'salesChart',
-            'topProducts',
-            'topProductsMax'
-        ));
-    }
-
-    private function calculateGrowth($current, $previous): array
-    {
-        if ($previous == 0 && $current == 0) {
-            return [
-                'value' => '0%',
-                'positive' => true,
-                'neutral' => true,
-            ];
-        }
-
-        if ($previous == 0) {
-            return [
-                'value' => '+100%',
-                'positive' => true,
-                'neutral' => false,
-            ];
-        }
-
-        $percentage = (($current - $previous) / $previous) * 100;
-
-        return [
-            'value' => ($percentage >= 0 ? '+' : '') . number_format($percentage, 1) . '%',
-            'positive' => $percentage >= 0,
-            'neutral' => false,
-        ];
-    }
+    return view('admin.dashboard.index', compact(
+        'totalProducts',
+        'totalCategories',
+        'totalOrders',
+        'pendingOrders',
+        'totalRevenue',
+        'totalCustomers',
+        'salesChart',
+        'topProducts',
+        'topProductsMax'
+    ));
+}
 
     private function getSalesChart(): array
     {

@@ -42,9 +42,95 @@
       </div>
       <div>
         <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">Tanggal Transaksi</label>
-        <input x-model="transactionDate" type="date" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
+        <input
+            x-model="transactionDate"
+            type="datetime-local"
+            class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10"
+        >
       </div>
     </div>
+  </div>
+
+  {{-- Informasi Pengiriman --}}
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm sm:rounded-3xl overflow-hidden">
+      <div class="flex items-center gap-3 border-b border-slate-200 px-4 py-3.5 sm:gap-4 sm:px-6 sm:py-5">
+          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 sm:h-12 sm:w-12">
+              <x-heroicon-o-map-pin class="h-5 w-5 text-[#AE7C18] sm:h-6 sm:w-6"/>
+          </div>
+          <div>
+              <h3 class="text-base font-bold text-slate-900 sm:text-lg">Informasi Pengiriman</h3>
+              <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Isi alamat dan metode pengiriman pelanggan.</p>
+          </div>
+      </div>
+      <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:gap-6 sm:p-6">
+          <div class="sm:col-span-2">
+              <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">
+                  Alamat Pengiriman <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                  x-model="shipping.address"
+                  rows="3"
+                  placeholder="Masukkan alamat lengkap..."
+                  class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10"
+              ></textarea>
+          </div>
+          <div>
+              <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">
+                  Kecamatan <span class="text-red-500">*</span>
+              </label>
+              <input
+                  x-model="shipping.district"
+                  type="text"
+                  placeholder="Kecamatan..."
+                  class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10"
+              >
+          </div>
+          <div>
+              <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">
+                  Kota / Kabupaten <span class="text-red-500">*</span>
+              </label>
+              <input
+                  x-model="shipping.city"
+                  type="text"
+                  placeholder="Kota / Kabupaten..."
+                  class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10"
+              >
+          </div>
+          <div>
+              <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">
+                  Provinsi <span class="text-red-500">*</span>
+              </label>
+              <input
+                  x-model="shipping.province"
+                  type="text"
+                  placeholder="Provinsi..."
+                  class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10"
+              >
+          </div>
+          <div>
+              <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">
+                  Kode Pos <span class="text-red-500">*</span>
+              </label>
+              <input
+                  x-model="shipping.postal_code"
+                  type="text"
+                  inputmode="numeric"
+                  placeholder="701xx"
+                  class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10"
+              >
+          </div>
+          <div>
+              <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">
+                  Metode Pengiriman <span class="text-red-500">*</span>
+              </label>
+              <input
+                  x-model="shipping.method"
+                  type="text"
+                  placeholder="Contoh: JNE REG / J&T / Ambil di Toko"
+                  class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10"
+              >
+          </div>
+      </div>
   </div>
 
   {{-- Pemilihan Produk --}}
@@ -150,7 +236,7 @@
                 </p>
               </div>
               <div class="text-right">
-                <p class="text-xs font-bold text-[#AE7C18] sm:text-sm">Rp <span x-text="formatNumber(item.price)"></span></p>
+                <p class="text-xs font-bold text-[#AE7C18] sm:text-sm"><span x-text="formatNumber(item.price)"></span></p>
               </div>
               <button type="button" @click="removeSelectedProduct(index)" class="rounded-lg p-1.5 text-red-500 transition hover:bg-red-50" title="Hapus">
                 <x-heroicon-o-trash class="h-5 w-5"/>
@@ -194,6 +280,18 @@
                 <div class="mt-1 flex items-center gap-2 text-[11px] text-slate-600">
                   <span class="rounded bg-slate-100 px-1.5 py-0.5 font-medium">Ukuran: <strong class="text-slate-800" x-text="item.size"></strong></span>
                 </div>
+                <div class="mt-2">
+                    <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nama Jersey</label>
+                    <input
+                        x-model="item.custom_name"
+                        type="text"
+                        maxlength="20"
+                        pattern="[A-Za-zÀ-ÿ\s]+"
+                        placeholder="Masukkan nama jersey"
+                        required
+                        class="w-full rounded-lg border border-slate-300 px-2.5 py-2 text-xs font-medium uppercase focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/10"
+                    >
+                </div>
               </div>
             </div>
             <button type="button" @click="removeItem(index)" class="rounded-xl p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 transition" title="Hapus produk">
@@ -214,7 +312,7 @@
 
             <div class="text-right">
               <span class="text-[10px] text-slate-400 block uppercase font-medium">Subtotal</span>
-              <span class="text-sm font-bold text-[#AE7C18]">Rp <span x-text="formatNumber(item.price * item.qty)"></span></span>
+              <span class="text-sm font-bold text-[#AE7C18]"><span x-text="formatNumber(item.price * item.qty)"></span></span>
             </div>
           </div>
         </div>
@@ -235,37 +333,81 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-          <template x-if="cart.length === 0">
-            <tr>
-              <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-400">Belum ada produk di keranjang.</td>
-            </tr>
-          </template>
-          <template x-for="(item,index) in cart" :key="item.variant_id">
-            <tr class="hover:bg-slate-50">
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <img :src="item.image" :alt="item.product_name" class="h-full w-full object-cover" loading="lazy">
-                  </div>
-                  <div class="min-w-0">
-                    <p class="font-semibold text-slate-900 truncate" x-text="item.product_name"></p>
-                    {{-- <p class="text-xs text-slate-500">SKU: <span x-text="item.sku"></span></p> --}}
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 text-center" x-text="item.size"></td>
-              <td class="px-6 py-4 text-center">
-                <input x-model.number="item.qty" @change="updateQty(index)" type="number" min="1" :max="item.stock" class="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-center">
-              </td>
-              <td class="px-6 py-4 text-right">Rp <span x-text="formatNumber(item.price)"></span></td>
-              <td class="px-6 py-4 text-right font-bold text-[#AE7C18]">Rp <span x-text="formatNumber(item.price * item.qty)"></span></td>
-              <td class="px-6 py-4 text-center">
-                <button type="button" @click="removeItem(index)" class="rounded-lg p-2 text-red-600 transition hover:bg-red-50">
-                  <x-heroicon-o-trash class="h-5 w-5"/>
-                </button>
-              </td>
-            </tr>
-          </template>
+            <template x-if="cart.length === 0">
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-400">
+                        Belum ada produk di keranjang.
+                    </td>
+                </tr>
+            </template>
+
+            <template x-for="(item,index) in cart" :key="item.variant_id">
+                <tr class="hover:bg-slate-50">
+                    <td class="px-6 py-4">
+                        <div class="flex items-start gap-3">
+                            <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                                <img :src="item.image" :alt="item.product_name" class="h-full w-full object-cover" loading="lazy">
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <p class="font-semibold text-slate-900 truncate" x-text="item.product_name"></p>
+
+                                <div class="mt-2">
+                                    <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                        Nama Jersey
+                                    </label>
+
+                                    <input
+                                        x-model="item.custom_name"
+                                        type="text"
+                                        maxlength="20"
+                                        pattern="[A-Za-zÀ-ÿ\s]+"
+                                        placeholder="Masukkan nama jersey"
+                                        required
+                                        class="w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium uppercase transition focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/10"
+                                    >
+
+                                    <p class="mt-1 text-[10px] text-slate-400">
+                                        Maks. 20 karakter, huruf dan spasi.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="px-6 py-4 text-center" x-text="item.size"></td>
+
+                    <td class="px-6 py-4 text-center">
+                        <input
+                            x-model.number="item.qty"
+                            @change="updateQty(index)"
+                            type="number"
+                            min="1"
+                            :max="item.stock"
+                            class="w-20 rounded-lg border border-slate-300 px-2 py-1.5 text-center focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/10"
+                        >
+                    </td>
+
+                    <td class="px-6 py-4 text-right">
+                        <span x-text="formatNumber(item.price)"></span>
+                    </td>
+
+                    <td class="px-6 py-4 text-right font-bold text-[#AE7C18]">
+                        <span x-text="formatNumber(item.price * item.qty)"></span>
+                    </td>
+
+                    <td class="px-6 py-4 text-center">
+                        <button
+                            type="button"
+                            @click="removeItem(index)"
+                            class="rounded-lg p-2 text-red-600 transition hover:bg-red-50"
+                            title="Hapus"
+                        >
+                            <x-heroicon-o-trash class="h-5 w-5"/>
+                        </button>
+                    </td>
+                </tr>
+            </template>
         </tbody>
       </table>
     </div>
@@ -275,7 +417,7 @@
         Total Produk: <span class="font-semibold text-slate-700" x-text="totalQty"></span>
       </span>
       <span class="text-sm font-bold text-[#AE7C18] sm:text-lg">
-        Total: Rp <span x-text="formatNumber(subtotal)"></span>
+          <span x-text="formatNumber(subtotal)"></span>
       </span>
     </div>
   </div>
@@ -323,14 +465,6 @@
             </div>
           </label>
         </div>
-        
-        <div class="mt-4 border-t border-slate-200 pt-4 sm:mt-6 sm:pt-6">
-          <label class="mb-1.5 block text-xs font-semibold text-slate-700 sm:mb-2 sm:text-sm">Sumber Transaksi</label>
-          <select x-model="source" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-xs sm:text-sm font-medium text-slate-700 transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10">
-            <option value="Android POS">Android POS</option>
-            <option value="Smart EDC">Smart EDC</option>
-          </select>
-        </div>
       </div>
     </div>
 
@@ -348,7 +482,7 @@
       <div class="space-y-4 p-4 sm:p-6 text-xs sm:text-sm">
         <div class="flex justify-between items-center">
           <span class="text-slate-600">Subtotal</span>
-          <span class="font-semibold text-slate-900">Rp <span x-text="formatNumber(subtotal)"></span></span>
+          <span class="font-semibold text-slate-900"><span x-text="formatNumber(subtotal)"></span></span>
         </div>
         <div class="flex items-center justify-between gap-4">
           <span class="text-slate-600">Diskon</span>
@@ -356,13 +490,13 @@
         </div>
         <div class="flex items-center justify-between gap-4">
           <span class="text-slate-600">Ongkos Kirim</span>
-          <input x-model.number="shipping" type="number" min="0" class="w-28 sm:w-32 rounded-lg border border-slate-300 px-3 py-2 text-right text-xs sm:text-sm">
+          <input x-model.number="shippingCost" type="number" min="0" class="w-28 sm:w-32 rounded-lg border border-slate-300 px-3 py-2 text-right text-xs sm:text-sm">
         </div>
         <div class="border-t border-dashed border-slate-300"></div>
         <div class="flex items-center justify-between pt-1">
           <span class="text-sm font-bold text-slate-900 sm:text-lg">Total Keseluruhan</span>
           <span class="text-lg font-bold text-[#AE7C18] sm:text-2xl">
-            Rp <span x-text="formatNumber(grandTotal)"></span>
+            <span x-text="formatNumber(grandTotal)"></span>
           </span>
         </div>
       </div>
@@ -390,7 +524,7 @@
     <div class="flex items-center justify-between gap-3">
       <div class="min-w-0 flex-1">
         <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Pembayaran</p>
-        <p class="text-lg font-black text-[#AE7C18] truncate">Rp <span x-text="formatNumber(grandTotal)"></span></p>
+        <p class="text-lg font-black text-[#AE7C18] truncate" x-text="formatNumber(grandTotal)"></p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
         <button type="button" @click="resetForm()" class="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition active:scale-95 active:bg-slate-100" title="Atur Ulang">
@@ -424,21 +558,50 @@ function transactionCreate() {
       }
 
       return [
-        'id' => $variant->id, 'sku' => $variant->sku, 'price' => (float) $variant->price, 'stock' => (int) ($variant->inventory?->stock ?? 0), 'image' => $image,
-        'size' => ['id' => $variant->size?->id, 'name' => $variant->size?->name ?? '-'],
-        'color' => ['id' => $variant->color?->id, 'name' => $variant->color?->name ?? '-'],
-        'product' => ['id' => $variant->product?->id, 'name' => $variant->product?->name ?? '-'],
+          'id' => $variant->id,
+          'sku' => $variant->sku,
+          'price' => (float) $variant->price,
+          'stock' => (int) ($variant->inventory?->stock ?? 0),
+          'image' => $image,
+          'size' => [
+              'id' => $variant->size?->id,
+              'name' => $variant->size?->name ?? '-'
+          ],
+          'product' => [
+              'id' => $variant->product?->id,
+              'name' => $variant->product?->name ?? '-'
+          ],
       ];
     })->values()),
 
     productSearch: '', productResults: [], productSearching: false, showProductResults: false,
     selectedVariantId: '', selectedVariant: null, selectedProducts: [], qty: 1, cart: [],
     customer: { name: '', phone: '', email: '' },
-    transactionDate: '{{ now()->format('Y-m-d') }}', paymentMethod: 'CASH', source: 'Android POS', discount: 0, shipping: 0, loading: false,
+    shipping: {
+        address: '',
+        district: '',
+        city: '',
+        province: '',
+        postal_code: '',
+        method: ''
+    },
+    transactionDate: '{{ now()->format('Y-m-d\TH:i') }}',
+    paymentMethod: 'CASH',
+    source: 'Website',
+    discount: 0,
+    shippingCost: 0,
+    loading: false,
 
     get subtotal() { return this.cart.reduce((total, item) => total + (Number(item.price) * Number(item.qty)), 0); },
     get totalQty() { return this.cart.reduce((total, item) => total + Number(item.qty), 0); },
-    get grandTotal() { return Math.max(0, this.subtotal - Number(this.discount || 0) + Number(this.shipping || 0)); },
+    get grandTotal() {
+        return Math.max(
+            0,
+            this.subtotal
+            - Number(this.discount || 0)
+            + Number(this.shippingCost || 0)
+        );
+    },
 
     searchProducts() {
       const keyword = this.productSearch.trim().toLowerCase();
@@ -472,7 +635,18 @@ function transactionCreate() {
           if (newQty > stock) { this.toast('error', 'Stok Tidak Mencukupi', `${variant.product?.name ?? 'Produk'} maksimal ${stock} pcs.`); return; }
           existing.qty = newQty;
         } else {
-          this.cart.push({ variant_id: variant.id, product_id: variant.product?.id ?? null, product_name: variant.product?.name ?? '-', sku: variant.sku, image: variant.image, size: variant.size?.name ?? '-', color: variant.color?.name ?? '-', price: Number(variant.price), stock: stock, qty: qty });
+          this.cart.push({
+              variant_id: variant.id,
+              product_id: variant.product?.id ?? null,
+              product_name: variant.product?.name ?? '-',
+              sku: variant.sku,
+              image: variant.image,
+              size: variant.size?.name ?? '-',
+              price: Number(variant.price),
+              stock: stock,
+              qty: qty,
+              custom_name: ''
+          });
         }
       }
       this.selectedProducts = []; this.selectedVariantId = ''; this.selectedVariant = null; this.qty = 1;
@@ -491,10 +665,24 @@ function transactionCreate() {
       this.productSearch = ''; this.productResults = []; this.productSearching = false; this.showProductResults = false;
       this.selectedProducts = []; this.selectedVariantId = ''; this.selectedVariant = null; this.qty = 1; this.cart = [];
       this.customer = { name: '', phone: '', email: '' };
-      this.transactionDate = '{{ now()->format('Y-m-d') }}'; this.paymentMethod = 'CASH'; this.source = 'Android POS'; this.discount = 0; this.shipping = 0;
+      this.transactionDate = '{{ now()->format('Y-m-d\TH:i') }}';
+      this.paymentMethod = 'CASH';
+      this.source = 'Website';
+      this.shipping = {
+          address: '',
+          district: '',
+          city: '',
+          province: '',
+          postal_code: '',
+          method: ''
+      };
+      this.discount = 0;
+      this.shippingCost = 0;
     },
 
-    formatNumber(value) { return Number(value || 0).toLocaleString('id-ID'); },
+    formatNumber(value) {
+        return 'Rp. ' + Number(value || 0).toLocaleString('id-ID');
+    },
     
     toast(type, title, message) { 
       window.dispatchEvent(new CustomEvent('toast', { detail: { type, title, message } })); 
@@ -502,8 +690,57 @@ function transactionCreate() {
 
     async submitForm() {
       if (this.loading) return;
-      if (!this.customer.name) { this.toast('error', 'Data Belum Lengkap', 'Nama pelanggan wajib diisi.'); return; }
-      if (this.cart.length === 0) { this.toast('error', 'Keranjang Kosong', 'Tambahkan minimal satu produk.'); return; }
+
+      if (!this.customer.name.trim()) {
+          this.toast('error', 'Data Belum Lengkap', 'Nama pelanggan wajib diisi.');
+          return;
+      }
+
+      if (this.cart.length === 0) {
+          this.toast('error', 'Keranjang Kosong', 'Tambahkan minimal satu produk.');
+          return;
+      }
+
+      if (this.cart.some(item => !item.custom_name || !item.custom_name.trim())) {
+          this.toast('error', 'Nama Jersey Belum Diisi', 'Isi nama jersey untuk setiap produk.');
+          return;
+      }
+
+      if (this.cart.some(item => !/^[A-Za-zÀ-ÿ\s]+$/.test(item.custom_name.trim()))) {
+          this.toast('error', 'Nama Jersey Tidak Valid', 'Nama jersey hanya boleh berisi huruf dan spasi.');
+          return;
+      }
+
+      if (!this.shipping.address.trim()) {
+          this.toast('error', 'Alamat Belum Diisi', 'Alamat pengiriman wajib diisi.');
+          return;
+      }
+
+      if (!this.shipping.district.trim()) {
+          this.toast('error', 'Kecamatan Belum Diisi', 'Kecamatan wajib diisi.');
+          return;
+      }
+
+      if (!this.shipping.city.trim()) {
+          this.toast('error', 'Kota Belum Diisi', 'Kota atau kabupaten wajib diisi.');
+          return;
+      }
+
+      if (!this.shipping.province.trim()) {
+          this.toast('error', 'Provinsi Belum Diisi', 'Provinsi wajib diisi.');
+          return;
+      }
+
+      if (!this.shipping.postal_code.trim()) {
+          this.toast('error', 'Kode Pos Belum Diisi', 'Kode pos wajib diisi.');
+          return;
+      }
+
+      if (!this.shipping.method.trim()) {
+          this.toast('error', 'Metode Pengiriman Belum Diisi', 'Metode pengiriman wajib diisi.');
+          return;
+      }
+
       this.loading = true;
       try {
         const response = await fetch('{{ route('admin.transactions.store') }}', {
@@ -514,9 +751,18 @@ function transactionCreate() {
             'X-Requested-With': 'XMLHttpRequest'
           },
           body: JSON.stringify({
-            customer: this.customer, transaction_date: this.transactionDate, payment_method: this.paymentMethod,
-            source: this.source, discount: Number(this.discount || 0), shipping: Number(this.shipping || 0),
-            items: this.cart.map((item) => ({ product_variant_id: item.variant_id, qty: Number(item.qty) }))
+              customer: this.customer,
+              shipping_data: this.shipping,
+              transaction_date: this.transactionDate,
+              payment_method: this.paymentMethod,
+              source: 'Website',
+              discount: Number(this.discount || 0),
+              shipping: Number(this.shippingCost || 0),
+              items: this.cart.map((item) => ({
+                  product_variant_id: item.variant_id,
+                  qty: Number(item.qty),
+                  custom_name: item.custom_name.trim()
+              }))
           })
         });
         const contentType = response.headers.get('content-type') || ''; const text = await response.text(); let data = {};

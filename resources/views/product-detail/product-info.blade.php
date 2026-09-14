@@ -176,7 +176,7 @@
                             ></p>
                         </div>
 
-                        {{-- <form
+                        <form
                             id="add-to-cart-form"
                             method="POST"
                             action="{{ route('cart.add') }}"
@@ -216,7 +216,7 @@
                                     Out of Stock
                                 </span>
                             </button>
-                        </form> --}}
+                        </form>
                         <a
                             href="{{ $whatsappUrl }}"
                             target="_blank"

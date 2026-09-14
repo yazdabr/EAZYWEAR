@@ -45,7 +45,7 @@
                         <div></div>
 
                         {{-- Button Panah --}}
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/50 bg-black/20 text-white backdrop-blur-md transition-all duration-300 group-hover:border-[#AE7C18] group-hover:bg-[#AE7C18] group-hover:scale-110 sm:h-10 sm:w-10">
+                        {{-- <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/50 bg-black/20 text-white backdrop-blur-md transition-all duration-300 group-hover:border-[#AE7C18] group-hover:bg-[#AE7C18] group-hover:scale-110 sm:h-10 sm:w-10">
                             <svg
                                 class="h-4 w-4 transition-transform duration-300 group-hover:scale-110 sm:h-[18px] sm:w-[18px]"
                                 fill="none"
@@ -59,7 +59,7 @@
                                     d="M5 12h14m-6-6 6 6-6 6"
                                 />
                             </svg>
-                        </div>
+                        </div> --}}
                     </div>
                 </a>
             </x-ui.reveal>
@@ -85,7 +85,7 @@
                         <div></div>
 
                         {{-- Button Panah --}}
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/50 bg-black/20 text-white backdrop-blur-md transition-all duration-300 group-hover:border-[#AE7C18] group-hover:bg-[#AE7C18] group-hover:scale-110 sm:h-10 sm:w-10">
+                        {{-- <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/50 bg-black/20 text-white backdrop-blur-md transition-all duration-300 group-hover:border-[#AE7C18] group-hover:bg-[#AE7C18] group-hover:scale-110 sm:h-10 sm:w-10">
                             <svg
                                 class="h-4 w-4 transition-transform duration-300 group-hover:scale-110 sm:h-[18px] sm:w-[18px]"
                                 fill="none"
@@ -99,7 +99,7 @@
                                     d="M5 12h14m-6-6 6 6-6 6"
                                 />
                             </svg>
-                        </div>
+                        </div> --}}
                     </div>
                 </a>
             </x-ui.reveal>
@@ -125,7 +125,7 @@
                         <div></div>
 
                         {{-- Button Panah --}}
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/50 bg-black/20 text-white backdrop-blur-md transition-all duration-300 group-hover:border-[#AE7C18] group-hover:bg-[#AE7C18] group-hover:scale-110 sm:h-10 sm:w-10">
+                        {{-- <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/50 bg-black/20 text-white backdrop-blur-md transition-all duration-300 group-hover:border-[#AE7C18] group-hover:bg-[#AE7C18] group-hover:scale-110 sm:h-10 sm:w-10">
                             <svg
                                 class="h-4 w-4 transition-transform duration-300 group-hover:scale-110 sm:h-[18px] sm:w-[18px]"
                                 fill="none"
@@ -139,7 +139,7 @@
                                     d="M5 12h14m-6-6 6 6-6 6"
                                 />
                             </svg>
-                        </div>
+                        </div> --}}
                     </div>
                 </a>
             </x-ui.reveal>

@@ -7,7 +7,7 @@
         $imageUrls = [asset('images/products/placeholder.png')];
     }
     $startingPrice = $product->starting_price ?? 0;
-    $whatsappMessage = 'Halo Eazywear, saya tertarik dengan produk ' . $product->name . '. Saya ingin menanyakan harga dan detail produk.';
+    $whatsappMessage = 'Halo Eazywear, saya ingin bertanya mengenai jersey dan informasi lebih lanjut.';
     $whatsappUrl = 'https://wa.me/6285754431105?text=' . urlencode($whatsappMessage);
 @endphp
 

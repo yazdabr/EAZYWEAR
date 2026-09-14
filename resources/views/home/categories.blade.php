@@ -26,7 +26,7 @@
         class="group relative block aspect-[4/3] overflow-hidden rounded-2xl bg-slate-300 transition-all duration-300 hover:shadow-lg active:scale-[0.98] sm:aspect-[16/10] lg:aspect-[16/9]"
     >
         <img
-            src="{{ asset('images/hero/jersey4.png') }}"
+            src="{{ asset('images/hero/jersey4.webp') }}"
             alt="Kaos Jersey Eazywear"
             class="absolute inset-0 h-full w-full object-cover object-top transition duration-500 group-hover:scale-105"
         >

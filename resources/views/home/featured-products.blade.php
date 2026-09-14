@@ -30,10 +30,10 @@
                 >
                     <picture>
                         {{-- Gambar Desktop (Layar >= 640px) --}}
-                        <source media="(min-width: 640px)" srcset="{{ asset('images/hero/jersey1.png') }}">
+                        <source media="(min-width: 640px)" srcset="{{ asset('images/hero/jersey1.webp') }}">
                         {{-- Gambar Mobile --}}
                         <img
-                            src="{{ asset('images/hero/jersey1-mobile.png') }}"
+                            src="{{ asset('images/hero/jersey1-mobile.webp') }}"
                             alt="Jersey Collection 01"
                             class="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
                         >
@@ -71,9 +71,9 @@
                     class="group relative block h-72 w-full overflow-hidden rounded-2xl bg-slate-200 transition-all duration-300 hover:shadow-xl active:scale-[0.98] sm:h-auto sm:aspect-[4/5]"
                 >
                     <picture>
-                        <source media="(min-width: 640px)" srcset="{{ asset('images/hero/jersey2.png') }}">
+                        <source media="(min-width: 640px)" srcset="{{ asset('images/hero/jersey2.webp') }}">
                         <img
-                            src="{{ asset('images/hero/jersey2-mobile.png') }}"
+                            src="{{ asset('images/hero/jersey2-mobile.webp') }}"
                             alt="Jersey Collection 02"
                             class="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
                         >
@@ -111,9 +111,9 @@
                     class="group relative block h-72 w-full overflow-hidden rounded-2xl bg-slate-200 transition-all duration-300 hover:shadow-xl active:scale-[0.98] sm:h-auto sm:aspect-[4/5]"
                 >
                     <picture>
-                        <source media="(min-width: 640px)" srcset="{{ asset('images/hero/jersey3.png') }}">
+                        <source media="(min-width: 640px)" srcset="{{ asset('images/hero/jersey3.webp') }}">
                         <img
-                            src="{{ asset('images/hero/jersey3-mobile.png') }}"
+                            src="{{ asset('images/hero/jersey3-mobile.webp') }}"
                             alt="Jersey Collection 03"
                             class="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
                         >

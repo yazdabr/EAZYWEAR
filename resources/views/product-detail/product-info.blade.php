@@ -13,54 +13,54 @@
 
 <section x-data="galleryProduct()" class="bg-white py-6 sm:py-10 lg:py-14">
     <x-ui.container>
-        <div class="grid items-stretch gap-6 sm:gap-10 lg:min-h-0 lg:grid-cols-2 lg:gap-16">
+        <div class="grid items-start gap-6 sm:gap-10 lg:grid-cols-2 lg:gap-16">
             {{-- GALLERY --}}
-            <div class="h-full min-h-0">
-                <div class="grid h-full min-h-0 gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_86px] lg:items-stretch">
-
+            <div class="w-full min-w-0">
+                <div class="flex w-full flex-col gap-3 sm:gap-4">
                     {{-- MAIN IMAGE --}}
-                    <div
-                        class="aspect-square w-full min-h-0 overflow-hidden rounded-2xl bg-gray-100 shadow-md sm:rounded-3xl sm:shadow-xl lg:aspect-auto lg:h-full"
-                    >
+                    <div class="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-50 shadow-md sm:rounded-3xl sm:shadow-xl">
                         <img
                             id="main-product-image"
                             :src="currentImage"
                             alt="{{ $product->name }}"
-                            class="h-full w-full object-cover transition duration-500"
+                            class="absolute inset-0 h-full w-full object-contain transition duration-500"
                         >
+                        <div class="absolute bottom-2.5 right-2.5 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm sm:bottom-4 sm:right-4 sm:px-3 sm:py-1.5 sm:text-xs">
+                            <span x-text="images.indexOf(currentImage) + 1"></span>/<span x-text="images.length"></span>
+                        </div>
                     </div>
 
                     {{-- THUMBNAILS --}}
                     @if(count($imageUrls) > 1)
-                        <div
-                            class="order-last grid grid-cols-4 gap-2.5 sm:gap-4 lg:order-none lg:grid-cols-1 lg:grid-rows-5 lg:gap-3"
-                        >
-                            <template
-                                x-for="(image,index) in images.slice(0,5)"
-                                :key="image"
-                            >
-                                <button
-                                    type="button"
-                                    @click="currentImage=image"
-                                    class="h-full min-h-0 w-full overflow-hidden rounded-lg border-2 transition sm:rounded-xl"
-                                    :class="currentImage===image
-                                        ? 'border-[#AE7C18]'
-                                        : 'border-gray-200 hover:border-[#AE7C18]'"
-                                >
-                                    <img
-                                        :src="image"
-                                        alt="{{ $product->name }}"
-                                        width="200"
-                                        height="200"
-                                        loading="lazy"
-                                        decoding="async"
-                                        class="h-full w-full object-cover"
+                        <div class="w-full min-w-0 overflow-hidden">
+                            <div class="flex w-full max-w-full snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:gap-2.5">
+                                <template x-for="(image,index) in images.slice(0,10)" :key="image">
+                                    <button
+                                        type="button"
+                                        @click="currentImage=image"
+                                        class="group relative aspect-[3/4] w-[58px] shrink-0 snap-start overflow-hidden rounded-lg border-2 bg-slate-50 transition sm:w-[68px] sm:rounded-xl"
+                                        :class="currentImage===image
+                                            ? 'border-[#AE7C18] ring-2 ring-[#AE7C18]/15'
+                                            : 'border-slate-200 hover:border-[#AE7C18]'"
                                     >
-                                </button>
-                            </template>
+                                        <img
+                                            :src="image"
+                                            alt="{{ $product->name }}"
+                                            width="162"
+                                            height="216"
+                                            loading="lazy"
+                                            decoding="async"
+                                            class="h-full w-full object-contain transition duration-300 group-hover:scale-[1.03]"
+                                        >
+                                        <span
+                                            class="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-md bg-black/65 px-1 text-[9px] font-bold text-white backdrop-blur-sm"
+                                            x-text="index + 1"
+                                        ></span>
+                                    </button>
+                                </template>
+                            </div>
                         </div>
                     @endif
-
                 </div>
             </div>
 
@@ -176,7 +176,7 @@
                             ></p>
                         </div>
 
-                        {{-- <form
+                        <form
                             id="add-to-cart-form"
                             method="POST"
                             action="{{ route('cart.add') }}"
@@ -216,7 +216,7 @@
                                     Out of Stock
                                 </span>
                             </button>
-                        </form> --}}
+                        </form>
                         <a
                             href="{{ $whatsappUrl }}"
                             target="_blank"

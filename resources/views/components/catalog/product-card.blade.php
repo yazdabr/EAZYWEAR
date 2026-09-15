@@ -20,14 +20,14 @@
 <div class="group flex h-full flex-col overflow-hidden rounded-xl border border-gray-100 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg lg:rounded-2xl">
     <div
         class="relative cursor-pointer overflow-hidden bg-gray-100"
-        @click="$dispatch('quick-view', {
+        {{-- @click="$dispatch('quick-view', {
             id: @js($product->id),
             url: @js($detailUrl),
             title: @js($product->name),
             series: @js($category),
             image: @js($image),
             price: @js('Rp ' . number_format($price, 0, ',', '.'))
-        })"
+        })" --}}
     >
         <img
             src="{{ $image }}"
@@ -38,17 +38,17 @@
         >
 
         <div class="absolute inset-0 hidden items-center justify-center bg-black/0 transition-all duration-300 lg:flex lg:group-hover:bg-black/20">
-            <button
+            {{-- <button
                 type="button"
                 class="translate-y-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-[#AE7C18] hover:text-white"
             >
                 Quick View
-            </button>
+            </button> --}}
         </div>
     </div>
     <div class="flex flex-1 flex-col px-2.5 py-2.5 sm:px-3 sm:py-3 lg:px-4 lg:py-4">
         <p class="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#AE7C18] sm:text-[10px] lg:text-xs lg:tracking-[0.18em]">
-            {{ $category }}
+            Jersey
         </p>
 
         <h3 class="mt-1 line-clamp-2 min-h-[2rem] text-sm font-bold leading-4 text-slate-900 transition-colors duration-300 group-hover:text-[#AE7C18] sm:text-[15px] sm:leading-5 lg:mt-1.5 lg:min-h-[2.75rem] lg:text-lg lg:leading-6">
@@ -65,7 +65,7 @@
             </p>
         </div>
 
-        <div class="mt-auto pt-2.5 sm:pt-3 lg:pt-4">
+        {{-- <div class="mt-auto pt-2.5 sm:pt-3 lg:pt-4">
             <x-ui.button
                 :href="$detailUrl"
                 variant="outline"
@@ -73,6 +73,6 @@
             >
                 View Detail
             </x-ui.button>
-        </div>
+        </div> --}}
     </div>
 </div>

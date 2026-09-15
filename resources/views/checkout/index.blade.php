@@ -95,7 +95,7 @@
                         </div>
                     </div>
 
-                    {{-- Shipping Method --}}
+                    {{-- *Shipping Method* --}}
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
                         <div class="mb-4">
                             <h2 class="text-base font-bold text-slate-900 sm:text-lg">Pengiriman</h2>
@@ -103,13 +103,20 @@
                         <div class="space-y-2.5">
                             @foreach($shippingMethods as $method)
                                 <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-[#AE7C18] bg-[#AE7C18]/5 px-3.5 py-3 sm:gap-4 sm:px-4">
-                                    <input type="radio" name="shipping_method" value="{{ $method['value'] }}" checked class="h-4 w-4 accent-[#AE7C18]">
+                                    <input type="radio" name="shipping_method" value="{{ $method['value'] }}" class="h-4 w-4 accent-[#AE7C18]" {{ $loop->first ? 'checked' : '' }}>
                                     <div class="min-w-0 flex-1">
                                         <p class="text-xs font-semibold text-slate-900 sm:text-sm">{{ $method['name'] }}</p>
                                         <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">{{ $method['description'] }}</p>
                                     </div>
                                 </label>
                             @endforeach
+                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 sm:gap-4 sm:px-4">
+                                <input type="radio" name="shipping_method" value="pickup" class="h-4 w-4 accent-[#AE7C18]">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-semibold text-slate-900 sm:text-sm">Ambil di Tempat</p>
+                                    <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">Ambil pesanan langsung di Kantor Eazywear</p>
+                                </div>
+                            </label>
                         </div>
                         <div class="mt-3 rounded-lg bg-gray-50 px-3 py-2.5">
                             <p class="text-[10px] leading-4 text-gray-500 sm:text-xs sm:leading-5">Biaya pengiriman akan ditentukan pada proses pemesanan berikutnya.</p>

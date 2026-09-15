@@ -106,7 +106,7 @@
             $status = $product->status ? 'Aktif' : 'Tidak Aktif';
             $updated = $product->updated_at ? $product->updated_at->diffForHumans() : '-';
 
-            $galleryImages=$product->images->sortBy('sort_order')->take(5)->map(function($galleryImage){
+            $galleryImages=$product->images->sortBy('sort_order')->take(10)->map(function($galleryImage){
                 $path=$galleryImage->image;
                 $url=(str_starts_with($path,'http://')||str_starts_with($path,'https://'))?$path:((str_starts_with($path,'images/')||str_starts_with($path,'storage/'))?asset($path):asset('storage/'.$path));
                 return ['id'=>$galleryImage->id,'url'=>$url];

@@ -110,7 +110,7 @@
         this.errors={};
         const variants=this.normalizeVariants(product?.variants||{});
         let sizeIds=this.normalizeSizeIds(product?.size_ids||[],variants);
-        const gallery=Array.isArray(product?.images)?product.images.slice(0,5):[];
+        const gallery=Array.isArray(product?.images)?product.images.slice(0,10):[];
         this.form={
             id:product?.id||'',
             name:product?.name||'',

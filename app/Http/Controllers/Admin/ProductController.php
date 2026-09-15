@@ -146,7 +146,7 @@ class ProductController extends Controller
                 'description' => ['nullable', 'string'],
                 'material' => ['nullable', 'string', 'max:100'],
                 'status' => ['required', 'boolean'],
-                'image' => ['nullable', 'array', 'max:5'],
+                'image' => ['nullable', 'array', 'max:10'],
                 'image.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
                 'size_ids' => ['required', 'array', 'min:1'],
                 'size_ids.*' => ['integer', 'exists:sizes,id'],
@@ -162,7 +162,7 @@ class ProductController extends Controller
                 'name.max' => 'Nama produk maksimal 150 karakter.',
                 'status.required' => 'Status produk wajib dipilih.',
                 'image.array' => 'Format galeri gambar tidak valid.',
-                'image.max' => 'Maksimal 5 foto produk.',
+                'image.max' => 'Maksimal 10 foto produk.',
                 'image.*.image' => 'File harus berupa gambar.',
                 'image.*.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
                 'image.*.max' => 'Ukuran setiap foto maksimal 10 MB.',
@@ -305,9 +305,9 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'material' => ['nullable', 'string', 'max:100'],
             'status' => ['required', 'boolean'],
-            'image' => ['nullable', 'array', 'max:5'],
+            'image' => ['nullable', 'array', 'max:10'],
             'image.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
-            'existing_images' => ['nullable', 'array', 'max:5'],
+            'existing_images' => ['nullable', 'array', 'max:10'],
             'existing_images.*' => ['string'],
             'size_ids' => ['required', 'array', 'min:1'],
             'size_ids.*' => ['integer', 'exists:sizes,id'],
@@ -323,7 +323,7 @@ class ProductController extends Controller
             'name.max' => 'Nama produk maksimal 150 karakter.',
             'status.required' => 'Status produk wajib dipilih.',
             'image.array' => 'Format galeri gambar tidak valid.',
-            'image.max' => 'Maksimal 5 foto produk.',
+            'image.max' => 'Maksimal 10 foto produk.',
             'image.*.image' => 'File harus berupa gambar.',
             'image.*.mimes' => 'Format gambar harus JPG, JPEG, PNG, atau WEBP.',
             'image.*.max' => 'Ukuran setiap foto maksimal 10 MB.',
@@ -436,8 +436,8 @@ class ProductController extends Controller
             }
             $newFiles=$request->file('image',[]);
             $totalImages=count($keptImages)+count($newFiles);
-            if($totalImages>5){
-                throw new \Exception('Maksimal 5 foto produk.');
+            if($totalImages>10){
+                throw new \Exception('Maksimal 10 foto produk.');
             }
             foreach($keptImages as $index=>$image){
                 $image->update([

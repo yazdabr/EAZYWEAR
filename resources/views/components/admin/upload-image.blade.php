@@ -4,7 +4,7 @@
     items:[],
     newFiles:[],
     error:'',
-    maxFiles:5,
+    maxFiles:10,
 
     init(){
         window.addEventListener('product-gallery-update',event=>{
@@ -160,7 +160,7 @@
 
     openFilePicker(){
         if(this.items.length>=this.maxFiles){
-            this.error='Maksimal 5 foto produk.';
+            this.error=`Maksimal ${this.maxFiles} foto produk.`;
             return;
         }
 
@@ -210,7 +210,7 @@
         </p>
 
         <p class="mt-0.5 sm:mt-1 text-[10px] sm:text-xs text-slate-400">
-            Maksimal 5 foto • 10 MB/foto
+            Maksimal 10 foto • 10 MB/foto
         </p>
     </div>
 
@@ -283,7 +283,7 @@
         <div class="flex items-center justify-between rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 sm:px-4 sm:py-3">
             <div>
                 <p class="text-xs sm:text-sm font-semibold text-slate-700">
-                    <span x-text="items.length"></span>/5 Foto
+                    <span x-text="items.length"></span>/10 Foto
                 </p>
 
                 <p class="mt-0.5 text-[10px] sm:text-xs text-slate-400">

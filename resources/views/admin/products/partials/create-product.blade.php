@@ -110,7 +110,8 @@
         this.errors={};
         const variants=this.normalizeVariants(product?.variants||{});
         let sizeIds=this.normalizeSizeIds(product?.size_ids||[],variants);
-        const gallery=Array.isArray(product?.images)?product.images.slice(0,10):[];
+        let gallery=Array.isArray(product?.images)?product.images.filter(Boolean).slice(0,10):[];
+        if(gallery.length===0&&product?.image)gallery=[product.image];
         this.form={
             id:product?.id||'',
             name:product?.name||'',
@@ -122,13 +123,17 @@
             stock:product?.stock!==''&&product?.stock!==null&&product?.stock!==undefined?parseInt(product.stock):'',
             status:product?.status===true||product?.status===1||product?.status==='1'?'Aktif':'Tidak Aktif',
             image:gallery[0]||'',
-            gallery:gallery,
+            gallery:[...gallery],
             size_ids:sizeIds,
             variants:variants
         };
         this.syncVariants();
         this.open=true;
-        this.$nextTick(()=>window.dispatchEvent(new CustomEvent('product-gallery-update',{detail:{images:this.form.gallery}})));
+        this.$nextTick(()=>{
+            window.dispatchEvent(new CustomEvent('product-gallery-update',{
+                detail:{images:[...this.form.gallery]}
+            }));
+        });
     }
 }" x-effect="toggleBodyScroll()" @keydown.escape.window="closeDrawer()" x-on:open-create-product.window="openCreate()" x-on:open-edit-product.window="openEdit($event.detail)">
 {{-- OVERLAY --}}

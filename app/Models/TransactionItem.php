@@ -14,6 +14,7 @@ class TransactionItem extends Model
         'transaction_id',
         'product_variant_id',
         'custom_name',
+        'custom_number',
         'qty',
         'price',
         'subtotal',

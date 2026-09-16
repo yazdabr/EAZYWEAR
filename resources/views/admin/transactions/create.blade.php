@@ -292,6 +292,18 @@
                         class="w-full rounded-lg border border-slate-300 px-2.5 py-2 text-xs font-medium uppercase focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/10"
                     >
                 </div>
+                <div class="mt-2">
+                    <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nomor Jersey</label>
+                    <input
+                        x-model="item.custom_number"
+                        type="text"
+                        inputmode="numeric"
+                        maxlength="2"
+                        pattern="[0-9]{1,2}"
+                        placeholder="Contoh: 10"
+                        class="w-full rounded-lg border border-slate-300 px-2.5 py-2 text-xs font-medium focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/10"
+                    >
+                </div>
               </div>
             </div>
             <button type="button" @click="removeItem(index)" class="rounded-xl p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 transition" title="Hapus produk">
@@ -370,6 +382,18 @@
                                     <p class="mt-1 text-[10px] text-slate-400">
                                         Maks. 20 karakter, huruf dan spasi.
                                     </p>
+                                </div>
+                                <div class="mt-2">
+                                    <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-500">Nomor Jersey</label>
+                                    <input
+                                        x-model="item.custom_number"
+                                        type="text"
+                                        inputmode="numeric"
+                                        maxlength="2"
+                                        pattern="[0-9]{1,2}"
+                                        placeholder="Contoh: 10"
+                                        class="w-full max-w-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium transition focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/10"
+                                    >
                                 </div>
                             </div>
                         </div>
@@ -645,7 +669,8 @@ function transactionCreate() {
               price: Number(variant.price),
               stock: stock,
               qty: qty,
-              custom_name: ''
+              custom_name: '',
+              custom_number: ''
           });
         }
       }
@@ -711,6 +736,16 @@ function transactionCreate() {
           return;
       }
 
+      if (this.cart.some(item => !item.custom_number || !String(item.custom_number).trim())) {
+          this.toast('error', 'Nomor Jersey Belum Diisi', 'Isi nomor jersey untuk setiap produk.');
+          return;
+      }
+
+      if (this.cart.some(item => !/^\d{1,2}$/.test(String(item.custom_number).trim()))) {
+          this.toast('error', 'Nomor Jersey Tidak Valid', 'Nomor jersey hanya boleh berupa 1–2 digit angka.');
+          return;
+      }
+
       if (!this.shipping.address.trim()) {
           this.toast('error', 'Alamat Belum Diisi', 'Alamat pengiriman wajib diisi.');
           return;
@@ -761,7 +796,8 @@ function transactionCreate() {
               items: this.cart.map((item) => ({
                   product_variant_id: item.variant_id,
                   qty: Number(item.qty),
-                  custom_name: item.custom_name.trim()
+                  custom_name: item.custom_name.trim(),
+                  custom_number: String(item.custom_number).trim()
               }))
           })
         });

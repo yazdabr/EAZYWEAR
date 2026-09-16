@@ -71,7 +71,7 @@
                         <div class="flex items-center gap-2">
 
                             <span
-                                class="inline-block rounded-full bg-[#AE7C18]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#AE7C18]"
+                                class="inline-block rounded-full text-[11px] font-bold uppercase tracking-widest text-[#AE7C18]"
                                 x-text="series"
                             ></span>
 
@@ -84,12 +84,7 @@
                         ></h2>
 
                         {{-- Description --}}
-                        <p class="mt-4 text-sm leading-relaxed text-slate-500">
-                            Premium apparel designed with quality materials,
-                            comfortable construction, and customizable design
-                            options for teams, communities, businesses, and
-                            everyday wear.
-                        </p>
+                        <p class="mt-4 whitespace-pre-line text-sm leading-relaxed text-slate-500" x-text="description || 'Tidak ada deskripsi.'"></p>
 
                     </div>
 
@@ -106,7 +101,7 @@
                                 </p>
 
                                 <h3
-                                    class="mt-0.5 text-3xl font-black tracking-tight text-[#AE7C18]"
+                                    class="mt-0.5 text-3xl font-bold tracking-tight text-[#AE7C18]"
                                     x-text="price"
                                 ></h3>
 
@@ -115,13 +110,13 @@
                             {{-- View Detail --}}
                             <div class="shrink-0">
 
-                                <a
+                                {{-- <a
                                     x-bind:href="productUrl"
                                     @click.stop
                                     class="inline-flex items-center justify-center rounded-full bg-[#AE7C18] px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/25 transition-all hover:bg-[#8F6514] hover:shadow-xl hover:shadow-[#AE7C18]/35"
                                 >
                                     View Detail
-                                </a>
+                                </a> --}}
 
                             </div>
 
@@ -192,7 +187,7 @@
 
                 {{-- Category --}}
                 <span
-                    class="inline-block rounded-full bg-[#AE7C18]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#AE7C18]"
+                    class="inline-block rounded-full text-[10px] font-bold uppercase tracking-widest text-[#AE7C18]"
                     x-text="series"
                 ></span>
 
@@ -203,12 +198,7 @@
                 ></h2>
 
                 {{-- Description --}}
-                <p class="mt-3 text-sm leading-relaxed text-slate-600">
-                    Premium apparel designed with quality materials,
-                    comfortable construction, and customizable design
-                    options for teams, communities, businesses, and
-                    everyday wear.
-                </p>
+                <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600" x-text="description || 'Tidak ada deskripsi.'"></p>
 
             </div>
 
@@ -236,7 +226,7 @@
 
 
                 {{-- View Detail --}}
-                <div class="flex-1">
+                {{-- <div class="flex-1">
 
                     <a
                         x-bind:href="productUrl"
@@ -246,7 +236,7 @@
                         View Detail
                     </a>
 
-                </div>
+                </div> --}}
 
             </div>
 

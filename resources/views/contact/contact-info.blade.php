@@ -1,5 +1,16 @@
 @php
 $contacts = [
+    // [
+    //     'title' => 'WhatsApp',
+    //     'value' => '+62 813 8377 763',
+    //     'badge' => 'Jersey PS Barito Putera',
+    //     'action_label' => 'Chat Now',
+    //     'href' => 'https://wa.me/628138377763',
+    //     'icon' => 'chat-bubble-left-right',
+    //     'card_bg' => 'bg-[#F5E047]/10 border-[#F5E047]/40 hover:bg-[#F5E047]/20 hover:border-[#F5E047]',
+    //     'brand_color' => 'bg-[#F5E047] text-slate-900 group-hover:bg-[#E5D13F]',
+    //     'btn_color' => 'bg-[#F5E047] text-slate-900 shadow-sm group-hover:bg-[#E5D13F]',
+    // ],
     [
         'title' => 'WhatsApp',
         'value' => '+62 857 5443 1105',
@@ -59,7 +70,7 @@ $contacts = [
                         rel="noopener noreferrer"
                         class="group relative flex w-full items-center justify-between rounded-2xl border p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md sm:p-5 {{ $contact['card_bg'] }}"
                     >
-                        <div class="flex items-center gap-3.5 sm:gap-4">
+                        <div class="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
                             {{-- Icon Box dengan Warna Brand khas --}}
                             <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl {{ $contact['brand_color'] }} shadow-sm transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12">
                                 @switch($contact['icon'])
@@ -79,28 +90,33 @@ $contacts = [
                             </div>
 
                             {{-- Text Content --}}
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <h3 class="text-sm font-bold text-slate-900 sm:text-base">
-                                        {{ $contact['title'] }}
-                                    </h3>
-                                    
-                                    {{-- Badge Teks Custom Jersey --}}
-                                    @if($contact['badge'])
-                                        <span class="inline-flex items-center rounded-full bg-emerald-600/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                            <div class="min-w-0">
+                                <h3 class="text-sm font-bold leading-tight text-slate-900 sm:text-base">
+                                    {{ $contact['title'] }}
+                                </h3>
+
+                                @if($contact['badge'])
+                                    @if($contact['badge'] === 'Jersey PS Barito Putera')
+                                        <div class="mt-1 flex flex-col items-start">
+                                            <span class="text-[11px] font-bold leading-tight text-[#96690F]">
+                                                Jersey PS Barito Putera
+                                            </span>
+                                        </div>
+                                    @else
+                                        <span class="mt-1 flex items-start text-[11px] font-bold leading-tight text-emerald-700">
                                             {{ $contact['badge'] }}
                                         </span>
                                     @endif
-                                </div>
+                                @endif
 
-                                <p class="mt-0.5 whitespace-pre-line text-xs leading-relaxed text-slate-600 sm:text-sm">
+                                <p class="mt-1 whitespace-pre-line text-xs leading-relaxed text-slate-600 sm:text-sm">
                                     {{ $contact['value'] }}
                                 </p>
                             </div>
                         </div>
 
                         {{-- Action Button Solid di kanan --}}
-                        <div class="ml-2 flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-300 {{ $contact['btn_color'] }}">
+                        <div class="ml-1 flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-semibold transition-all duration-300 sm:ml-2 sm:px-3 {{ $contact['btn_color'] }}">
                             <span class="hidden sm:inline">{{ $contact['action_label'] }}</span>
                             <x-heroicon-o-arrow-up-right class="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                         </div>

@@ -3,10 +3,10 @@
 
         {{-- MOBILE --}}
         <div class="block lg:hidden">
-            <div class="grid grid-cols-2 gap-5">
+            <div class="grid grid-cols-2 items-stretch gap-5">
 
                 @forelse($products as $product)
-                    <x-ui.reveal :index="floor($loop->index / 2)">
+                    <x-ui.reveal :index="floor($loop->index / 2)" class="h-full">
                         <x-catalog.product-card :product="$product" />
                     </x-ui.reveal>
                 @empty

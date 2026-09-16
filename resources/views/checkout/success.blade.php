@@ -63,6 +63,9 @@
                                         @if(!empty($item->custom_name))
                                             <p class="mt-1.5 text-xs font-extrabold tracking-wide text-[#AE7C18] sm:text-sm">Nama Jersey: {{ $item->custom_name }}</p>
                                         @endif
+                                        @if(!empty($item->custom_number))
+                                            <p class="mt-1 text-xs font-extrabold tracking-wide text-slate-700 sm:text-sm">Nomor Punggung: {{ $item->custom_number }}</p>
+                                        @endif
                                     </div>
                                     <p class="shrink-0 font-bold text-slate-900">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</p>
                                 </div>

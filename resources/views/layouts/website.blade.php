@@ -27,9 +27,9 @@
     <meta name="twitter:description" content="@yield('twitter_description', trim($__env->yieldContent('meta_description')) ?: 'Eazywear Indonesia menyediakan custom sportswear, jersey, teamwear, dan apparel berkualitas.')">
     <meta name="twitter:image" content="@yield('twitter_image', asset('images/hero/logoweb.png'))">
 
-    {{-- ================= FAVICON ================= --}}
-    <link rel="icon" type="image/png" href="{{ asset('images/hero/logoweb.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/hero/logoweb.png') }}">
+    {{-- *================= FAVICON =================* --}}
+    <link rel="icon" type="image/webp" href="{{ asset('images/hero/favicon.webp') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/hero/favicon.webp') }}">
 
     {{-- ================= STRUCTURED DATA / JSON-LD ================= --}}
     @php

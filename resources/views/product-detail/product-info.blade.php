@@ -14,10 +14,12 @@
 <section x-data="galleryProduct()" class="bg-white py-6 sm:py-10 lg:py-14">
     <x-ui.container>
         <div class="grid items-start gap-6 sm:gap-10 lg:grid-cols-2 lg:gap-16">
-            {{-- GALLERY --}}
+            {{-- *GALLERY* --}}
             <div class="w-full min-w-0">
-                <div class="flex w-full flex-col gap-3 sm:gap-4">
-                    {{-- MAIN IMAGE --}}
+                <div class="w-full">
+                {{-- *DESKTOP* --}}
+                <div class="hidden lg:grid lg:grid-cols-[minmax(0,1fr)_164px] lg:items-start lg:gap-3">
+                    {{-- *Main Image* --}}
                     <div class="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-50 shadow-md sm:rounded-3xl sm:shadow-xl">
                         <img
                             id="main-product-image"
@@ -25,20 +27,20 @@
                             alt="{{ $product->name }}"
                             class="absolute inset-0 h-full w-full object-contain transition duration-500"
                         >
-                        <div class="absolute bottom-2.5 right-2.5 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm sm:bottom-4 sm:right-4 sm:px-3 sm:py-1.5 sm:text-xs">
+                        <div class="absolute bottom-3 right-3 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm">
                             <span x-text="images.indexOf(currentImage) + 1"></span>/<span x-text="images.length"></span>
                         </div>
                     </div>
 
-                    {{-- THUMBNAILS --}}
+                    {{-- *Thumbnails Gallery* --}}
                     @if(count($imageUrls) > 1)
-                        <div class="w-full min-w-0 overflow-hidden">
-                            <div class="flex w-full max-w-full snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:gap-2.5">
-                                <template x-for="(image,index) in images.slice(0,10)" :key="image">
+                        <div class="max-h-[calc(100%)] w-full overflow-y-auto pr-1 [scrollbar-width:thin]">
+                            <div class="grid grid-cols-2 gap-2">
+                                <template x-for="(image,index) in images" :key="image">
                                     <button
                                         type="button"
                                         @click="currentImage=image"
-                                        class="group relative aspect-[3/4] w-[58px] shrink-0 snap-start overflow-hidden rounded-lg border-2 bg-slate-50 transition sm:w-[68px] sm:rounded-xl"
+                                        class="group relative aspect-3/4 w-full overflow-hidden rounded-xl border-2 bg-slate-50 transition"
                                         :class="currentImage===image
                                             ? 'border-[#AE7C18] ring-2 ring-[#AE7C18]/15'
                                             : 'border-slate-200 hover:border-[#AE7C18]'"
@@ -46,14 +48,12 @@
                                         <img
                                             :src="image"
                                             alt="{{ $product->name }}"
-                                            width="162"
-                                            height="216"
                                             loading="lazy"
                                             decoding="async"
-                                            class="h-full w-full object-contain transition duration-300 group-hover:scale-[1.03]"
+                                            class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                                         >
                                         <span
-                                            class="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-md bg-black/65 px-1 text-[9px] font-bold text-white backdrop-blur-sm"
+                                            class="absolute bottom-1.5 left-1.5 flex h-5 min-w-5 items-center justify-center rounded-md bg-black/65 px-1 text-[9px] font-bold text-white backdrop-blur-sm"
                                             x-text="index + 1"
                                         ></span>
                                     </button>
@@ -61,6 +61,52 @@
                             </div>
                         </div>
                     @endif
+                </div>
+
+                    {{-- *MOBILE* --}}
+                    <div class="lg:hidden">
+                        <div class="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-50 shadow-md sm:rounded-3xl sm:shadow-xl">
+                            <img
+                                id="main-product-image"
+                                :src="currentImage"
+                                alt="{{ $product->name }}"
+                                class="absolute inset-0 h-full w-full object-contain transition duration-500"
+                            >
+                            <div class="absolute bottom-2.5 right-2.5 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm sm:bottom-4 sm:right-4 sm:px-3 sm:py-1.5 sm:text-xs">
+                                <span x-text="images.indexOf(currentImage) + 1"></span>/<span x-text="images.length"></span>
+                            </div>
+                        </div>
+                        @if(count($imageUrls) > 1)
+                            <div class="mt-3 w-full min-w-0 overflow-hidden">
+                                <div class="flex w-full max-w-full snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:gap-2.5">
+                                    <template x-for="(image,index) in images.slice(0,10)" :key="image">
+                                        <button
+                                            type="button"
+                                            @click="currentImage=image"
+                                            class="group relative aspect-[3/4] w-[58px] shrink-0 snap-start overflow-hidden rounded-lg border-2 bg-slate-50 transition sm:w-[68px] sm:rounded-xl"
+                                            :class="currentImage===image
+                                                ? 'border-[#AE7C18] ring-2 ring-[#AE7C18]/15'
+                                                : 'border-slate-200 hover:border-[#AE7C18]'"
+                                        >
+                                            <img
+                                                :src="image"
+                                                alt="{{ $product->name }}"
+                                                width="162"
+                                                height="216"
+                                                loading="lazy"
+                                                decoding="async"
+                                                class="h-full w-full object-contain transition duration-300 group-hover:scale-[1.03]"
+                                            >
+                                            <span
+                                                class="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-md bg-black/65 px-1 text-[9px] font-bold text-white backdrop-blur-sm"
+                                                x-text="index + 1"
+                                            ></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
 
@@ -92,7 +138,8 @@
                             selectedVariant: {{ $product->available_sizes[0]['id'] ?? 'null' }},
                             selectedPrice: {{ $product->available_sizes[0]['price'] ?? 0 }},
                             selectedStock: {{ $product->available_sizes[0]['stock'] ?? 0 }},
-                            customName: ''
+                            customName: '',
+                            customNumber: ''
                         }"
                     >
                         <div class="mb-2 flex items-center justify-between sm:mb-3">
@@ -124,45 +171,71 @@
                             @endforeach
                         </div>
 
-                        {{-- JERSEY NAME --}}
-                        <div class="mt-5 sm:mt-6">
-                            <div class="mb-2 flex items-end justify-between">
-                                <div>
-                                    <label
-                                        for="custom_name"
-                                        class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm"
-                                    >
-                                        Name on Jersey
-                                    </label>
-
-                                    <p class="text-[10px] text-gray-400 sm:text-xs">
-                                        Enter the name to be printed on your jersey
-                                    </p>
+                        {{-- *JERSEY CUSTOMIZATION* --}}
+                        <div class="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4">
+                            {{-- *JERSEY NAME* --}}
+                            <div>
+                                <div class="mb-2 flex items-end justify-between">
+                                    <div>
+                                        <label for="custom_name" class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm">
+                                            Name on Jersey
+                                        </label>
+                                        <p class="text-[10px] text-gray-400 sm:text-xs">
+                                            Enter the name to be printed
+                                        </p>
+                                    </div>
+                                    <span class="text-[10px] tabular-nums text-gray-400 sm:text-xs">
+                                        <span x-text="customName.length"></span>/20
+                                    </span>
                                 </div>
-
-                                <span class="text-[10px] tabular-nums text-gray-400 sm:text-xs">
-                                    <span x-text="customName.length"></span>/20
-                                </span>
+                                <input
+                                    id="custom_name"
+                                    type="text"
+                                    name="custom_name"
+                                    x-model="customName"
+                                    form="add-to-cart-form"
+                                    maxlength="20"
+                                    autocomplete="off"
+                                    placeholder="e.g. BARITO PUTERA"
+                                    pattern="[A-Za-zÀ-ÿ\s]+"
+                                    title="Jersey name may only contain letters and spaces."
+                                    required
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold uppercase tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base"
+                                >
+                                <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">
+                                    Letters and spaces only
+                                </p>
                             </div>
 
-                            <input
-                                id="custom_name"
-                                type="text"
-                                name="custom_name"
-                                x-model="customName"
-                                form="add-to-cart-form"
-                                maxlength="20"
-                                autocomplete="off"
-                                placeholder="e.g. BARITO PUTERA"
-                                pattern="[A-Za-zÀ-ÿ\s]+"
-                                title="Jersey name may only contain letters and spaces."
-                                required
-                                class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold uppercase tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-5 sm:py-3.5 sm:text-base"
-                            >
-
-                            <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">
-                                Letters and spaces only · Maximum 20 characters
-                            </p>
+                            {{-- *BACK NUMBER* --}}
+                            <div>
+                                <div class="mb-2">
+                                    <label for="custom_number" class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm">
+                                        Back Number
+                                    </label>
+                                    <p class="text-[10px] text-gray-400 sm:text-xs">
+                                        Enter the number to be printed
+                                    </p>
+                                </div>
+                                <input
+                                    id="custom_number"
+                                    type="text"
+                                    name="custom_number"
+                                    x-model="customNumber"
+                                    form="add-to-cart-form"
+                                    maxlength="2"
+                                    inputmode="numeric"
+                                    autocomplete="off"
+                                    placeholder="e.g. 10"
+                                    pattern="[0-9]{1,2}"
+                                    title="Back number may only contain 1-2 digits."
+                                    required
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base"
+                                >
+                                <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">
+                                    Numbers only · Maximum 2 digits
+                                </p>
+                            </div>
                         </div>
 
                         {{-- SELECTED PRICE --}}
@@ -176,7 +249,7 @@
                             ></p>
                         </div>
 
-                        <form
+                        {{-- <form
                             id="add-to-cart-form"
                             method="POST"
                             action="{{ route('cart.add') }}"
@@ -203,6 +276,12 @@
                                 :value="customName"
                             >
 
+                            <input
+                                type="hidden"
+                                name="custom_number"
+                                :value="customNumber"
+                            >
+
                             <button
                                 type="submit"
                                 x-bind:disabled="selectedStock <= 0"
@@ -216,7 +295,7 @@
                                     Out of Stock
                                 </span>
                             </button>
-                        </form>
+                        </form> --}}
                         <a
                             href="{{ $whatsappUrl }}"
                             target="_blank"

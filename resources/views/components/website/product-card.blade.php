@@ -42,14 +42,14 @@
         </div>
 
         {{-- View Detail --}}
-        <div class="mt-3 sm:mt-6">
+        {{-- <div class="mt-3 sm:mt-6">
             <a
                 href="{{ $href }}"
                 class="inline-flex items-center gap-1.5 text-xs font-semibold text-[#AE7C18] transition-all duration-300 hover:gap-2 sm:gap-2 sm:text-base sm:hover:gap-3">
                 View Detail
                 <x-heroicon-o-arrow-right class="h-4 w-4 sm:h-5 sm:w-5"/>
             </a>
-        </div>
+        </div> --}}
 
     </div>
 

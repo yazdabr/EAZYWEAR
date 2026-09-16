@@ -153,6 +153,7 @@ class TransactionController extends Controller
                         'image' => $image?->image ? asset('storage/' . $image->image) : null,
                         'size' => $variant?->size?->name ?? '-',
                         'custom_name' => $item->custom_name ?? '',
+                        'custom_number' => $item->custom_number ?? '',
                         'qty' => (int) $item->qty,
                         'price' => (float) $item->price,
                         'subtotal' => (float) $item->subtotal,
@@ -405,6 +406,12 @@ class TransactionController extends Controller
                 'max:20',
                 'regex:/^[\pL\s]+$/u',
             ],
+            'items.*.custom_number' => [
+                'required',
+                'string',
+                'max:2',
+                'regex:/^[0-9]{1,2}$/',
+            ],
         ], [
             'customer.name.required' => 'Nama pelanggan wajib diisi.',
             'customer.email.email' => 'Format email tidak valid.',
@@ -421,6 +428,9 @@ class TransactionController extends Controller
             'items.*.custom_name.required' => 'Nama jersey wajib diisi.',
             'items.*.custom_name.max' => 'Nama jersey maksimal 20 karakter.',
             'items.*.custom_name.regex' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
+            'items.*.custom_number.required' => 'Nomor punggung wajib diisi.',
+            'items.*.custom_number.max' => 'Nomor punggung maksimal 2 digit.',
+            'items.*.custom_number.regex' => 'Nomor punggung hanya boleh berisi angka.',
         ]);
 
         try {
@@ -492,6 +502,7 @@ class TransactionController extends Controller
                     }
 
                     $customName = trim($item['custom_name']);
+                    $customNumber = trim($item['custom_number']);
 
                     if ($customName === '') {
                         throw ValidationException::withMessages([
@@ -502,6 +513,18 @@ class TransactionController extends Controller
                     if (!preg_match('/^[\pL\s]+$/u', $customName)) {
                         throw ValidationException::withMessages([
                             'items' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
+                        ]);
+                    }
+
+                    if ($customNumber === '') {
+                        throw ValidationException::withMessages([
+                            'items' => 'Nomor punggung wajib diisi.',
+                        ]);
+                    }
+
+                    if (!preg_match('/^[0-9]{1,2}$/', $customNumber)) {
+                        throw ValidationException::withMessages([
+                            'items' => 'Nomor punggung hanya boleh berisi 1-2 angka.',
                         ]);
                     }
 
@@ -517,6 +540,7 @@ class TransactionController extends Controller
                         'price' => $price,
                         'subtotal' => $itemSubtotal,
                         'custom_name' => $customName,
+                        'custom_number' => $customNumber,
                     ];
                 }
 
@@ -564,6 +588,7 @@ class TransactionController extends Controller
                         'transaction_id' => $transaction->id,
                         'product_variant_id' => $item['variant']->id,
                         'custom_name' => $item['custom_name'],
+                        'custom_number' => $item['custom_number'],
                         'qty' => $item['qty'],
                         'price' => $item['price'],
                         'subtotal' => $item['subtotal'],

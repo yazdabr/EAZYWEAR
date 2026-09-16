@@ -45,10 +45,20 @@
                                     <div>
                                         <h2 class="text-sm font-bold text-slate-900 sm:text-lg">{{ $item['product_name'] }}</h2>
                                         <p class="text-xs text-gray-500 sm:text-sm">Size: {{ $item['size_name'] }}</p>
-                                        @if(!empty($item['custom_name']))
-                                            <div class="mt-2">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">Name On Jersey</p>
-                                                <p class="mt-0.5 text-sm font-bold uppercase tracking-wide text-slate-900 sm:text-base">{{ $item['custom_name'] }}</p>
+                                        @if(!empty($item['custom_name']) || !empty($item['custom_number']))
+                                            <div class="mt-2 space-y-1.5">
+                                                @if(!empty($item['custom_name']))
+                                                    <div>
+                                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">Name On Jersey</p>
+                                                        <p class="mt-0.5 text-sm font-bold uppercase tracking-wide text-slate-900 sm:text-base">{{ $item['custom_name'] }}</p>
+                                                    </div>
+                                                @endif
+                                                @if(!empty($item['custom_number']))
+                                                    <div>
+                                                        <p class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">Back Number</p>
+                                                        <p class="mt-0.5 text-sm font-bold tracking-wide text-slate-900 sm:text-base">{{ $item['custom_number'] }}</p>
+                                                    </div>
+                                                @endif
                                             </div>
                                         @endif
                                     </div>

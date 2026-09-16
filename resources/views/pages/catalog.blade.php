@@ -63,6 +63,7 @@ document.addEventListener('alpine:init', () => {
         series: '',
         image: '',
         price: '',
+        description: '',
         isDragging: false,
         offsetY: 0,
         startY: 0,
@@ -74,6 +75,7 @@ document.addEventListener('alpine:init', () => {
             this.series = product.series ?? '';
             this.image = product.image ?? '';
             this.price = product.price ?? '';
+            this.description = product.description ?? '';
             this.offsetY = 0;
             this.isDragging = false;
             this.open = true;

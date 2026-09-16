@@ -109,6 +109,9 @@
                                         <template x-if="item.custom_name">
                                             <span class="rounded bg-[#AE7C18]/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-[#AE7C18]" x-text="'Nama Jersey: ' + item.custom_name"></span>
                                         </template>
+                                        <template x-if="item.custom_number">
+                                            <span class="rounded bg-slate-900/5 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700" x-text="'Nomor Punggung: ' + item.custom_number"></span>
+                                        </template>
                                         <span class="font-medium text-slate-700" x-text="item.qty + 'x'"></span>
                                     </div>
                                 </div>
@@ -143,6 +146,9 @@
                                                 <p class="text-base font-medium text-slate-900" x-text="item.name"></p>
                                                 <template x-if="item.custom_name">
                                                     <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-[#AE7C18]" x-text="'Nama Jersey: ' + item.custom_name"></p>
+                                                </template>
+                                                <template x-if="item.custom_number">
+                                                    <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-700" x-text="'Nomor Punggung: ' + item.custom_number"></p>
                                                 </template>
                                             </div>
                                         </div>

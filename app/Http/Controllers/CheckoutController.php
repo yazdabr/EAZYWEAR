@@ -111,6 +111,7 @@ class CheckoutController extends Controller
                 'string',
                 Rule::in([
                     'Kurir',
+                    'Ambil di Tempat',
                 ]),
             ],
             'payment_method' => [
@@ -165,6 +166,7 @@ class CheckoutController extends Controller
                     $variantId = (int) ($cartItem['variant_id'] ?? 0);
                     $qty = (int) ($cartItem['qty'] ?? 0);
                     $customName = trim((string) ($cartItem['custom_name'] ?? ''));
+                    $customNumber = trim((string) ($cartItem['custom_number'] ?? ''));
 
                     if ($variantId <= 0 || $qty <= 0) {
                         throw ValidationException::withMessages([
@@ -187,6 +189,18 @@ class CheckoutController extends Controller
                     if (!preg_match('/^[\pL\s]+$/u', $customName)) {
                         throw ValidationException::withMessages([
                             'cart' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
+                        ]);
+                    }
+
+                    if ($customNumber === '') {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Nomor punggung belum diisi untuk salah satu produk.',
+                        ]);
+                    }
+
+                    if (!preg_match('/^[0-9]{1,2}$/', $customNumber)) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Nomor punggung hanya boleh berisi 1-2 angka.',
                         ]);
                     }
 
@@ -246,6 +260,7 @@ class CheckoutController extends Controller
                         'price' => $price,
                         'subtotal' => $itemSubtotal,
                         'custom_name' => trim($cartItem['custom_name'] ?? ''),
+                        'custom_number' => trim($cartItem['custom_number'] ?? ''),
                     ];
                 }
 
@@ -306,6 +321,7 @@ class CheckoutController extends Controller
                         'transaction_id' => $transaction->id,
                         'product_variant_id' => $item['variant']->id,
                         'custom_name' => $item['custom_name'],
+                        'custom_number' => $item['custom_number'],
                         'qty' => $item['qty'],
                         'price' => $item['price'],
                         'subtotal' => $item['subtotal'],

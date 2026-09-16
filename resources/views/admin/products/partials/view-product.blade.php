@@ -25,7 +25,11 @@
     openView(data){
         const sizeIds=Array.isArray(data?.size_ids)?data.size_ids.map(id=>Number(id)):[];
         const variants=data?.variants&&typeof data.variants==='object'?data.variants:{};
-        const images=Array.isArray(data?.images)?data.images.slice(0,10):(data?.image?[data.image]:[]);
+        let images=Array.isArray(data?.images)?[...data.images].slice(0,10):[];
+        const mainImage=data?.image??'';
+        if(mainImage&&!images.some(image=>(image?.url||image)===mainImage)){
+            images=[{id:'main-image',url:mainImage},...images].slice(0,10);
+        }
         this.product={
             id:data?.id??null,
             image:images[0]??data?.image??'',
@@ -143,32 +147,29 @@ x-on:open-view-product.window="openView($event.detail)"
                             </div>
                         </template>
                     </div>
-                    <div
-                        x-show="product.images.length>1"
-                        x-cloak
-                        class="mt-3 grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-2.5"
-                    >
-                        <template
-                            x-for="(image,index) in product.images.slice(1,10)"
-                            :key="'gallery-'+(image.id||index)"
-                        >
+                    <div x-show="product.images.length>1" x-cloak class="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-5 sm:gap-2.5">
+                        <template x-for="(image,index) in product.images.slice(0,10)" :key="'gallery-'+(image.id||index)">
                             <button
                                 type="button"
                                 @click="product.image=image"
-                                class="relative overflow-hidden rounded-lg border-2 transition"
+                                class="relative aspect-[3/4] overflow-hidden rounded-lg border-2 bg-slate-50 transition"
                                 :class="product.image?.id===image?.id
                                     ? 'border-[#AE7C18]'
                                     : 'border-slate-200 hover:border-[#AE7C18]'"
                             >
                                 <img
                                     :src="image.url"
-                                    :alt="'Foto Produk '+(index+2)"
-                                    width="200"
-                                    height="200"
+                                    :alt="'Foto Produk '+(index+1)"
+                                    width="162"
+                                    height="216"
                                     loading="lazy"
                                     decoding="async"
-                                    class="aspect-square w-full object-cover"
+                                    class="h-full w-full object-contain"
                                 >
+                                <span
+                                    class="absolute bottom-1 left-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[9px] font-bold text-white"
+                                    x-text="index+1"
+                                ></span>
                             </button>
                         </template>
                     </div>

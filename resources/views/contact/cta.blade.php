@@ -12,7 +12,7 @@
 
                     {{-- Teks Kiri --}}
                     <div class="max-w-2xl">
-                        <h2 class="mt-3 text-2xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl">
+                        <h2 class="mt-3 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
                             Ready to Start Your Custom Jersey Project?
                         </h2>
 

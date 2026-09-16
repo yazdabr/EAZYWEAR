@@ -111,7 +111,7 @@
                                 </label>
                             @endforeach
                             <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 sm:gap-4 sm:px-4">
-                                <input type="radio" name="shipping_method" value="pickup" class="h-4 w-4 accent-[#AE7C18]">
+                                <input type="radio" name="shipping_method" value="Ambil di Tempat" class="h-4 w-4 accent-[#AE7C18]">
                                 <div class="min-w-0 flex-1">
                                     <p class="text-xs font-semibold text-slate-900 sm:text-sm">Ambil di Tempat</p>
                                     <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">Ambil pesanan langsung di Kantor Eazywear</p>
@@ -167,6 +167,11 @@
                                             @if(!empty($item['custom_name']))
                                                 <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 sm:text-[11px]">
                                                     Nama Jersey: {{ $item['custom_name'] }}
+                                                </p>
+                                            @endif
+                                            @if(!empty($item['custom_number']))
+                                                <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 sm:text-[11px]">
+                                                    Nomor Punggung: {{ $item['custom_number'] }}
                                                 </p>
                                             @endif
 

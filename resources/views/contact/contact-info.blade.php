@@ -1,16 +1,16 @@
 @php
 $contacts = [
-    // [
-    //     'title' => 'WhatsApp',
-    //     'value' => '+62 813 8377 763',
-    //     'badge' => 'Jersey PS Barito Putera',
-    //     'action_label' => 'Chat Now',
-    //     'href' => 'https://wa.me/628138377763',
-    //     'icon' => 'chat-bubble-left-right',
-    //     'card_bg' => 'bg-[#F5E047]/10 border-[#F5E047]/40 hover:bg-[#F5E047]/20 hover:border-[#F5E047]',
-    //     'brand_color' => 'bg-[#F5E047] text-slate-900 group-hover:bg-[#E5D13F]',
-    //     'btn_color' => 'bg-[#F5E047] text-slate-900 shadow-sm group-hover:bg-[#E5D13F]',
-    // ],
+    [
+        'title' => 'WhatsApp',
+        'value' => '+62 813 8377 763',
+        'badge' => 'Jersey PS Barito Putera',
+        'action_label' => 'Chat Now',
+        'href' => 'https://wa.me/628138377763',
+        'icon' => 'chat-bubble-left-right',
+        'card_bg' => 'bg-[#F5E047]/10 border-[#F5E047]/40 hover:bg-[#F5E047]/20 hover:border-[#F5E047]',
+        'brand_color' => 'bg-[#F5E047] text-slate-900 group-hover:bg-[#E5D13F]',
+        'btn_color' => 'bg-[#F5E047] text-slate-900 shadow-sm group-hover:bg-[#E5D13F]',
+    ],
     [
         'title' => 'WhatsApp',
         'value' => '+62 857 5443 1105',

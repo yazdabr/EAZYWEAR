@@ -81,12 +81,17 @@
                         x-bind:class="open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'"
                     >
                         <div class="min-h-0 overflow-hidden">
-                            <ul class="pb-2.5 text-[11px] text-slate-300">
-                                <li>
-                                    <span class="text-slate-400">
-                                        Soon
-                                    </span>
-                                </li>
+                            <ul class="space-y-1.5 pb-2.5 text-[11px] text-slate-300">
+                                @foreach(\App\Models\Category::where('status', 1)->orderBy('name')->get() as $category)
+                                    <li>
+                                        <a
+                                            href="{{ route('catalog', ['category' => $category->slug]) }}"
+                                            class="transition hover:text-white"
+                                        >
+                                            {{ $category->name }}
+                                        </a>
+                                    </li>
+                                @endforeach
                             </ul>
                         </div>
                     </div>
@@ -180,11 +185,16 @@
                         Categories
                     </h3>
                     <ul class="space-y-2 text-xs font-medium text-slate-300">
-                        <li>
-                            <span class="text-slate-400">
-                                Soon
-                            </span>
-                        </li>
+                        @foreach(\App\Models\Category::where('status', 1)->orderBy('name')->get() as $category)
+                            <li>
+                                <a
+                                    href="{{ route('catalog', ['category' => $category->slug]) }}"
+                                    class="transition hover:text-white"
+                                >
+                                    {{ $category->name }}
+                                </a>
+                            </li>
+                        @endforeach
                     </ul>
                 </div>
 

@@ -12,7 +12,9 @@
         ? asset('storage/' . $thumbnail->image)
         : asset('images/products/placeholder.png');
 
-    $price = $product->variants->min('price') ?? 0;
+    $price = $product->variants
+        ->filter(fn ($variant) => (float) $variant->price > 0)
+        ->min('price') ?? 0;
     $category = $product->category?->name ?? 'Product';
     $detailUrl = route('product.detail', ['product' => $product->slug]);
 @endphp

@@ -258,7 +258,7 @@
                     {{-- Tombol Aksi Mobile --}}
                     <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
                         <div class="flex items-center gap-2">
-                            <button
+                            {{-- <button
                                 type="button"
                                 @click="
                                     $dispatch('open-view-category',{
@@ -276,7 +276,7 @@
                             >
                                 <x-heroicon-o-eye class="h-3.5 w-3.5 text-slate-500"/>
                                 <span>Lihat</span>
-                            </button>
+                            </button> --}}
 
                             <button
                                 type="button"

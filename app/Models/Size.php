@@ -15,4 +15,11 @@ class Size extends Model
     {
         return $this->hasMany(ProductVariant::class, 'size_id');
     }
+    public function productionItems(): HasMany
+    {
+        return $this->hasMany(
+            ProductionItem::class,
+            'size_id'
+        );
+    }
 }

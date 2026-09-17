@@ -97,7 +97,7 @@
                     class="fixed z-[9999] w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl shadow-slate-900/10"
                     style="display:none;">
 
-                    {{-- LIHAT --}}
+                    {{-- LIHAT
                     <button
                         type="button"
                         @click="
@@ -117,7 +117,7 @@
 
                         <x-heroicon-o-eye class="h-4 w-4 shrink-0 text-slate-500"/>
                         <span>Lihat</span>
-                    </button>
+                    </button> --}}
 
                     {{-- UBAH --}}
                     <button

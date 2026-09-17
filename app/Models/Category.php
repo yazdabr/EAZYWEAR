@@ -35,4 +35,12 @@ class Category extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    public function productionRecords(): HasMany
+    {
+        return $this->hasMany(
+            ProductionRecord::class,
+            'category_id'
+        );
+    }
 }

@@ -1,166 +1,153 @@
-<div
-    x-data="transactionView()"
-    x-effect="document.body.classList.toggle('overflow-hidden', open)"
-    @keydown.escape.window="open=false"
-    x-on:open-view-transaction.window="openDrawer($event.detail)"
->
-    <!-- Overlay Backdrop -->
-    <div
-        x-show="open"
-        x-transition.opacity
-        @click="open=false"
-        class="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm"
-        style="display:none;"
-    ></div>
+<div x-data="transactionView()" x-effect="document.body.classList.toggle('overflow-hidden', open)" @keydown.escape.window="open=false" x-on:open-view-transaction.window="openDrawer($event.detail)">
+    <div x-show="open" x-transition.opacity @click="open=false" class="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm" style="display:none;"></div>
 
-    <!-- Drawer Panel (Tetap dari Samping Kanan) -->
-    <div
-        x-show="open"
-        x-transition:enter="transition transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
-        x-transition:enter-start="translate-x-full"
-        x-transition:enter-end="translate-x-0"
-        x-transition:leave="transition transform duration-300 ease-in-out"
-        x-transition:leave-start="translate-x-0"
-        x-transition:leave-end="translate-x-full"
-        class="fixed right-0 top-0 z-[100] flex h-screen w-full max-w-[760px] flex-col bg-white shadow-2xl"
-        style="display:none;"
-    >
-        <!-- Header Drawer -->
-        <div class="flex items-center justify-between border-b border-slate-200 px-4 py-3.5 sm:px-8 sm:py-6 shrink-0">
-            <div>
-                <p class="text-xs font-medium text-slate-500 sm:text-sm">Detail Transaksi</p>
-                <h2 class="mt-0.5 text-base font-bold text-slate-900 sm:mt-1 sm:text-2xl" x-text="transaction.invoice"></h2>
+    <div x-show="open" x-transition:enter="transition transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition transform duration-300 ease-in-out" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" class="fixed right-0 top-0 z-[100] flex h-screen w-full max-w-[520px] flex-col bg-white shadow-2xl" style="display:none;">
+
+        {{-- Header --}}
+        <div class="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
+            <div class="min-w-0">
+                <p class="text-[11px] font-medium text-slate-500 sm:text-xs">Detail Transaksi</p>
+                <h2 class="mt-0.5 truncate text-base font-bold text-slate-900 sm:text-lg" x-text="transaction.invoice || 'Detail Transaksi'"></h2>
             </div>
 
-            <button type="button" @click="open=false" class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
-                <x-heroicon-o-x-mark class="h-5 w-5 sm:h-6 sm:w-6"/>
+            <button type="button" @click="open=false" class="ml-3 shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
+                <x-heroicon-o-x-mark class="h-5 w-5"/>
             </button>
         </div>
 
-        <!-- Scrollable Content Body -->
-        <div class="flex-1 space-y-4 overflow-y-auto bg-slate-50 p-4 sm:space-y-6 sm:p-8">
-            
-            <!-- Informasi Pelanggan -->
-            <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
-                <h3 class="mb-3 text-sm font-semibold text-slate-900 sm:mb-5 sm:text-lg">Informasi Pelanggan</h3>
+        {{-- Body --}}
+        <div class="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-3 sm:space-y-4 sm:p-4">
 
-                <div class="grid grid-cols-2 gap-3 sm:gap-5">
+            {{-- Informasi Pelanggan --}}
+            <div class="rounded-xl border border-slate-200 bg-white p-4">
+                <div class="mb-3 flex items-center gap-2">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#AE7C18]/10 text-[#AE7C18]">
+                        <x-heroicon-o-user class="h-4 w-4"/>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-900">Informasi Pelanggan</h3>
+                </div>
+
+                <div class="grid grid-cols-2 gap-x-3 gap-y-3">
                     <div class="col-span-2 sm:col-span-1">
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:text-xs">Pelanggan</p>
-                        <p class="mt-0.5 text-sm font-semibold text-slate-900 sm:mt-1 sm:text-base break-words" x-text="transaction.customer"></p>
+                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Pelanggan</p>
+                        <p class="mt-1 break-words text-sm font-semibold text-slate-900" x-text="transaction.customer || '-'"></p>
                     </div>
 
                     <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:text-xs">Telepon</p>
-                        <p class="mt-0.5 text-sm font-semibold text-slate-900 sm:mt-1 sm:text-base" x-text="transaction.phone"></p>
+                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Telepon</p>
+                        <p class="mt-1 break-words text-sm font-semibold text-slate-900" x-text="transaction.phone || '-'"></p>
                     </div>
 
                     <div>
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:text-xs">Tanggal</p>
-                        <p class="mt-0.5 text-sm font-semibold text-slate-900 sm:mt-1 sm:text-base" x-text="transaction.date"></p>
+                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Tanggal</p>
+                        <p class="mt-1 text-sm font-semibold text-slate-900" x-text="transaction.date || '-'"></p>
                     </div>
 
                     <div class="col-span-2 sm:col-span-1">
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:text-xs">Email</p>
-                        <p class="mt-0.5 text-sm font-semibold text-slate-900 sm:mt-1 sm:text-base break-all" x-text="transaction.email"></p>
+                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Email</p>
+                        <p class="mt-1 break-all text-sm font-semibold text-slate-900" x-text="transaction.email || '-'"></p>
                     </div>
+
                     <div class="col-span-2">
-                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:text-xs">
-                            Alamat Pengiriman
-                        </p>
-
-                        <p
-                            class="mt-0.5 text-sm font-semibold leading-5 text-slate-900 sm:mt-1 sm:text-base sm:leading-6"
-                            x-text="transaction.address"
-                        ></p>
-
-                        <p
-                            class="mt-0.5 text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6"
-                            x-text="transaction.location"
-                        ></p>
-
-                        <p
-                            class="mt-1 text-xs font-medium text-slate-500 sm:text-sm"
-                            x-text="'Pengiriman: ' + transaction.shippingMethod"
-                        ></p>
+                        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Alamat Pengiriman</p>
+                        <p class="mt-1 text-sm font-semibold leading-5 text-slate-900" x-text="transaction.address || '-'"></p>
+                        <p class="mt-1 text-xs leading-5 text-slate-500" x-text="transaction.location || '-'"></p>
+                        <p class="mt-1 text-xs font-medium text-slate-500" x-text="'Pengiriman: ' + (transaction.shippingMethod || '-')"></p>
                     </div>
                 </div>
             </div>
 
-            <!-- Produk (Optimized for Mobile) -->
-            <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
-                <h3 class="mb-3 text-sm font-semibold text-slate-900 sm:mb-5 sm:text-lg">Item Produk</h3>
+            {{-- Produk --}}
+            <div class="rounded-xl border border-slate-200 bg-white p-4">
+                <div class="mb-3 flex items-center gap-2">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#AE7C18]/10 text-[#AE7C18]">
+                        <x-heroicon-o-shopping-bag class="h-4 w-4"/>
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-900">Item Produk</h3>
+                </div>
 
-                <!-- Mobile View: Card List (Ditampilkan di layar kecil) -->
-                <div class="space-y-3 sm:hidden">
-                    <template x-for="(item, index) in transaction.items" :key="index">
-                        <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+                {{-- Mobile --}}
+                <div class="space-y-2.5 sm:hidden">
+                    <template x-for="(item,index) in transaction.items" :key="index">
+                        <div class="rounded-lg border border-slate-100 bg-slate-50/70 p-3">
                             <div class="flex items-start gap-3">
-                                <div class="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-200">
+                                <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-200">
                                     <img :src="item.image || '/images/products/placeholder.png'" :alt="item.name" class="h-full w-full object-cover" loading="lazy">
                                 </div>
+
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-start justify-between gap-2">
-                                        <p class="text-sm font-semibold leading-snug text-slate-900" x-text="item.name"></p>
-                                        <span class="shrink-0 text-sm font-bold text-slate-900" x-text="formatCurrency(item.total)"></span>
+                                        <p class="text-xs font-semibold leading-snug text-slate-900" x-text="item.name || '-'"></p>
+                                        <span class="shrink-0 text-xs font-bold text-slate-900" x-text="formatCurrency(item.total)"></span>
                                     </div>
-                                    <div class="mt-2 flex flex-wrap items-center gap-2 border-t border-slate-200/60 pt-2 text-xs text-slate-500">
-                                        <span class="rounded bg-slate-200/60 px-1.5 py-0.5 text-[11px] uppercase" x-text="'Ukuran: ' + (item.size || '-')"></span>
+
+                                    <div class="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-200/60 pt-2">
+                                        <span class="rounded bg-slate-200/60 px-1.5 py-0.5 text-[10px] uppercase text-slate-600" x-text="'Ukuran: ' + (item.size || '-')"></span>
+
                                         <template x-if="item.custom_name">
-                                            <span class="rounded bg-[#AE7C18]/10 px-1.5 py-0.5 text-[11px] font-semibold uppercase text-[#AE7C18]" x-text="'Nama Jersey: ' + item.custom_name"></span>
+                                            <span class="rounded bg-[#AE7C18]/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[#AE7C18]" x-text="'Nama: ' + item.custom_name"></span>
                                         </template>
+
                                         <template x-if="item.custom_number">
-                                            <span class="rounded bg-slate-900/5 px-1.5 py-0.5 text-[11px] font-semibold text-slate-700" x-text="'Nomor Punggung: ' + item.custom_number"></span>
+                                            <span class="rounded bg-slate-900/5 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700" x-text="'Nomor: ' + item.custom_number"></span>
                                         </template>
-                                        <span class="font-medium text-slate-700" x-text="item.qty + 'x'"></span>
+
+                                        <span class="text-[11px] font-medium text-slate-700" x-text="(item.qty || 0) + 'x'"></span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </template>
+
                     <template x-if="!transaction.items.length">
-                        <div class="py-6 text-center text-xs text-slate-400">Tidak ada produk pada transaksi ini.</div>
+                        <div class="py-5 text-center text-xs text-slate-400">Tidak ada produk pada transaksi ini.</div>
                     </template>
                 </div>
 
-                <!-- Desktop View: Table (Ditampilkan di layar desktop / sm ke atas) -->
-                <div class="hidden sm:block overflow-x-auto">
+                {{-- Desktop --}}
+                <div class="hidden overflow-x-auto sm:block">
                     <table class="w-full">
                         <thead>
-                            <tr class="border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
-                                <th class="pb-3">Produk</th>
-                                <th class="pb-3">Ukuran</th>
-                                <th class="pb-3 text-center">Jumlah</th>
-                                <th class="pb-3 text-right">Total</th>  
+                            <tr class="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-500">
+                                <th class="pb-2">Produk</th>
+                                <th class="pb-2">Ukuran</th>
+                                <th class="pb-2 text-center">Jumlah</th>
+                                <th class="pb-2 text-right">Total</th>
                             </tr>
                         </thead>
+
                         <tbody class="divide-y divide-slate-100">
                             <template x-for="(item,index) in transaction.items" :key="index">
                                 <tr>
-                                    <td class="py-4">
-                                        <div class="flex items-center gap-3">
-                                            <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                                    <td class="py-3">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-slate-100">
                                                 <img :src="item.image || '/images/products/placeholder.png'" :alt="item.name" class="h-full w-full object-cover" loading="lazy">
                                             </div>
+
                                             <div class="min-w-0">
-                                                <p class="text-base font-medium text-slate-900" x-text="item.name"></p>
+                                                <p class="text-xs font-semibold text-slate-900" x-text="item.name || '-'"></p>
+
                                                 <template x-if="item.custom_name">
-                                                    <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-[#AE7C18]" x-text="'Nama Jersey: ' + item.custom_name"></p>
+                                                    <p class="mt-1 text-[10px] font-semibold uppercase text-[#AE7C18]" x-text="'Nama: ' + item.custom_name"></p>
                                                 </template>
+
                                                 <template x-if="item.custom_number">
-                                                    <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-700" x-text="'Nomor Punggung: ' + item.custom_number"></p>
+                                                    <p class="mt-1 text-[10px] font-semibold text-slate-700" x-text="'Nomor: ' + item.custom_number"></p>
                                                 </template>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="py-4 text-base text-slate-600" x-text="item.size"></td>
-                                    <td class="py-4 text-center text-base text-slate-600" x-text="item.qty"></td>
-                                    <td class="py-4 text-right text-base font-semibold text-slate-900" x-text="formatCurrency(item.total)"></td>
+
+                                    <td class="py-3 text-xs text-slate-600" x-text="item.size || '-'"></td>
+                                    <td class="py-3 text-center text-xs text-slate-600" x-text="item.qty || 0"></td>
+                                    <td class="py-3 text-right text-xs font-semibold text-slate-900" x-text="formatCurrency(item.total)"></td>
                                 </tr>
                             </template>
+
                             <template x-if="!transaction.items.length">
                                 <tr>
-                                    <td colspan="4" class="py-8 text-center text-sm text-slate-400">Tidak ada produk pada transaksi ini.</td>
+                                    <td colspan="4" class="py-6 text-center text-xs text-slate-400">Tidak ada produk pada transaksi ini.</td>
                                 </tr>
                             </template>
                         </tbody>
@@ -168,25 +155,28 @@
                 </div>
             </div>
 
-            <!-- Pembayaran & Ringkasan -->
-            <div class="grid gap-4 sm:gap-6 lg:grid-cols-2">
-                <!-- Status Pembayaran -->
-                <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
-                    <h3 class="mb-3 text-sm font-semibold text-slate-900 sm:mb-5 sm:text-lg">Pembayaran</h3>
+            {{-- Pembayaran dan Ringkasan --}}
+            <div class="grid gap-3 sm:gap-4 lg:grid-cols-2">
 
-                    <div class="space-y-3 sm:space-y-6">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs text-slate-500 sm:text-sm">Metode Pembayaran</span>
-                            <span class="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700 sm:px-3 sm:py-1" x-text="transaction.payment"></span>
+                {{-- Pembayaran --}}
+                <div class="rounded-xl border border-slate-200 bg-white p-4">
+                    <div class="mb-3 flex items-center gap-2">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#AE7C18]/10 text-[#AE7C18]">
+                            <x-heroicon-o-credit-card class="h-4 w-4"/>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-900">Pembayaran</h3>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs text-slate-500">Metode Pembayaran</span>
+                            <span class="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-semibold text-violet-700" x-text="transaction.payment || '-'"></span>
                         </div>
 
                         <div>
-                            <label class="mb-1.5 block text-xs font-medium text-slate-700 sm:mb-2 sm:text-sm">Status Transaksi</label>
-                            <select
-                                x-model="transaction.status"
-                                :disabled="loading"
-                                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs transition duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10 disabled:cursor-not-allowed disabled:bg-slate-100 sm:px-4 sm:py-3 sm:text-base"
-                            >
+                            <label class="mb-1.5 block text-xs font-medium text-slate-700">Status Transaksi</label>
+
+                            <select x-model="transaction.status" :disabled="loading" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10 disabled:cursor-not-allowed disabled:bg-slate-100">
                                 <option value="PENDING">Pending</option>
                                 <option value="PAID">Paid</option>
                                 <option value="CANCELLED">Cancelled</option>
@@ -195,75 +185,109 @@
                     </div>
                 </div>
 
-                <!-- Ringkasan Harga -->
-                <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
-                    <h3 class="mb-3 text-sm font-semibold text-slate-900 sm:mb-5 sm:text-lg">Ringkasan</h3>
+                {{-- Ringkasan --}}
+                <div class="rounded-xl border border-slate-200 bg-white p-4">
+                    <div class="mb-3 flex items-center gap-2">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#AE7C18]/10 text-[#AE7C18]">
+                            <x-heroicon-o-receipt-percent class="h-4 w-4"/>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-900">Ringkasan</h3>
+                    </div>
 
-                    <div class="space-y-2.5 sm:space-y-4">
-                        <div class="flex items-center justify-between text-xs sm:text-sm">
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between text-xs">
                             <span class="text-slate-500">Subtotal</span>
                             <span class="font-medium text-slate-900" x-text="formatCurrency(transaction.subtotal)"></span>
                         </div>
 
-                        <div class="flex items-center justify-between text-xs sm:text-sm">
+                        <div class="flex items-center justify-between text-xs">
                             <span class="text-slate-500">Diskon</span>
                             <span class="font-medium text-slate-900" x-text="formatCurrency(transaction.discount)"></span>
                         </div>
 
-                        <div class="flex items-center justify-between text-xs sm:text-sm">
+                        <div class="flex items-center justify-between text-xs">
                             <span class="text-slate-500">Ongkos Kirim</span>
                             <span class="font-medium text-slate-900" x-text="formatCurrency(transaction.shipping)"></span>
                         </div>
 
-                        <div class="border-t border-dashed border-slate-300 pt-2.5 sm:pt-4">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm font-bold text-slate-900 sm:text-lg">Total</span>
-                                <span class="text-lg font-bold text-[#AE7C18] sm:text-2xl" x-text="'Rp ' + Number(transaction.total || 0).toLocaleString('id-ID')"></span>
+                        <div class="border-t border-dashed border-slate-300 pt-2.5">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-sm font-bold text-slate-900">Total</span>
+                                <span class="text-base font-bold text-[#AE7C18]" x-text="formatCurrency(transaction.total)"></span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <!-- Action Footer (Optimized Mobile Touch Targets) -->
-        <div class="flex flex-col gap-2 border-t border-slate-200 bg-white p-4 shrink-0 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5">
+{{-- *FOOTER* --}}
+<div class="shrink-0 border-t border-slate-200 bg-white px-5 py-4 sm:px-6 sm:py-5">
+
+    <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+
+        <button
+            type="button"
+            @click="updateStatus()"
+            :disabled="loading || !transaction.id"
+            class="order-1 h-[42px] w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-600/20 transition-all duration-200 hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-600/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 sm:order-none sm:h-[48px] sm:w-auto sm:min-w-[170px] sm:px-5 sm:py-3 sm:text-base"
+        >
+            <span x-show="!loading">Perbarui Status</span>
+
+            <span
+                x-show="loading"
+                x-cloak
+                class="inline-flex items-center justify-center gap-2"
+            >
+                <svg
+                    class="h-4 w-4 animate-spin sm:h-5 sm:w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                >
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        class="opacity-30"
+                    ></circle>
+
+                    <path
+                        d="M21 12a9 9 0 0 0-9-9"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                    ></path>
+                </svg>
+
+                Menyimpan...
+            </span>
+        </button>
+
+        <div class="order-2 flex w-full items-center gap-2.5 sm:order-none sm:w-auto sm:gap-3">
+
+            <a
+                :href="'{{ route('admin.transactions.print', ['invoice' => '__invoice__']) }}'.replace('__invoice__', transaction.invoice)"
+                target="_blank"
+                class="flex h-[42px] flex-1 items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-center text-xs font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95 sm:h-[48px] sm:flex-none sm:px-5 sm:py-3 sm:text-base"
+            >
+                Cetak Invoice
+            </a>
+
             <button
                 type="button"
-                @click="updateStatus()"
-                :disabled="loading || !transaction.id"
-                class="order-1 w-full rounded-xl bg-emerald-600 px-5 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:order-none sm:w-auto sm:px-6 sm:py-3 sm:text-base"
+                @click="open = false"
+                class="flex h-[42px] flex-1 items-center justify-center rounded-xl bg-[#AE7C18] px-4 py-2.5 text-center text-xs font-bold text-white shadow-lg shadow-[#AE7C18]/20 transition-all duration-200 hover:bg-[#96690F] hover:shadow-xl hover:shadow-[#AE7C18]/30 active:scale-95 sm:h-[48px] sm:flex-none sm:min-w-[120px] sm:px-5 sm:py-3 sm:text-base"
             >
-                <span x-show="!loading">Perbarui Status</span>
-
-                <span x-show="loading" x-cloak class="inline-flex items-center justify-center gap-2">
-                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" class="opacity-30"></circle>
-                        <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
-                    </svg>
-                    Menyimpan...
-                </span>
+                Tutup
             </button>
 
-            <div class="order-2 flex items-center gap-2 sm:order-none sm:gap-3">
-                <a
-                    :href="'{{ route('admin.transactions.print', ['invoice' => '__invoice__']) }}'.replace('__invoice__', transaction.invoice)"
-                    target="_blank"
-                    class="flex-1 rounded-xl border border-slate-300 px-3.5 py-2.5 text-center text-xs font-semibold text-slate-700 transition hover:bg-slate-100 sm:flex-none sm:px-5 sm:py-3 sm:text-sm"
-                >
-                    Cetak Invoice
-                </a>
-
-                <button
-                    type="button"
-                    @click="open=false"
-                    class="flex-1 rounded-xl bg-[#AE7C18] px-4 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-[#96690F] sm:flex-none sm:px-6 sm:py-3 sm:text-sm"
-                >
-                    Tutup
-                </button>
-            </div>
         </div>
+
+    </div>
+
+</div>
     </div>
 </div>
 
@@ -271,9 +295,6 @@
 <script>
 function transactionView(){
     return {
-        formatCurrency(value){
-            return 'Rp. ' + Number(value || 0).toLocaleString('id-ID');
-        },
         open:false,
         loading:false,
         transaction:{
@@ -287,12 +308,16 @@ function transactionView(){
             location:'',
             shippingMethod:'',
             payment:'',
-            status:'Pending',
+            status:'PENDING',
             subtotal:0,
             discount:0,
             shipping:0,
             total:0,
             items:[]
+        },
+
+        formatCurrency(value){
+            return 'Rp. ' + Number(value || 0).toLocaleString('id-ID');
         },
 
         openDrawer(data){
@@ -305,18 +330,14 @@ function transactionView(){
                 customer:data?.customer ?? '',
                 phone:data?.phone ?? data?.customer_phone ?? '-',
                 email:data?.email ?? data?.customer_email ?? '-',
-
                 address:data?.shipping_address ?? '-',
-
                 location:[
                     data?.shipping_district,
                     data?.shipping_city,
                     data?.shipping_province,
                     data?.shipping_postal_code
                 ].filter(Boolean).join(', ') || '-',
-
                 shippingMethod:data?.shipping_method ?? '-',
-
                 payment:data?.payment ?? '-',
                 status:String(data?.status ?? 'PENDING').toUpperCase(),
                 subtotal:data?.subtotal ?? 0,
@@ -327,7 +348,6 @@ function transactionView(){
             };
 
             console.log('TRANSACTION AFTER OPEN:',this.transaction);
-
             this.open=true;
         },
 
@@ -354,7 +374,6 @@ function transactionView(){
 
             const transactionId=this.transaction.id;
             const status=String(this.transaction.status || '').toUpperCase();
-
             const url='/admin/transactions/'+transactionId+'/status';
 
             console.log('=== UPDATE TRANSACTION STATUS ===');
@@ -419,9 +438,7 @@ function transactionView(){
                         throw new Error(data.message || 'Status transaksi tidak valid.');
                     }
 
-                    throw new Error(
-                        data.message || 'Gagal memperbarui status transaksi.'
-                    );
+                    throw new Error(data.message || 'Gagal memperbarui status transaksi.');
                 }
 
                 if(data.success===false){
@@ -452,10 +469,11 @@ function transactionView(){
                         message:error.message || 'Failed to update transaction status.'
                     }
                 }));
+
             }finally{
                 this.loading=false;
             }
-        },
+        }
     };
 }
 </script>

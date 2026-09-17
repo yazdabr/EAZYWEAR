@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
             CustomerSeeder::class,
             TransactionSeeder::class,
             TransactionItemSeeder::class,
+            UserSeeder::class,
         ]);
     }
 }

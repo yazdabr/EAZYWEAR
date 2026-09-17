@@ -25,13 +25,34 @@ class LoginController extends Controller
             'name' => $credentials['username'],
             'password' => $credentials['password'],
         ], $remember)) {
+
             $request->session()->regenerate();
 
-            if ($request->user()->role === 'management') {
+            $user = $request->user();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Redirect Berdasarkan Role
+            |--------------------------------------------------------------------------
+            */
+
+            // User Production
+            if ($user->role === 'production') {
+                return redirect()->route('admin.production-reports');
+            }
+
+            // User Management
+            if ($user->role === 'management') {
                 return redirect()->route('admin.transactions');
             }
 
-            return redirect()->route('admin.dashboard');
+            // User Super Admin
+            if ($user->role === 'super_admin') {
+                return redirect()->route('admin.dashboard');
+            }
+
+            // Fallback jika role tidak dikenali
+            return redirect()->route('home');
         }
 
         return back()

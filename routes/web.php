@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\Admin\ProductionController;
+use App\Http\Controllers\Admin\ProductionReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,11 +68,21 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index'])
 
 Route::get('/login', function () {
     if (auth()->check()) {
-        if (auth()->user()->role === 'management') {
+        $role = auth()->user()->role;
+
+        if ($role === 'production') {
+            return redirect()->route('admin.production-reports');
+        }
+
+        if ($role === 'management') {
             return redirect()->route('admin.transactions');
         }
 
-        return redirect()->route('admin.dashboard');
+        if ($role === 'super_admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
+        return redirect()->route('home');
     }
 
     return view('auth.login');
@@ -203,4 +215,117 @@ Route::prefix('admin')
             Route::get('/sales-reports/export', [SalesReportController::class, 'export'])
                 ->name('sales-reports.export');
         });
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Produksi
+        |--------------------------------------------------------------------------
+        */
+
+        Route::middleware('role:super_admin,management,production')
+            ->group(function () {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Index Produksi
+                |--------------------------------------------------------------------------
+                */
+
+                Route::get(
+                    '/productions',
+                    [ProductionController::class, 'index']
+                )->name('productions');
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Tambah Produksi
+                |--------------------------------------------------------------------------
+                */
+
+                Route::get(
+                    '/productions/create',
+                    [ProductionController::class, 'create']
+                )->name('productions.create');
+
+                Route::post(
+                    '/productions',
+                    [ProductionController::class, 'store']
+                )->name('productions.store');
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Edit Produksi
+                |--------------------------------------------------------------------------
+                | Diletakkan sebelum route {production}
+                |--------------------------------------------------------------------------
+                */
+
+                Route::get(
+                    '/productions/{production}/edit',
+                    [ProductionController::class, 'edit']
+                )->name('productions.edit');
+
+                Route::put(
+                    '/productions/{production}',
+                    [ProductionController::class, 'update']
+                )->name('productions.update');
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Hapus Produksi
+                |--------------------------------------------------------------------------
+                */
+
+                Route::delete(
+                    '/productions/{production}',
+                    [ProductionController::class, 'destroy']
+                )->name('productions.destroy');
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Detail Produksi
+                |--------------------------------------------------------------------------
+                | Diletakkan setelah route edit, update, dan destroy
+                |--------------------------------------------------------------------------
+                */
+
+                Route::get(
+                    '/productions/{production}',
+                    [ProductionController::class, 'show']
+                )->name('productions.show');
+
+            });
+
+        
+        /*
+        |--------------------------------------------------------------------------
+        | Production Reports
+        |--------------------------------------------------------------------------
+        */
+
+        Route::middleware('role:super_admin,management,production')
+            ->group(function () {
+
+                Route::get(
+                    '/production-reports',
+                    [ProductionReportController::class, 'index']
+                )->name('production-reports');
+
+                Route::get(
+                    '/production-reports/print',
+                    [ProductionReportController::class, 'print']
+                )->name('production-reports.print');
+
+                Route::get(
+                    '/production-reports/export',
+                    [ProductionReportController::class, 'export']
+                )->name('production-reports.export');
+
+            });
     });

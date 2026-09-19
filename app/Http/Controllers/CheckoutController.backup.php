@@ -7,7 +7,6 @@ use App\Models\Inventory;
 use App\Models\ProductVariant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
-use App\Services\DokuService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use RuntimeException;
+use App\Services\DokuService;
 
 class CheckoutController extends Controller
 {
@@ -27,7 +26,10 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Keranjang masih kosong.');
         }
 
-        $subtotal = $cart->sum(fn ($item) => (float) $item['price'] * (int) $item['qty']);
+        $subtotal = $cart->sum(function ($item) {
+            return (float) $item['price'] * (int) $item['qty'];
+        });
+
         $totalItems = $cart->sum('qty');
 
         $shippingMethods = [[
@@ -36,11 +38,13 @@ class CheckoutController extends Controller
             'description' => 'Pengiriman ke alamat yang Anda masukkan.',
         ]];
 
-        $paymentMethods = [[
-            'value' => 'VA',
-            'name' => 'Virtual Account',
-            'description' => 'Bayar menggunakan Virtual Account dari bank yang tersedia.',
-        ]];
+        $paymentMethods = [
+            [
+                'value' => 'VA',
+                'name' => 'Virtual Account',
+                'description' => 'Bayar menggunakan Virtual Account dari bank yang tersedia.',
+            ],
+        ];
 
         return view('checkout.index', compact('cart', 'subtotal', 'totalItems', 'shippingMethods', 'paymentMethods'));
     }
@@ -57,7 +61,11 @@ class CheckoutController extends Controller
             'shipping_province' => ['required', 'string', 'max:100'],
             'shipping_postal_code' => ['required', 'string', 'max:10'],
             'shipping_method' => ['required', 'string', Rule::in(['Kurir', 'Ambil di Tempat'])],
-            'payment_method' => ['required', 'string', Rule::in(['VA'])],
+            'payment_method' => [
+                'required',
+                'string',
+                Rule::in(['VA']),
+            ],
         ]);
 
         $cart = collect($request->session()->get('cart', []));
@@ -67,11 +75,11 @@ class CheckoutController extends Controller
         }
 
         try {
-            $transaction = DB::transaction(function () use ($validated, $cart, $dokuService) {
-                if (! $dokuService->isConfigured()) {
-                    throw new RuntimeException('Konfigurasi DOKU belum lengkap.');
-                }
-
+            $transaction = DB::transaction(function () use (
+                $validated,
+                $cart,
+                $dokuService
+            ) {
                 $customer = Customer::query()
                     ->where(function ($query) use ($validated) {
                         $query->where('phone', $validated['phone'])
@@ -129,9 +137,7 @@ class CheckoutController extends Controller
                     }
 
                     if (! $variant->product || ! $variant->product->status) {
-                        throw ValidationException::withMessages([
-                            'cart' => "Produk {$variant->product?->name} sudah tidak aktif.",
-                        ]);
+                        throw ValidationException::withMessages(['cart' => "Produk {$variant->product?->name} sudah tidak aktif."]);
                     }
 
                     $inventory = Inventory::query()
@@ -140,21 +146,18 @@ class CheckoutController extends Controller
                         ->first();
 
                     if (! $inventory) {
-                        throw ValidationException::withMessages([
-                            'cart' => "Stok untuk {$variant->sku} tidak ditemukan.",
-                        ]);
+                        throw ValidationException::withMessages(['cart' => "Stok untuk {$variant->sku} tidak ditemukan."]);
                     }
 
                     $stock = (int) $inventory->stock;
 
                     if ($stock < $qty) {
-                        throw ValidationException::withMessages([
-                            'cart' => "Stok {$variant->product->name} tidak mencukupi. Stok tersedia: {$stock}.",
-                        ]);
+                        throw ValidationException::withMessages(['cart' => "Stok {$variant->product->name} tidak mencukupi. Stok tersedia: {$stock}."]);
                     }
 
                     $price = (float) $variant->price;
                     $itemSubtotal = $price * $qty;
+
                     $subtotal += $itemSubtotal;
 
                     $items[] = [
@@ -163,8 +166,8 @@ class CheckoutController extends Controller
                         'qty' => $qty,
                         'price' => $price,
                         'subtotal' => $itemSubtotal,
-                        'custom_name' => $customName,
-                        'custom_number' => $customNumber,
+                        'custom_name' => trim($cartItem['custom_name'] ?? ''),
+                        'custom_number' => trim($cartItem['custom_number'] ?? ''),
                     ];
                 }
 
@@ -209,61 +212,6 @@ class CheckoutController extends Controller
                     $item['inventory']->decrement('stock', $item['qty']);
                 }
 
-                $amount = number_format((float) $total, 2, '.', '');
-
-                $dokuResponse = $dokuService->createVirtualAccount([
-                    'partnerServiceId' => config('doku.va.partner_service_id', '19008'),
-                    'customerNo' => '0',
-                    'virtualAccountName' => $validated['name'],
-                    'virtualAccountEmail' => $validated['email'],
-                    'virtualAccountPhone' => $validated['phone'],
-                    'trxId' => $transaction->invoice_number,
-                    'amount' => $amount,
-                    'channel' => 'VIRTUAL_ACCOUNT_BCA',
-                    'expiredDate' => now('Asia/Jakarta')
-                        ->addHours(24)
-                        ->format('Y-m-d\TH:i:sP'),
-                ]);
-
-                $responseCode = (string) ($dokuResponse['responseCode'] ?? '');
-
-                if ($responseCode === '' || ! str_starts_with($responseCode, '200')) {
-                    throw new RuntimeException(
-                        'Create VA DOKU gagal: ' .
-                        ($dokuResponse['responseMessage'] ?? 'Respons tidak valid.')
-                    );
-                }
-
-                $vaNumber = $this->extractDokuValue($dokuResponse, [
-                    'virtualAccountNo',
-                    'virtualAccountNumber',
-                ]);
-
-                if (! $vaNumber) {
-                    throw new RuntimeException(
-                        'Create VA berhasil dipanggil, tetapi nomor VA tidak ditemukan pada respons DOKU.'
-                    );
-                }
-
-                $vaExpiredAt = $this->extractDokuValue($dokuResponse, [
-                    'expiredDate',
-                    'virtualAccountExpiredDate',
-                    'expirationDate',
-                ]);
-
-                $paymentRequestId = $this->extractDokuValue($dokuResponse, [
-                    'paymentRequestId',
-                ]);
-
-                $transaction->update([
-                    'doku_request_id' => $dokuResponse['_external_id'] ?? null,
-                    'doku_payment_id' => $paymentRequestId,
-                    'va_number' => $vaNumber,
-                    'va_bank' => 'BCA',
-                    'va_expired_at' => $vaExpiredAt,
-                    'doku_response' => $dokuResponse,
-                ]);
-
                 return $transaction;
             });
 
@@ -275,6 +223,7 @@ class CheckoutController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             report($e);
+
             return back()->withInput()->with('error', 'Pesanan gagal dibuat. Silakan coba lagi.');
         }
     }
@@ -292,7 +241,9 @@ class CheckoutController extends Controller
             'items.productVariant.product',
             'items.productVariant.size',
             'items.productVariant.color',
-        ])->where('invoice_number', $invoice)->first();
+        ])
+            ->where('invoice_number', $invoice)
+            ->first();
 
         if (! $transaction) {
             return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
@@ -308,26 +259,5 @@ class CheckoutController extends Controller
         } while (Transaction::where('invoice_number', $invoice)->exists());
 
         return $invoice;
-    }
-
-    private function extractDokuValue(array $data, array $keys): mixed
-    {
-        foreach ($keys as $key) {
-            if (array_key_exists($key, $data) && $data[$key] !== null && $data[$key] !== '') {
-                return $data[$key];
-            }
-        }
-
-        foreach ($data as $value) {
-            if (is_array($value)) {
-                $result = $this->extractDokuValue($value, $keys);
-
-                if ($result !== null) {
-                    return $result;
-                }
-            }
-        }
-
-        return null;
     }
 }

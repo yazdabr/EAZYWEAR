@@ -193,33 +193,73 @@ class DokuService
 
         $endpoint = config('doku.va.endpoint');
 
-        $timestamp = now('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
+        $timestamp = now('Asia/Jakarta')->format(
+            'Y-m-d\TH:i:sP'
+        );
 
         $externalId = now('Asia/Jakarta')->format('YmdHis')
             . random_int(1000, 9999);
 
+        /*
+        * BCA DGPC:
+        * Partner Service ID wajib memiliki panjang 8 karakter
+        * dan menggunakan padding spasi di sebelah kiri.
+        */
+        $partnerServiceId = str_pad(
+            (string) (
+                $data['partnerServiceId']
+                ?? config('doku.va.partner_service_id', '19008')
+            ),
+            8,
+            ' ',
+            STR_PAD_LEFT
+        );
+
+        $customerNo = (string) (
+            $data['customerNo'] ?? '0'
+        );
+
+        /*
+        * Untuk DGPC, DOKU menghasilkan payment code.
+        * Pola ini mengikuti contoh DGPC pada dokumentasi DOKU.
+        */
+        $virtualAccountNo = $data['virtualAccountNo']
+            ?? ($partnerServiceId . $customerNo);
+
         $body = [
-            'partnerServiceId' => $data['partnerServiceId'] ?? '',
-            'customerNo' => $data['customerNo'] ?? '',
-            'virtualAccountNo' => $data['virtualAccountNo'] ?? '',
+            'partnerServiceId' => $partnerServiceId,
+
+            'customerNo' => $customerNo,
+
+            'virtualAccountNo' => $virtualAccountNo,
+
             'virtualAccountName' => $data['virtualAccountName'] ?? '',
+
             'virtualAccountEmail' => $data['virtualAccountEmail'] ?? '',
+
             'virtualAccountPhone' => $data['virtualAccountPhone'] ?? '',
+
             'trxId' => $data['trxId'] ?? '',
+
             'totalAmount' => [
                 'value' => $data['amount'] ?? '0.00',
                 'currency' => 'IDR',
             ],
+
             'additionalInfo' => [
-                'channel' => $data['channel'] ?? 'VIRTUAL_ACCOUNT_BCA',
+                'channel' => $data['channel']
+                    ?? 'VIRTUAL_ACCOUNT_BCA',
             ],
+
             'virtualAccountTrxType' => config(
                 'doku.va.virtual_account_trx_type',
                 'C'
             ),
-            'expiredDate' => $data['expiredDate'] ?? now('Asia/Jakarta')
-            ->addHours(24)
-            ->format('Y-m-d\TH:i:sP'),
+
+            'expiredDate' => $data['expiredDate']
+                ?? now('Asia/Jakarta')
+                    ->addHours(24)
+                    ->format('Y-m-d\TH:i:sP'),
         ];
 
         $requestBody = json_encode(
@@ -257,6 +297,16 @@ class DokuService
 
         $response->throw();
 
-        return $response->json();
+        $responseData = $response->json();
+
+        if (! is_array($responseData)) {
+            throw new RuntimeException(
+                'Respons Create VA DOKU tidak valid.'
+            );
+        }
+
+        $responseData['_external_id'] = $externalId;
+
+        return $responseData;
     }
 }

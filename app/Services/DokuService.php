@@ -211,12 +211,15 @@ class DokuService
                 'currency' => 'IDR',
             ],
             'additionalInfo' => [
-                'channel' => $data['channel'] ?? 'H2H',
+                'channel' => $data['channel'] ?? 'VIRTUAL_ACCOUNT_BCA',
             ],
             'virtualAccountTrxType' => config(
                 'doku.va.virtual_account_trx_type',
                 'C'
             ),
+            'expiredDate' => $data['expiredDate'] ?? now('Asia/Jakarta')
+            ->addHours(24)
+            ->format('Y-m-d\TH:i:sP'),
         ];
 
         $requestBody = json_encode(

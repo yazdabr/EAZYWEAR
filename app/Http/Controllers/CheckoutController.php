@@ -239,9 +239,12 @@ class CheckoutController extends Controller
                     'virtualAccountNumber',
                 ]);
 
-                if (! $vaNumber) {
+                // Normalisasi nomor VA: hapus spasi dan karakter whitespace
+                $vaNumber = preg_replace('/\s+/', '', (string) $vaNumber);
+
+                if (! $vaNumber || ! preg_match('/^\d+$/', $vaNumber)) {
                     throw new RuntimeException(
-                        'Create VA berhasil dipanggil, tetapi nomor VA tidak ditemukan pada respons DOKU.'
+                        'Create VA berhasil dipanggil, tetapi nomor VA tidak valid pada respons DOKU.'
                     );
                 }
 

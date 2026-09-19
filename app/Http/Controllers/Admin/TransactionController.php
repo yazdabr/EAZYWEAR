@@ -483,22 +483,26 @@ class TransactionController extends Controller
     }
 
     public function checkDokuPayment(
-        Request $request,
         Transaction $transaction,
         DokuService $dokuService
     ) {
         if ($transaction->status === 'PAID') {
-            return back()->with('info', 'Transaksi ini sudah berstatus PAID.');
+            return response()->json([
+                'success' => true,
+                'status' => 'PAID',
+                'message' => 'Transaksi ini sudah berstatus PAID.',
+            ]);
         }
 
         if (
             empty($transaction->va_number) ||
             empty($transaction->invoice_number)
         ) {
-            return back()->with(
-                'error',
-                'Data VA atau invoice transaksi tidak lengkap.'
-            );
+            return response()->json([
+                'success' => false,
+                'status' => $transaction->status,
+                'message' => 'Data VA atau invoice transaksi tidak lengkap.',
+            ], 422);
         }
 
         try {
@@ -508,7 +512,9 @@ class TransactionController extends Controller
                     '190089'
                 ),
                 'customerNo' => '0',
-                'virtualAccountNo' => trim($transaction->va_number),
+                'virtualAccountNo' => trim(
+                    $transaction->va_number
+                ),
                 'paymentRequestId' => $transaction->invoice_number,
             ]);
 
@@ -522,28 +528,47 @@ class TransactionController extends Controller
                 'response' => $response,
             ]);
 
-            if ($httpStatus < 200 || $httpStatus >= 300) {
-                return back()->with(
-                    'error',
-                    'DOKU mengembalikan HTTP status: ' . $httpStatus
-                );
+            if (
+                $httpStatus === null ||
+                $httpStatus < 200 ||
+                $httpStatus >= 300
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'status' => $transaction->status,
+                    'message' =>
+                        'DOKU mengembalikan HTTP status: ' .
+                        ($httpStatus ?? 'tidak tersedia'),
+                ], 422);
             }
 
-
-
-            $responseCode = $response['responseCode'] ?? null;
+            $responseCode =
+                $response['responseCode'] ?? null;
 
             $paidAmount = data_get(
                 $response,
                 'virtualAccountData.paidAmount.value'
             );
 
-            if ($responseCode !== '2002500' || empty($paidAmount)) {
-                return back()->with(
-                    'error',
-                    'Pembayaran belum berhasil atau nominal pembayaran tidak tersedia. '
-                    . 'Response code: ' . ($responseCode ?? 'tidak tersedia')
-                );
+            /*
+            * Pembayaran belum dianggap berhasil
+            * hanya karena HTTP response 2xx.
+            *
+            * Status DOKU dan nominal pembayaran
+            * harus sesuai terlebih dahulu.
+            */
+            if (
+                $responseCode !== '2002500' ||
+                empty($paidAmount)
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'status' => $transaction->status,
+                    'message' =>
+                        'Pembayaran belum berhasil atau nominal pembayaran belum tersedia. ' .
+                        'Response code: ' .
+                        ($responseCode ?? 'tidak tersedia'),
+                ]);
             }
 
             $transactionAmount = number_format(
@@ -561,22 +586,50 @@ class TransactionController extends Controller
             );
 
             if ($transactionAmount !== $dokuAmount) {
-                return back()->with(
-                    'error',
-                    'Nominal pembayaran tidak sesuai dengan nominal transaksi.'
+                \Log::warning(
+                    'DOKU PAYMENT AMOUNT MISMATCH',
+                    [
+                        'transaction_id' => $transaction->id,
+                        'invoice' =>
+                            $transaction->invoice_number,
+                        'transaction_amount' =>
+                            $transactionAmount,
+                        'doku_amount' =>
+                            $dokuAmount,
+                    ]
                 );
+
+                return response()->json([
+                    'success' => false,
+                    'status' => $transaction->status,
+                    'message' =>
+                        'Nominal pembayaran DOKU tidak sesuai dengan nominal transaksi.',
+                ], 422);
             }
 
+            /*
+            * Hanya pada titik ini transaksi boleh
+            * diubah menjadi PAID.
+            */
             $transaction->update([
                 'status' => 'PAID',
                 'paid_at' => now(),
                 'doku_response' => $response,
             ]);
 
-            return back()->with(
-                'success',
-                'Pembayaran berhasil diverifikasi dan transaksi diubah menjadi PAID.'
-            );
+            \Log::info('DOKU PAYMENT VERIFIED', [
+                'transaction_id' => $transaction->id,
+                'invoice' => $transaction->invoice_number,
+                'amount' => $dokuAmount,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'status' => 'PAID',
+                'message' =>
+                    'Pembayaran berhasil diverifikasi dan transaksi diubah menjadi PAID.',
+            ]);
+
         } catch (\Throwable $e) {
             \Log::error('DOKU PAYMENT CHECK FAILED', [
                 'transaction_id' => $transaction->id,
@@ -584,10 +637,12 @@ class TransactionController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->with(
-                'error',
-                'Gagal mengecek pembayaran DOKU. Silakan periksa log.'
-            );
+            return response()->json([
+                'success' => false,
+                'status' => $transaction->status,
+                'message' =>
+                    'Gagal mengecek pembayaran DOKU. Silakan periksa log.',
+            ], 500);
         }
     }
 }

@@ -358,6 +358,13 @@ class DokuService
             $data['virtualAccountNo'] ?? ''
         );
 
+        $virtualAccountNo = str_pad(
+            $virtualAccountNo,
+            18,
+            ' ',
+            STR_PAD_LEFT
+        );
+
         if ($virtualAccountNo === '') {
             throw new RuntimeException(
                 'Nomor Virtual Account wajib diisi.'

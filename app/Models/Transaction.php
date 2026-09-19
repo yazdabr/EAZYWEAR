@@ -16,14 +16,22 @@ class Transaction extends Model
         'invoice_number',
         'transaction_date',
         'payment_method',
+
+        'doku_request_id',
+        'doku_payment_id',
+        'va_number',
+        'va_bank',
+        'va_expired_at',
+
         'subtotal',
         'discount',
         'shipping',
         'total',
         'status',
+        'paid_at',
+        'doku_response',
         'source',
 
-        // Shipping snapshot
         'shipping_name',
         'shipping_email',
         'shipping_phone',
@@ -37,10 +45,15 @@ class Transaction extends Model
 
     protected $casts = [
         'transaction_date' => 'datetime',
+        'va_expired_at' => 'datetime',
+        'paid_at' => 'datetime',
+
         'subtotal' => 'decimal:2',
         'discount' => 'decimal:2',
         'shipping' => 'decimal:2',
         'total' => 'decimal:2',
+
+        'doku_response' => 'array',
     ];
 
     public function customer(): BelongsTo

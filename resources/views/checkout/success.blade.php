@@ -86,7 +86,9 @@
                             </div>
                             <div class="flex justify-between text-xs text-gray-600 sm:text-sm">
                                 <span>Metode Pembayaran</span>
-                                <span class="font-bold text-slate-900">{{ $transaction->payment_method === 'TRANSFER' ? 'Transfer Bank' : 'QRIS' }}</span>
+                                <span class="font-bold text-slate-900">
+                                    {{ $transaction->payment_method === 'VA' ? 'Virtual Account' : $transaction->payment_method }}
+                                </span>
                             </div>
                             <div class="border-t border-gray-100 pt-3 sm:pt-4">
                                 <div class="flex items-center justify-between gap-4">
@@ -99,13 +101,89 @@
                 </div>
             </div>
 
+            {{-- INFORMASI PEMBAYARAN VA --}}
+            @if($transaction->payment_method === 'VA')
+                <div class="mt-4 overflow-hidden rounded-2xl border border-blue-200 bg-white shadow-sm sm:mt-6 sm:rounded-3xl">
+                    <div class="bg-blue-50 px-5 py-5 sm:px-8 sm:py-6">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                                <x-heroicon-o-building-library class="h-5 w-5 text-blue-700"/>
+                            </div>
+
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-blue-700 sm:text-sm">
+                                    Pembayaran Virtual Account
+                                </p>
+                                <p class="mt-1 text-[11px] text-blue-600 sm:text-xs">
+                                    Gunakan informasi berikut untuk melakukan pembayaran.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 px-5 py-5 sm:px-8 sm:py-6">
+                        @if($transaction->va_number)
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 sm:text-sm">
+                                    Nomor Virtual Account
+                                </p>
+
+                                <div class="mt-2 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+                                    <p class="break-all text-lg font-extrabold tracking-wide text-slate-900 sm:text-2xl">
+                                        {{ $transaction->va_number }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if($transaction->va_bank)
+                                <div class="flex items-center justify-between gap-4 text-sm">
+                                    <span class="text-gray-500">Bank</span>
+                                    <span class="font-bold text-slate-900">
+                                        {{ $transaction->va_bank }}
+                                    </span>
+                                </div>
+                            @endif
+
+                            @if($transaction->va_expired_at)
+                                <div class="flex items-center justify-between gap-4 text-sm">
+                                    <span class="text-gray-500">Batas Pembayaran</span>
+                                    <span class="text-right font-bold text-slate-900">
+                                        {{ $transaction->va_expired_at->format('d M Y, H:i') }}
+                                    </span>
+                                </div>
+                            @endif
+
+                            <div class="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                                <p class="text-xs leading-5 text-amber-800 sm:text-sm">
+                                    Pastikan nominal pembayaran sesuai dengan total pesanan Anda.
+                                </p>
+                            </div>
+                        @else
+                            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                                <p class="text-sm font-semibold text-amber-900">
+                                    Nomor Virtual Account belum tersedia
+                                </p>
+
+                                <p class="mt-1 text-xs leading-5 text-amber-800 sm:text-sm">
+                                    Pesanan sudah tercatat, tetapi nomor VA belum berhasil dibuat.
+                                    Silakan tunggu informasi pembayaran berikutnya.
+                                </p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             {{-- NOTIFIKASI PEMBAYARAN --}}
             <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:mt-6 sm:p-5">
                 <div class="flex items-start gap-3">
                     <x-heroicon-o-information-circle class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"/>
                     <div>
-                        <p class="text-xs font-semibold text-amber-900 sm:text-sm">Pesanan menunggu pembayaran</p>
-                        <p class="mt-0.5 text-[11px] leading-4 text-amber-800 sm:mt-1 sm:text-sm sm:leading-6">Pesanan Anda telah tercatat dengan status <strong>PENDING</strong>. Instruksi pembayaran akan diaktifkan pada tahap pembayaran berikutnya.</p>
+                        <p class="mt-0.5 text-[11px] leading-4 text-amber-800 sm:mt-1 sm:text-sm sm:leading-6">
+                            Pesanan Anda telah tercatat dengan status
+                            <strong>{{ $transaction->status }}</strong>.
+                            Nomor Virtual Account akan ditampilkan setelah berhasil dibuat oleh sistem.
+                        </p>
                     </div>
                 </div>
             </div>

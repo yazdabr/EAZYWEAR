@@ -8,12 +8,12 @@ use App\Models\Inventory;
 use App\Models\ProductVariant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
@@ -63,82 +63,29 @@ class TransactionController extends Controller
             $query->where('customer_id', $request->integer('customer_id'));
         }
 
-        $transactions = $query
-            ->latest('transaction_date')
-            ->paginate(10)
-            ->withQueryString();
+        $transactions = $query->latest('transaction_date')->paginate(10)->withQueryString();
 
         $transactions->through(function ($transaction) {
             return [
                 'id' => $transaction->id,
-
                 'invoice' => $transaction->invoice_number,
-
-                'date' => $transaction->transaction_date
-                    ? $transaction->transaction_date->format('d M Y H:i')
-                    : '-',
-
-                /*
-                |--------------------------------------------------------------------------
-                | CUSTOMER
-                |--------------------------------------------------------------------------
-                */
-                'customer' => $transaction->shipping_name
-                    ?? $transaction->customer?->name
-                    ?? '-',
-
-                'customer_phone' => $transaction->shipping_phone
-                    ?? $transaction->customer?->phone
-                    ?? '-',
-
-                'customer_email' => $transaction->shipping_email
-                    ?? $transaction->customer?->email
-                    ?? '-',
-
-                /*
-                |--------------------------------------------------------------------------
-                | SHIPPING SNAPSHOT
-                |--------------------------------------------------------------------------
-                | Data diambil dari transaksi, bukan dari customer,
-                | supaya alamat historis tidak berubah ketika customer berubah.
-                |--------------------------------------------------------------------------
-                */
+                'date' => $transaction->transaction_date ? $transaction->transaction_date->format('d M Y H:i') : '-',
+                'customer' => $transaction->shipping_name ?? $transaction->customer?->name ?? '-',
+                'customer_phone' => $transaction->shipping_phone ?? $transaction->customer?->phone ?? '-',
+                'customer_email' => $transaction->shipping_email ?? $transaction->customer?->email ?? '-',
                 'shipping_address' => $transaction->shipping_address ?? '-',
-
                 'shipping_district' => $transaction->shipping_district ?? '-',
-
                 'shipping_city' => $transaction->shipping_city ?? '-',
-
                 'shipping_province' => $transaction->shipping_province ?? '-',
-
                 'shipping_postal_code' => $transaction->shipping_postal_code ?? '-',
-
                 'shipping_method' => $transaction->shipping_method ?? '-',
-
-                /*
-                |--------------------------------------------------------------------------
-                | PAYMENT & TOTAL
-                |--------------------------------------------------------------------------
-                */
                 'payment' => $transaction->payment_method ?? '-',
-
                 'status' => $transaction->status ?? 'PENDING',
-
                 'subtotal' => (float) $transaction->subtotal,
-
                 'discount' => (float) $transaction->discount,
-
                 'shipping' => (float) $transaction->shipping,
-
                 'total' => (float) $transaction->total,
-
                 'source' => $transaction->source,
-
-                /*
-                |--------------------------------------------------------------------------
-                | TRANSACTION ITEMS
-                |--------------------------------------------------------------------------
-                */
                 'items' => $transaction->items->map(function ($item) {
                     $variant = $item->productVariant;
                     $product = $variant?->product;
@@ -163,18 +110,11 @@ class TransactionController extends Controller
             ];
         });
 
-        /*
-        |--------------------------------------------------------------------------
-        | STATISTICS
-        |--------------------------------------------------------------------------
-        */
-
         $totalTransactions = Transaction::count();
         $totalRevenue = Transaction::sum('total');
         $completedOrders = Transaction::where('status', 'PAID')->count();
         $pendingTransactions = Transaction::where('status', 'PENDING')->count();
         $currentMonth = Carbon::now()->startOfMonth();
-
         $previousMonth = Carbon::now()->subMonth()->startOfMonth();
 
         $currentTransactions = Transaction::whereBetween('transaction_date', [
@@ -200,16 +140,12 @@ class TransactionController extends Controller
         $currentCompleted = Transaction::whereBetween('transaction_date', [
             $currentMonth->copy()->startOfMonth(),
             $currentMonth->copy()->endOfMonth(),
-        ])
-            ->where('status', 'PAID')
-            ->count();
+        ])->where('status', 'PAID')->count();
 
         $previousCompleted = Transaction::whereBetween('transaction_date', [
             $previousMonth->copy()->startOfMonth(),
             $previousMonth->copy()->endOfMonth(),
-        ])
-            ->where('status', 'PAID')
-            ->count();
+        ])->where('status', 'PAID')->count();
 
         $calculateGrowth = function ($current, $previous) {
             if ((float) $previous === 0.0) {
@@ -231,30 +167,15 @@ class TransactionController extends Controller
             $growth = (($current - $previous) / $previous) * 100;
 
             return [
-                'value' => ($growth >= 0 ? '+' : '')
-                    . number_format($growth, 1, ',', '.')
-                    . '%',
-
+                'value' => ($growth >= 0 ? '+' : '') . number_format($growth, 1, ',', '.') . '%',
                 'positive' => $growth >= 0,
-
                 'neutral' => false,
             ];
         };
 
-        $transactionGrowth = $calculateGrowth(
-            $currentTransactions,
-            $previousTransactions
-        );
-
-        $revenueGrowth = $calculateGrowth(
-            $currentRevenue,
-            $previousRevenue
-        );
-
-        $completedGrowth = $calculateGrowth(
-            $currentCompleted,
-            $previousCompleted
-        );
+        $transactionGrowth = $calculateGrowth($currentTransactions, $previousTransactions);
+        $revenueGrowth = $calculateGrowth($currentRevenue, $previousRevenue);
+        $completedGrowth = $calculateGrowth($currentCompleted, $previousCompleted);
 
         return view('admin.transactions.index', [
             'transactions' => $transactions,
@@ -273,156 +194,59 @@ class TransactionController extends Controller
         $search = trim($request->input('search', ''));
 
         if (strlen($search) < 2) {
-            return response()->json([
-                'data' => [],
-            ]);
+            return response()->json(['data' => []]);
         }
 
         $customers = Customer::query()
             ->where('name', 'like', "%{$search}%")
             ->orderBy('name')
             ->limit(10)
-            ->get([
-                'id',
-                'name',
-                'email',
-            ]);
+            ->get(['id', 'name', 'email']);
 
-        return response()->json([
-            'data' => $customers,
-        ]);
+        return response()->json(['data' => $customers]);
     }
 
     public function create()
     {
-        $variants = ProductVariant::with([
-            'product.images',
-            'size',
-            'color',
-            'inventory',
-        ])
-            ->whereHas('product', function ($query) {
-                $query->where('status', true);
-            })
-            ->whereHas('inventory', function ($query) {
-                $query->where('stock', '>', 0);
-            })
+        $variants = ProductVariant::with(['product.images', 'size', 'color', 'inventory'])
+            ->whereHas('product', fn ($query) => $query->where('status', true))
+            ->whereHas('inventory', fn ($query) => $query->where('stock', '>', 0))
             ->orderBy('id')
             ->get();
 
-        return view('admin.transactions.create', [
-            'variants' => $variants,
-        ]);
+        return view('admin.transactions.create', ['variants' => $variants]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'customer.name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'customer.phone' => [
-                'nullable',
-                'string',
-                'max:30',
-            ],
-            'customer.email' => [
-                'nullable',
-                'email',
-                'max:255',
-            ],
-
-            'shipping_data.address' => [
-                'required',
-                'string',
-            ],
-            'shipping_data.district' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'shipping_data.city' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'shipping_data.province' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'shipping_data.postal_code' => [
-                'required',
-                'string',
-                'max:10',
-            ],
-            'shipping_data.method' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'transaction_date' => [
-                'required',
-                'date',
-            ],
-            'payment_method' => [
-                'required',
-                'string',
-                'max:50',
-            ],
-
-            'discount' => [
-                'nullable',
-                'numeric',
-                'min:0',
-            ],
-            'shipping' => [
-                'nullable',
-                'numeric',
-                'min:0',
-            ],
-
-            'items' => [
-                'required',
-                'array',
-                'min:1',
-            ],
-            'items.*.product_variant_id' => [
-                'required',
-                'integer',
-                'exists:product_variants,id',
-            ],
-            'items.*.qty' => [
-                'required',
-                'integer',
-                'min:1',
-            ],
-            'items.*.custom_name' => [
-                'required',
-                'string',
-                'max:20',
-                'regex:/^[\pL\s]+$/u',
-            ],
-            'items.*.custom_number' => [
-                'required',
-                'string',
-                'max:2',
-                'regex:/^[0-9]{1,2}$/',
-            ],
+            'customer.name' => ['required', 'string', 'max:255'],
+            'customer.phone' => ['nullable', 'string', 'max:30'],
+            'customer.email' => ['nullable', 'email', 'max:255'],
+            'shipping_data.address' => ['required', 'string'],
+            'shipping_data.district' => ['required', 'string', 'max:255'],
+            'shipping_data.city' => ['required', 'string', 'max:255'],
+            'shipping_data.province' => ['required', 'string', 'max:255'],
+            'shipping_data.postal_code' => ['required', 'string', 'max:10'],
+            'shipping_data.method' => ['required', 'string', 'max:255'],
+            'transaction_date' => ['required', 'date'],
+            'payment_method' => ['required', 'string', 'max:50'],
+            'discount' => ['nullable', 'numeric', 'min:0'],
+            'shipping' => ['nullable', 'numeric', 'min:0'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_variant_id' => ['required', 'integer', 'exists:product_variants,id'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'items.*.custom_name' => ['required', 'string', 'max:20', 'regex:/^[\pL\s]+$/u'],
+            'items.*.custom_number' => ['required', 'string', 'max:2', 'regex:/^[0-9]{1,2}$/'],
         ], [
             'customer.name.required' => 'Nama pelanggan wajib diisi.',
             'customer.email.email' => 'Format email tidak valid.',
-
             'shipping_data.address.required' => 'Alamat pengiriman wajib diisi.',
             'shipping_data.district.required' => 'Kecamatan wajib diisi.',
             'shipping_data.city.required' => 'Kota atau kabupaten wajib diisi.',
             'shipping_data.province.required' => 'Provinsi wajib diisi.',
             'shipping_data.postal_code.required' => 'Kode pos wajib diisi.',
             'shipping_data.method.required' => 'Metode pengiriman wajib diisi.',
-
             'items.required' => 'Minimal satu produk harus dipilih.',
             'items.min' => 'Minimal satu produk harus dipilih.',
             'items.*.custom_name.required' => 'Nama jersey wajib diisi.',
@@ -440,21 +264,15 @@ class TransactionController extends Controller
 
                 $customer = null;
 
-                if (!empty($customerData['phone'])) {
-                    $customer = Customer::where(
-                        'phone',
-                        $customerData['phone']
-                    )->first();
+                if (! empty($customerData['phone'])) {
+                    $customer = Customer::where('phone', $customerData['phone'])->first();
                 }
 
-                if (!$customer && !empty($customerData['email'])) {
-                    $customer = Customer::where(
-                        'email',
-                        $customerData['email']
-                    )->first();
+                if (! $customer && ! empty($customerData['email'])) {
+                    $customer = Customer::where('email', $customerData['email'])->first();
                 }
 
-                if (!$customer) {
+                if (! $customer) {
                     $customer = Customer::create([
                         'name' => $customerData['name'],
                         'phone' => $customerData['phone'] ?? null,
@@ -466,71 +284,48 @@ class TransactionController extends Controller
                 $subtotal = 0;
 
                 foreach ($validated['items'] as $item) {
-                    $variant = ProductVariant::with([
-                        'product',
-                        'size',
-                    ])
+                    $variant = ProductVariant::with(['product', 'size'])
                         ->lockForUpdate()
                         ->findOrFail($item['product_variant_id']);
 
-                    if (!$variant->product || !$variant->product->status) {
-                        throw ValidationException::withMessages([
-                            'items' => 'Produk yang dipilih tidak aktif.',
-                        ]);
+                    if (! $variant->product || ! $variant->product->status) {
+                        throw ValidationException::withMessages(['items' => 'Produk yang dipilih tidak aktif.']);
                     }
 
-                    $inventory = Inventory::where(
-                        'product_variant_id',
-                        $variant->id
-                    )
-                        ->lockForUpdate()
-                        ->first();
+                    $inventory = Inventory::where('product_variant_id', $variant->id)->lockForUpdate()->first();
 
-                    if (!$inventory) {
-                        throw ValidationException::withMessages([
-                            'items' => "Stok untuk {$variant->sku} tidak ditemukan.",
-                        ]);
+                    if (! $inventory) {
+                        throw ValidationException::withMessages(['items' => "Stok untuk {$variant->sku} tidak ditemukan."]);
                     }
 
                     $qty = (int) $item['qty'];
                     $stock = (int) $inventory->stock;
 
                     if ($stock < $qty) {
-                        throw ValidationException::withMessages([
-                            'items' => "Stok {$variant->sku} tidak mencukupi. Stok tersedia: {$stock}.",
-                        ]);
+                        throw ValidationException::withMessages(['items' => "Stok {$variant->sku} tidak mencukupi. Stok tersedia: {$stock}."]);
                     }
 
                     $customName = trim($item['custom_name']);
                     $customNumber = trim($item['custom_number']);
 
                     if ($customName === '') {
-                        throw ValidationException::withMessages([
-                            'items' => 'Nama jersey wajib diisi.',
-                        ]);
+                        throw ValidationException::withMessages(['items' => 'Nama jersey wajib diisi.']);
                     }
 
-                    if (!preg_match('/^[\pL\s]+$/u', $customName)) {
-                        throw ValidationException::withMessages([
-                            'items' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
-                        ]);
+                    if (! preg_match('/^[\pL\s]+$/u', $customName)) {
+                        throw ValidationException::withMessages(['items' => 'Nama jersey hanya boleh berisi huruf dan spasi.']);
                     }
 
                     if ($customNumber === '') {
-                        throw ValidationException::withMessages([
-                            'items' => 'Nomor punggung wajib diisi.',
-                        ]);
+                        throw ValidationException::withMessages(['items' => 'Nomor punggung wajib diisi.']);
                     }
 
-                    if (!preg_match('/^[0-9]{1,2}$/', $customNumber)) {
-                        throw ValidationException::withMessages([
-                            'items' => 'Nomor punggung hanya boleh berisi 1-2 angka.',
-                        ]);
+                    if (! preg_match('/^[0-9]{1,2}$/', $customNumber)) {
+                        throw ValidationException::withMessages(['items' => 'Nomor punggung hanya boleh berisi 1-2 angka.']);
                     }
 
                     $price = (float) $variant->price;
                     $itemSubtotal = $price * $qty;
-
                     $subtotal += $itemSubtotal;
 
                     $items[] = [
@@ -548,13 +343,10 @@ class TransactionController extends Controller
                 $shipping = (float) ($validated['shipping'] ?? 0);
 
                 if ($discount > $subtotal) {
-                    throw ValidationException::withMessages([
-                        'discount' => 'Diskon tidak boleh lebih besar dari subtotal.',
-                    ]);
+                    throw ValidationException::withMessages(['discount' => 'Diskon tidak boleh lebih besar dari subtotal.']);
                 }
 
                 $total = $subtotal - $discount + $shipping;
-
                 $invoiceNumber = $this->generateInvoiceNumber();
 
                 $transaction = Transaction::create([
@@ -567,11 +359,7 @@ class TransactionController extends Controller
                     'shipping' => $shipping,
                     'total' => $total,
                     'status' => 'PENDING',
-
-                    // Sumber transaksi selalu Website
                     'source' => 'Website',
-
-                    // Shipping snapshot
                     'shipping_name' => $customerData['name'],
                     'shipping_email' => $customerData['email'] ?? null,
                     'shipping_phone' => $customerData['phone'] ?? null,
@@ -594,10 +382,7 @@ class TransactionController extends Controller
                         'subtotal' => $item['subtotal'],
                     ]);
 
-                    $item['inventory']->decrement(
-                        'stock',
-                        $item['qty']
-                    );
+                    $item['inventory']->decrement('stock', $item['qty']);
                 }
 
                 return $transaction;
@@ -627,9 +412,7 @@ class TransactionController extends Controller
     {
         do {
             $invoice = 'INV-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
-        } while (
-            Transaction::where('invoice_number', $invoice)->exists()
-        );
+        } while (Transaction::where('invoice_number', $invoice)->exists());
 
         return $invoice;
     }
@@ -649,21 +432,10 @@ class TransactionController extends Controller
     public function updateStatus(Request $request, Transaction $transaction)
     {
         $validated = $request->validate([
-            'status' => [
-                'required',
-                'string',
-                Rule::in([
-                    'PENDING',
-                    'PAID',
-                    'COMPLETED',
-                    'CANCELLED',
-                ]),
-            ],
+            'status' => ['required', 'string', Rule::in(['PENDING', 'PAID', 'COMPLETED', 'CANCELLED'])],
         ]);
 
-        $transaction->update([
-            'status' => $validated['status'],
-        ]);
+        $transaction->update(['status' => $validated['status']]);
 
         return response()->json([
             'success' => true,
@@ -684,9 +456,7 @@ class TransactionController extends Controller
             ], 422);
         }
 
-        $transaction->update([
-            'status' => 'CANCELLED',
-        ]);
+        $transaction->update(['status' => 'CANCELLED']);
 
         return response()->json([
             'success' => true,
@@ -701,7 +471,6 @@ class TransactionController extends Controller
     public function destroy(Transaction $transaction)
     {
         $transaction->items()->delete();
-
         $transaction->delete();
 
         return response()->json([

@@ -22,9 +22,7 @@ class CheckoutController extends Controller
         $cart = collect($request->session()->get('cart', []));
 
         if ($cart->isEmpty()) {
-            return redirect()
-                ->route('cart.index')
-                ->with('error', 'Keranjang masih kosong.');
+            return redirect()->route('cart.index')->with('error', 'Keranjang masih kosong.');
         }
 
         $subtotal = $cart->sum(function ($item) {
@@ -33,112 +31,50 @@ class CheckoutController extends Controller
 
         $totalItems = $cart->sum('qty');
 
-        $shippingMethods = [
-            [
-                'value' => 'Kurir',
-                'name' => 'Kurir',
-                'description' => 'Pengiriman ke alamat yang Anda masukkan.',
-            ],
-        ];
+        $shippingMethods = [[
+            'value' => 'Kurir',
+            'name' => 'Kurir',
+            'description' => 'Pengiriman ke alamat yang Anda masukkan.',
+        ]];
 
         $paymentMethods = [
             [
-                'value' => 'QRIS',
-                'name' => 'QRIS',
-                'description' => 'Bayar menggunakan QRIS.',
-            ],
-            [
-                'value' => 'TRANSFER',
-                'name' => 'Transfer Bank',
-                'description' => 'Transfer ke rekening Eazywear.',
+                'value' => 'VA',
+                'name' => 'Virtual Account',
+                'description' => 'Bayar menggunakan Virtual Account dari bank yang tersedia.',
             ],
         ];
 
-        return view('checkout.index', compact(
-            'cart',
-            'subtotal',
-            'totalItems',
-            'shippingMethods',
-            'paymentMethods'
-        ));
+        return view('checkout.index', compact('cart', 'subtotal', 'totalItems', 'shippingMethods', 'paymentMethods'));
     }
 
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:150',
-            ],
-            'email' => [
-                'required',
-                'email',
-                'max:150',
-            ],
-            'phone' => [
-                'required',
-                'string',
-                'max:30',
-            ],
-            'shipping_address' => [
-                'required',
-                'string',
-                'max:1000',
-            ],
-            'shipping_district' => [
-                'required',
-                'string',
-                'max:100',
-            ],
-            'shipping_city' => [
-                'required',
-                'string',
-                'max:100',
-            ],
-            'shipping_province' => [
-                'required',
-                'string',
-                'max:100',
-            ],
-            'shipping_postal_code' => [
-                'required',
-                'string',
-                'max:10',
-            ],
-            'shipping_method' => [
-                'required',
-                'string',
-                Rule::in([
-                    'Kurir',
-                    'Ambil di Tempat',
-                ]),
-            ],
+            'name' => ['required', 'string', 'max:150'],
+            'email' => ['required', 'email', 'max:150'],
+            'phone' => ['required', 'string', 'max:30'],
+            'shipping_address' => ['required', 'string', 'max:1000'],
+            'shipping_district' => ['required', 'string', 'max:100'],
+            'shipping_city' => ['required', 'string', 'max:100'],
+            'shipping_province' => ['required', 'string', 'max:100'],
+            'shipping_postal_code' => ['required', 'string', 'max:10'],
+            'shipping_method' => ['required', 'string', Rule::in(['Kurir', 'Ambil di Tempat'])],
             'payment_method' => [
                 'required',
                 'string',
-                Rule::in([
-                    'QRIS',
-                    'TRANSFER',
-                ]),
+                Rule::in(['VA']),
             ],
         ]);
 
         $cart = collect($request->session()->get('cart', []));
 
         if ($cart->isEmpty()) {
-            return redirect()
-                ->route('cart.index')
-                ->with('error', 'Keranjang masih kosong.');
+            return redirect()->route('cart.index')->with('error', 'Keranjang masih kosong.');
         }
 
         try {
             $transaction = DB::transaction(function () use ($validated, $cart) {
-                /*
-                |--------------------------------------------------------------------------
-                | 1. Customer
-                |--------------------------------------------------------------------------
-                */
                 $customer = Customer::query()
                     ->where(function ($query) use ($validated) {
                         $query->where('phone', $validated['phone'])
@@ -146,7 +82,7 @@ class CheckoutController extends Controller
                     })
                     ->first();
 
-                if (!$customer) {
+                if (! $customer) {
                     $customer = Customer::create([
                         'name' => $validated['name'],
                         'phone' => $validated['phone'],
@@ -154,11 +90,6 @@ class CheckoutController extends Controller
                     ]);
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | 2. Lock & validate cart items
-                |--------------------------------------------------------------------------
-                */
                 $items = [];
                 $subtotal = 0;
 
@@ -169,59 +100,39 @@ class CheckoutController extends Controller
                     $customNumber = trim((string) ($cartItem['custom_number'] ?? ''));
 
                     if ($variantId <= 0 || $qty <= 0) {
-                        throw ValidationException::withMessages([
-                            'cart' => 'Data keranjang tidak valid.',
-                        ]);
+                        throw ValidationException::withMessages(['cart' => 'Data keranjang tidak valid.']);
                     }
 
                     if ($customName === '') {
-                        throw ValidationException::withMessages([
-                            'cart' => 'Nama jersey belum diisi untuk salah satu produk.',
-                        ]);
+                        throw ValidationException::withMessages(['cart' => 'Nama jersey belum diisi untuk salah satu produk.']);
                     }
 
                     if (mb_strlen($customName) > 20) {
-                        throw ValidationException::withMessages([
-                            'cart' => 'Nama jersey maksimal 20 karakter.',
-                        ]);
+                        throw ValidationException::withMessages(['cart' => 'Nama jersey maksimal 20 karakter.']);
                     }
 
-                    if (!preg_match('/^[\pL\s]+$/u', $customName)) {
-                        throw ValidationException::withMessages([
-                            'cart' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
-                        ]);
+                    if (! preg_match('/^[\pL\s]+$/u', $customName)) {
+                        throw ValidationException::withMessages(['cart' => 'Nama jersey hanya boleh berisi huruf dan spasi.']);
                     }
 
                     if ($customNumber === '') {
-                        throw ValidationException::withMessages([
-                            'cart' => 'Nomor punggung belum diisi untuk salah satu produk.',
-                        ]);
+                        throw ValidationException::withMessages(['cart' => 'Nomor punggung belum diisi untuk salah satu produk.']);
                     }
 
-                    if (!preg_match('/^[0-9]{1,2}$/', $customNumber)) {
-                        throw ValidationException::withMessages([
-                            'cart' => 'Nomor punggung hanya boleh berisi 1-2 angka.',
-                        ]);
+                    if (! preg_match('/^[0-9]{1,2}$/', $customNumber)) {
+                        throw ValidationException::withMessages(['cart' => 'Nomor punggung hanya boleh berisi 1-2 angka.']);
                     }
 
-                    $variant = ProductVariant::with([
-                        'product',
-                        'size',
-                        'color',
-                    ])
+                    $variant = ProductVariant::with(['product', 'size', 'color'])
                         ->lockForUpdate()
                         ->find($variantId);
 
-                    if (!$variant) {
-                        throw ValidationException::withMessages([
-                            'cart' => 'Salah satu produk sudah tidak tersedia.',
-                        ]);
+                    if (! $variant) {
+                        throw ValidationException::withMessages(['cart' => 'Salah satu produk sudah tidak tersedia.']);
                     }
 
-                    if (!$variant->product || !$variant->product->status) {
-                        throw ValidationException::withMessages([
-                            'cart' => "Produk {$variant->product?->name} sudah tidak aktif.",
-                        ]);
+                    if (! $variant->product || ! $variant->product->status) {
+                        throw ValidationException::withMessages(['cart' => "Produk {$variant->product?->name} sudah tidak aktif."]);
                     }
 
                     $inventory = Inventory::query()
@@ -229,25 +140,16 @@ class CheckoutController extends Controller
                         ->lockForUpdate()
                         ->first();
 
-                    if (!$inventory) {
-                        throw ValidationException::withMessages([
-                            'cart' => "Stok untuk {$variant->sku} tidak ditemukan.",
-                        ]);
+                    if (! $inventory) {
+                        throw ValidationException::withMessages(['cart' => "Stok untuk {$variant->sku} tidak ditemukan."]);
                     }
 
                     $stock = (int) $inventory->stock;
 
                     if ($stock < $qty) {
-                        throw ValidationException::withMessages([
-                            'cart' => "Stok {$variant->product->name} tidak mencukupi. Stok tersedia: {$stock}.",
-                        ]);
+                        throw ValidationException::withMessages(['cart' => "Stok {$variant->product->name} tidak mencukupi. Stok tersedia: {$stock}."]);
                     }
 
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Gunakan harga dari database, bukan harga dari session.
-                    |--------------------------------------------------------------------------
-                    */
                     $price = (float) $variant->price;
                     $itemSubtotal = $price * $qty;
 
@@ -264,31 +166,11 @@ class CheckoutController extends Controller
                     ];
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | 3. Shipping
-                |--------------------------------------------------------------------------
-                | Untuk Sprint 2B ongkir masih 0.
-                | Perhitungan ongkir akan kita kerjakan nanti.
-                |--------------------------------------------------------------------------
-                */
                 $discount = 0;
                 $shipping = 0;
-
                 $total = $subtotal - $discount + $shipping;
-
-                /*
-                |--------------------------------------------------------------------------
-                | 4. Generate Invoice
-                |--------------------------------------------------------------------------
-                */
                 $invoiceNumber = $this->generateInvoiceNumber();
 
-                /*
-                |--------------------------------------------------------------------------
-                | 5. Create Transaction
-                |--------------------------------------------------------------------------
-                */
                 $transaction = Transaction::create([
                     'customer_id' => $customer->id,
                     'invoice_number' => $invoiceNumber,
@@ -311,11 +193,6 @@ class CheckoutController extends Controller
                     'shipping_method' => $validated['shipping_method'],
                 ]);
 
-                /*
-                |--------------------------------------------------------------------------
-                | 6. Create Transaction Items + decrease stock
-                |--------------------------------------------------------------------------
-                */
                 foreach ($items as $item) {
                     TransactionItem::create([
                         'transaction_id' => $transaction->id,
@@ -327,48 +204,22 @@ class CheckoutController extends Controller
                         'subtotal' => $item['subtotal'],
                     ]);
 
-                    $item['inventory']->decrement(
-                        'stock',
-                        $item['qty']
-                    );
+                    $item['inventory']->decrement('stock', $item['qty']);
                 }
 
                 return $transaction;
             });
 
-            /*
-            |--------------------------------------------------------------------------
-            | 7. Save invoice in session so success page belongs to this checkout
-            |--------------------------------------------------------------------------
-            */
-            $request->session()->put(
-                'checkout_success_invoice',
-                $transaction->invoice_number
-            );
-
-            /*
-            |--------------------------------------------------------------------------
-            | 8. Clear cart after successful transaction
-            |--------------------------------------------------------------------------
-            */
+            $request->session()->put('checkout_success_invoice', $transaction->invoice_number);
             $request->session()->forget('cart');
 
-            return redirect()
-                ->route('checkout.success')
-                ->with('success', 'Pesanan berhasil dibuat.');
-
+            return redirect()->route('checkout.success')->with('success', 'Pesanan berhasil dibuat.');
         } catch (ValidationException $e) {
             throw $e;
-
         } catch (\Throwable $e) {
             report($e);
 
-            return back()
-                ->withInput()
-                ->with(
-                    'error',
-                    'Pesanan gagal dibuat. Silakan coba lagi.'
-                );
+            return back()->withInput()->with('error', 'Pesanan gagal dibuat. Silakan coba lagi.');
         }
     }
 
@@ -376,7 +227,7 @@ class CheckoutController extends Controller
     {
         $invoice = $request->session()->pull('checkout_success_invoice');
 
-        if (!$invoice) {
+        if (! $invoice) {
             return redirect()->route('home');
         }
 
@@ -389,10 +240,8 @@ class CheckoutController extends Controller
             ->where('invoice_number', $invoice)
             ->first();
 
-        if (!$transaction) {
-            return redirect()
-                ->route('home')
-                ->with('error', 'Pesanan tidak ditemukan.');
+        if (! $transaction) {
+            return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
         }
 
         return view('checkout.success', compact('transaction'));
@@ -401,13 +250,8 @@ class CheckoutController extends Controller
     private function generateInvoiceNumber(): string
     {
         do {
-            $invoice = 'INV-' .
-                now()->format('Ymd') .
-                '-' .
-                strtoupper(Str::random(6));
-        } while (
-            Transaction::where('invoice_number', $invoice)->exists()
-        );
+            $invoice = 'INV-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
+        } while (Transaction::where('invoice_number', $invoice)->exists());
 
         return $invoice;
     }

@@ -6,7 +6,9 @@
     if (empty($imageUrls)) {
         $imageUrls = [asset('images/products/placeholder.png')];
     }
-    $startingPrice = $product->starting_price ?? 0;
+    $startingPrice = $product->variants
+        ->filter(fn ($variant) => (float) $variant->price > 0)
+        ->min('price') ?? 0;
     $whatsappMessage = 'Halo Eazywear, saya ingin bertanya mengenai jersey dan informasi lebih lanjut.';
     $whatsappUrl = 'https://wa.me/6285754431105?text=' . urlencode($whatsappMessage);
 @endphp
@@ -249,7 +251,7 @@
                             ></p>
                         </div>
 
-                        {{-- <form
+                        <form
                             id="add-to-cart-form"
                             method="POST"
                             action="{{ route('cart.add') }}"
@@ -295,7 +297,7 @@
                                     Out of Stock
                                 </span>
                             </button>
-                        </form> --}}
+                        </form>
                         <a
                             href="{{ $whatsappUrl }}"
                             target="_blank"

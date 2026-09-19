@@ -512,10 +512,8 @@ class TransactionController extends Controller
                     '190089'
                 ),
                 'customerNo' => '0',
-                'virtualAccountNo' => trim(
-                    $transaction->va_number
-                ),
-                'paymentRequestId' => $transaction->invoice_number,
+                'virtualAccountNo' => (string) $transaction->va_number,
+                'paymentRequestId' => $transaction->doku_payment_id,
             ]);
 
             $response = $result['response'] ?? [];

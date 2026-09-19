@@ -374,6 +374,22 @@ class DokuService
             'additionalInfo' => new \stdClass(),
         ];
 
+        if (! empty($data['paymentRequestId'])) {
+            $body['paymentRequestId'] = (string) $data['paymentRequestId'];
+        }
+
+        \Log::info('DOKU CHECK STATUS REQUEST', [
+            'partnerServiceId' => $partnerServiceId,
+            'partnerServiceId_length' => strlen($partnerServiceId),
+            'customerNo' => $customerNo,
+            'virtualAccountNo' => $virtualAccountNo,
+            'virtualAccountNo_length' => strlen($virtualAccountNo),
+            'paymentRequestId' => $data['paymentRequestId'] ?? null,
+            'paymentRequestId_length' => ! empty($data['paymentRequestId'])
+                ? strlen((string) $data['paymentRequestId'])
+                : 0,
+        ]);
+
         $requestBody = json_encode(
             $body,
             JSON_UNESCAPED_SLASHES

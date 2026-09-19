@@ -212,7 +212,7 @@ class CheckoutController extends Controller
                 $amount = number_format((float) $total, 2, '.', '');
 
                 $dokuResponse = $dokuService->createVirtualAccount([
-                    'partnerServiceId' => config('doku.va.partner_service_id', '19008'),
+                    'partnerServiceId' => config('doku.va.merchant_bin', '190089'),
                     'customerNo' => '0',
                     'virtualAccountName' => $validated['name'],
                     'virtualAccountEmail' => $validated['email'],

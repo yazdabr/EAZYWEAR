@@ -153,14 +153,10 @@ class DokuService
         string $timestamp
     ): string {
         if (empty($this->secretKey)) {
-            throw new RuntimeException(
-                'DOKU Secret Key belum dikonfigurasi.'
-            );
+            throw new RuntimeException('DOKU Secret Key belum dikonfigurasi.');
         }
 
-        $bodyHash = strtolower(
-            hash('sha256', $requestBody)
-        );
+        $bodyHash = strtolower(hash('sha256', $requestBody));
 
         $stringToSign = strtoupper($httpMethod)
             . ':'
@@ -172,11 +168,14 @@ class DokuService
             . ':'
             . $timestamp;
 
-        return hash_hmac(
+        $signature = hash_hmac(
             'sha512',
             $stringToSign,
-            $this->secretKey
+            $this->secretKey,
+            true
         );
+
+        return base64_encode($signature);
     }
 
     public function createVirtualAccount(array $data): array

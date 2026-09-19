@@ -12,7 +12,6 @@ class DokuNotificationController extends Controller
     public function bcaPayment(Request $request): JsonResponse
     {
         $rawBody = $request->getContent();
-
         $timestamp = $request->header('X-TIMESTAMP', '');
         $signature = $request->header('X-SIGNATURE', '');
         $partnerId = $request->header('X-PARTNER-ID', '');
@@ -20,27 +19,28 @@ class DokuNotificationController extends Controller
         $channelId = $request->header('CHANNEL-ID', '');
         $authorization = $request->header('Authorization', '');
 
-        if (
-            !$timestamp ||
-            !$signature ||
-            !$partnerId ||
-            !$externalId ||
-            !$channelId ||
-            !$authorization
-        ) {
+        if (!$timestamp || !$signature || !$partnerId || !$externalId || !$channelId || !$authorization) {
             Log::warning('DOKU notification missing required headers.', [
-                'headers' => [
-                    'X-TIMESTAMP' => $timestamp,
-                    'X-PARTNER-ID' => $partnerId,
-                    'X-EXTERNAL-ID' => $externalId,
-                    'CHANNEL-ID' => $channelId,
-                ],
+                'external_id' => $externalId,
+                'partner_id' => $partnerId,
+                'channel_id' => $channelId,
             ]);
 
             return response()->json([
                 'responseCode' => '4002502',
                 'responseMessage' => 'Missing required headers.',
             ], 400);
+        }
+
+        if ($partnerId !== (string) config('doku.client_id')) {
+            Log::warning('DOKU notification partner ID mismatch.', [
+                'partner_id' => $partnerId,
+            ]);
+
+            return response()->json([
+                'responseCode' => '4012500',
+                'responseMessage' => 'Invalid partner ID.',
+            ], 401);
         }
 
         $accessToken = preg_replace(
@@ -50,7 +50,6 @@ class DokuNotificationController extends Controller
         );
 
         $endpoint = $request->getPathInfo();
-
         $bodyHash = strtolower(hash('sha256', $rawBody));
 
         $stringToSign = implode(':', [
@@ -94,11 +93,13 @@ class DokuNotificationController extends Controller
 
         $trxId = $payload['trxId'] ?? null;
         $paymentRequestId = $payload['paymentRequestId'] ?? null;
+        $virtualAccountNo = $payload['virtualAccountNo'] ?? null;
         $paidAmount = $payload['paidAmount']['value'] ?? null;
         $currency = $payload['paidAmount']['currency'] ?? null;
 
-        if (!$trxId || $paidAmount === null || $currency !== 'IDR') {
+        if (!$virtualAccountNo || $paidAmount === null || $currency !== 'IDR') {
             Log::warning('DOKU notification has invalid payment data.', [
+                'external_id' => $externalId,
                 'payload' => $payload,
             ]);
 
@@ -108,12 +109,25 @@ class DokuNotificationController extends Controller
             ], 400);
         }
 
+        $normalizedVa = preg_replace('/\s+/', '', (string) $virtualAccountNo);
+
         $transaction = Transaction::query()
-            ->where('invoice_number', $trxId)
-            ->first();
+            ->whereNotNull('va_number')
+            ->get()
+            ->first(function (Transaction $item) use ($normalizedVa, $trxId) {
+                $storedVa = preg_replace(
+                    '/\s+/',
+                    '',
+                    (string) $item->va_number
+                );
+
+                return $storedVa === $normalizedVa
+                    || ($trxId && $item->invoice_number === $trxId);
+            });
 
         if (!$transaction) {
             Log::warning('Transaction not found for DOKU notification.', [
+                'virtual_account_no' => $normalizedVa,
                 'trx_id' => $trxId,
                 'payment_request_id' => $paymentRequestId,
             ]);
@@ -140,7 +154,8 @@ class DokuNotificationController extends Controller
 
         if ($expectedAmount !== $receivedAmount) {
             Log::warning('DOKU notification amount mismatch.', [
-                'trx_id' => $trxId,
+                'transaction_id' => $transaction->id,
+                'invoice_number' => $transaction->invoice_number,
                 'expected_amount' => $expectedAmount,
                 'received_amount' => $receivedAmount,
             ]);
@@ -165,6 +180,7 @@ class DokuNotificationController extends Controller
             'invoice_number' => $transaction->invoice_number,
             'payment_request_id' => $paymentRequestId,
             'paid_amount' => $paidAmount,
+            'external_id' => $externalId,
         ]);
 
         return response()->json([

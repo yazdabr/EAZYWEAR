@@ -548,9 +548,10 @@ class TransactionController extends Controller
             }
 
             $result = $dokuService->checkVirtualAccountStatus([
-                'partnerServiceId' => $partnerServiceId,
+                'partnerServiceId' => config('doku.va.merchant_bin', '190089'),
                 'customerNo' => $customerNo,
-                'virtualAccountNo' => $virtualAccountNo,
+                'virtualAccountNo' => (string) $transaction->va_number,
+                'trxId' => (string) $transaction->invoice_number,
                 'paymentRequestId' => $transaction->doku_payment_id,
             ]);
 

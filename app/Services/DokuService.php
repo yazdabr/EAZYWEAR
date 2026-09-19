@@ -366,11 +366,9 @@ class DokuService
 
         $body = [
             'partnerServiceId' => $partnerServiceId,
-
             'customerNo' => $customerNo,
-
             'virtualAccountNo' => $virtualAccountNo,
-
+            'trxId' => (string) ($data['trxId'] ?? ''),
             'additionalInfo' => new \stdClass(),
         ];
 
@@ -384,10 +382,8 @@ class DokuService
             'customerNo' => $customerNo,
             'virtualAccountNo' => $virtualAccountNo,
             'virtualAccountNo_length' => strlen($virtualAccountNo),
+            'trxId' => $data['trxId'] ?? null,
             'paymentRequestId' => $data['paymentRequestId'] ?? null,
-            'paymentRequestId_length' => ! empty($data['paymentRequestId'])
-                ? strlen((string) $data['paymentRequestId'])
-                : 0,
         ]);
 
         $requestBody = json_encode(

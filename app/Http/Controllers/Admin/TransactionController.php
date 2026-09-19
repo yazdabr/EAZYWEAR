@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Services\DokuService;
+
+
 
 class TransactionController extends Controller
 {
@@ -477,5 +480,114 @@ class TransactionController extends Controller
             'success' => true,
             'message' => 'Transaction has been deleted successfully.',
         ]);
+    }
+
+    public function checkDokuPayment(
+        Request $request,
+        Transaction $transaction,
+        DokuService $dokuService
+    ) {
+        if ($transaction->status === 'PAID') {
+            return back()->with('info', 'Transaksi ini sudah berstatus PAID.');
+        }
+
+        if (
+            empty($transaction->va_number) ||
+            empty($transaction->invoice_number)
+        ) {
+            return back()->with(
+                'error',
+                'Data VA atau invoice transaksi tidak lengkap.'
+            );
+        }
+
+        try {
+            $result = $dokuService->checkVirtualAccountStatus([
+                'partnerServiceId' => config(
+                    'doku.va.merchant_bin',
+                    '190089'
+                ),
+                'customerNo' => '0',
+                'virtualAccountNo' => trim($transaction->va_number),
+                'paymentRequestId' => $transaction->invoice_number,
+            ]);
+
+            $response = $result['response'] ?? [];
+            $httpStatus = $result['http_status'] ?? null;
+
+            \Log::info('DOKU PAYMENT STATUS RESPONSE', [
+                'transaction_id' => $transaction->id,
+                'invoice' => $transaction->invoice_number,
+                'http_status' => $httpStatus,
+                'response' => $response,
+            ]);
+
+            if ($httpStatus < 200 || $httpStatus >= 300) {
+                return back()->with(
+                    'error',
+                    'DOKU mengembalikan HTTP status: ' . $httpStatus
+                );
+            }
+
+
+
+            $responseCode = $response['responseCode'] ?? null;
+
+            $paidAmount = data_get(
+                $response,
+                'virtualAccountData.paidAmount.value'
+            );
+
+            if ($responseCode !== '2002500' || empty($paidAmount)) {
+                return back()->with(
+                    'error',
+                    'Pembayaran belum berhasil atau nominal pembayaran tidak tersedia. '
+                    . 'Response code: ' . ($responseCode ?? 'tidak tersedia')
+                );
+            }
+
+            $transactionAmount = number_format(
+                (float) $transaction->total,
+                2,
+                '.',
+                ''
+            );
+
+            $dokuAmount = number_format(
+                (float) $paidAmount,
+                2,
+                '.',
+                ''
+            );
+
+            if ($transactionAmount !== $dokuAmount) {
+                return back()->with(
+                    'error',
+                    'Nominal pembayaran tidak sesuai dengan nominal transaksi.'
+                );
+            }
+
+            $transaction->update([
+                'status' => 'PAID',
+                'paid_at' => now(),
+                'doku_response' => $response,
+            ]);
+
+            return back()->with(
+                'success',
+                'Pembayaran berhasil diverifikasi dan transaksi diubah menjadi PAID.'
+            );
+        } catch (\Throwable $e) {
+            \Log::error('DOKU PAYMENT CHECK FAILED', [
+                'transaction_id' => $transaction->id,
+                'invoice' => $transaction->invoice_number,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with(
+                'error',
+                'Gagal mengecek pembayaran DOKU. Silakan periksa log.'
+            );
+        }
     }
 }

@@ -102,6 +102,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
         Route::get('/transactions/customer-search', [TransactionController::class, 'customerSearch'])->name('transactions.customer-search');
         Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
+        Route::post(
+            '/transactions/{transaction}/check-doku-payment',
+            [TransactionController::class, 'checkDokuPayment']
+        )->name('transactions.check-doku-payment');
         Route::patch('/transactions/{transaction}/status', [TransactionController::class, 'updateStatus'])->name('transactions.update-status');
         Route::patch('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])->name('transactions.cancel');
         Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');

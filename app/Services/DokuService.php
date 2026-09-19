@@ -308,4 +308,129 @@ class DokuService
 
         return $responseData;
     }
+
+    /**
+     * Mengecek status pembayaran Virtual Account melalui DOKU.
+     *
+     * @param array $data
+     * @return array
+     */
+    public function checkVirtualAccountStatus(array $data): array
+    {
+        $tokenResponse = $this->getAccessToken();
+
+        $accessToken = $tokenResponse['accessToken'] ?? null;
+
+        if (empty($accessToken)) {
+            throw new RuntimeException(
+                'Access token DOKU tidak ditemukan dalam response.'
+            );
+        }
+
+        $endpoint = '/orders/v1.0/transfer-va/status';
+
+        $timestamp = now('Asia/Jakarta')->format(
+            'Y-m-d\TH:i:sP'
+        );
+
+        $externalId = now('Asia/Jakarta')->format('YmdHis')
+            . random_int(1000, 9999);
+
+        /*
+        * Partner Service ID harus memiliki panjang 8 karakter
+        * dan menggunakan padding spasi di sebelah kiri.
+        */
+        $partnerServiceId = str_pad(
+            (string) (
+                $data['partnerServiceId']
+                ?? config('doku.va.merchant_bin', '190089')
+            ),
+            8,
+            ' ',
+            STR_PAD_LEFT
+        );
+
+        $customerNo = (string) (
+            $data['customerNo'] ?? '0'
+        );
+
+        $virtualAccountNo = (string) (
+            $data['virtualAccountNo'] ?? ''
+        );
+
+        if ($virtualAccountNo === '') {
+            throw new RuntimeException(
+                'Nomor Virtual Account wajib diisi.'
+            );
+        }
+
+        $body = [
+            'partnerServiceId' => $partnerServiceId,
+
+            'customerNo' => $customerNo,
+
+            'virtualAccountNo' => $virtualAccountNo,
+
+            'additionalInfo' => new \stdClass(),
+        ];
+
+        $requestBody = json_encode(
+            $body,
+            JSON_UNESCAPED_SLASHES
+        );
+
+        if ($requestBody === false) {
+            throw new RuntimeException(
+                'Gagal membuat JSON request Check Status DOKU.'
+            );
+        }
+
+        $signature = $this->generateSymmetricSignature(
+            'POST',
+            $endpoint,
+            $accessToken,
+            $requestBody,
+            $timestamp
+        );
+
+        $response = Http::timeout(30)
+            ->acceptJson()
+            ->withHeaders([
+                'Authorization' => 'Bearer ' . $accessToken,
+                'X-SIGNATURE' => $signature,
+                'X-TIMESTAMP' => $timestamp,
+                'X-PARTNER-ID' => $this->clientId,
+                'X-EXTERNAL-ID' => $externalId,
+                'CHANNEL-ID' => config(
+                    'doku.va.channel_id',
+                    'H2H'
+                ),
+                'Content-Type' => 'application/json',
+            ])
+            ->withBody(
+                $requestBody,
+                'application/json'
+            )
+            ->post(
+                $this->baseUrl . $endpoint
+            );
+
+        /*
+        * Jangan langsung menganggap semua respons HTTP
+        * sebagai status pembayaran.
+        */
+        $responseData = $response->json();
+
+        if (! is_array($responseData)) {
+            throw new RuntimeException(
+                'Respons Check Status DOKU tidak valid.'
+            );
+        }
+
+        return [
+            'http_status' => $response->status(),
+            'response' => $responseData,
+            '_external_id' => $externalId,
+        ];
+    }
 }

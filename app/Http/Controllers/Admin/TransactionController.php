@@ -594,10 +594,17 @@ class TransactionController extends Controller
             * Status DOKU dan nominal pembayaran
             * harus sesuai terlebih dahulu.
             */
-            if (
-                $responseCode !== '2002500' ||
-                empty($paidAmount)
-            ) {
+            $paymentFlagReason = data_get(
+                $response,
+                'virtualAccountData.paymentFlagReason.english'
+            );
+
+            $isPaymentSuccessful =
+                $responseCode === '2002600' &&
+                strtolower((string) $paymentFlagReason) === 'success' &&
+                ! empty($paidAmount);
+
+            if (! $isPaymentSuccessful) {
                 return response()->json([
                     'success' => false,
                     'status' => $transaction->status,

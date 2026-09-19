@@ -506,13 +506,51 @@ class TransactionController extends Controller
         }
 
         try {
+            $partnerServiceIdRaw = (string) config('doku.va.merchant_bin', '190089');
+
+            $partnerServiceId = str_pad(
+                $partnerServiceIdRaw,
+                8,
+                ' ',
+                STR_PAD_LEFT
+            );
+
+            $partnerServiceIdDigits = preg_replace(
+                '/\D/',
+                '',
+                $partnerServiceIdRaw
+            );
+
+            $virtualAccountNo = preg_replace(
+                '/\D/',
+                '',
+                (string) $transaction->va_number
+            );
+
+            if (
+                $virtualAccountNo === '' ||
+                ! str_starts_with($virtualAccountNo, $partnerServiceIdDigits)
+            ) {
+                throw new \RuntimeException(
+                    'Format nomor VA tidak sesuai dengan partnerServiceId.'
+                );
+            }
+
+            $customerNo = substr(
+                $virtualAccountNo,
+                strlen($partnerServiceIdDigits)
+            );
+
+            if ($customerNo === '') {
+                throw new \RuntimeException(
+                    'Customer number tidak dapat diambil dari nomor VA.'
+                );
+            }
+
             $result = $dokuService->checkVirtualAccountStatus([
-                'partnerServiceId' => config(
-                    'doku.va.merchant_bin',
-                    '190089'
-                ),
-                'customerNo' => '0',
-                'virtualAccountNo' => (string) $transaction->va_number,
+                'partnerServiceId' => $partnerServiceId,
+                'customerNo' => $customerNo,
+                'virtualAccountNo' => $virtualAccountNo,
                 'paymentRequestId' => $transaction->doku_payment_id,
             ]);
 

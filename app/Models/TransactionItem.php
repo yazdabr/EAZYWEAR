@@ -19,6 +19,7 @@ class TransactionItem extends Model
         'price',
         'subtotal',
         'stock_deducted_at',
+        'stock_restored_at',
     ];
 
     protected $casts = [
@@ -26,6 +27,7 @@ class TransactionItem extends Model
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'stock_deducted_at' => 'datetime',
+        'stock_restored_at' => 'datetime',
     ];
 
     public function transaction(): BelongsTo

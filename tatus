@@ -1,0 +1,340 @@
+warning: in the working copy of 'app/Models/TransactionItem.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'app/Services/InventoryStockService.php', CRLF will be replaced by LF the next time Git touches it
+warning: in the working copy of 'tests/Feature/InventoryStockServiceTest.php', CRLF will be replaced by LF the next time Git touches it
+[1mdiff --git a/app/Http/Controllers/Admin/TransactionController.php b/app/Http/Controllers/Admin/TransactionController.php[m
+[1mindex 6d74227..af5ff31 100644[m
+[1m--- a/app/Http/Controllers/Admin/TransactionController.php[m
+[1m+++ b/app/Http/Controllers/Admin/TransactionController.php[m
+[36m@@ -432,10 +432,36 @@[m [mpublic function print($invoice)[m
+     public function updateStatus(Request $request, Transaction $transaction)[m
+     {[m
+         $validated = $request->validate([[m
+[31m-            'status' => ['required', 'string', Rule::in(['PENDING', 'PAID', 'COMPLETED', 'CANCELLED'])],[m
+[32m+[m[32m            'status' => ['required', 'string', Rule::in(['PENDING', 'COMPLETED', 'CANCELLED'])],[m
+         ]);[m
+ [m
+[31m-        $transaction->update(['status' => $validated['status']]);[m
+[32m+[m[32m        $newStatus = $validated['status'];[m
+[32m+[m[32m        $currentStatus = $transaction->status;[m
+[32m+[m
+[32m+[m[32m        if ($newStatus === 'COMPLETED' && $currentStatus !== 'PAID') {[m
+[32m+[m[32m            return response()->json([[m
+[32m+[m[32m                'success' => false,[m
+[32m+[m[32m                'message' => 'Transaksi hanya dapat diselesaikan setelah berstatus PAID.',[m
+[32m+[m[32m            ], 422);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        if ($newStatus === 'CANCELLED' && $currentStatus !== 'PENDING') {[m
+[32m+[m[32m            return response()->json([[m
+[32m+[m[32m                'success' => false,[m
+[32m+[m[32m                'message' => 'Hanya transaksi PENDING yang dapat dibatalkan.',[m
+[32m+[m[32m            ], 422);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        if ($currentStatus === 'CANCELLED') {[m
+[32m+[m[32m            return response()->json([[m
+[32m+[m[32m                'success' => false,[m
+[32m+[m[32m                'message' => 'Transaksi yang sudah dibatalkan tidak dapat diubah.',[m
+[32m+[m[32m            ], 422);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $transaction->update([[m
+[32m+[m[32m            'status' => $newStatus,[m
+[32m+[m[32m        ]);[m
+ [m
+         return response()->json([[m
+             'success' => true,[m
+[36m@@ -447,25 +473,63 @@[m [mpublic function updateStatus(Request $request, Transaction $transaction)[m
+         ]);[m
+     }[m
+ [m
+[31m-    public function cancel(Transaction $transaction)[m
+[31m-    {[m
+[31m-        if ($transaction->status !== 'PENDING') {[m
+[32m+[m[32m    public function cancel([m
+[32m+[m[32m        Transaction $transaction,[m
+[32m+[m[32m        InventoryStockService $inventoryStockService[m
+[32m+[m[32m    ) {[m
+[32m+[m[32m        if ($transaction->status === 'CANCELLED') {[m
+             return response()->json([[m
+                 'success' => false,[m
+[31m-                'message' => 'Only pending transactions can be cancelled.',[m
+[32m+[m[32m                'message' => 'Transaksi sudah dibatalkan sebelumnya.',[m
+             ], 422);[m
+         }[m
+ [m
+[31m-        $transaction->update(['status' => 'CANCELLED']);[m
+[32m+[m[32m        if ($transaction->status === 'COMPLETED') {[m
+[32m+[m[32m            return response()->json([[m
+[32m+[m[32m                'success' => false,[m
+[32m+[m[32m                'message' => 'Transaksi yang sudah selesai tidak dapat dibatalkan.',[m
+[32m+[m[32m            ], 422);[m
+[32m+[m[32m        }[m
+ [m
+[31m-        return response()->json([[m
+[31m-            'success' => true,[m
+[31m-            'message' => 'Transaction has been cancelled successfully.',[m
+[31m-            'data' => [[m
+[31m-                'id' => $transaction->id,[m
+[31m-                'status' => $transaction->status,[m
+[31m-            ],[m
+[31m-        ]);[m
+[32m+[m[32m        try {[m
+[32m+[m[32m            if ($transaction->status === 'PENDING') {[m
+[32m+[m[32m                $transaction->update([[m
+[32m+[m[32m                    'status' => 'CANCELLED',[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            } elseif ($transaction->status === 'PAID') {[m
+[32m+[m[32m                $inventoryStockService->restoreForTransaction([m
+[32m+[m[32m                    $transaction,[m
+[32m+[m[32m                    "Stock restored due to cancellation - {$transaction->invoice_number}"[m
+[32m+[m[32m                );[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return response()->json([[m
+[32m+[m[32m                    'success' => false,[m
+[32m+[m[32m                    'message' => 'Status transaksi tidak dapat dibatalkan.',[m
+[32m+[m[32m                ], 422);[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            return response()->json([[m
+[32m+[m[32m                'success' => true,[m
+[32m+[m[32m                'message' => 'Transaction has been cancelled successfully.',[m
+[32m+[m[32m                'data' => [[m
+[32m+[m[32m                    'id' => $transaction->id,[m
+[32m+[m[32m                    'status' => 'CANCELLED',[m
+[32m+[m[32m                ],[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m        } catch (ValidationException $e) {[m
+[32m+[m[32m            return response()->json([[m
+[32m+[m[32m                'success' => false,[m
+[32m+[m[32m                'message' => $e->getMessage(),[m
+[32m+[m[32m                'errors' => $e->errors(),[m
+[32m+[m[32m            ], 422);[m
+[32m+[m[32m        } catch (\Throwable $e) {[m
+[32m+[m[32m            report($e);[m
+[32m+[m
+[32m+[m[32m            return response()->json([[m
+[32m+[m[32m                'success' => false,[m
+[32m+[m[32m                'message' => 'Gagal membatalkan transaksi.',[m
+[32m+[m[32m            ], 500);[m
+[32m+[m[32m        }[m
+     }[m
+ [m
+     public function destroy(Transaction $transaction)[m
+[1mdiff --git a/app/Http/Controllers/DokuNotificationController.php b/app/Http/Controllers/DokuNotificationController.php[m
+[1mindex 2c3be15..53abf58 100644[m
+[1m--- a/app/Http/Controllers/DokuNotificationController.php[m
+[1m+++ b/app/Http/Controllers/DokuNotificationController.php[m
+[36m@@ -105,7 +105,8 @@[m [mpublic function bcaPayment([m
+         if (!$virtualAccountNo || $paidAmount === null || $currency !== 'IDR') {[m
+             Log::warning('DOKU notification has invalid payment data.', [[m
+                 'external_id' => $externalId,[m
+[31m-                'payload' => $payload,[m
+[32m+[m[32m                'payment_request_id' => $paymentRequestId,[m
+[32m+[m[32m                'virtual_account_no' => $virtualAccountNo,[m
+             ]);[m
+ [m
+             return response()->json([[m
+[1mdiff --git a/app/Models/TransactionItem.php b/app/Models/TransactionItem.php[m
+[1mindex b17ab4c..4f00414 100644[m
+[1m--- a/app/Models/TransactionItem.php[m
+[1m+++ b/app/Models/TransactionItem.php[m
+[36m@@ -19,6 +19,7 @@[m [mclass TransactionItem extends Model[m
+         'price',[m
+         'subtotal',[m
+         'stock_deducted_at',[m
+[32m+[m[32m        'stock_restored_at',[m
+     ];[m
+ [m
+     protected $casts = [[m
+[36m@@ -26,6 +27,7 @@[m [mclass TransactionItem extends Model[m
+         'price' => 'decimal:2',[m
+         'subtotal' => 'decimal:2',[m
+         'stock_deducted_at' => 'datetime',[m
+[32m+[m[32m        'stock_restored_at' => 'datetime',[m
+     ];[m
+ [m
+     public function transaction(): BelongsTo[m
+[1mdiff --git a/app/Services/InventoryStockService.php b/app/Services/InventoryStockService.php[m
+[1mindex cb7bf44..4dceb2f 100644[m
+[1m--- a/app/Services/InventoryStockService.php[m
+[1m+++ b/app/Services/InventoryStockService.php[m
+[36m@@ -243,6 +243,10 @@[m [mpublic function decreaseForTransaction([m
+             $inventoryUpdates = collect();[m
+ [m
+             foreach ($items as $item) {[m
+[32m+[m[32m                if ($item->stock_deducted_at !== null) {[m
+[32m+[m[32m                    continue;[m
+[32m+[m[32m                }[m
+[32m+[m
+                 $inventory = Inventory::query()[m
+                     ->where('product_variant_id', $item->product_variant_id)[m
+                     ->lockForUpdate()[m
+[36m@@ -263,8 +267,7 @@[m [mpublic function decreaseForTransaction([m
+                 if ($stockBefore < $quantity) {[m
+                     throw ValidationException::withMessages([[m
+                         'stock' => sprintf([m
+[31m-                            'Stok tidak mencukupi untuk varian %d. ' .[m
+[31m-                            'Tersedia: %d, diminta: %d.',[m
+[32m+[m[32m                            'Stok tidak mencukupi untuk varian %d. Tersedia: %d, diminta: %d.',[m
+                             $item->product_variant_id,[m
+                             $stockBefore,[m
+                             $quantity[m
+[36m@@ -309,4 +312,100 @@[m [mpublic function decreaseForTransaction([m
+             return $inventoryUpdates;[m
+         });[m
+     }[m
+[32m+[m
+[32m+[m[32m    public function restoreForTransaction([m
+[32m+[m[32m        Transaction $transaction,[m
+[32m+[m[32m        ?string $description = null[m
+[32m+[m[32m    ): Collection {[m
+[32m+[m[32m        return DB::transaction(function () use ($transaction, $description) {[m
+[32m+[m[32m            $lockedTransaction = Transaction::query()[m
+[32m+[m[32m                ->with('items')[m
+[32m+[m[32m                ->whereKey($transaction->id)[m
+[32m+[m[32m                ->lockForUpdate()[m
+[32m+[m[32m                ->firstOrFail();[m
+[32m+[m
+[32m+[m[32m            $items = $lockedTransaction->items;[m
+[32m+[m
+[32m+[m[32m            $allItemsRestored = $items->isNotEmpty()[m
+[32m+[m[32m                && $items->every([m
+[32m+[m[32m                    fn ($item) => $item->stock_restored_at !== null[m
+[32m+[m[32m                );[m
+[32m+[m
+[32m+[m[32m            if ([m
+[32m+[m[32m                $lockedTransaction->status === 'CANCELLED'[m
+[32m+[m[32m                && $allItemsRestored[m
+[32m+[m[32m            ) {[m
+[32m+[m[32m                return collect();[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            if ($lockedTransaction->status !== 'PAID') {[m
+[32m+[m[32m                throw ValidationException::withMessages([[m
+[32m+[m[32m                    'transaction' => 'Hanya transaksi PAID yang dapat direstock.',[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            $items = $lockedTransaction->items;[m
+[32m+[m
+[32m+[m[32m            $inventoryUpdates = collect();[m
+[32m+[m
+[32m+[m[32m            foreach ($items as $item) {[m
+[32m+[m[32m                if ($item->stock_deducted_at === null || $item->stock_restored_at !== null) {[m
+[32m+[m[32m                    continue;[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m                $inventory = Inventory::query()[m
+[32m+[m[32m                    ->where('product_variant_id', $item->product_variant_id)[m
+[32m+[m[32m                    ->lockForUpdate()[m
+[32m+[m[32m                    ->first();[m
+[32m+[m
+[32m+[m[32m                if (!$inventory) {[m
+[32m+[m[32m                    throw ValidationException::withMessages([[m
+[32m+[m[32m                        'stock' => sprintf([m
+[32m+[m[32m                            'Inventory untuk varian %d tidak ditemukan.',[m
+[32m+[m[32m                            $item->product_variant_id[m
+[32m+[m[32m                        ),[m
+[32m+[m[32m                    ]);[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m                $quantity = (int) $item->qty;[m
+[32m+[m
+[32m+[m[32m                if ($quantity <= 0) {[m
+[32m+[m[32m                    throw ValidationException::withMessages([[m
+[32m+[m[32m                        'stock' => "Jumlah item {$item->id} tidak valid.",[m
+[32m+[m[32m                    ]);[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m                $stockBefore = (int) $inventory->stock;[m
+[32m+[m[32m                $stockAfter = $stockBefore + $quantity;[m
+[32m+[m
+[32m+[m[32m                $inventory->update([[m
+[32m+[m[32m                    'stock' => $stockAfter,[m
+[32m+[m[32m                ]);[m
+[32m+[m
+[32m+[m[32m                StockMovement::create([[m
+[32m+[m[32m                    'inventory_id' => $inventory->id,[m
+[32m+[m[32m                    'transaction_id' => $lockedTransaction->id,[m
+[32m+[m[32m                    'transaction_item_id' => $item->id,[m
+[32m+[m[32m                    'type' => 'IN',[m
+[32m+[m[32m                    'qty' => $quantity,[m
+[32m+[m[32m                    'stock_before' => $stockBefore,[m
+[32m+[m[32m                    'stock_after' => $stockAfter,[m
+[32m+[m[32m                    'description' => $description[m
+[32m+[m[32m                        ?? "Stock restored for transaction #{$lockedTransaction->id}",[m
+[32m+[m[32m                ]);[m
+[32m+[m
+[32m+[m[32m                $item->update([[m
+[32m+[m[32m                    'stock_restored_at' => now(),[m
+[32m+[m[32m                ]);[m
+[32m+[m
+[32m+[m[32m                $inventoryUpdates->push($inventory->fresh());[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            $lockedTransaction->update([[m
+[32m+[m[32m                'status' => 'CANCELLED',[m
+[32m+[m[32m            ]);[m
+[32m+[m
+[32m+[m[32m            return $inventoryUpdates;[m
+[32m+[m[32m        });[m
+[32m+[m[32m    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/tests/Feature/InventoryStockServiceTest.php b/tests/Feature/InventoryStockServiceTest.php[m
+[1mindex c04d7f4..f9f4395 100644[m
+[1m--- a/tests/Feature/InventoryStockServiceTest.php[m
+[1m+++ b/tests/Feature/InventoryStockServiceTest.php[m
+[36m@@ -113,4 +113,173 @@[m [mpublic function test_stock_is_not_deducted_twice_for_same_transaction(): void[m
+             $movementCountAfterSecondCall[m
+         );[m
+     }[m
+[32m+[m[32m    public function test_stock_is_restored_for_paid_transaction(): void[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $transaction = Transaction::with('items')->findOrFail(54);[m
+[32m+[m[32m        $inventory = Inventory::where([m
+[32m+[m[32m            'product_variant_id',[m
+[32m+[m[32m            $transaction->items->first()->product_variant_id[m
+[32m+[m[32m        )->firstOrFail();[m
+[32m+[m
+[32m+[m[32m        $stockBefore = (int) $inventory->stock;[m
+[32m+[m[32m        $quantity = (int) $transaction->items->sum('qty');[m
+[32m+[m
+[32m+[m[32m        $service = app(InventoryStockService::class);[m
+[32m+[m
+[32m+[m[32m        $service->decreaseForTransaction([m
+[32m+[m[32m            $transaction,[m
+[32m+[m[32m            'Restore test - deduction'[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        $inventory->refresh();[m
+[32m+[m
+[32m+[m[32m        $this->assertSame([m
+[32m+[m[32m            $stockBefore - $quantity,[m
+[32m+[m[32m            (int) $inventory->stock[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        $transaction->refresh();[m
+[32m+[m
+[32m+[m[32m        $service->restoreForTransaction([m
+[32m+[m[32m            $transaction,[m
+[32m+[m[32m            'Restore test - restoration'[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        $inventory->refresh();[m
+[32m+[m[32m        $transaction->refresh();[m
+[32m+[m[32m        $transaction->load('items');[m
+[32m+[m
+[32m+[m[32m        $this->assertSame([m
+[32m+[m[32m            $stockBefore,[m
+[32m+[m[32m            (int) $inventory->stock[m
+[32m+[m[32m        );[m
+[32m+[m
+[32m+[m[32m        $this->assertSame('CANCELLED', $transaction->status);[m
+[32m+[m
+[32m+[m[32m        foreach ($transaction->items as $item) {[m
+[32m+[m[32m            $this->assertNotNull($item->stock_deducted_at);[m
+[32m+[m[32m            $this->assertNotNull($item->stock_restored_at);[m
+[32m+[m
+[32m+[m[32m            $movementE

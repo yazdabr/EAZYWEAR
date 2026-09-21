@@ -243,6 +243,10 @@ class InventoryStockService
             $inventoryUpdates = collect();
 
             foreach ($items as $item) {
+                if ($item->stock_deducted_at !== null) {
+                    continue;
+                }
+
                 $inventory = Inventory::query()
                     ->where('product_variant_id', $item->product_variant_id)
                     ->lockForUpdate()
@@ -263,8 +267,7 @@ class InventoryStockService
                 if ($stockBefore < $quantity) {
                     throw ValidationException::withMessages([
                         'stock' => sprintf(
-                            'Stok tidak mencukupi untuk varian %d. ' .
-                            'Tersedia: %d, diminta: %d.',
+                            'Stok tidak mencukupi untuk varian %d. Tersedia: %d, diminta: %d.',
                             $item->product_variant_id,
                             $stockBefore,
                             $quantity
@@ -304,6 +307,102 @@ class InventoryStockService
             $lockedTransaction->update([
                 'status' => 'PAID',
                 'paid_at' => $lockedTransaction->paid_at ?? now(),
+            ]);
+
+            return $inventoryUpdates;
+        });
+    }
+
+    public function restoreForTransaction(
+        Transaction $transaction,
+        ?string $description = null
+    ): Collection {
+        return DB::transaction(function () use ($transaction, $description) {
+            $lockedTransaction = Transaction::query()
+                ->with('items')
+                ->whereKey($transaction->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $items = $lockedTransaction->items;
+
+            $allItemsRestored = $items->isNotEmpty()
+                && $items->every(
+                    fn ($item) => $item->stock_restored_at !== null
+                );
+
+            if (
+                $lockedTransaction->status === 'CANCELLED'
+                && $allItemsRestored
+            ) {
+                return collect();
+            }
+
+            if ($lockedTransaction->status !== 'PAID') {
+                throw ValidationException::withMessages([
+                    'transaction' => 'Hanya transaksi PAID yang dapat direstock.',
+                ]);
+            }
+
+            $items = $lockedTransaction->items;
+
+            $inventoryUpdates = collect();
+
+            foreach ($items as $item) {
+                if ($item->stock_deducted_at === null || $item->stock_restored_at !== null) {
+                    continue;
+                }
+
+                $inventory = Inventory::query()
+                    ->where('product_variant_id', $item->product_variant_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$inventory) {
+                    throw ValidationException::withMessages([
+                        'stock' => sprintf(
+                            'Inventory untuk varian %d tidak ditemukan.',
+                            $item->product_variant_id
+                        ),
+                    ]);
+                }
+
+                $quantity = (int) $item->qty;
+
+                if ($quantity <= 0) {
+                    throw ValidationException::withMessages([
+                        'stock' => "Jumlah item {$item->id} tidak valid.",
+                    ]);
+                }
+
+                $stockBefore = (int) $inventory->stock;
+                $stockAfter = $stockBefore + $quantity;
+
+                $inventory->update([
+                    'stock' => $stockAfter,
+                ]);
+
+                StockMovement::create([
+                    'inventory_id' => $inventory->id,
+                    'transaction_id' => $lockedTransaction->id,
+                    'transaction_item_id' => $item->id,
+                    'type' => 'IN',
+                    'qty' => $quantity,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $stockAfter,
+                    'description' => $description
+                        ?? "Stock restored for transaction #{$lockedTransaction->id}",
+                ]);
+
+                $item->update([
+                    'stock_restored_at' => now(),
+                ]);
+
+                $inventoryUpdates->push($inventory->fresh());
+            }
+
+            $lockedTransaction->update([
+                'status' => 'CANCELLED',
             ]);
 
             return $inventoryUpdates;

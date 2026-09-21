@@ -105,7 +105,8 @@ class DokuNotificationController extends Controller
         if (!$virtualAccountNo || $paidAmount === null || $currency !== 'IDR') {
             Log::warning('DOKU notification has invalid payment data.', [
                 'external_id' => $externalId,
-                'payload' => $payload,
+                'payment_request_id' => $paymentRequestId,
+                'virtual_account_no' => $virtualAccountNo,
             ]);
 
             return response()->json([

@@ -6,10 +6,15 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use App\Services\InventoryStockService;
+use Illuminate\Validation\ValidationException;
 
 class DokuNotificationController extends Controller
 {
-    public function bcaPayment(Request $request): JsonResponse
+    public function bcaPayment(
+        Request $request,
+        InventoryStockService $inventoryStockService
+    ): JsonResponse
     {
         $rawBody = $request->getContent();
         $timestamp = $request->header('X-TIMESTAMP', '');
@@ -166,13 +171,38 @@ class DokuNotificationController extends Controller
             ], 400);
         }
 
-        if ($transaction->status !== 'PAID') {
+        try {
+            $inventoryStockService->decreaseForTransaction(
+                $transaction,
+                "DOKU BCA payment notification - {$transaction->invoice_number}"
+            );
+
             $transaction->update([
-                'status' => 'PAID',
-                'paid_at' => now(),
                 'doku_payment_id' => $paymentRequestId,
                 'doku_response' => $payload,
             ]);
+        } catch (ValidationException $e) {
+            Log::warning('DOKU payment verified but stock deduction failed.', [
+                'transaction_id' => $transaction->id,
+                'invoice_number' => $transaction->invoice_number,
+                'errors' => $e->errors(),
+            ]);
+
+            return response()->json([
+                'responseCode' => '4092500',
+                'responseMessage' => 'Payment verified but stock processing failed.',
+            ], 409);
+        } catch (\Throwable $e) {
+            Log::error('DOKU payment stock processing failed.', [
+                'transaction_id' => $transaction->id,
+                'invoice_number' => $transaction->invoice_number,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'responseCode' => '5002500',
+                'responseMessage' => 'Payment processing failed.',
+            ], 500);
         }
 
         Log::info('DOKU BCA payment notification processed.', [

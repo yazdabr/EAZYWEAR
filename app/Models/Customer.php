@@ -16,12 +16,6 @@ class Customer extends Model
         'email',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
-
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);

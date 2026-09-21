@@ -18,19 +18,15 @@ class TransactionItem extends Model
         'qty',
         'price',
         'subtotal',
+        'stock_deducted_at',
     ];
 
     protected $casts = [
         'qty' => 'integer',
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'stock_deducted_at' => 'datetime',
     ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
 
     public function transaction(): BelongsTo
     {

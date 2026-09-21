@@ -205,8 +205,6 @@ class CheckoutController extends Controller
                         'price' => $item['price'],
                         'subtotal' => $item['subtotal'],
                     ]);
-
-                    $item['inventory']->decrement('stock', $item['qty']);
                 }
 
                 $amount = number_format((float) $total, 2, '.', '');
@@ -239,7 +237,6 @@ class CheckoutController extends Controller
                     'virtualAccountNumber',
                 ]);
 
-                // Normalisasi nomor VA: hapus spasi dan karakter whitespace
                 $vaNumber = preg_replace('/\s+/', '', (string) $vaNumber);
 
                 if (! $vaNumber || ! preg_match('/^\d+$/', $vaNumber)) {

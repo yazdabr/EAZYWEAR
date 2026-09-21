@@ -8,15 +8,14 @@ use App\Models\Inventory;
 use App\Models\ProductVariant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Services\DokuService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use App\Services\DokuService;
-
-
+use App\Services\InventoryStockService;
 
 class TransactionController extends Controller
 {
@@ -384,8 +383,6 @@ class TransactionController extends Controller
                         'price' => $item['price'],
                         'subtotal' => $item['subtotal'],
                     ]);
-
-                    $item['inventory']->decrement('stock', $item['qty']);
                 }
 
                 return $transaction;
@@ -484,8 +481,10 @@ class TransactionController extends Controller
 
     public function checkDokuPayment(
         Transaction $transaction,
-        DokuService $dokuService
-    ) {
+        DokuService $dokuService,
+        InventoryStockService $inventoryStockService
+    )
+    {
         if ($transaction->status === 'PAID') {
             return response()->json([
                 'success' => true,
@@ -494,10 +493,7 @@ class TransactionController extends Controller
             ]);
         }
 
-        if (
-            empty($transaction->va_number) ||
-            empty($transaction->invoice_number)
-        ) {
+        if (empty($transaction->va_number) || empty($transaction->invoice_number)) {
             return response()->json([
                 'success' => false,
                 'status' => $transaction->status,
@@ -507,44 +503,18 @@ class TransactionController extends Controller
 
         try {
             $partnerServiceIdRaw = (string) config('doku.va.merchant_bin', '190089');
+            $partnerServiceId = str_pad($partnerServiceIdRaw, 8, ' ', STR_PAD_LEFT);
+            $partnerServiceIdDigits = preg_replace('/\D/', '', $partnerServiceIdRaw);
+            $virtualAccountNo = preg_replace('/\D/', '', (string) $transaction->va_number);
 
-            $partnerServiceId = str_pad(
-                $partnerServiceIdRaw,
-                8,
-                ' ',
-                STR_PAD_LEFT
-            );
-
-            $partnerServiceIdDigits = preg_replace(
-                '/\D/',
-                '',
-                $partnerServiceIdRaw
-            );
-
-            $virtualAccountNo = preg_replace(
-                '/\D/',
-                '',
-                (string) $transaction->va_number
-            );
-
-            if (
-                $virtualAccountNo === '' ||
-                ! str_starts_with($virtualAccountNo, $partnerServiceIdDigits)
-            ) {
-                throw new \RuntimeException(
-                    'Format nomor VA tidak sesuai dengan partnerServiceId.'
-                );
+            if ($virtualAccountNo === '' || ! str_starts_with($virtualAccountNo, $partnerServiceIdDigits)) {
+                throw new \RuntimeException('Format nomor VA tidak sesuai dengan partnerServiceId.');
             }
 
-            $customerNo = substr(
-                $virtualAccountNo,
-                strlen($partnerServiceIdDigits)
-            );
+            $customerNo = substr($virtualAccountNo, strlen($partnerServiceIdDigits));
 
             if ($customerNo === '') {
-                throw new \RuntimeException(
-                    'Customer number tidak dapat diambil dari nomor VA.'
-                );
+                throw new \RuntimeException('Customer number tidak dapat diambil dari nomor VA.');
             }
 
             $result = $dokuService->checkVirtualAccountStatus([
@@ -565,101 +535,69 @@ class TransactionController extends Controller
                 'response' => $response,
             ]);
 
-            if (
-                $httpStatus === null ||
-                $httpStatus < 200 ||
-                $httpStatus >= 300
-            ) {
+            if ($httpStatus === null || $httpStatus < 200 || $httpStatus >= 300) {
                 return response()->json([
                     'success' => false,
                     'status' => $transaction->status,
-                    'message' =>
-                        'DOKU mengembalikan HTTP status: ' .
-                        ($httpStatus ?? 'tidak tersedia'),
+                    'message' => 'DOKU mengembalikan HTTP status: ' . ($httpStatus ?? 'tidak tersedia'),
                 ], 422);
             }
 
-            $responseCode =
-                $response['responseCode'] ?? null;
-
-            $paidAmount = data_get(
-                $response,
-                'virtualAccountData.paidAmount.value'
-            );
-
-            /*
-            * Pembayaran belum dianggap berhasil
-            * hanya karena HTTP response 2xx.
-            *
-            * Status DOKU dan nominal pembayaran
-            * harus sesuai terlebih dahulu.
-            */
-            $paymentFlagReason = data_get(
-                $response,
-                'virtualAccountData.paymentFlagReason.english'
-            );
-
-            $isPaymentSuccessful =
-                $responseCode === '2002600' &&
-                strtolower((string) $paymentFlagReason) === 'success' &&
-                ! empty($paidAmount);
+            $responseCode = $response['responseCode'] ?? null;
+            $paidAmount = data_get($response, 'virtualAccountData.paidAmount.value');
+            $paymentFlagReason = data_get($response, 'virtualAccountData.paymentFlagReason.english');
+            $isPaymentSuccessful = $responseCode === '2002600'
+                && strtolower((string) $paymentFlagReason) === 'success'
+                && ! empty($paidAmount);
 
             if (! $isPaymentSuccessful) {
                 return response()->json([
                     'success' => false,
                     'status' => $transaction->status,
-                    'message' =>
-                        'Pembayaran belum berhasil atau nominal pembayaran belum tersedia. ' .
-                        'Response code: ' .
-                        ($responseCode ?? 'tidak tersedia'),
+                    'message' => 'Pembayaran belum berhasil atau nominal pembayaran belum tersedia. Response code: ' . ($responseCode ?? 'tidak tersedia'),
                 ]);
             }
 
-            $transactionAmount = number_format(
-                (float) $transaction->total,
-                2,
-                '.',
-                ''
-            );
-
-            $dokuAmount = number_format(
-                (float) $paidAmount,
-                2,
-                '.',
-                ''
-            );
+            $transactionAmount = number_format((float) $transaction->total, 2, '.', '');
+            $dokuAmount = number_format((float) $paidAmount, 2, '.', '');
 
             if ($transactionAmount !== $dokuAmount) {
-                \Log::warning(
-                    'DOKU PAYMENT AMOUNT MISMATCH',
-                    [
-                        'transaction_id' => $transaction->id,
-                        'invoice' =>
-                            $transaction->invoice_number,
-                        'transaction_amount' =>
-                            $transactionAmount,
-                        'doku_amount' =>
-                            $dokuAmount,
-                    ]
-                );
+                \Log::warning('DOKU PAYMENT AMOUNT MISMATCH', [
+                    'transaction_id' => $transaction->id,
+                    'invoice' => $transaction->invoice_number,
+                    'transaction_amount' => $transactionAmount,
+                    'doku_amount' => $dokuAmount,
+                ]);
 
                 return response()->json([
                     'success' => false,
                     'status' => $transaction->status,
-                    'message' =>
-                        'Nominal pembayaran DOKU tidak sesuai dengan nominal transaksi.',
+                    'message' => 'Nominal pembayaran DOKU tidak sesuai dengan nominal transaksi.',
                 ], 422);
             }
 
-            /*
-            * Hanya pada titik ini transaksi boleh
-            * diubah menjadi PAID.
-            */
-            $transaction->update([
-                'status' => 'PAID',
-                'paid_at' => now(),
-                'doku_response' => $response,
-            ]);
+            try {
+                $inventoryStockService->decreaseForTransaction(
+                    $transaction,
+                    "Manual DOKU payment check - {$transaction->invoice_number}"
+                );
+
+                $transaction->update([
+                    'doku_response' => $response,
+                ]);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                \Log::warning('Manual DOKU payment verified but stock deduction failed.', [
+                    'transaction_id' => $transaction->id,
+                    'invoice' => $transaction->invoice_number,
+                    'errors' => $e->errors(),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'status' => $transaction->status,
+                    'message' => 'Pembayaran terverifikasi, tetapi stok gagal diproses.',
+                ], 409);
+            }
 
             \Log::info('DOKU PAYMENT VERIFIED', [
                 'transaction_id' => $transaction->id,
@@ -670,10 +608,8 @@ class TransactionController extends Controller
             return response()->json([
                 'success' => true,
                 'status' => 'PAID',
-                'message' =>
-                    'Pembayaran berhasil diverifikasi dan transaksi diubah menjadi PAID.',
+                'message' => 'Pembayaran berhasil diverifikasi dan transaksi diubah menjadi PAID.',
             ]);
-
         } catch (\Throwable $e) {
             \Log::error('DOKU PAYMENT CHECK FAILED', [
                 'transaction_id' => $transaction->id,
@@ -684,8 +620,7 @@ class TransactionController extends Controller
             return response()->json([
                 'success' => false,
                 'status' => $transaction->status,
-                'message' =>
-                    'Gagal mengecek pembayaran DOKU. Silakan periksa log.',
+                'message' => 'Gagal mengecek pembayaran DOKU. Silakan periksa log.',
             ], 500);
         }
     }

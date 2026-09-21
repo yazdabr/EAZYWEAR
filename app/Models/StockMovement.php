@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Transaction;
+use App\Models\TransactionItem;
 
 class StockMovement extends Model
 {
@@ -12,6 +14,8 @@ class StockMovement extends Model
 
     protected $fillable = [
         'inventory_id',
+        'transaction_id',
+        'transaction_item_id',
         'type',
         'qty',
         'stock_before',
@@ -25,14 +29,19 @@ class StockMovement extends Model
         'stock_after' => 'integer',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
-
     public function inventory(): BelongsTo
     {
         return $this->belongsTo(Inventory::class);
     }
+
+    public function transaction()
+    {
+        return $this->belongsTo(Transaction::class);
+    }
+
+    public function transactionItem()
+    {
+        return $this->belongsTo(TransactionItem::class);
+    }
+    
 }

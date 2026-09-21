@@ -361,18 +361,41 @@ class ProductController extends Controller
             }
 
             $sizes = Size::query()->whereIn('id', $sizeIds)->orderBy('id')->get();
-            $existingVariants = $product->variants()->with('inventory')->get()->keyBy('size_id');
+            $existingVariants = $product->variants()
+                ->with('inventory')
+                ->get()
+                ->groupBy('size_id');
 
             foreach ($sizes as $size) {
-                $sizeId = (string) $size->id;
-                $variantData = $variantsData[$sizeId] ?? $variantsData[$size->id] ?? null;
+                $sizeId = (int) $size->id;
+
+                $variantData = $variantsData[(string) $sizeId]
+                    ?? $variantsData[$sizeId]
+                    ?? null;
 
                 if (!$variantData) {
-                    throw new \Exception("Data harga dan stok untuk ukuran {$size->name} belum lengkap.");
+                    throw new \Exception(
+                        "Data harga dan stok untuk ukuran {$size->name} belum lengkap."
+                    );
                 }
 
-                $sku = $product->product_code . '-' . strtoupper(Str::slug($size->name));
-                $variant = $existingVariants->get($size->id);
+                $variantsForSize = $existingVariants->get($sizeId, collect());
+
+                if ($variantsForSize->count() > 1) {
+                    $variantIds = $variantsForSize
+                        ->pluck('id')
+                        ->implode(', ');
+
+                    throw new \Exception(
+                        "Terdapat variant duplikat untuk ukuran {$size->name}. " .
+                        "ID variant: {$variantIds}. Silakan bersihkan data terlebih dahulu."
+                    );
+                }
+
+                $sku = $product->product_code . '-' .
+                    strtoupper(Str::slug($size->name));
+
+                $variant = $variantsForSize->first();
 
                 if ($variant) {
                     $variant->update([
@@ -382,9 +405,13 @@ class ProductController extends Controller
                     ]);
 
                     if ($variant->inventory) {
-                        $variant->inventory->update(['stock' => $variantData['stock']]);
+                        $variant->inventory->update([
+                            'stock' => $variantData['stock'],
+                        ]);
                     } else {
-                        $variant->inventory()->create(['stock' => $variantData['stock']]);
+                        $variant->inventory()->create([
+                            'stock' => $variantData['stock'],
+                        ]);
                     }
                 } else {
                     $variant = ProductVariant::create([

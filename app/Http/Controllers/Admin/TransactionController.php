@@ -8,14 +8,15 @@ use App\Models\Inventory;
 use App\Models\ProductVariant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Models\StockMovement;
 use App\Services\DokuService;
+use App\Services\InventoryStockService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use App\Services\InventoryStockService;
 
 class TransactionController extends Controller
 {
@@ -534,13 +535,76 @@ class TransactionController extends Controller
 
     public function destroy(Transaction $transaction)
     {
-        $transaction->items()->delete();
-        $transaction->delete();
+        if (in_array($transaction->status, ['PAID', 'COMPLETED'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi yang sudah dibayar atau selesai tidak dapat dihapus.',
+            ], 422);
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Transaction has been deleted successfully.',
-        ]);
+        $hasStockMovements = StockMovement::query()
+            ->where('transaction_id', $transaction->id)
+            ->exists();
+
+        if ($hasStockMovements) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Transaksi yang memiliki riwayat stok tidak dapat dihapus.',
+            ], 422);
+        }
+
+        if (! in_array($transaction->status, ['PENDING', 'CANCELLED'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Status transaksi tidak dapat dihapus.',
+            ], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($transaction) {
+                $lockedTransaction = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $hasStockMovements = StockMovement::query()
+                    ->where('transaction_id', $lockedTransaction->id)
+                    ->exists();
+
+                if ($hasStockMovements) {
+                    throw ValidationException::withMessages([
+                        'transaction' => 'Transaksi memiliki riwayat stok dan tidak dapat dihapus.',
+                    ]);
+                }
+
+                if (! in_array($lockedTransaction->status, ['PENDING', 'CANCELLED'], true)) {
+                    throw ValidationException::withMessages([
+                        'transaction' => 'Status transaksi tidak dapat dihapus.',
+                    ]);
+                }
+
+                $lockedTransaction->items()->delete();
+                $lockedTransaction->delete();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction has been deleted successfully.',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus transaksi.',
+            ], 500);
+        }
     }
 
     public function checkDokuPayment(

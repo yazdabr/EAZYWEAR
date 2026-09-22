@@ -235,6 +235,7 @@
                             Lihat
                         </button>
 
+                        @if (in_array($transaction['status'] ?? '', ['PENDING', 'PAID', 'CANCELLED'], true))
                         <button
                             type="button"
                             @click="window.dispatchEvent(new CustomEvent('open-delete-transaction',{
@@ -251,6 +252,7 @@
                         >
                             <x-heroicon-o-trash class="h-3.5 w-3.5"/>
                         </button>
+                        @endif
                     </div>
                 </div>
             @empty

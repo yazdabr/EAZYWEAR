@@ -46,13 +46,13 @@
             {{-- TEXT CONTENT --}}
             <div class="mt-4 sm:mt-6 text-center">
                 <h2 class="text-lg sm:text-2xl font-bold text-slate-900">
-                    <span x-text="isPending() ? 'Batalkan Transaksi?' : 'Hapus Transaksi?'"></span>
+                    <span x-text="isCancellable() ? 'Batalkan Transaksi?' : 'Hapus Transaksi?'"></span>
                 </h2>
 
                 <p class="mt-2 text-xs sm:text-base text-slate-600 leading-relaxed">
                     Faktur
                     <span class="font-bold text-slate-900 break-words" x-text="transaction.invoice ? `'` + transaction.invoice + `'` : '-'"></span>
-                    <span x-text="isPending() ? 'akan dibatalkan.' : 'akan dihapus secara permanen.'"></span>
+                    <span x-text="isCancellable() ? 'akan dibatalkan.' : 'akan dihapus secara permanen.'"></span>
                 </p>
 
                 <!-- Detail Info Box -->
@@ -72,7 +72,7 @@
                 </div>
 
                 <p class="mt-3 text-[11px] sm:text-sm font-medium text-red-500">
-                    <span x-text="isPending() ? 'Transaksi ini akan diubah menjadi status DIBATALKAN.' : 'Tindakan ini permanen dan tidak dapat dibatalkan.'"></span>
+                    <span x-text="isCancellable() ? 'Transaksi ini akan diubah menjadi status DIBATALKAN.' : 'Tindakan ini permanen dan tidak dapat dibatalkan.'"></span>
                 </p>
             </div>
 
@@ -104,7 +104,7 @@
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
 
-                    <span x-text="loading ? 'Memproses...' : (isPending() ? 'Batalkan' : 'Ya, Hapus')"></span>
+                    <span x-text="loading ? 'Memproses...' : (isCancellable() ? 'Batalkan' : 'Ya, Hapus')"></span>
                 </button>
             </div>
         </div>
@@ -148,8 +148,8 @@ document.addEventListener('alpine:init', () => {
             this.toggleBodyScroll();
         },
 
-        isPending() {
-            return this.transaction.status === 'PENDING';
+        isCancellable() {
+            return ['PENDING', 'PAID'].includes(this.transaction.status);
         },
 
         statusClass() {
@@ -165,13 +165,13 @@ document.addEventListener('alpine:init', () => {
 
             this.loading = true;
             const id = this.transaction.id;
-            const pending = this.isPending();
+            const cancellable = this.isCancellable();
 
-            const url = pending
+            const url = cancellable
                 ? '{{ url('/admin/transactions') }}/' + id + '/cancel'
                 : '{{ url('/admin/transactions') }}/' + id;
 
-            const method = pending ? 'PATCH' : 'DELETE';
+            const method = cancellable ? 'PATCH' : 'DELETE';
 
             try {
                 const response = await fetch(url, {

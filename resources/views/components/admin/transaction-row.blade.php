@@ -153,25 +153,27 @@
                 <span>Lihat</span>
             </button>
 
-            <button
-                type="button"
-                @click="
-                    open=false;
-                    window.dispatchEvent(new CustomEvent('open-delete-transaction',{
-                        detail:{
-                            id:@js($transaction['id'] ?? null),
-                            invoice:@js($transaction['invoice'] ?? ''),
-                            customer:@js($transaction['customer'] ?? ''),
-                            total:@js($total),
-                            status:@js($transaction['status'] ?? '')
-                        }
-                    }));
-                "
-                class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
-            >
-                <x-heroicon-o-trash class="h-4 w-4 shrink-0"/>
-                <span>Hapus</span>
-            </button>
+            @if (in_array($transaction['status'] ?? '', ['PENDING', 'PAID', 'CANCELLED'], true))
+                <button
+                    type="button"
+                    @click="
+                        open=false;
+                        window.dispatchEvent(new CustomEvent('open-delete-transaction',{
+                            detail:{
+                                id:@js($transaction['id'] ?? null),
+                                invoice:@js($transaction['invoice'] ?? ''),
+                                customer:@js($transaction['customer'] ?? ''),
+                                total:@js($total),
+                                status:@js($transaction['status'] ?? '')
+                            }
+                        }));
+                    "
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                >
+                    <x-heroicon-o-trash class="h-4 w-4 shrink-0"/>
+                    <span>Hapus</span>
+                </button>
+            @endif
         </div>
     </template>
 </td>

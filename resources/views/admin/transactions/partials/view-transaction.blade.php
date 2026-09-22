@@ -231,12 +231,17 @@
 
         {{-- **FOOTER** --}}
         <div class="shrink-0 border-t border-slate-200 bg-white p-4 sm:p-5">
-            <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
+            <div
+                class="grid gap-2.5 sm:gap-3"
+                :class="isDokuPayment() && !['PAID', 'CANCELLED'].includes(transaction.status)
+                    ? 'grid-cols-3'
+                    : 'grid-cols-2'"
+            >
 
                 {{-- Cek Pembayaran DOKU --}}
                 <button
                     type="button"
-                    x-show="isDokuPayment() && transaction.status !== 'PAID'"
+                    x-show="isDokuPayment() && !['PAID', 'CANCELLED'].includes(transaction.status)"
                     @click="checkDokuPayment()"
                     :disabled="loading || dokuLoading || !transaction.id"
                     class="flex h-11 w-full items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700 transition-all duration-200 hover:bg-violet-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
@@ -277,47 +282,6 @@
                         <span class="truncate">Mengecek...</span>
                     </span>
                 </button>
-
-                {{-- Perbarui Status --}}
-                {{-- <button
-                    type="button"
-                    @click="updateStatus()"
-                    :disabled="loading || dokuLoading || !transaction.id"
-                    class="flex h-11 w-full items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-md shadow-emerald-600/20 transition-all duration-200 hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-                    :class="{'sm:col-span-2': !isDokuPayment() || transaction.status === 'PAID'}"
-                >
-                    <span x-show="!loading" class="truncate">
-                        Perbarui Status
-                    </span>
-
-                    <span
-                        x-show="loading"
-                        x-cloak
-                        class="inline-flex items-center justify-center gap-1.5"
-                    >
-                        <svg
-                            class="h-4 w-4 animate-spin shrink-0"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                        >
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="9"
-                                stroke="currentColor"
-                                stroke-width="3"
-                                class="opacity-30"
-                            ></circle>
-                            <path
-                                d="M21 12a9 9 0 0 0-9-9"
-                                stroke="currentColor"
-                                stroke-width="3"
-                                stroke-linecap="round"
-                            ></path>
-                        </svg>
-                        <span class="truncate">Menyimpan...</span>
-                    </span>
-                </button> --}}
 
                 {{-- Cetak Invoice --}}
                 <a
@@ -414,7 +378,7 @@ function transactionView(){
                 return;
             }
 
-            if (this.transaction.status === 'PAID') {
+            if (['PAID', 'CANCELLED'].includes(this.transaction.status)) {
                 return;
             }
 

@@ -174,13 +174,21 @@
                         </div>
 
                         <div>
-                            <label class="mb-1.5 block text-xs font-medium text-slate-700">Status Transaksi</label>
+                            <label class="mb-1.5 block text-xs font-medium text-slate-700">
+                                Status Transaksi
+                            </label>
 
-                            <select x-model="transaction.status" :disabled="loading" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10 disabled:cursor-not-allowed disabled:bg-slate-100">
-                                <option value="PENDING">Pending</option>
-                                <option value="PAID">Paid</option>
-                                <option value="CANCELLED">Cancelled</option>
-                            </select>
+                            <div
+                                class="flex min-h-[38px] items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold"
+                                :class="{
+                                    'text-amber-700': transaction.status === 'PENDING',
+                                    'text-emerald-700': transaction.status === 'PAID',
+                                    'text-red-700': transaction.status === 'CANCELLED',
+                                    'text-slate-700': transaction.status === 'COMPLETED'
+                                }"
+                            >
+                                <span x-text="transaction.status || '-'"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -271,7 +279,7 @@
                 </button>
 
                 {{-- Perbarui Status --}}
-                <button
+                {{-- <button
                     type="button"
                     @click="updateStatus()"
                     :disabled="loading || dokuLoading || !transaction.id"
@@ -309,7 +317,7 @@
                         </svg>
                         <span class="truncate">Menyimpan...</span>
                     </span>
-                </button>
+                </button> --}}
 
                 {{-- Cetak Invoice --}}
                 <a
@@ -527,130 +535,6 @@ function transactionView(){
                 this.dokuLoading = false;
             }
         },
-
-        async updateStatus(){
-            if(this.loading){
-                return;
-            }
-
-            if(!this.transaction.id){
-                console.error('Transaction ID kosong:',this.transaction);
-
-                window.dispatchEvent(new CustomEvent('toast',{
-                    detail:{
-                        type:'error',
-                        title:'Gagal Memperbarui',
-                        message:'ID transaksi tidak ditemukan.'
-                    }
-                }));
-
-                return;
-            }
-
-            this.loading=true;
-
-            const transactionId=this.transaction.id;
-            const status=String(this.transaction.status || '').toUpperCase();
-            const url='/admin/transactions/'+transactionId+'/status';
-
-            console.log('=== UPDATE TRANSACTION STATUS ===');
-            console.log('Transaction ID:',transactionId);
-            console.log('Status:',status);
-            console.log('URL:',url);
-
-            try{
-                const response=await fetch(url,{
-                    method:'PATCH',
-                    headers:{
-                        'Content-Type':'application/json',
-                        'Accept':'application/json',
-                        'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                        'X-Requested-With':'XMLHttpRequest'
-                    },
-                    body:JSON.stringify({
-                        status:status
-                    })
-                });
-
-                console.log('Response Status:',response.status);
-                console.log('Response URL:',response.url);
-
-                const contentType=response.headers.get('content-type') || '';
-                const responseText=await response.text();
-
-                console.log('Response:',responseText);
-
-                let data={};
-
-                if(contentType.includes('application/json')){
-                    try{
-                        data=JSON.parse(responseText);
-                    }catch(error){
-                        throw new Error('Response JSON tidak valid.');
-                    }
-                }else{
-                    if(!response.ok){
-                        throw new Error('Server mengembalikan halaman error. Status HTTP: '+response.status);
-                    }
-
-                    throw new Error('Server mengembalikan response yang tidak sesuai.');
-                }
-
-                if(!response.ok){
-                    if(response.status===419){
-                        throw new Error('Sesi telah berakhir. Silakan refresh halaman.');
-                    }
-
-                    if(response.status===422){
-                        if(data.errors){
-                            const firstError=Object.values(data.errors)[0];
-
-                            throw new Error(
-                                Array.isArray(firstError)
-                                    ? firstError[0]
-                                    : firstError
-                            );
-                        }
-
-                        throw new Error(data.message || 'Status transaksi tidak valid.');
-                    }
-
-                    throw new Error(data.message || 'Gagal memperbarui status transaksi.');
-                }
-
-                if(data.success===false){
-                    throw new Error(data.message || 'Gagal memperbarui status transaksi.');
-                }
-
-                this.transaction.status=status;
-
-                window.dispatchEvent(new CustomEvent('toast',{
-                    detail:{
-                        type:'success',
-                        title:'Status Updated',
-                        message:data.message || 'Transaction status updated successfully.'
-                    }
-                }));
-
-                setTimeout(()=>{
-                    window.location.reload();
-                },700);
-
-            }catch(error){
-                console.error('Transaction Status Error:',error);
-
-                window.dispatchEvent(new CustomEvent('toast',{
-                    detail:{
-                        type:'error',
-                        title:'Update Failed',
-                        message:error.message || 'Failed to update transaction status.'
-                    }
-                }));
-
-            }finally{
-                this.loading=false;
-            }
-        }
     };
 }
 </script>

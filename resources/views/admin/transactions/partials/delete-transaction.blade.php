@@ -193,9 +193,9 @@ document.addEventListener('alpine:init', () => {
 
                 window.dispatchEvent(new CustomEvent('toast', {
                     detail: {
-                        type: pending ? 'warning' : 'success',
-                        title: pending ? 'Transaksi Dibatalkan' : 'Transaksi Dihapus',
-                        message: data.message || (pending ? 'Transaksi berhasil dibatalkan.' : 'Transaksi berhasil dihapus.')
+                        type: cancellable ? 'warning' : 'success',
+                        title: cancellable ? 'Transaksi Dibatalkan' : 'Transaksi Dihapus',
+                        message: data.message || (cancellable ? 'Transaksi berhasil dibatalkan.' : 'Transaksi berhasil dihapus.')
                     }
                 }));
 

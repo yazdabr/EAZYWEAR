@@ -248,9 +248,9 @@
                                 }
                             }))"
                             class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-2 text-xs font-medium text-red-600 transition hover:bg-red-100 active:scale-95"
-                            aria-label="Hapus Transaksi"
+                            aria-label="{{ ($transaction['status'] ?? '') === 'CANCELLED' ? 'Hapus Transaksi' : 'Batalkan Transaksi' }}"
                         >
-                            <x-heroicon-o-trash class="h-3.5 w-3.5"/>
+                            <x-heroicon-o-x-circle class="h-3.5 w-3.5"/>
                         </button>
                         @endif
                     </div>

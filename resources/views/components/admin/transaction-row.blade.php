@@ -170,8 +170,8 @@
                     "
                     class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
                 >
-                    <x-heroicon-o-trash class="h-4 w-4 shrink-0"/>
-                    <span>Batalkan Transaksi?</span>
+                    <x-heroicon-o-x-circle class="h-4 w-4 shrink-0"/>
+                    <span>{{ ($transaction['status'] ?? '') === 'CANCELLED' ? 'Hapus' : 'Batalkan' }}</span>
                 </button>
             @endif
         </div>

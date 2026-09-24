@@ -152,6 +152,10 @@ document.addEventListener('alpine:init', () => {
             return ['PENDING', 'PAID'].includes(this.transaction.status);
         },
 
+        isDeletable() {
+            return this.transaction.status === 'CANCELLED';
+        },
+
         statusClass() {
             if (this.transaction.status === 'PENDING') return 'bg-amber-100 text-amber-700';
             if (this.transaction.status === 'PAID') return 'bg-emerald-100 text-emerald-700';
@@ -166,6 +170,21 @@ document.addEventListener('alpine:init', () => {
             this.loading = true;
             const id = this.transaction.id;
             const cancellable = this.isCancellable();
+            const deletable = this.isDeletable();
+
+            if (!cancellable && !deletable) {
+                this.loading = false;
+
+                window.dispatchEvent(new CustomEvent('toast', {
+                    detail: {
+                        type: 'error',
+                        title: 'Aksi Tidak Tersedia',
+                        message: 'Transaksi dengan status ini tidak dapat dibatalkan atau dihapus.'
+                    }
+                }));
+
+                return;
+            }
 
             const url = cancellable
                 ? '{{ url('/admin/transactions') }}/' + id + '/cancel'

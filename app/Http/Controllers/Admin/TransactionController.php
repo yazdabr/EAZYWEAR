@@ -598,6 +598,14 @@ class TransactionController extends Controller
             ]);
         }
 
+        if ($transaction->status !== 'PENDING') {
+            return response()->json([
+                'success' => false,
+                'status' => $transaction->status,
+                'message' => 'Pembayaran DOKU hanya dapat dicek untuk transaksi PENDING.',
+            ], 422);
+        }
+
         if (empty($transaction->va_number) || empty($transaction->invoice_number)) {
             return response()->json([
                 'success' => false,

@@ -8,6 +8,7 @@ use App\Models\StockMovement;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
+use App\Services\DokuService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -120,6 +121,33 @@ class TransactionControllerTest extends TestCase
             'id' => $transaction->id,
             'status' => 'COMPLETED',
         ]);
+    }
+
+    public function test_paid_transaction_returns_paid_without_checking_doku_again(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = Transaction::factory()->create([
+            'status' => 'PAID',
+            'va_number' => '190089123456789012',
+            'invoice_number' => 'INV-TEST-PAID',
+        ]);
+
+        $this->mock(DokuService::class, function ($mock) {
+            $mock->shouldNotReceive('checkVirtualAccountStatus');
+        });
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(route('admin.transactions.check-doku-payment', $transaction));
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'status' => 'PAID',
+                'message' => 'Transaksi ini sudah berstatus PAID.',
+            ]);
     }
 
     public function test_cancelled_transaction_without_stock_movement_can_be_deleted(): void
@@ -304,5 +332,82 @@ class TransactionControllerTest extends TestCase
             'id' => $transaction->id,
             'status' => 'EXPIRED',
         ]);
+    }
+    public function test_cancelled_transaction_cannot_be_checked_against_doku(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = Transaction::factory()->create([
+            'status' => 'CANCELLED',
+            'va_number' => '190089123456789012',
+            'invoice_number' => 'INV-TEST-CANCELLED',
+        ]);
+
+        $this->mock(DokuService::class, function ($mock) {
+            $mock->shouldNotReceive('checkVirtualAccountStatus');
+        });
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(route('admin.transactions.check-doku-payment', $transaction));
+
+        $response
+            ->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'status' => 'CANCELLED',
+            ]);
+    }
+
+    public function test_expired_transaction_cannot_be_checked_against_doku(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = Transaction::factory()->create([
+            'status' => 'EXPIRED',
+            'va_number' => '190089123456789012',
+            'invoice_number' => 'INV-TEST-EXPIRED',
+        ]);
+
+        $this->mock(DokuService::class, function ($mock) {
+            $mock->shouldNotReceive('checkVirtualAccountStatus');
+        });
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(route('admin.transactions.check-doku-payment', $transaction));
+
+        $response
+            ->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'status' => 'EXPIRED',
+            ]);
+    }
+
+    public function test_completed_transaction_cannot_be_checked_against_doku(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = Transaction::factory()->create([
+            'status' => 'COMPLETED',
+            'va_number' => '190089123456789012',
+            'invoice_number' => 'INV-TEST-COMPLETED',
+        ]);
+
+        $this->mock(DokuService::class, function ($mock) {
+            $mock->shouldNotReceive('checkVirtualAccountStatus');
+        });
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(route('admin.transactions.check-doku-payment', $transaction));
+
+        $response
+            ->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'status' => 'COMPLETED',
+            ]);
     }
 }

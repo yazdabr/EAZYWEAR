@@ -583,7 +583,7 @@
                     <div class="grid grid-cols-2 gap-2 text-[11px]">
                         <div class="bg-slate-50/80 p-2 rounded-lg border border-slate-100">
                             <span class="text-slate-400 block text-[10px]">Tanggal</span>
-                            <span class="font-medium text-slate-700 block truncate">{{ $transaction->transaction_date?->format('d M Y, H:i') ?? '-' }}</span>
+                            <span class="font-medium text-slate-700 block truncate">{{ $transaction->transaction_date?->copy()->setTimezone('Asia/Makassar')->format('d M Y, H:i') ?? '-' }}</span>
                         </div>
                         <div class="bg-slate-50/80 p-2 rounded-lg border border-slate-100">
                             <span class="text-slate-400 block text-[10px]">Pelanggan</span>
@@ -649,7 +649,7 @@
 
                             <td class="whitespace-nowrap px-6 py-5">
                                 <span class="text-sm text-slate-500">
-                                    {{ $transaction->transaction_date?->format('d M Y, H:i') ?? '-' }}
+                                    {{ $transaction->transaction_date?->copy()->setTimezone('Asia/Makassar')->format('d M Y, H:i') ?? '-' }}
                                 </span>
                             </td>
 

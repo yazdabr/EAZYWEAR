@@ -72,7 +72,9 @@ class TransactionController extends Controller
             return [
                 'id' => $transaction->id,
                 'invoice' => $transaction->invoice_number,
-                'date' => $transaction->transaction_date ? $transaction->transaction_date->format('d M Y H:i') : '-',
+                'date' => $transaction->transaction_date
+                    ? $transaction->transaction_date->copy()->setTimezone('Asia/Makassar')->format('d M Y H:i')
+                    : '-',
                 'customer' => $transaction->shipping_name ?? $transaction->customer?->name ?? '-',
                 'customer_phone' => $transaction->shipping_phone ?? $transaction->customer?->phone ?? '-',
                 'customer_email' => $transaction->shipping_email ?? $transaction->customer?->email ?? '-',
@@ -352,10 +354,16 @@ class TransactionController extends Controller
                 $total = $subtotal - $discount + $shipping;
                 $invoiceNumber = $this->generateInvoiceNumber();
 
+                $transactionDate = Carbon::createFromFormat(
+                    'Y-m-d\TH:i',
+                    $validated['transaction_date'],
+                    'Asia/Makassar'
+                )->utc();
+
                 $transaction = Transaction::create([
                     'customer_id' => $customer->id,
                     'invoice_number' => $invoiceNumber,
-                    'transaction_date' => $validated['transaction_date'],
+                    'transaction_date' => $transactionDate,
                     'payment_method' => $validated['payment_method'],
                     'subtotal' => $subtotal,
                     'discount' => $discount,

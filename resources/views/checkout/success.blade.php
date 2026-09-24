@@ -148,7 +148,7 @@
                                 <div class="flex items-center justify-between gap-4 text-sm">
                                     <span class="text-gray-500">Batas Pembayaran</span>
                                     <span class="text-right font-bold text-slate-900">
-                                        {{ $transaction->va_expired_at->format('d M Y, H:i') }}
+                                        {{ $transaction->va_expired_at->copy()->setTimezone('Asia/Makassar')->format('d M Y, H:i') }}
                                     </span>
                                 </div>
                             @endif

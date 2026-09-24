@@ -378,7 +378,7 @@ class SalesReportController extends Controller
             return [
                 'invoice' => $transaction->invoice_number,
                 'date' => $transaction->transaction_date
-                    ? $transaction->transaction_date->format('d M Y, H:i')
+                    ? $transaction->transaction_date->copy()->setTimezone('Asia/Makassar')->format('d M Y, H:i')
                     : '-',
                 'customer' => $transaction->customer?->name ?? '-',
                 'payment' => $transaction->payment_method ?? '-',

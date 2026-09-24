@@ -142,7 +142,7 @@
                     <div>
                         <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Tanggal Invoice</p>
                         <p class="text-xs font-bold text-slate-900">
-                            {{ $transaction->transaction_date?->format('d M Y') ?? '-' }}
+                            {{ $transaction->transaction_date?->copy()->setTimezone('Asia/Makassar')->format('d M Y') ?? '-' }}
                         </p>
                     </div>
                     <div>

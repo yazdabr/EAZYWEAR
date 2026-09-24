@@ -609,7 +609,7 @@ function transactionCreate() {
         postal_code: '',
         method: ''
     },
-    transactionDate: '{{ now()->format('Y-m-d\TH:i') }}',
+    transactionDate: '{{ now('Asia/Makassar')->format('Y-m-d\TH:i') }}',
     paymentMethod: 'CASH',
     source: 'Website',
     discount: 0,
@@ -690,7 +690,7 @@ function transactionCreate() {
       this.productSearch = ''; this.productResults = []; this.productSearching = false; this.showProductResults = false;
       this.selectedProducts = []; this.selectedVariantId = ''; this.selectedVariant = null; this.qty = 1; this.cart = [];
       this.customer = { name: '', phone: '', email: '' };
-      this.transactionDate = '{{ now()->format('Y-m-d\TH:i') }}';
+      this.transactionDate = '{{ now('Asia/Makassar')->format('Y-m-d\TH:i') }}';
       this.paymentMethod = 'CASH';
       this.source = 'Website';
       this.shipping = {

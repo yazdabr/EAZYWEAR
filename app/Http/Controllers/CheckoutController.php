@@ -208,6 +208,7 @@ class CheckoutController extends Controller
                 }
 
                 $amount = number_format((float) $total, 2, '.', '');
+                $vaExpiredAt = now('UTC')->addMinutes(10);
 
                 $dokuResponse = $dokuService->createVirtualAccount([
                     'partnerServiceId' => config('doku.va.merchant_bin', '190089'),
@@ -218,8 +219,9 @@ class CheckoutController extends Controller
                     'trxId' => $transaction->invoice_number,
                     'amount' => $amount,
                     'channel' => 'VIRTUAL_ACCOUNT_BCA',
-                    'expiredDate' => now('Asia/Jakarta')
-                        ->addHours(24)
+                    'expiredDate' => $vaExpiredAt
+                        ->copy()
+                        ->setTimezone('Asia/Makassar')
                         ->format('Y-m-d\TH:i:sP'),
                 ]);
 
@@ -244,12 +246,6 @@ class CheckoutController extends Controller
                         'Create VA berhasil dipanggil, tetapi nomor VA tidak valid pada respons DOKU.'
                     );
                 }
-
-                $vaExpiredAt = $this->extractDokuValue($dokuResponse, [
-                    'expiredDate',
-                    'virtualAccountExpiredDate',
-                    'expirationDate',
-                ]);
 
                 $paymentRequestId = $this->extractDokuValue($dokuResponse, [
                     'paymentRequestId',

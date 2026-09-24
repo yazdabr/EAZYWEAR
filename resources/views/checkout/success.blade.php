@@ -151,6 +151,32 @@
                                         {{ $transaction->va_expired_at->copy()->setTimezone('Asia/Makassar')->format('d M Y, H:i') }}
                                     </span>
                                 </div>
+
+                                <div
+                                    id="payment-countdown"
+                                    data-expires-at="{{ $transaction->va_expired_at->copy()->utc()->toIso8601String() }}"
+                                    class="rounded-xl border border-red-200 bg-red-50 px-4 py-3"
+                                >
+                                    <div class="flex items-center justify-between gap-4">
+                                        <span class="text-sm font-semibold text-red-700">
+                                            Waktu pembayaran tersisa
+                                        </span>
+
+                                        <span
+                                            id="payment-countdown-timer"
+                                            class="text-lg font-extrabold tabular-nums text-red-700 sm:text-xl"
+                                        >
+                                            00:00
+                                        </span>
+                                    </div>
+
+                                    <p
+                                        id="payment-countdown-message"
+                                        class="mt-1 text-xs text-red-600"
+                                    >
+                                        Segera selesaikan pembayaran Anda.
+                                    </p>
+                                </div>
                             @endif
 
                             <div class="rounded-xl border border-amber-200 bg-amber-50 p-3">
@@ -196,4 +222,60 @@
         </div>
     </x-ui.container>
 </section>
+
 @endsection
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const countdown = document.getElementById('payment-countdown');
+        const timer = document.getElementById('payment-countdown-timer');
+        const message = document.getElementById('payment-countdown-message');
+
+        if (!countdown || !timer || !message) {
+            return;
+        }
+
+        const expiresAt = new Date(countdown.dataset.expiresAt).getTime();
+
+        const updateCountdown = () => {
+            const remaining = Math.max(0, expiresAt - Date.now());
+
+            const totalSeconds = Math.floor(remaining / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+
+            timer.textContent =
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            if (remaining <= 0) {
+                timer.textContent = '00:00';
+                message.textContent = 'Waktu pembayaran telah berakhir.';
+
+                countdown.classList.remove('border-red-200', 'bg-red-50');
+                countdown.classList.add('border-gray-200', 'bg-gray-100');
+
+                timer.classList.remove('text-red-700');
+                timer.classList.add('text-gray-500');
+
+                message.classList.remove('text-red-600');
+                message.classList.add('text-gray-500');
+
+                clearInterval(interval);
+            }
+        };
+
+        let interval = null;
+
+        const updateCountdown = () => {
+            // ...
+            if (remaining <= 0) {
+                if (interval) {
+                    clearInterval(interval);
+                }
+            }
+        };
+
+        updateCountdown();
+        interval = setInterval(updateCountdown, 1000);
+    });
+</script>

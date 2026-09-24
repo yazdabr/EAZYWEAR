@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('transactions:expire')->everyMinute();
+        $schedule->command('transactions:reconcile-doku')->everyFiveMinutes();
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([

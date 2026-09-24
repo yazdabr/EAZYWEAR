@@ -178,14 +178,23 @@ class DokuService
         $endpoint = '/orders/v1.0/transfer-va/status';
         $timestamp = now('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
         $externalId = now('Asia/Jakarta')->format('YmdHis') . random_int(1000, 9999);
-        $partnerServiceId = str_pad((string) ($data['partnerServiceId'] ?? config('doku.va.merchant_bin', '190089')), 8, ' ', STR_PAD_LEFT);
+        $partnerServiceId = str_pad(
+            (string) ($data['partnerServiceId'] ?? config('doku.va.merchant_bin', '190089')),
+            8,
+            ' ',
+            STR_PAD_LEFT
+        );
         $customerNo = (string) ($data['customerNo'] ?? '0');
-        $virtualAccountNo = str_pad((string) ($data['virtualAccountNo'] ?? ''), 18, ' ', STR_PAD_LEFT);
-
+        $virtualAccountNo = (string) ($data['virtualAccountNo'] ?? '');
         if ($virtualAccountNo === '') {
             throw new RuntimeException('Nomor Virtual Account wajib diisi.');
         }
-
+        $virtualAccountNo = str_pad(
+            $virtualAccountNo,
+            18,
+            ' ',
+            STR_PAD_LEFT
+        );
         $body = [
             'partnerServiceId' => $partnerServiceId,
             'customerNo' => $customerNo,
@@ -193,11 +202,9 @@ class DokuService
             'trxId' => (string) ($data['trxId'] ?? ''),
             'additionalInfo' => new \stdClass(),
         ];
-
         if (! empty($data['paymentRequestId'])) {
             $body['paymentRequestId'] = (string) $data['paymentRequestId'];
         }
-
         \Log::info('DOKU CHECK STATUS REQUEST', [
             'partnerServiceId' => $partnerServiceId,
             'partnerServiceId_length' => strlen($partnerServiceId),

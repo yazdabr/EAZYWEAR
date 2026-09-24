@@ -439,91 +439,60 @@ class TransactionController extends Controller
         return view('admin.transactions.print', compact('transaction'));
     }
 
-    public function updateStatus(Request $request, Transaction $transaction)
-    {
-        $validated = $request->validate([
-            'status' => ['required', 'string', Rule::in(['PENDING', 'COMPLETED', 'CANCELLED'])],
-        ]);
-
-        $newStatus = $validated['status'];
-        $currentStatus = $transaction->status;
-
-        if ($newStatus === 'COMPLETED' && $currentStatus !== 'PAID') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Transaksi hanya dapat diselesaikan setelah berstatus PAID.',
-            ], 422);
-        }
-
-        if ($newStatus === 'CANCELLED' && $currentStatus !== 'PENDING') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Hanya transaksi PENDING yang dapat dibatalkan.',
-            ], 422);
-        }
-
-        if ($currentStatus === 'CANCELLED') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Transaksi yang sudah dibatalkan tidak dapat diubah.',
-            ], 422);
-        }
-
-        $transaction->update([
-            'status' => $newStatus,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Transaction status updated successfully.',
-            'data' => [
-                'id' => $transaction->id,
-                'status' => $transaction->status,
-            ],
-        ]);
-    }
-
     public function cancel(
         Transaction $transaction,
         InventoryStockService $inventoryStockService
     ) {
-        if ($transaction->status === 'CANCELLED') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Transaksi sudah dibatalkan sebelumnya.',
-            ], 422);
-        }
-
-        if ($transaction->status === 'COMPLETED') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Transaksi yang sudah selesai tidak dapat dibatalkan.',
-            ], 422);
-        }
-
         try {
-            if ($transaction->status === 'PENDING') {
-                $transaction->update([
-                    'status' => 'CANCELLED',
+            $cancelledTransaction = DB::transaction(function () use (
+                $transaction,
+                $inventoryStockService
+            ) {
+                $lockedTransaction = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($lockedTransaction->status === 'CANCELLED') {
+                    throw ValidationException::withMessages([
+                        'transaction' => 'Transaksi sudah dibatalkan sebelumnya.',
+                    ]);
+                }
+
+                if ($lockedTransaction->status === 'COMPLETED') {
+                    throw ValidationException::withMessages([
+                        'transaction' => 'Transaksi yang sudah selesai tidak dapat dibatalkan.',
+                    ]);
+                }
+
+                if ($lockedTransaction->status === 'PENDING') {
+                    $lockedTransaction->update([
+                        'status' => 'CANCELLED',
+                    ]);
+
+                    return $lockedTransaction->fresh();
+                }
+
+                if ($lockedTransaction->status === 'PAID') {
+                    $inventoryStockService->restoreForTransaction(
+                        $lockedTransaction,
+                        "Stock restored due to cancellation - {$lockedTransaction->invoice_number}"
+                    );
+
+                    return $lockedTransaction->fresh();
+                }
+
+                throw ValidationException::withMessages([
+                    'transaction' => 'Status transaksi tidak dapat dibatalkan.',
                 ]);
-            } elseif ($transaction->status === 'PAID') {
-                $inventoryStockService->restoreForTransaction(
-                    $transaction,
-                    "Stock restored due to cancellation - {$transaction->invoice_number}"
-                );
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Status transaksi tidak dapat dibatalkan.',
-                ], 422);
-            }
+            });
 
             return response()->json([
                 'success' => true,
                 'message' => 'Transaction has been cancelled successfully.',
                 'data' => [
-                    'id' => $transaction->id,
-                    'status' => 'CANCELLED',
+                    'id' => $cancelledTransaction->id,
+                    'status' => $cancelledTransaction->status,
                 ],
             ]);
         } catch (ValidationException $e) {
@@ -562,7 +531,7 @@ class TransactionController extends Controller
             ], 422);
         }
 
-        if (! in_array($transaction->status, ['PENDING', 'CANCELLED'], true)) {
+        if ($transaction->status !== 'CANCELLED') {
             return response()->json([
                 'success' => false,
                 'message' => 'Status transaksi tidak dapat dihapus.',
@@ -586,7 +555,7 @@ class TransactionController extends Controller
                     ]);
                 }
 
-                if (! in_array($lockedTransaction->status, ['PENDING', 'CANCELLED'], true)) {
+                if ($lockedTransaction->status !== 'CANCELLED') {
                     throw ValidationException::withMessages([
                         'transaction' => 'Status transaksi tidak dapat dihapus.',
                     ]);

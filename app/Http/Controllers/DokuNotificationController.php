@@ -3,19 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
-use Illuminate\Http\Request;
+use App\Services\TransactionPaymentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use App\Services\InventoryStockService;
 use Illuminate\Validation\ValidationException;
 
 class DokuNotificationController extends Controller
 {
     public function bcaPayment(
         Request $request,
-        InventoryStockService $inventoryStockService
-    ): JsonResponse
-    {
+        TransactionPaymentService $transactionPaymentService
+    ): JsonResponse {
         $rawBody = $request->getContent();
         $timestamp = $request->header('X-TIMESTAMP', '');
         $signature = $request->header('X-SIGNATURE', '');
@@ -24,7 +23,14 @@ class DokuNotificationController extends Controller
         $channelId = $request->header('CHANNEL-ID', '');
         $authorization = $request->header('Authorization', '');
 
-        if (!$timestamp || !$signature || !$partnerId || !$externalId || !$channelId || !$authorization) {
+        if (
+            !$timestamp
+            || !$signature
+            || !$partnerId
+            || !$externalId
+            || !$channelId
+            || !$authorization
+        ) {
             Log::warning('DOKU notification missing required headers.', [
                 'external_id' => $externalId,
                 'partner_id' => $partnerId,
@@ -102,7 +108,11 @@ class DokuNotificationController extends Controller
         $paidAmount = $payload['paidAmount']['value'] ?? null;
         $currency = $payload['paidAmount']['currency'] ?? null;
 
-        if (!$virtualAccountNo || $paidAmount === null || $currency !== 'IDR') {
+        if (
+            !$virtualAccountNo
+            || $paidAmount === null
+            || $currency !== 'IDR'
+        ) {
             Log::warning('DOKU notification has invalid payment data.', [
                 'external_id' => $externalId,
                 'payment_request_id' => $paymentRequestId,
@@ -115,12 +125,19 @@ class DokuNotificationController extends Controller
             ], 400);
         }
 
-        $normalizedVa = preg_replace('/\s+/', '', (string) $virtualAccountNo);
+        $normalizedVa = preg_replace(
+            '/\s+/',
+            '',
+            (string) $virtualAccountNo
+        );
 
         $transaction = Transaction::query()
             ->whereNotNull('va_number')
             ->get()
-            ->first(function (Transaction $item) use ($normalizedVa, $trxId) {
+            ->first(function (Transaction $item) use (
+                $normalizedVa,
+                $trxId
+            ) {
                 $storedVa = preg_replace(
                     '/\s+/',
                     '',
@@ -132,11 +149,14 @@ class DokuNotificationController extends Controller
             });
 
         if (!$transaction) {
-            Log::warning('Transaction not found for DOKU notification.', [
-                'virtual_account_no' => $normalizedVa,
-                'trx_id' => $trxId,
-                'payment_request_id' => $paymentRequestId,
-            ]);
+            Log::warning(
+                'Transaction not found for DOKU notification.',
+                [
+                    'virtual_account_no' => $normalizedVa,
+                    'trx_id' => $trxId,
+                    'payment_request_id' => $paymentRequestId,
+                ]
+            );
 
             return response()->json([
                 'responseCode' => '4042500',
@@ -144,57 +164,28 @@ class DokuNotificationController extends Controller
             ], 404);
         }
 
-        $expectedAmount = number_format(
-            (float) $transaction->total,
-            2,
-            '.',
-            ''
-        );
-
-        $receivedAmount = number_format(
-            (float) $paidAmount,
-            2,
-            '.',
-            ''
-        );
-
-        if ($expectedAmount !== $receivedAmount) {
-            Log::warning('DOKU notification amount mismatch.', [
-                'transaction_id' => $transaction->id,
-                'invoice_number' => $transaction->invoice_number,
-                'expected_amount' => $expectedAmount,
-                'received_amount' => $receivedAmount,
-            ]);
-
-            return response()->json([
-                'responseCode' => '4002502',
-                'responseMessage' => 'Payment amount mismatch.',
-            ], 400);
-        }
-
         try {
-            $inventoryStockService->decreaseForTransaction(
+            $transactionPaymentService->processSuccessfulPayment(
                 $transaction,
-                "DOKU BCA payment notification - {$transaction->invoice_number}"
+                $payload,
+                'DOKU BCA payment notification'
             );
-
-            $transaction->update([
-                'doku_payment_id' => $paymentRequestId,
-                'doku_response' => $payload,
-            ]);
         } catch (ValidationException $e) {
-            Log::warning('DOKU payment verified but stock deduction failed.', [
-                'transaction_id' => $transaction->id,
-                'invoice_number' => $transaction->invoice_number,
-                'errors' => $e->errors(),
-            ]);
+            Log::warning(
+                'DOKU payment verified but payment processing was rejected.',
+                [
+                    'transaction_id' => $transaction->id,
+                    'invoice_number' => $transaction->invoice_number,
+                    'errors' => $e->errors(),
+                ]
+            );
 
             return response()->json([
                 'responseCode' => '4092500',
-                'responseMessage' => 'Payment verified but stock processing failed.',
+                'responseMessage' => 'Payment processing rejected.',
             ], 409);
         } catch (\Throwable $e) {
-            Log::error('DOKU payment stock processing failed.', [
+            Log::error('DOKU payment processing failed.', [
                 'transaction_id' => $transaction->id,
                 'invoice_number' => $transaction->invoice_number,
                 'error' => $e->getMessage(),

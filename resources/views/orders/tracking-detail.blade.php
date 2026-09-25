@@ -40,8 +40,57 @@
                             </div>
                         </div>
                     @empty
-                        <div class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">
-                            Belum ada pembaruan status pesanan.
+                        <div class="mt-4 space-y-4">
+                            @forelse($transaction->orderStatusHistories as $history)
+                                <div class="flex gap-4">
+                                    <div class="flex flex-col items-center">
+                                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-[#AE7C18] text-white">
+                                            ✓
+                                        </div>
+
+                                        @if(!$loop->last)
+                                            <div class="h-full w-px bg-gray-200"></div>
+                                        @endif
+                                    </div>
+
+                                    <div class="pb-4">
+                                        <p class="font-semibold text-slate-900">
+                                            @switch($history->status)
+                                                @case('PAYMENT_CONFIRMED')
+                                                    Pembayaran Berhasil
+                                                    @break
+
+                                                @case('ORDER_COMPLETED')
+                                                    Pesanan Selesai
+                                                    @break
+
+                                                @case('ORDER_CANCELLED')
+                                                    Pesanan Dibatalkan
+                                                    @break
+
+                                                @case('ORDER_EXPIRED')
+                                                    Pembayaran Kadaluarsa
+                                                    @break
+
+                                                @default
+                                                    Pesanan Dibuat
+                                            @endswitch
+                                        </p>
+
+                                        <p class="text-sm text-gray-500">
+                                            {{ $history->note }}
+                                        </p>
+
+                                        <p class="mt-1 text-xs text-gray-400">
+                                            {{ $history->created_at->format('d M Y H:i') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
+                                    Belum ada pembaruan status pesanan.
+                                </div>
+                            @endforelse
                         </div>
                     @endforelse
                 </div>
@@ -64,8 +113,8 @@
                                 </p>
 
                                 @if($item->custom_name)
-                                    <p class="text-sm font-bold text-[#AE7C18]">
-                                        Nama: {{ $item->custom_name }}
+                                    <p class="text-sm font-semibold text-[#AE7C18]">
+                                        Nama Jersey: {{ $item->custom_name }}
                                     </p>
                                 @endif
 

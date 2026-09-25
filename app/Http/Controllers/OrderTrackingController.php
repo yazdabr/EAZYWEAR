@@ -36,6 +36,7 @@ class OrderTrackingController extends Controller
             'items.productVariant.product',
             'items.productVariant.size',
             'items.productVariant.color',
+            'orderStatusHistories',
         ])
         ->where('invoice_number', $validated['invoice_number'])
         ->where('shipping_email', $validated['email'])

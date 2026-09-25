@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\OrderStatusHistory;
 
 class Transaction extends Model
 {
@@ -56,6 +57,13 @@ class Transaction extends Model
         'doku_response' => 'array',
     ];
 
+    public const ORDER_CREATED = 'ORDER_CREATED';
+    public const PAYMENT_CONFIRMED = 'PAYMENT_CONFIRMED';
+    public const ORDER_PROCESSING = 'ORDER_PROCESSING';
+    public const ORDER_SHIPPED = 'ORDER_SHIPPED';
+    public const ORDER_COMPLETED = 'ORDER_COMPLETED';
+    public const ORDER_CANCELLED = 'ORDER_CANCELLED';
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
@@ -64,5 +72,25 @@ class Transaction extends Model
     public function items(): HasMany
     {
         return $this->hasMany(TransactionItem::class);
+    }
+
+    public function orderStatusHistories(): HasMany
+    {
+        return $this->hasMany(OrderStatusHistory::class)
+            ->latest();
+    }
+
+    public function latestOrderStatus()
+    {
+        return $this->orderStatusHistories()
+            ->first();
+    }
+
+    public function addStatusHistory(string $status, ?string $note = null): OrderStatusHistory
+    {
+        return $this->orderStatusHistories()->create([
+            'status' => $status,
+            'note' => $note,
+        ]);
     }
 }

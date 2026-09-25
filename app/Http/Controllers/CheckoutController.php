@@ -7,6 +7,7 @@ use App\Models\Inventory;
 use App\Models\ProductVariant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
+use App\Models\OrderStatusHistory;
 use App\Services\DokuService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -195,6 +196,17 @@ class CheckoutController extends Controller
                     'shipping_method' => $validated['shipping_method'],
                 ]);
 
+                $transaction->addStatusHistory(
+                    Transaction::ORDER_CREATED,
+                    'Pesanan dibuat melalui website.'
+                );
+
+                OrderStatusHistory::create([
+                    'transaction_id' => $transaction->id,
+                    'status' => 'ORDER_CREATED',
+                    'note' => 'Pesanan berhasil dibuat.',
+                ]);
+
                 foreach ($items as $item) {
                     TransactionItem::create([
                         'transaction_id' => $transaction->id,
@@ -206,6 +218,11 @@ class CheckoutController extends Controller
                         'subtotal' => $item['subtotal'],
                     ]);
                 }
+
+                $transaction->orderStatusHistories()->create([
+                    'status' => Transaction::ORDER_CREATED,
+                    'note' => 'Pesanan berhasil dibuat melalui website.',
+                ]);
 
                 $amount = number_format((float) $total, 2, '.', '');
                 $vaExpiredAt = now('UTC')->addMinutes(10);

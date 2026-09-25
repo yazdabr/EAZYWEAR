@@ -79,6 +79,12 @@ class TransactionPaymentService
             ]);
         }
 
+        if ($transaction->status === 'PAID') {
+
+            return;
+
+        }
+
         $this->inventoryStockService->decreaseForTransaction(
             $transaction,
             "{$source} - {$transaction->invoice_number}"
@@ -90,9 +96,21 @@ class TransactionPaymentService
         );
 
         $transaction->update([
+            'status' => 'PAID',
+            'paid_at' => now(),
             'doku_payment_id' => $paymentRequestId ?: $transaction->doku_payment_id,
             'doku_response' => $dokuResponse,
         ]);
+
+        $transaction->orderStatusHistories()->create([
+            'status' => 'PAYMENT_CONFIRMED',
+            'note' => "Pembayaran berhasil dikonfirmasi melalui {$source}.",
+        ]);
+
+        $transaction->addStatusHistory(
+            Transaction::PAYMENT_CONFIRMED,
+            "Pembayaran berhasil dikonfirmasi melalui {$source}."
+        );
 
         \Log::info('DOKU PAYMENT PROCESSED', [
             'transaction_id' => $transaction->id,

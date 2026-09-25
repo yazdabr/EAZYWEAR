@@ -410,4 +410,23 @@ class TransactionControllerTest extends TestCase
                 'status' => 'COMPLETED',
             ]);
     }
+    public function test_cancelled_transaction_creates_order_cancelled_history(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = $this->createTestTransaction();
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route('admin.transactions.cancel', $transaction)
+            );
+
+        $response->assertOk();
+
+        $this->assertDatabaseHas('order_status_histories', [
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::ORDER_CANCELLED,
+        ]);
+    }
 }

@@ -15,11 +15,14 @@ class TransactionPaymentService
     /**
      * Memproses pembayaran DOKU yang sudah terverifikasi.
      *
-     * Service ini menjadi payment transition gate:
-     * DOKU SUCCESS -> validasi nominal -> deduct stock -> PAID.
+     * Flow:
+     * DOKU SUCCESS
+     * -> validasi nominal
+     * -> deduct stock
+     * -> update PAID
+     * -> simpan status history
      *
-     * Idempotency dan locking stock tetap ditangani
-     * oleh InventoryStockService.
+     * Idempotency dan locking stock ditangani oleh InventoryStockService.
      *
      * @throws ValidationException
      */
@@ -80,19 +83,23 @@ class TransactionPaymentService
         }
 
         if ($transaction->status === 'PAID') {
-
             return;
-
         }
 
-        $this->inventoryStockService->decreaseForTransaction(
-            $transaction,
-            "{$source} - {$transaction->invoice_number}"
-        );
+        if ($transaction->status !== 'PENDING') {
+            throw ValidationException::withMessages([
+                'payment' => 'Transaksi tidak dapat diproses menjadi PAID.',
+            ]);
+        }
 
         $paymentRequestId = data_get(
             $dokuResponse,
             'virtualAccountData.paymentRequestId'
+        );
+
+        $this->inventoryStockService->decreaseForTransaction(
+            $transaction,
+            "{$source} - {$transaction->invoice_number}"
         );
 
         $transaction->update([
@@ -100,11 +107,6 @@ class TransactionPaymentService
             'paid_at' => now(),
             'doku_payment_id' => $paymentRequestId ?: $transaction->doku_payment_id,
             'doku_response' => $dokuResponse,
-        ]);
-
-        $transaction->orderStatusHistories()->create([
-            'status' => 'PAYMENT_CONFIRMED',
-            'note' => "Pembayaran berhasil dikonfirmasi melalui {$source}.",
         ]);
 
         $transaction->addStatusHistory(

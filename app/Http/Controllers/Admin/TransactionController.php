@@ -470,6 +470,11 @@ class TransactionController extends Controller
                         'status' => 'CANCELLED',
                     ]);
 
+                    $lockedTransaction->addStatusHistory(
+                        'ORDER_CANCELLED',
+                        'Pesanan dibatalkan oleh admin.'
+                    );
+
                     return $lockedTransaction->fresh();
                 }
 
@@ -477,6 +482,11 @@ class TransactionController extends Controller
                     $inventoryStockService->restoreForTransaction(
                         $lockedTransaction,
                         "Stock restored due to cancellation - {$lockedTransaction->invoice_number}"
+                    );
+
+                    $lockedTransaction->addStatusHistory(
+                        'ORDER_CANCELLED',
+                        'Pesanan dibatalkan oleh admin dan stok dikembalikan.'
                     );
 
                     return $lockedTransaction->fresh();

@@ -219,10 +219,10 @@ class CheckoutController extends Controller
                     ]);
                 }
 
-                $transaction->orderStatusHistories()->create([
-                    'status' => Transaction::ORDER_CREATED,
-                    'note' => 'Pesanan berhasil dibuat melalui website.',
-                ]);
+                $transaction->addStatusHistory(
+                    Transaction::ORDER_CREATED,
+                    'Pesanan berhasil dibuat melalui website.'
+                );
 
                 $amount = number_format((float) $total, 2, '.', '');
                 $vaExpiredAt = now('UTC')->addMinutes(10);

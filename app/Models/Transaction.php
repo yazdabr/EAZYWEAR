@@ -80,17 +80,20 @@ class Transaction extends Model
             ->latest();
     }
 
+    public function addStatusHistory(
+        string $status,
+        ?string $note = null
+    ): void {
+        $this->orderStatusHistories()->create([
+            'status' => $status,
+            'note' => $note,
+        ]);
+    }
+
     public function latestOrderStatus()
     {
         return $this->orderStatusHistories()
             ->first();
     }
 
-    public function addStatusHistory(string $status, ?string $note = null): OrderStatusHistory
-    {
-        return $this->orderStatusHistories()->create([
-            'status' => $status,
-            'note' => $note,
-        ]);
-    }
 }

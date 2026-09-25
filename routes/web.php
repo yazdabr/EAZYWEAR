@@ -13,6 +13,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\OrderTrackingController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'pages.home')->name('home');
@@ -29,6 +30,13 @@ Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+
+Route::get('/cek-pesanan', [OrderTrackingController::class, 'index'])
+    ->name('orders.tracking');
+
+Route::post('/cek-pesanan', [OrderTrackingController::class, 'search'])
+    ->middleware('throttle:5,1')
+    ->name('orders.tracking.search');
 
 Route::view('/about', 'pages.about')->name('about');
 Route::view('/contact', 'pages.contact')->name('contact');

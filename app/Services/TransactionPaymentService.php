@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 class TransactionPaymentService
 {
@@ -12,20 +13,6 @@ class TransactionPaymentService
     ) {
     }
 
-    /**
-     * Memproses pembayaran DOKU yang sudah terverifikasi.
-     *
-     * Flow:
-     * DOKU SUCCESS
-     * -> validasi nominal
-     * -> deduct stock
-     * -> update PAID
-     * -> simpan status history
-     *
-     * Idempotency dan locking stock ditangani oleh InventoryStockService.
-     *
-     * @throws ValidationException
-     */
     public function processSuccessfulPayment(
         Transaction $transaction,
         array $dokuResponse,
@@ -38,10 +25,24 @@ class TransactionPaymentService
             'virtualAccountData.paymentFlagReason.english'
         );
 
+        if (!$paymentFlagReason) {
+            $paymentFlagReason = data_get(
+                $dokuResponse,
+                'paymentFlagReason.english'
+            );
+        }
+
         $paidAmount = data_get(
             $dokuResponse,
             'virtualAccountData.paidAmount.value'
         );
+
+        if ($paidAmount === null) {
+            $paidAmount = data_get(
+                $dokuResponse,
+                'paidAmount.value'
+            );
+        }
 
         if (
             $responseCode !== '2002600'
@@ -69,7 +70,7 @@ class TransactionPaymentService
         );
 
         if ($transactionAmount !== $dokuAmount) {
-            \Log::warning('DOKU PAYMENT AMOUNT MISMATCH', [
+            Log::warning('DOKU PAYMENT AMOUNT MISMATCH', [
                 'transaction_id' => $transaction->id,
                 'invoice' => $transaction->invoice_number,
                 'transaction_amount' => $transactionAmount,
@@ -97,6 +98,13 @@ class TransactionPaymentService
             'virtualAccountData.paymentRequestId'
         );
 
+        if (!$paymentRequestId) {
+            $paymentRequestId = data_get(
+                $dokuResponse,
+                'paymentRequestId'
+            );
+        }
+
         $this->inventoryStockService->decreaseForTransaction(
             $transaction,
             "{$source} - {$transaction->invoice_number}"
@@ -114,7 +122,7 @@ class TransactionPaymentService
             "Pembayaran berhasil dikonfirmasi melalui {$source}."
         );
 
-        \Log::info('DOKU PAYMENT PROCESSED', [
+        Log::info('DOKU PAYMENT PROCESSED', [
             'transaction_id' => $transaction->id,
             'invoice' => $transaction->invoice_number,
             'source' => $source,

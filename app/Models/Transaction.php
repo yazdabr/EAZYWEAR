@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\OrderStatusHistory;
 
 class Transaction extends Model
 {
@@ -57,12 +56,24 @@ class Transaction extends Model
         'doku_response' => 'array',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | Order Status
+    |--------------------------------------------------------------------------
+    */
+
     public const ORDER_CREATED = 'ORDER_CREATED';
     public const PAYMENT_CONFIRMED = 'PAYMENT_CONFIRMED';
     public const ORDER_PROCESSING = 'ORDER_PROCESSING';
     public const ORDER_SHIPPED = 'ORDER_SHIPPED';
     public const ORDER_COMPLETED = 'ORDER_COMPLETED';
     public const ORDER_CANCELLED = 'ORDER_CANCELLED';
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
 
     public function customer(): BelongsTo
     {
@@ -80,6 +91,12 @@ class Transaction extends Model
             ->latest();
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Status Management
+    |--------------------------------------------------------------------------
+    */
+
     public function addStatusHistory(
         string $status,
         ?string $note = null
@@ -90,10 +107,45 @@ class Transaction extends Model
         ]);
     }
 
-    public function latestOrderStatus()
+    public function updateStatus(
+        string $status,
+        ?string $note = null
+    ): void {
+        $this->update([
+            'status' => $status,
+        ]);
+
+        $this->addStatusHistory(
+            $status,
+            $note
+        );
+    }
+
+    public function latestOrderStatus(): ?OrderStatusHistory
     {
         return $this->orderStatusHistories()
             ->first();
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Accessors
+    |--------------------------------------------------------------------------
+    */
+
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            self::ORDER_CREATED => 'Pesanan Dibuat',
+            self::PAYMENT_CONFIRMED => 'Pembayaran Dikonfirmasi',
+            self::ORDER_PROCESSING => 'Sedang Diproses',
+            self::ORDER_SHIPPED => 'Pesanan Dikirim',
+            self::ORDER_COMPLETED => 'Pesanan Selesai',
+            self::ORDER_CANCELLED => 'Pesanan Dibatalkan',
+            'PENDING' => 'Menunggu Pembayaran',
+            'PAID' => 'Pembayaran Berhasil',
+            'EXPIRED' => 'Pembayaran Kadaluarsa',
+            default => $this->status,
+        };
+    }
 }

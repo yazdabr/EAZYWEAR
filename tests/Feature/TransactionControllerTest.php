@@ -429,4 +429,38 @@ class TransactionControllerTest extends TestCase
             'status' => Transaction::ORDER_CANCELLED,
         ]);
     }
+    public function test_admin_can_view_transaction_detail(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = Transaction::factory()->create([
+            'status' => 'PAID',
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->get(route('admin.transactions.show', $transaction));
+
+        $response
+            ->assertOk()
+            ->assertViewIs('admin.transactions.show')
+            ->assertViewHas('transaction');
+    }
+    public function test_admin_can_print_transaction_invoice()
+    {
+        $user = User::factory()->create([
+            'role' => 'super_admin',
+        ]);
+
+        $transaction = Transaction::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->get(route('admin.transactions.print', $transaction->invoice_number));
+
+        $response
+            ->assertOk()
+            ->assertViewIs('admin.transactions.print')
+            ->assertViewHas('transaction');
+    }
 }

@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use App\Services\TransactionPaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -23,14 +24,7 @@ class DokuNotificationController extends Controller
         $channelId = $request->header('CHANNEL-ID', '');
         $authorization = $request->header('Authorization', '');
 
-        if (
-            !$timestamp
-            || !$signature
-            || !$partnerId
-            || !$externalId
-            || !$channelId
-            || !$authorization
-        ) {
+        if (!$timestamp || !$signature || !$partnerId || !$externalId || !$channelId || !$authorization) {
             Log::warning('DOKU notification missing required headers.', [
                 'external_id' => $externalId,
                 'partner_id' => $partnerId,
@@ -54,12 +48,7 @@ class DokuNotificationController extends Controller
             ], 401);
         }
 
-        $accessToken = preg_replace(
-            '/^Bearer\s+/i',
-            '',
-            trim($authorization)
-        );
-
+        $accessToken = preg_replace('/^Bearer\s+/i', '', trim($authorization));
         $endpoint = $request->getPathInfo();
         $bodyHash = strtolower(hash('sha256', $rawBody));
 
@@ -105,14 +94,11 @@ class DokuNotificationController extends Controller
         $trxId = $payload['trxId'] ?? null;
         $paymentRequestId = $payload['paymentRequestId'] ?? null;
         $virtualAccountNo = $payload['virtualAccountNo'] ?? null;
-        $paidAmount = $payload['paidAmount']['value'] ?? null;
+        $paidAmount = data_get($payload,'paidAmount.value')
+            ?? data_get($payload,'virtualAccountData.paidAmount.value');
         $currency = $payload['paidAmount']['currency'] ?? null;
 
-        if (
-            !$virtualAccountNo
-            || $paidAmount === null
-            || $currency !== 'IDR'
-        ) {
+        if (!$virtualAccountNo || $paidAmount === null || $currency !== 'IDR') {
             Log::warning('DOKU notification has invalid payment data.', [
                 'external_id' => $externalId,
                 'payment_request_id' => $paymentRequestId,
@@ -125,38 +111,24 @@ class DokuNotificationController extends Controller
             ], 400);
         }
 
-        $normalizedVa = preg_replace(
-            '/\s+/',
-            '',
-            (string) $virtualAccountNo
-        );
+        $normalizedVa = preg_replace('/\s+/', '', (string) $virtualAccountNo);
 
         $transaction = Transaction::query()
-            ->whereNotNull('va_number')
-            ->get()
-            ->first(function (Transaction $item) use (
-                $normalizedVa,
-                $trxId
-            ) {
-                $storedVa = preg_replace(
-                    '/\s+/',
-                    '',
-                    (string) $item->va_number
-                );
+            ->where(function ($query) use ($normalizedVa, $trxId) {
+                $query->where('va_number', $normalizedVa);
 
-                return $storedVa === $normalizedVa
-                    || ($trxId && $item->invoice_number === $trxId);
-            });
+                if ($trxId) {
+                    $query->orWhere('invoice_number', $trxId);
+                }
+            })
+            ->first();
 
         if (!$transaction) {
-            Log::warning(
-                'Transaction not found for DOKU notification.',
-                [
-                    'virtual_account_no' => $normalizedVa,
-                    'trx_id' => $trxId,
-                    'payment_request_id' => $paymentRequestId,
-                ]
-            );
+            Log::warning('Transaction not found for DOKU notification.', [
+                'virtual_account_no' => $normalizedVa,
+                'trx_id' => $trxId,
+                'payment_request_id' => $paymentRequestId,
+            ]);
 
             return response()->json([
                 'responseCode' => '4042500',
@@ -164,21 +136,38 @@ class DokuNotificationController extends Controller
             ], 404);
         }
 
+        if ((float) $paidAmount !== (float) $transaction->total) {
+            Log::warning('DOKU amount mismatch.', [
+                'transaction_id' => $transaction->id,
+                'expected' => $transaction->total,
+                'received' => $paidAmount,
+            ]);
+
+            return response()->json([
+                'responseCode' => '4002502',
+                'responseMessage' => 'Payment amount mismatch.',
+            ], 400);
+        }
+
         try {
-            $transactionPaymentService->processSuccessfulPayment(
-                $transaction,
-                $payload,
-                'DOKU BCA payment notification'
-            );
+            DB::transaction(function () use ($transaction, $payload, $transactionPaymentService) {
+                $lockedTransaction = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $transactionPaymentService->processSuccessfulPayment(
+                    $lockedTransaction,
+                    $payload,
+                    'DOKU BCA payment notification'
+                );
+            });
         } catch (ValidationException $e) {
-            Log::warning(
-                'DOKU payment verified but payment processing was rejected.',
-                [
-                    'transaction_id' => $transaction->id,
-                    'invoice_number' => $transaction->invoice_number,
-                    'errors' => $e->errors(),
-                ]
-            );
+            Log::warning('DOKU payment verified but payment processing was rejected.', [
+                'transaction_id' => $transaction->id,
+                'invoice_number' => $transaction->invoice_number,
+                'errors' => $e->errors(),
+            ]);
 
             return response()->json([
                 'responseCode' => '4092500',

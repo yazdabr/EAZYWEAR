@@ -117,6 +117,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])->name('transactions.cancel');
         Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
         Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->name('transactions.print');
+        Route::get(
+            '/transactions/{transaction}',
+            [TransactionController::class,'show']
+        )->name('transactions.show');
 
         Route::get('/api-logs', [ApiLogController::class, 'index'])->name('api-logs');
     });

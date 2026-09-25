@@ -1,4 +1,4 @@
-﻿<div x-data="transactionView()" x-effect="document.body.classList.toggle('overflow-hidden', open)" @keydown.escape.window="open=false" x-on:open-view-transaction.window="openDrawer($event.detail)">
+<div x-data="transactionView()" x-effect="document.body.classList.toggle('overflow-hidden', open)" @keydown.escape.window="open=false" x-on:open-view-transaction.window="openDrawer($event.detail)">
     <div x-show="open" x-transition.opacity @click="open=false" class="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm" style="display:none;"></div>
 
     <div x-show="open" x-transition:enter="transition transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition transform duration-300 ease-in-out" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" class="fixed right-0 top-0 z-[100] flex h-screen w-full max-w-[520px] flex-col bg-white shadow-2xl" style="display:none;">
@@ -181,11 +181,11 @@
                             <div
                                 class="flex min-h-[38px] items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold"
                                 :class="{
-                                    'text-amber-700': transaction.status === 'PENDING',
-                                    'text-emerald-700': transaction.status === 'PAID',
-                                    'text-red-700': transaction.status === 'CANCELLED',
-                                    'text-slate-500': transaction.status === 'EXPIRED',
-                                    'text-slate-700': transaction.status === 'COMPLETED'
+                                    'bg-amber-50 border-amber-200 text-amber-700': transaction.status === 'PENDING',
+                                    'bg-emerald-50 border-emerald-200 text-emerald-700': transaction.status === 'PAID',
+                                    'bg-red-50 border-red-200 text-red-700': transaction.status === 'CANCELLED',
+                                    'bg-orange-50 border-orange-200 text-orange-700': transaction.status === 'EXPIRED',
+                                    'bg-slate-50 border-slate-200 text-slate-700': transaction.status === 'COMPLETED'
                                 }"
                             >
                                 <span x-text="transaction.status || '-'"></span>

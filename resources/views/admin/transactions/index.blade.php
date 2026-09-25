@@ -224,16 +224,13 @@
 
                     {{-- Baris 3: Tombol Aksi --}}
                     <div class="mt-3 flex items-center justify-end gap-2">
-                        <button
-                            type="button"
-                            @click="window.dispatchEvent(new CustomEvent('open-view-transaction',{
-                                detail:@js($transaction)
-                            }))"
-                            class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100 active:scale-95"
+                        <a
+                        href="{{ route('admin.transactions.show',$transaction['id']) }}"
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700"
                         >
-                            <x-heroicon-o-eye class="h-3.5 w-3.5 text-slate-500"/>
-                            Lihat
-                        </button>
+                        <x-heroicon-o-eye class="h-3.5 w-3.5"/>
+                        Lihat
+                        </a>
 
                         @if (in_array($transaction['status'] ?? '', ['PENDING', 'PAID', 'CANCELLED'], true))
                         <button

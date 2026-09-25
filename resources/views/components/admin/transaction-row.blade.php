@@ -117,41 +117,13 @@
             class="z-[999999] overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-2xl shadow-slate-900/20"
             style="display:none;"
         >
-            <button
-                type="button"
-                @click="
-                    open=false;
-                    window.dispatchEvent(new CustomEvent('open-view-transaction',{
-                        detail:{
-                            id:@js($transaction['id'] ?? null),
-                            invoice:@js($transaction['invoice'] ?? ''),
-                            date:@js($transaction['date'] ?? ''),
-                            customer:@js($transaction['customer'] ?? ''),
-                            customer_phone:@js($transaction['customer_phone'] ?? ''),
-                            customer_email:@js($transaction['customer_email'] ?? ''),
-
-                            shipping_address:@js($transaction['shipping_address'] ?? ''),
-                            shipping_district:@js($transaction['shipping_district'] ?? ''),
-                            shipping_city:@js($transaction['shipping_city'] ?? ''),
-                            shipping_province:@js($transaction['shipping_province'] ?? ''),
-                            shipping_postal_code:@js($transaction['shipping_postal_code'] ?? ''),
-                            shipping_method:@js($transaction['shipping_method'] ?? ''),
-
-                            payment:@js($transaction['payment'] ?? ''),
-                            status:@js($transaction['status'] ?? 'PENDING'),
-                            subtotal:@js($transaction['subtotal'] ?? 0),
-                            discount:@js($transaction['discount'] ?? 0),
-                            shipping:@js($transaction['shipping'] ?? 0),
-                            total:@js($transaction['total'] ?? 0),
-                            items:@js($transaction['items'] ?? [])
-                        }
-                    }));
-                "
+            <a
+                href="{{ route('admin.transactions.show', $transaction['id']) }}"
                 class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
                 <x-heroicon-o-eye class="h-4 w-4 shrink-0 text-slate-500"/>
                 <span>Lihat</span>
-            </button>
+            </a>
 
             @if (in_array($transaction['status'] ?? '', ['PENDING', 'PAID', 'CANCELLED'], true))
                 <button

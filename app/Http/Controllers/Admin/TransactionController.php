@@ -79,6 +79,8 @@ class TransactionController extends Controller
                 'customer' => $transaction->shipping_name ?? $transaction->customer?->name ?? '-',
                 'customer_phone' => $transaction->shipping_phone ?? $transaction->customer?->phone ?? '-',
                 'customer_email' => $transaction->shipping_email ?? $transaction->customer?->email ?? '-',
+                'phone' => $transaction->shipping_phone ?? $transaction->customer?->phone ?? '-',
+                'email' => $transaction->shipping_email ?? $transaction->customer?->email ?? '-',
                 'shipping_address' => $transaction->shipping_address ?? '-',
                 'shipping_district' => $transaction->shipping_district ?? '-',
                 'shipping_city' => $transaction->shipping_city ?? '-',
@@ -425,6 +427,19 @@ class TransactionController extends Controller
         } while (Transaction::where('invoice_number', $invoice)->exists());
 
         return $invoice;
+    }
+
+    public function show(Transaction $transaction)
+    {
+        $transaction->load([
+            'customer',
+            'items.productVariant.product.images',
+            'items.productVariant.size',
+            'items.productVariant.color',
+            'orderStatusHistories',
+        ]);
+
+        return view('admin.transactions.show', compact('transaction'));
     }
 
     public function print($invoice)

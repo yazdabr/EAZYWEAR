@@ -196,17 +196,6 @@ class CheckoutController extends Controller
                     'shipping_method' => $validated['shipping_method'],
                 ]);
 
-                $transaction->addStatusHistory(
-                    Transaction::ORDER_CREATED,
-                    'Pesanan dibuat melalui website.'
-                );
-
-                OrderStatusHistory::create([
-                    'transaction_id' => $transaction->id,
-                    'status' => 'ORDER_CREATED',
-                    'note' => 'Pesanan berhasil dibuat.',
-                ]);
-
                 foreach ($items as $item) {
                     TransactionItem::create([
                         'transaction_id' => $transaction->id,
@@ -225,7 +214,7 @@ class CheckoutController extends Controller
                 );
 
                 $amount = number_format((float) $total, 2, '.', '');
-                $vaExpiredAt = now('UTC')->addMinutes(10);
+                $vaExpiredAt = now('Asia/Makassar')->addMinutes(10);
 
                 $dokuResponse = $dokuService->createVirtualAccount([
                     'partnerServiceId' => config('doku.va.merchant_bin', '190089'),

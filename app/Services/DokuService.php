@@ -106,8 +106,8 @@ class DokuService
         }
 
         $endpoint = config('doku.va.endpoint');
-        $timestamp = now('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
-        $externalId = now('Asia/Jakarta')->format('YmdHis') . random_int(1000, 9999);
+        $timestamp = now('Asia/Makassar')->format('Y-m-d\TH:i:sP');
+        $externalId = now('Asia/Makassar')->format('YmdHis') . random_int(1000, 9999);
         $partnerServiceId = str_pad((string) ($data['partnerServiceId'] ?? config('doku.va.partner_service_id', '19008')), 8, ' ', STR_PAD_LEFT);
         $customerNo = (string) ($data['customerNo'] ?? '0');
         $virtualAccountNo = $data['virtualAccountNo'] ?? ($partnerServiceId . $customerNo);
@@ -128,7 +128,7 @@ class DokuService
                 'channel' => $data['channel'] ?? 'VIRTUAL_ACCOUNT_BCA',
             ],
             'virtualAccountTrxType' => config('doku.va.virtual_account_trx_type', 'C'),
-            'expiredDate' => $data['expiredDate'] ?? now('Asia/Jakarta')->addHours(24)->format('Y-m-d\TH:i:sP'),
+            'expiredDate' => $data['expiredDate'] ?? now('Asia/Makassar')->addHours(24)->format('Y-m-d\TH:i:sP'),
         ];
 
         $requestBody = json_encode($body, JSON_UNESCAPED_SLASHES);
@@ -138,6 +138,13 @@ class DokuService
         }
 
         $signature = $this->generateSymmetricSignature('POST', $endpoint, $accessToken, $requestBody, $timestamp);
+
+        \Log::info('DOKU CREATE VA REQUEST', [
+            'endpoint' => $endpoint,
+            'external_id' => $externalId,
+            'timestamp' => $timestamp,
+            'body' => $body,
+        ]);
 
         $response = Http::timeout(30)
             ->acceptJson()
@@ -156,6 +163,11 @@ class DokuService
         $response->throw();
 
         $responseData = $response->json();
+
+        \Log::info('DOKU CREATE VA RESPONSE', [
+            'external_id' => $externalId,
+            'response' => $responseData,
+        ]);
 
         if (! is_array($responseData)) {
             throw new RuntimeException('Respons Create VA DOKU tidak valid.');
@@ -176,8 +188,8 @@ class DokuService
         }
 
         $endpoint = '/orders/v1.0/transfer-va/status';
-        $timestamp = now('Asia/Jakarta')->format('Y-m-d\TH:i:sP');
-        $externalId = now('Asia/Jakarta')->format('YmdHis') . random_int(1000, 9999);
+        $timestamp = now('Asia/Makassar')->format('Y-m-d\TH:i:sP');
+        $externalId = now('Asia/Makassar')->format('YmdHis') . random_int(1000, 9999);
         $partnerServiceId = str_pad(
             (string) ($data['partnerServiceId'] ?? config('doku.va.merchant_bin', '190089')),
             8,
@@ -189,12 +201,8 @@ class DokuService
         if ($virtualAccountNo === '') {
             throw new RuntimeException('Nomor Virtual Account wajib diisi.');
         }
-        $virtualAccountNo = str_pad(
-            $virtualAccountNo,
-            18,
-            ' ',
-            STR_PAD_LEFT
-        );
+        $virtualAccountNo = preg_replace('/\s+/', '', $virtualAccountNo);
+
         $body = [
             'partnerServiceId' => $partnerServiceId,
             'customerNo' => $customerNo,
@@ -222,7 +230,11 @@ class DokuService
         }
 
         $signature = $this->generateSymmetricSignature('POST', $endpoint, $accessToken, $requestBody, $timestamp);
-
+        \Log::info('DOKU CREATE VA REQUEST', [
+            'endpoint' => $endpoint,
+            'external_id' => $externalId,
+            'body' => $body,
+        ]);
         $response = Http::timeout(30)
             ->acceptJson()
             ->withHeaders([
@@ -238,6 +250,11 @@ class DokuService
             ->post($this->baseUrl . $endpoint);
 
         $responseData = $response->json();
+
+        \Log::info('DOKU CREATE VA RESPONSE', [
+            'external_id' => $externalId,
+            'response' => $responseData,
+        ]);
 
         if (! is_array($responseData)) {
             throw new RuntimeException('Respons Check Status DOKU tidak valid.');

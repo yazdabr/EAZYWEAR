@@ -184,6 +184,7 @@
                                     'text-amber-700': transaction.status === 'PENDING',
                                     'text-emerald-700': transaction.status === 'PAID',
                                     'text-red-700': transaction.status === 'CANCELLED',
+                                    'text-slate-500': transaction.status === 'EXPIRED',
                                     'text-slate-700': transaction.status === 'COMPLETED'
                                 }"
                             >
@@ -233,7 +234,7 @@
         <div class="shrink-0 border-t border-slate-200 bg-white p-4 sm:p-5">
             <div
                 class="grid gap-2.5 sm:gap-3"
-                :class="isDokuPayment() && !['PAID', 'CANCELLED'].includes(transaction.status)
+                :class="isDokuPayment() && transaction.status === 'PENDING'
                     ? 'grid-cols-3'
                     : 'grid-cols-2'"
             >
@@ -241,7 +242,7 @@
                 {{-- Cek Pembayaran DOKU --}}
                 <button
                     type="button"
-                    x-show="isDokuPayment() && !['PAID', 'CANCELLED'].includes(transaction.status)"
+                    x-show="isDokuPayment() && transaction.status === 'PENDING'"
                     @click="checkDokuPayment()"
                     :disabled="loading || dokuLoading || !transaction.id"
                     class="flex h-11 w-full items-center justify-center rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700 transition-all duration-200 hover:bg-violet-100 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
@@ -378,7 +379,7 @@ function transactionView(){
                 return;
             }
 
-            if (['PAID', 'CANCELLED'].includes(this.transaction.status)) {
+            if (this.transaction.status !== 'PENDING') {
                 return;
             }
 

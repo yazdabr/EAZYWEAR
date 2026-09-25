@@ -82,6 +82,27 @@ $currentStatus = $statusMap[$currentHistory?->status ?? ''] ?? [
                 </div>
             </div>
 
+            {{-- NAVIGATION BUTTON --}}
+            <div class="flex flex-row gap-2.5 sm:gap-4 sm:justify-between">
+
+                <a
+                    href="{{ route('orders.tracking') }}"
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition sm:px-4 sm:py-2.5 sm:text-sm"
+                >
+                    <x-heroicon-o-arrow-left class="h-4 w-4 shrink-0" />
+                    <span class="truncate">Cek Pesanan Lain</span>
+                </a>
+
+                <a
+                    href="{{ route('home') }}"
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#AE7C18] px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#8F6514] transition sm:px-4 sm:py-2.5 sm:text-sm"
+                >
+                    <x-heroicon-o-home class="h-4 w-4 shrink-0" />
+                    <span class="truncate">Kembali ke Home</span>
+                </a>
+
+            </div>
+
             {{-- MAIN GRID: LEFT (TIMELINE & PRODUCTS), RIGHT (SUMMARY & CUSTOMER INFO) --}}
             <div class="grid gap-4 sm:gap-6 lg:grid-cols-12">
 

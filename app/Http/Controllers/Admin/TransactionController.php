@@ -652,6 +652,12 @@ class TransactionController extends Controller
             ($response['responseCode'] ?? null) === '2002600'
         ) {
 
+            \Log::info('Manual DOKU payment confirmed', [
+                'transaction_id' => $transaction->id,
+                'invoice' => $transaction->invoice_number,
+                'amount' => data_get($response, 'virtualAccountData.paidAmount.value'),
+            ]);
+
             $paymentService->processSuccessfulPayment(
                 $transaction,
                 $response,

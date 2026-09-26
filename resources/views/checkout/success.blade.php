@@ -52,7 +52,7 @@
                     <div class="py-4 sm:py-6">
                         <h2 class="text-sm font-bold text-slate-900 sm:text-lg">Detail Pesanan</h2>
                         <div class="mt-3 space-y-3 sm:mt-5 sm:space-y-5">
-                            @foreach($transaction->items as$item)
+                            @foreach($transaction->items as $item)
                                 <div class="flex items-start justify-between gap-3 text-xs sm:gap-4 sm:text-sm">
                                     <div class="min-w-0 flex-1">
                                         <p class="font-bold text-slate-900">{{ $item->productVariant?->product?->name ?? '-' }}</p>

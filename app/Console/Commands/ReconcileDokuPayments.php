@@ -107,10 +107,9 @@ class ReconcileDokuPayments extends Command
                 $payload = [
                     'partnerServiceId' => $partnerServiceIdRaw,
                     'customerNo' => $customerNo,
-                    'virtualAccountNo' => preg_replace(
-                        '/\s+/',
-                        '',
-                        (string) $transaction->va_number
+                    'virtualAccountNo' => (string) data_get(
+                        $transaction->doku_response,
+                        'virtualAccountData.virtualAccountNo'
                     ),
                     'trxId' => (string) $transaction->invoice_number,
                 ];

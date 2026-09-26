@@ -103,7 +103,7 @@
             <p class="mt-6 text-center text-xs text-slate-400">
                 Mengalami kendala?
                 <a
-                    href="https://api.whatsapp.com/send/?phone=6285754431105&type=phone_number&app_absent=0"
+                href="https://api.whatsapp.com/send/?phone=6285754431105&type=phone_number&app_absent=0"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="font-semibold text-[#AE7C18] hover:underline inline-flex items-center gap-1"

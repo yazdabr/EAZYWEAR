@@ -17,7 +17,7 @@ $statusMap = [
         'icon'  => 'credit-card',
     ],
     'ORDER_PROCESSING' => [
-        'label' => 'Pesanan Dipproses',
+        'label' => 'Pesanan Diproses',
         'color' => 'bg-amber-50 text-amber-700 border-amber-200',
         'icon'  => 'cog',
     ],

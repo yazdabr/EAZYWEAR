@@ -610,132 +610,62 @@ class TransactionController extends Controller
         }
     }
 
-    public function checkDokuPayment(
+    public function checkPayment(
         Transaction $transaction,
         DokuService $dokuService,
-        TransactionPaymentService $transactionPaymentService
-    ) {
-        if ($transaction->status === 'PAID') {
-            return response()->json([
-                'success' => true,
-                'status' => 'PAID',
-                'message' => 'Transaksi ini sudah berstatus PAID.',
-            ]);
-        }
-
+        TransactionPaymentService $paymentService
+    )
+    {
         if ($transaction->status !== 'PENDING') {
             return response()->json([
-                'success' => false,
-                'status' => $transaction->status,
-                'message' => 'Pembayaran DOKU hanya dapat dicek untuk transaksi PENDING.',
+                'message' => 'Transaksi sudah diproses.'
             ], 422);
         }
 
-        if (empty($transaction->va_number) || empty($transaction->invoice_number)) {
-            return response()->json([
-                'success' => false,
-                'status' => $transaction->status,
-                'message' => 'Data VA atau invoice transaksi tidak lengkap.',
-            ], 422);
-        }
 
-        try {
-            $partnerServiceIdRaw = (string) config('doku.va.merchant_bin', '190089');
-            $partnerServiceIdDigits = preg_replace('/\D/', '', $partnerServiceIdRaw);
-            $virtualAccountNo = preg_replace('/\D/', '', (string) $transaction->va_number);
+        $result = $dokuService->checkVirtualAccountStatus([
+            'partnerServiceId' => trim(
+                data_get(
+                    $transaction->doku_response,
+                    'virtualAccountData.partnerServiceId'
+                )
+            ),
 
-            if (
-                $virtualAccountNo === ''
-                || ! str_starts_with($virtualAccountNo, $partnerServiceIdDigits)
-            ) {
-                throw new \RuntimeException(
-                    'Format nomor VA tidak sesuai dengan partnerServiceId.'
-                );
-            }
+            'customerNo' => data_get(
+                $transaction->doku_response,
+                'virtualAccountData.customerNo'
+            ),
 
-            $customerNo = substr(
-                $virtualAccountNo,
-                strlen($partnerServiceIdDigits)
-            );
+            'virtualAccountNo' => $transaction->va_number,
 
-            if ($customerNo === '') {
-                throw new \RuntimeException(
-                    'Customer number tidak dapat diambil dari nomor VA.'
-                );
-            }
+            'trxId' => $transaction->invoice_number,
+        ]);
 
-            $result = $dokuService->checkVirtualAccountStatus([
-                'partnerServiceId' => $partnerServiceIdRaw,
-                'customerNo' => $customerNo,
-                'virtualAccountNo' => (string) $transaction->va_number,
-                'trxId' => (string) $transaction->invoice_number,
-                'paymentRequestId' => $transaction->doku_payment_id,
-            ]);
 
-            $response = $result['response'] ?? [];
-            $httpStatus = $result['http_status'] ?? null;
+        $response = $result['response'] ?? [];
 
-            \Log::info('DOKU PAYMENT STATUS RESPONSE', [
-                'transaction_id' => $transaction->id,
-                'invoice' => $transaction->invoice_number,
-                'http_status' => $httpStatus,
-                'response' => $response,
-            ]);
 
-            if (
-                $httpStatus === null
-                || $httpStatus < 200
-                || $httpStatus >= 300
-            ) {
-                return response()->json([
-                    'success' => false,
-                    'status' => $transaction->status,
-                    'message' => 'DOKU mengembalikan HTTP status: '
-                        . ($httpStatus ?? 'tidak tersedia'),
-                ], 422);
-            }
+        if (
+            ($response['responseCode'] ?? null) === '2002600'
+        ) {
 
-            $transactionPaymentService->processSuccessfulPayment(
+            $paymentService->processSuccessfulPayment(
                 $transaction,
                 $response,
                 'Manual DOKU payment check'
             );
 
-            \Log::info('DOKU PAYMENT VERIFIED', [
-                'transaction_id' => $transaction->id,
-                'invoice' => $transaction->invoice_number,
-            ]);
 
             return response()->json([
-                'success' => true,
-                'status' => 'PAID',
-                'message' => 'Pembayaran berhasil diverifikasi dan transaksi diubah menjadi PAID.',
+                'success'=>true,
+                'message'=>'Pembayaran berhasil dikonfirmasi.'
             ]);
-        } catch (ValidationException $e) {
-            \Log::warning('Manual DOKU payment validation failed.', [
-                'transaction_id' => $transaction->id,
-                'invoice' => $transaction->invoice_number,
-                'errors' => $e->errors(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'status' => $transaction->fresh()->status,
-                'message' => $e->getMessage(),
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Throwable $e) {
-            \Log::error('DOKU PAYMENT CHECK FAILED', [
-                'transaction_id' => $transaction->id,
-                'invoice' => $transaction->invoice_number,
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'status' => $transaction->status,
-                'message' => 'Gagal mengecek pembayaran DOKU. Silakan periksa log.',
-            ], 500);
         }
+
+
+        return response()->json([
+            'success'=>false,
+            'message'=>'Pembayaran belum diterima DOKU.'
+        ]);
     }
 }

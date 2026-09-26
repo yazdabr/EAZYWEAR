@@ -65,6 +65,32 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? [
         </div>
 
         <div class="flex items-center gap-2 sm:gap-3">
+
+            @if(
+                $transaction->payment_method === 'VA'
+                && $transaction->status === 'PENDING'
+            )
+            <button
+                type="button"
+                onclick="checkDokuPayment('{{ $transaction->id }}')"
+                id="check-doku-btn"
+                class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-violet-700">
+
+                <svg class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+
+                Cek Pembayaran
+            </button>
+            @endif
+
+
             <a href="{{ route('admin.transactions') }}"
             class="flex-1 sm:flex-initial text-center justify-center inline-flex items-center whitespace-nowrap rounded-xl border border-slate-200 px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50">
                 Kembali
@@ -192,10 +218,34 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? [
                         <span class="text-slate-500">Metode</span>
                         <span class="font-bold text-slate-900">{{ $transaction->payment_method }}</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-slate-500">Status</span>
-                        <span class="font-semibold text-slate-700">{{ $transaction->status }}</span>
-                    </div>
+                    @if($transaction->va_number)
+
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">
+                                VA Number
+                            </span>
+
+                            <span class="font-bold">
+                                {{ $transaction->va_number }}
+                            </span>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">
+                                Expired
+                            </span>
+
+                            <span>
+                                {{ $transaction->va_expired_at
+                                    ? $transaction->va_expired_at
+                                    ->setTimezone('Asia/Makassar')
+                                    ->format('d M Y H:i')
+                                    : '-'
+                                }}
+                            </span>
+                        </div>
+
+                    @endif
                 </div>
             </div>
 
@@ -276,4 +326,49 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? [
 
     </div>
 </div>
+<script>
+
+function checkDokuPayment(id)
+{
+
+    const btn = document.getElementById('check-doku-btn');
+
+    btn.disabled = true;
+    btn.innerText = 'Mengecek...';
+
+
+    fetch(
+        `/admin/transactions/${id}/check-payment`,
+        {
+            method:'POST',
+            headers:{
+                'X-CSRF-TOKEN':
+                '{{ csrf_token() }}',
+                'Accept':'application/json'
+            }
+        }
+    )
+    .then(res=>res.json())
+    .then(data=>{
+
+        alert(data.message);
+
+        if(data.success){
+            location.reload();
+        }
+
+    })
+    .catch(()=>{
+        alert('Terjadi kesalahan.');
+    })
+    .finally(()=>{
+
+        btn.disabled=false;
+        btn.innerText='Cek Pembayaran';
+
+    });
+
+}
+
+</script>
 @endsection

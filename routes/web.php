@@ -114,6 +114,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             '/transactions/{transaction}/check-doku-payment',
             [TransactionController::class, 'checkDokuPayment']
         )->name('transactions.check-doku-payment');
+        Route::post(
+            '/admin/transactions/{transaction}/check-payment',
+            [TransactionController::class, 'checkPayment']
+        )
+        ->name('admin.transactions.check-payment');
         Route::patch('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])->name('transactions.cancel');
         Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
         Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->name('transactions.print');

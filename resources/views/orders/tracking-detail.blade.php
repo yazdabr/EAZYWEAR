@@ -48,7 +48,7 @@ $currentHistory = $transaction
     ->sortByDesc('created_at')
     ->first();
 
-$currentStatus = $statusMap[$currentHistory?->status ?? ''] ?? [
+$currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ?? [
     'label' => $transaction->status,
     'color' => 'bg-slate-100 text-slate-700 border-slate-200',
     'icon'  => 'clock',
@@ -70,7 +70,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? ''] ?? [
                             {{ $transaction->invoice_number }}
                         </h1>
                         <p class="mt-0.5 text-xs sm:text-sm text-slate-500">
-                            Waktu Transaksi: {{ $transaction->created_at->format('d M Y, H:i') }}
+                            Waktu Transaksi: {{ $transaction->created_at->setTimezone('Asia/Makassar')->format('d M Y, h:i A') }}
                         </p>
                     </div>
 

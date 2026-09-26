@@ -138,9 +138,26 @@
                                     <button
                                         type="button"
                                         id="copy-va-button"
-                                        class="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
+                                        class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-600 bg-white px-3 py-2 text-xs font-bold text-blue-600 transition hover:bg-blue-50"
                                     >
-                                        Salin
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            class="h-4 w-4"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M10 20h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                            />
+                                        </svg>
+
+                                        <span>
+                                            Salin
+                                        </span>
                                     </button>
                                 </div>
                             </div>
@@ -330,13 +347,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
 
 
-                copyButton.textContent =
+                copyButton.querySelector('span').textContent =
                     'Tersalin';
 
 
                 setTimeout(() => {
 
-                    copyButton.textContent =
+                    copyButton.querySelector('span').textContent =
                         'Salin';
 
                 }, 2000);

@@ -39,7 +39,7 @@ class TransactionExpiryService
             ]);
 
             $lockedTransaction->addStatusHistory(
-                'ORDER_EXPIRED',
+                'EXPIRED',
                 'Pembayaran melewati batas waktu pembayaran.'
             );
 

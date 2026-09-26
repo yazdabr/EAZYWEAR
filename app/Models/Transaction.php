@@ -91,6 +91,11 @@ class Transaction extends Model
             ->latest();
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(TransactionNotification::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Status Management

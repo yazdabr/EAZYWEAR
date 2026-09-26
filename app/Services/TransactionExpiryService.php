@@ -38,6 +38,11 @@ class TransactionExpiryService
                 'status' => 'EXPIRED',
             ]);
 
+            $lockedTransaction->addStatusHistory(
+                'ORDER_EXPIRED',
+                'Pembayaran melewati batas waktu pembayaran.'
+            );
+
             return true;
         });
     }

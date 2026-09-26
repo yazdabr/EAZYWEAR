@@ -9,6 +9,8 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\OrderStatusHistory;
 use App\Services\DokuService;
+use App\Mail\OrderCreatedMail;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -266,8 +268,17 @@ class CheckoutController extends Controller
                     'doku_response' => $dokuResponse,
                 ]);
 
+
+                $transaction->load([
+                    'items.productVariant.product',
+                ]);
+
+
                 return $transaction;
             });
+
+            Mail::to($transaction->shipping_email)
+                ->send(new OrderCreatedMail($transaction));
 
             $request->session()->put('checkout_success_invoice', $transaction->invoice_number);
             $request->session()->forget('cart');

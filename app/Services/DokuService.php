@@ -190,12 +190,10 @@ class DokuService
         $endpoint = '/orders/v1.0/transfer-va/status';
         $timestamp = now('Asia/Makassar')->format('Y-m-d\TH:i:sP');
         $externalId = now('Asia/Makassar')->format('YmdHis') . random_int(1000, 9999);
-        $partnerServiceId = str_pad(
-            (string) ($data['partnerServiceId'] ?? config('doku.va.merchant_bin', '190089')),
-            8,
-            ' ',
-            STR_PAD_LEFT
-        );
+    $partnerServiceId = (string) (
+        $data['partnerServiceId']
+        ?? config('doku.va.merchant_bin', '190089')
+    );
         $customerNo = (string) ($data['customerNo'] ?? '0');
         $virtualAccountNo = (string) ($data['virtualAccountNo'] ?? '');
         if ($virtualAccountNo === '') {
@@ -208,8 +206,8 @@ class DokuService
             'customerNo' => $customerNo,
             'virtualAccountNo' => $virtualAccountNo,
             'trxId' => (string) ($data['trxId'] ?? ''),
-            'additionalInfo' => new \stdClass(),
         ];
+
         if (! empty($data['paymentRequestId'])) {
             $body['paymentRequestId'] = (string) $data['paymentRequestId'];
         }
@@ -230,7 +228,7 @@ class DokuService
         }
 
         $signature = $this->generateSymmetricSignature('POST', $endpoint, $accessToken, $requestBody, $timestamp);
-        \Log::info('DOKU CREATE VA REQUEST', [
+        \Log::info('DOKU CHECK STATUS REQUEST', [
             'endpoint' => $endpoint,
             'external_id' => $externalId,
             'body' => $body,
@@ -251,7 +249,7 @@ class DokuService
 
         $responseData = $response->json();
 
-        \Log::info('DOKU CREATE VA RESPONSE', [
+        \Log::info('DOKU CHECK STATUS RESPONSE', [
             'external_id' => $externalId,
             'response' => $responseData,
         ]);

@@ -214,7 +214,7 @@ class CheckoutController extends Controller
                 );
 
                 $amount = number_format((float) $total, 2, '.', '');
-                $vaExpiredAt = now('Asia/Makassar')->addMinutes(10);
+                $vaExpiredAt = now()->addMinutes(10);
 
                 $dokuResponse = $dokuService->createVirtualAccount([
                     'partnerServiceId' => config('doku.va.merchant_bin', '190089'),

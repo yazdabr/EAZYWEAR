@@ -129,9 +129,19 @@
                                 </p>
 
                                 <div class="mt-2 flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-                                    <p class="break-all text-lg font-extrabold tracking-wide text-slate-900 sm:text-2xl">
+                                    <p
+                                        id="va-number"
+                                        class="break-all text-lg font-extrabold tracking-wide text-slate-900 sm:text-2xl"
+                                    >
                                         {{ $transaction->va_number }}
                                     </p>
+                                    <button
+                                        type="button"
+                                        id="copy-va-button"
+                                        class="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
+                                    >
+                                        Salin
+                                    </button>
                                 </div>
                             </div>
 
@@ -148,13 +158,17 @@
                                 <div class="flex items-center justify-between gap-4 text-sm">
                                     <span class="text-gray-500">Batas Pembayaran</span>
                                     <span class="text-right font-bold text-slate-900">
-                                        {{ $transaction->va_expired_at->copy()->setTimezone('Asia/Makassar')->format('d M Y, H:i') }}
+                                        {{ $transaction->va_expired_at
+                                            ->copy()
+                                            ->setTimezone('Asia/Makassar')
+                                            ->format('d M Y, h:i A')
+                                        }}
                                     </span>
                                 </div>
 
                                 <div
                                     id="payment-countdown"
-                                    data-expires-at="{{ $transaction->va_expired_at->copy()->utc()->toIso8601String() }}"
+                                    data-expires-at="{{ $transaction->va_expired_at->timestamp * 1000 }}"
                                     class="rounded-xl border border-red-200 bg-red-50 px-4 py-3"
                                 >
                                     <div class="flex items-center justify-between gap-4">
@@ -226,56 +240,111 @@
 @endsection
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const countdown = document.getElementById('payment-countdown');
-        const timer = document.getElementById('payment-countdown-timer');
-        const message = document.getElementById('payment-countdown-message');
+document.addEventListener('DOMContentLoaded', () => {
 
-        if (!countdown || !timer || !message) {
-            return;
-        }
+    const countdown = document.getElementById('payment-countdown');
+    const timer = document.getElementById('payment-countdown-timer');
+    const message = document.getElementById('payment-countdown-message');
 
-        const expiresAt = new Date(countdown.dataset.expiresAt).getTime();
+    if (countdown && timer && message) {
+
+        const expiresAt = Number(
+            countdown.dataset.expiresAt
+        );
+
 
         const updateCountdown = () => {
-            const remaining = Math.max(0, expiresAt - Date.now());
 
-            const totalSeconds = Math.floor(remaining / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
+            const remaining = Math.max(
+                0,
+                expiresAt - Date.now()
+            );
+
+
+            const totalSeconds = Math.floor(
+                remaining / 1000
+            );
+
+
+            const minutes = Math.floor(
+                totalSeconds / 60
+            );
+
+
             const seconds = totalSeconds % 60;
+
 
             timer.textContent =
                 `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
+
             if (remaining <= 0) {
+
                 timer.textContent = '00:00';
-                message.textContent = 'Waktu pembayaran telah berakhir.';
 
-                countdown.classList.remove('border-red-200', 'bg-red-50');
-                countdown.classList.add('border-gray-200', 'bg-gray-100');
+                message.textContent =
+                    'Waktu pembayaran telah berakhir.';
 
-                timer.classList.remove('text-red-700');
-                timer.classList.add('text-gray-500');
 
-                message.classList.remove('text-red-600');
-                message.classList.add('text-gray-500');
+                countdown.classList.remove(
+                    'border-red-200',
+                    'bg-red-50'
+                );
+
+                countdown.classList.add(
+                    'border-gray-200',
+                    'bg-gray-100'
+                );
+
 
                 clearInterval(interval);
             }
         };
 
-        let interval = null;
-
-        const updateCountdown = () => {
-            // ...
-            if (remaining <= 0) {
-                if (interval) {
-                    clearInterval(interval);
-                }
-            }
-        };
 
         updateCountdown();
-        interval = setInterval(updateCountdown, 1000);
-    });
+
+        const interval = setInterval(
+            updateCountdown,
+            1000
+        );
+    }
+
+
+
+    const copyButton =
+        document.getElementById('copy-va-button');
+
+    const vaNumber =
+        document.getElementById('va-number');
+
+
+    if (copyButton && vaNumber) {
+
+        copyButton.addEventListener(
+            'click',
+            async () => {
+
+                await navigator.clipboard.writeText(
+                    vaNumber.innerText.trim()
+                );
+
+
+                copyButton.textContent =
+                    'Tersalin';
+
+
+                setTimeout(() => {
+
+                    copyButton.textContent =
+                        'Salin';
+
+                }, 2000);
+
+            }
+        );
+
+    }
+
+});
 </script>

@@ -111,11 +111,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/transactions/customer-search', [TransactionController::class, 'customerSearch'])->name('transactions.customer-search');
         Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
         Route::post(
-            '/transactions/{transaction}/check-doku-payment',
-            [TransactionController::class, 'checkDokuPayment']
-        )->name('transactions.check-doku-payment');
-        Route::post(
-            '/admin/transactions/{transaction}/check-payment',
+            '/transactions/{transaction}/check-payment',
             [TransactionController::class, 'checkPayment']
         )
         ->name('admin.transactions.check-payment');

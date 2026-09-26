@@ -215,6 +215,12 @@ class DokuService
             'trxId' => (string) ($data['trxId'] ?? ''),
         ];
 
+        \Log::info('DOKU BEFORE JSON BODY', [
+            'virtualAccountNo_raw' => $virtualAccountNo,
+            'virtualAccountNo_length' => strlen($virtualAccountNo),
+            'json' => json_encode($body),
+        ]);
+
         if (! empty($data['paymentRequestId'])) {
             $body['paymentRequestId'] = (string) $data['paymentRequestId'];
         }

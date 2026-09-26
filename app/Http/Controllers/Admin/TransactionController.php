@@ -636,7 +636,10 @@ class TransactionController extends Controller
                 'virtualAccountData.customerNo'
             ),
 
-            'virtualAccountNo' => $transaction->va_number,
+            'virtualAccountNo' => data_get(
+                $transaction->doku_response,
+                'virtualAccountData.virtualAccountNo'
+            ),
 
             'trxId' => $transaction->invoice_number,
         ]);

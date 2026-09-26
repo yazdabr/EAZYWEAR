@@ -200,11 +200,13 @@ class DokuService
             STR_PAD_LEFT
         );
         $customerNo = (string) ($data['customerNo'] ?? '0');
+
         $virtualAccountNo = (string) ($data['virtualAccountNo'] ?? '');
+        
         if ($virtualAccountNo === '') {
             throw new RuntimeException('Nomor Virtual Account wajib diisi.');
         }
-        $virtualAccountNo = preg_replace('/\s+/', '', $virtualAccountNo);
+        
 
         $body = [
             'partnerServiceId' => $partnerServiceId,

@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Transaction;
+use App\Mail\PaymentExpiredMail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class TransactionExpiryService
 {
@@ -16,7 +18,7 @@ class TransactionExpiryService
      */
     public function expire(Transaction $transaction): bool
     {
-        return DB::transaction(function () use ($transaction) {
+        $expired = DB::transaction(function () use ($transaction) {
             $lockedTransaction = Transaction::query()
                 ->whereKey($transaction->id)
                 ->lockForUpdate()
@@ -45,5 +47,16 @@ class TransactionExpiryService
 
             return true;
         });
+
+
+        if ($expired) {
+            $expiredTransaction = Transaction::find($transaction->id);
+
+            Mail::to($expiredTransaction->shipping_email)
+                ->send(new PaymentExpiredMail($expiredTransaction));
+        }
+
+
+        return $expired;
     }
 }

@@ -128,7 +128,7 @@ class ReconcileDokuPayments extends Command
                     'transaction_id' => $transaction->id,
                     'invoice' => $transaction->invoice_number,
                     'http_status' => $httpStatus,
-                    'response_code' => $response['responseCode'] ?? null,
+                    'response' => $response,
                 ]);
 
                 if (

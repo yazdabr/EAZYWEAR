@@ -59,15 +59,12 @@ Silakan lakukan pembayaran sebelum batas waktu yang ditentukan.
 <h3>Produk</h3>
 
 <ul>
-@foreach($transaction->items as $item)
-
-<li>
-{{ $item->productVariant?->product?->name }}
-<br>
-Qty: {{ $item->qty }}
-
-</li>
-
+@foreach ($transaction->items as $item)
+    <li>
+        {{ $item->productVariant?->product?->name }}
+        <br>
+        Qty: {{ $item->qty }}
+    </li>
 @endforeach
 </ul>
 

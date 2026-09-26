@@ -45,14 +45,20 @@ class ReconcileDokuPayments extends Command
             $checkedCount++;
 
             try {
-                $virtualAccountNo = (string) data_get(
-                    $transaction->doku_response,
-                    'virtualAccountData.virtualAccountNo'
+                $virtualAccountNo = preg_replace(
+                    '/\s+/',
+                    '',
+                    (string) data_get(
+                        $transaction->doku_response,
+                        'virtualAccountData.virtualAccountNo'
+                    )
                 );
 
-                $partnerServiceIdRaw = (string) data_get(
-                    $transaction->doku_response,
-                    'virtualAccountData.partnerServiceId'
+                $partnerServiceIdRaw = trim(
+                    (string) data_get(
+                        $transaction->doku_response,
+                        'virtualAccountData.partnerServiceId'
+                    )
                 );
 
                 $partnerServiceIdDigits = preg_replace(
@@ -101,7 +107,11 @@ class ReconcileDokuPayments extends Command
                 $payload = [
                     'partnerServiceId' => $partnerServiceIdRaw,
                     'customerNo' => $customerNo,
-                    'virtualAccountNo' => (string) $transaction->va_number,
+                    'virtualAccountNo' => preg_replace(
+                        '/\s+/',
+                        '',
+                        (string) $transaction->va_number
+                    ),
                     'trxId' => (string) $transaction->invoice_number,
                 ];
 

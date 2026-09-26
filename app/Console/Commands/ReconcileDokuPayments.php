@@ -99,13 +99,18 @@ class ReconcileDokuPayments extends Command
                     continue;
                 }
 
-                $result = $dokuService->checkVirtualAccountStatus([
+                $payload = [
                     'partnerServiceId' => $partnerServiceIdRaw,
                     'customerNo' => $customerNo,
                     'virtualAccountNo' => (string) $transaction->va_number,
                     'trxId' => (string) $transaction->invoice_number,
-                    'paymentRequestId' => $transaction->doku_payment_id,
-                ]);
+                ];
+
+                if ($transaction->doku_payment_id) {
+                    $payload['paymentRequestId'] = $transaction->doku_payment_id;
+                }
+
+                $result = $dokuService->checkVirtualAccountStatus($payload);
 
                 $httpStatus = $result['http_status'] ?? null;
                 $response = $result['response'] ?? [];

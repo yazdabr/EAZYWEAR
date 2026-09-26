@@ -118,9 +118,13 @@ class TransactionController extends Controller
             ];
         });
 
+        $totalTransactions = Transaction::count();
+
         $totalRevenue = Transaction::where('status', 'PAID')
             ->sum('total');
+
         $completedOrders = Transaction::where('status', 'PAID')->count();
+
         $pendingTransactions = Transaction::where('status', 'PENDING')->count();
         $currentMonth = Carbon::now()->startOfMonth();
         $previousMonth = Carbon::now()->subMonth()->startOfMonth();
@@ -128,12 +132,16 @@ class TransactionController extends Controller
         $currentTransactions = Transaction::whereBetween('transaction_date', [
             $currentMonth->copy()->startOfMonth(),
             $currentMonth->copy()->endOfMonth(),
-        ])->count();
+        ])
+        ->where('status', 'PAID')
+        ->count();
 
         $previousTransactions = Transaction::whereBetween('transaction_date', [
             $previousMonth->copy()->startOfMonth(),
             $previousMonth->copy()->endOfMonth(),
-        ])->count();
+        ])
+        ->where('status', 'PAID')
+        ->count();
 
         $currentRevenue = Transaction::whereBetween('transaction_date', [
             $currentMonth->copy()->startOfMonth(),

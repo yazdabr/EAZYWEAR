@@ -17,7 +17,7 @@ $statusMap = [
         'icon'  => 'credit-card',
     ],
     'ORDER_PROCESSING' => [
-        'label' => 'Pesanan Diproses',
+        'label' => 'Pesanan Dipproses',
         'color' => 'bg-amber-50 text-amber-700 border-amber-200',
         'icon'  => 'cog',
     ],
@@ -57,10 +57,10 @@ $currentStatus = $statusMap[$currentHistory?->status ?? ''] ?? [
 
 <section class="bg-slate-50/80 py-6 sm:py-10">
     <x-ui.container>
-        <div class="mx-auto max-w-5xl space-y-4 sm:space-y-6">
+        <div class="mx-auto max-w-6xl space-y-4 sm:space-y-6">
 
             {{-- HEADER / INVOICE CARD --}}
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-sm">
+            <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <p class="text-[10px] font-bold tracking-wider uppercase text-slate-400">
@@ -82,35 +82,33 @@ $currentStatus = $statusMap[$currentHistory?->status ?? ''] ?? [
                 </div>
             </div>
 
-            {{-- NAVIGATION BUTTON --}}
-            <div class="flex flex-row gap-2.5 sm:gap-4 sm:justify-between">
-
+            {{-- NAVIGATION BUTTONS (SIDE BY SIDE IN MOBILE & DESKTOP) --}}
+            <div class="grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-3">
                 <a
                     href="{{ route('orders.tracking') }}"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition sm:px-4 sm:py-2.5 sm:text-sm"
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl border border-slate-200 bg-white px-3 sm:px-5 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
                 >
-                    <x-heroicon-o-arrow-left class="h-4 w-4 shrink-0" />
+                    <x-heroicon-o-arrow-left class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"/>
                     <span class="truncate">Cek Pesanan Lain</span>
                 </a>
 
                 <a
                     href="{{ route('home') }}"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#AE7C18] px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#8F6514] transition sm:px-4 sm:py-2.5 sm:text-sm"
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-[#AE7C18] px-3 sm:px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-[#8F6514] transition"
                 >
-                    <x-heroicon-o-home class="h-4 w-4 shrink-0" />
+                    <x-heroicon-o-home class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"/>
                     <span class="truncate">Kembali ke Home</span>
                 </a>
-
             </div>
 
             {{-- MAIN GRID: LEFT (TIMELINE & PRODUCTS), RIGHT (SUMMARY & CUSTOMER INFO) --}}
-            <div class="grid gap-4 sm:gap-6 lg:grid-cols-12">
+            <div class="grid gap-6 lg:grid-cols-12 items-start">
 
                 {{-- KOLOM KIRI --}}
-                <div class="space-y-4 sm:space-y-6 lg:col-span-7">
+                <div class="flex flex-col gap-6 lg:col-span-7">
 
                     {{-- TIMELINE STATUS --}}
-                    <div class="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-sm">
+                    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
                         <h2 class="mb-4 text-base font-bold text-slate-900">
                             Status Pesanan
                         </h2>
@@ -181,7 +179,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? ''] ?? [
                     </div>
 
                     {{-- DETAIL PRODUK --}}
-                    <div class="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-sm">
+                    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
                         <h2 class="mb-4 text-base font-bold text-slate-900">
                             Rincian Produk
                         </h2>
@@ -216,7 +214,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? ''] ?? [
                                                 <div class="mt-1 flex flex-wrap gap-x-3 text-xs">
                                                     @if($item->custom_name)
                                                         <span class="text-[#AE7C18] font-medium">
-                                                            Nama: {{ $item->custom_name }}
+                                                            Nama Jersey: {{ $item->custom_name }}
                                                         </span>
                                                     @endif
                                                     @if($item->custom_number)
@@ -241,37 +239,11 @@ $currentStatus = $statusMap[$currentHistory?->status ?? ''] ?? [
                 </div>
 
                 {{-- KOLOM KANAN --}}
-                <div class="space-y-4 sm:space-y-6 lg:col-span-5">
-
-                    {{-- RINGKASAN PEMBAYARAN --}}
-                    <div class="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-sm">
-                        <h2 class="mb-4 text-base font-bold text-slate-900">
-                            Ringkasan Pembayaran
-                        </h2>
-
-                        <div class="space-y-2.5 text-xs sm:text-sm">
-                            <div class="flex justify-between text-slate-600">
-                                <span>Subtotal Produk</span>
-                                <span class="font-medium text-slate-900">Rp {{ number_format($transaction->subtotal, 0, ',', '.') }}</span>
-                            </div>
-
-                            <div class="flex justify-between text-slate-600">
-                                <span>Biaya Pengiriman</span>
-                                <span class="font-medium text-slate-900">Rp {{ number_format($transaction->shipping, 0, ',', '.') }}</span>
-                            </div>
-
-                            <div class="border-t border-slate-100 pt-3 mt-3 flex items-center justify-between">
-                                <span class="font-bold text-slate-900 text-sm sm:text-base">Total Bayar</span>
-                                <span class="text-base sm:text-lg font-extrabold text-[#AE7C18]">
-                                    Rp {{ number_format($transaction->total, 0, ',', '.') }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="flex flex-col gap-6 lg:col-span-5 h-full">
 
                     {{-- INFORMASI PELANGGAN & PENGIRIMAN --}}
-                    <div class="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-sm">
-                        <div class="mb-4 flex items-center gap-2.5">
+                    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
+                        <div class="mb-3.5 flex items-center gap-2.5">
                             <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#AE7C18]/10 text-[#AE7C18]">
                                 <x-heroicon-o-user class="h-4 w-4"/>
                             </div>
@@ -280,7 +252,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? ''] ?? [
                             </h2>
                         </div>
 
-                        <div class="space-y-3.5 text-xs sm:text-sm">
+                        <div class="space-y-3 text-xs sm:text-sm">
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Penerima</p>
                                 <p class="mt-0.5 font-semibold text-slate-800">
@@ -321,6 +293,34 @@ $currentStatus = $statusMap[$currentHistory?->status ?? ''] ?? [
                             </div>
                         </div>
                     </div>
+
+                    {{-- RINGKASAN PEMBAYARAN --}}
+                    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
+                        <h2 class="mb-4 text-base font-bold text-slate-900">
+                            Ringkasan Pembayaran
+                        </h2>
+
+                        <div class="space-y-2.5 text-xs sm:text-sm">
+                            <div class="flex justify-between text-slate-600">
+                                <span>Subtotal Produk</span>
+                                <span class="font-medium text-slate-900">Rp {{ number_format($transaction->subtotal, 0, ',', '.') }}</span>
+                            </div>
+
+                            <div class="flex justify-between text-slate-600">
+                                <span>Biaya Pengiriman</span>
+                                <span class="font-medium text-slate-900">Rp {{ number_format($transaction->shipping, 0, ',', '.') }}</span>
+                            </div>
+
+                            <div class="border-t border-slate-100 pt-3 mt-3 flex items-center justify-between">
+                                <span class="font-bold text-slate-900 text-sm sm:text-base">Total Bayar</span>
+                                <span class="text-base sm:text-lg font-extrabold text-[#AE7C18]">
+                                    Rp {{ number_format($transaction->total, 0, ',', '.') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+
 
                 </div>
 

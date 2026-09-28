@@ -26,7 +26,11 @@ class TransactionControllerTest extends TestCase
     private function createTestTransaction(int $quantity = 2): Transaction
     {
         $inventory = Inventory::query()
-            ->where('stock', '>=', $quantity)
+            ->where('stock', '>=', 1)
+            ->whereHas(
+                'productVariant.product',
+                fn ($query) => $query->where('status', true)
+            )
             ->firstOrFail();
 
         $variant = ProductVariant::query()
@@ -49,6 +53,98 @@ class TransactionControllerTest extends TestCase
         ]);
 
         return $transaction->load('items');
+    }
+
+    public function test_admin_transaction_snapshots_product_variant_weight(): void
+    {
+        $user = $this->superAdmin();
+
+        $inventory = Inventory::query()
+            ->where('stock', '>=', 1)
+            ->whereHas(
+                'productVariant.product',
+                fn ($query) => $query->where('status', true)
+            )
+            ->firstOrFail();
+
+        $variant = ProductVariant::query()
+            ->findOrFail($inventory->product_variant_id);
+
+        $variant->update([
+            'weight' => 750,
+        ]);
+
+        $this->actingAs($user);
+
+        $this->assertAuthenticatedAs($user);
+
+        $this->assertSame(
+            'super_admin',
+            $user->role
+        );
+
+        $this->withoutExceptionHandling();
+
+        $response = $this->postJson(
+            route('admin.transactions.store'),
+            [
+                'customer' => [
+                    'name' => 'Test Customer',
+                    'phone' => '081234567890',
+                    'email' => 'test-weight@example.com',
+                ],
+
+                'shipping_data' => [
+                    'address' => 'Jl. Test No. 1',
+                    'district' => 'Kertak Hanyar',
+                    'city' => 'Banjar',
+                    'province' => 'Kalimantan Selatan',
+                    'postal_code' => '70654',
+                    'method' => 'Kurir',
+                ],
+
+                'transaction_date' => now('Asia/Makassar')
+                    ->format('Y-m-d\TH:i'),
+
+                'payment_method' => 'Transfer Bank',
+
+                'discount' => 0,
+                'shipping' => 0,
+
+                'items' => [
+                    [
+                        'product_variant_id' => $variant->id,
+                        'qty' => 1,
+                        'custom_name' => 'TEST',
+                        'custom_number' => '10',
+                    ],
+                ],
+            ]);
+
+        $this->assertSame(
+            201,
+            $response->status(),
+            sprintf(
+                'Unexpected response: class=%s status=%s location=%s content=%s',
+                get_class($response),
+                $response->status(),
+                $response->headers->get('Location') ?? 'null',
+                $response->getContent()
+            )
+        );
+
+        $this->assertTrue(
+            $response->json('success') === true,
+            'Response JSON: ' . $response->getContent()
+        );
+
+        $transactionId = $response->json('data.id');
+
+        $this->assertDatabaseHas('transaction_items', [
+            'transaction_id' => $transactionId,
+            'product_variant_id' => $variant->id,
+            'weight' => 750,
+        ]);
     }
 
     public function test_pending_transaction_cannot_be_deleted(): void
@@ -123,7 +219,7 @@ class TransactionControllerTest extends TestCase
         ]);
     }
 
-    public function test_paid_transaction_returns_paid_without_checking_doku_again(): void
+    public function test_paid_transaction_cannot_be_checked_against_doku(): void
     {
         $user = $this->superAdmin();
 
@@ -139,14 +235,12 @@ class TransactionControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->postJson(route('admin.transactions.check-doku-payment', $transaction));
+            ->postJson(route('admin.transactions.check-payment', $transaction));
 
         $response
-            ->assertOk()
+            ->assertStatus(422)
             ->assertJson([
-                'success' => true,
-                'status' => 'PAID',
-                'message' => 'Transaksi ini sudah berstatus PAID.',
+                'message' => 'Transaksi sudah diproses.',
             ]);
     }
 
@@ -195,6 +289,7 @@ class TransactionControllerTest extends TestCase
             ->assertStatus(422)
             ->assertJson([
                 'success' => false,
+                'message' => 'Transaksi yang memiliki riwayat stok tidak dapat dihapus.',
             ]);
 
         $this->assertDatabaseHas('transactions', [
@@ -301,6 +396,7 @@ class TransactionControllerTest extends TestCase
             ->assertStatus(422)
             ->assertJson([
                 'success' => false,
+                'message' => 'Transaksi sudah dibatalkan sebelumnya.',
             ]);
 
         $this->assertDatabaseHas('transactions', [
@@ -333,6 +429,7 @@ class TransactionControllerTest extends TestCase
             'status' => 'EXPIRED',
         ]);
     }
+
     public function test_cancelled_transaction_cannot_be_checked_against_doku(): void
     {
         $user = $this->superAdmin();
@@ -349,13 +446,12 @@ class TransactionControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->postJson(route('admin.transactions.check-doku-payment', $transaction));
+            ->postJson(route('admin.transactions.check-payment', $transaction));
 
         $response
             ->assertStatus(422)
             ->assertJson([
-                'success' => false,
-                'status' => 'CANCELLED',
+                'message' => 'Transaksi sudah diproses.',
             ]);
     }
 
@@ -375,13 +471,12 @@ class TransactionControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->postJson(route('admin.transactions.check-doku-payment', $transaction));
+            ->postJson(route('admin.transactions.check-payment', $transaction));
 
         $response
             ->assertStatus(422)
             ->assertJson([
-                'success' => false,
-                'status' => 'EXPIRED',
+                'message' => 'Transaksi sudah diproses.',
             ]);
     }
 
@@ -401,15 +496,15 @@ class TransactionControllerTest extends TestCase
 
         $response = $this
             ->actingAs($user)
-            ->postJson(route('admin.transactions.check-doku-payment', $transaction));
+            ->postJson(route('admin.transactions.check-payment', $transaction));
 
         $response
             ->assertStatus(422)
             ->assertJson([
-                'success' => false,
-                'status' => 'COMPLETED',
+                'message' => 'Transaksi sudah diproses.',
             ]);
     }
+
     public function test_cancelled_transaction_creates_order_cancelled_history(): void
     {
         $user = $this->superAdmin();
@@ -429,6 +524,7 @@ class TransactionControllerTest extends TestCase
             'status' => Transaction::ORDER_CANCELLED,
         ]);
     }
+
     public function test_admin_can_view_transaction_detail(): void
     {
         $user = $this->superAdmin();
@@ -446,6 +542,7 @@ class TransactionControllerTest extends TestCase
             ->assertViewIs('admin.transactions.show')
             ->assertViewHas('transaction');
     }
+
     public function test_admin_can_print_transaction_invoice()
     {
         $user = User::factory()->create([

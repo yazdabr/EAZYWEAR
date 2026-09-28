@@ -409,6 +409,7 @@ class TransactionController extends Controller
                         'qty' => $item['qty'],
                         'price' => $item['price'],
                         'subtotal' => $item['subtotal'],
+                        'weight' => $item['variant']->weight,
                     ]);
                 }
 

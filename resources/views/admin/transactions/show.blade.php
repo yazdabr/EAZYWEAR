@@ -742,7 +742,7 @@
                                     <p class="mt-0.5 text-[10px] sm:text-xs text-slate-400">
                                         {{ $history->created_at
                                             ->setTimezone('Asia/Makassar')
-                                            ->format('d M Y H:i')
+                                            ->format('d M Y H:i') 
                                         }}
                                     </p>
 

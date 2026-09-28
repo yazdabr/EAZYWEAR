@@ -18,6 +18,7 @@ class TransactionItem extends Model
         'qty',
         'price',
         'subtotal',
+        'weight',
         'stock_deducted_at',
         'stock_restored_at',
     ];
@@ -26,6 +27,7 @@ class TransactionItem extends Model
         'qty' => 'integer',
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'weight' => 'integer',
         'stock_deducted_at' => 'datetime',
         'stock_restored_at' => 'datetime',
     ];

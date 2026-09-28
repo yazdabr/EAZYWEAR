@@ -70,6 +70,13 @@ class Transaction extends Model
     public const ORDER_SHIPPED = 'ORDER_SHIPPED';
     public const ORDER_COMPLETED = 'ORDER_COMPLETED';
     public const ORDER_CANCELLED = 'ORDER_CANCELLED';
+    public const SALES_REPORT_STATUSES = [
+        'PAID',
+        'COMPLETED',
+        self::ORDER_PROCESSING,
+        self::ORDER_SHIPPED,
+        self::ORDER_COMPLETED,
+    ];
 
     /*
     |--------------------------------------------------------------------------

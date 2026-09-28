@@ -124,10 +124,7 @@ class SalesReportExport implements
 
         $query = Transaction::with([
             'customer',
-        ])->whereIn('status', [
-            'PAID',
-            'COMPLETED',
-        ]);
+        ])->whereIn('status', Transaction::SALES_REPORT_STATUSES);
 
         if ($startDate) {
             $query->where('transaction_date', '>=', $startDate);

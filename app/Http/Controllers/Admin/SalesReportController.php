@@ -38,7 +38,7 @@ class SalesReportController extends Controller
             'items.productVariant.product.category',
             'items.productVariant.size',
             'items.productVariant.color',
-        ])->whereIn('status', ['PAID', 'COMPLETED']);
+        ])->whereIn('status', Transaction::SALES_REPORT_STATUSES);
 
         if ($startDate) {
             $query->where('transaction_date', '>=', $startDate);
@@ -74,7 +74,7 @@ class SalesReportController extends Controller
             $previousStart = $startDate->copy()->subDays($days)->startOfDay();
             $previousEnd = $startDate->copy()->subDay()->endOfDay();
 
-            $previousTransactions = Transaction::whereIn('status', ['PAID', 'COMPLETED'])
+            $previousTransactions = Transaction::whereIn('status', Transaction::SALES_REPORT_STATUSES)
                 ->whereBetween('transaction_date', [$previousStart, $previousEnd])
                 ->with('items')
                 ->get();
@@ -103,7 +103,7 @@ class SalesReportController extends Controller
 
         $years = Transaction::query()
             ->selectRaw('YEAR(transaction_date) as year')
-            ->whereIn('status', ['PAID', 'COMPLETED'])
+            ->whereIn('status', Transaction::SALES_REPORT_STATUSES)
             ->whereNotNull('transaction_date')
             ->distinct()
             ->orderByDesc('year')
@@ -349,7 +349,7 @@ class SalesReportController extends Controller
         $query = Transaction::with([
             'customer',
             'items.productVariant.product',
-        ])->whereIn('status', ['PAID', 'COMPLETED']);
+        ])->whereIn('status', Transaction::SALES_REPORT_STATUSES);
 
         if ($startDate) {
             $query->where('transaction_date', '>=', $startDate);

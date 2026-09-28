@@ -811,4 +811,68 @@ class TransactionController extends Controller
             'message'=>'Pembayaran belum diterima DOKU.'
         ]);
     }
+
+    public function updateShipping(Request $request, Transaction $transaction)
+    {
+        $validated = $request->validate([
+            'courier' => ['required', 'string', 'max:100'],
+            'tracking_number' => ['required', 'string', 'max:100'],
+        ], [
+            'courier.required' => 'Kurir wajib diisi.',
+            'tracking_number.required' => 'Nomor resi wajib diisi.',
+        ]);
+
+        try {
+            $updatedTransaction = DB::transaction(function () use (
+                $transaction,
+                $validated
+            ) {
+                $lockedTransaction = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if (! in_array(
+                    $lockedTransaction->status,
+                    ['ORDER_SHIPPED', 'ORDER_COMPLETED'],
+                    true
+                )) {
+                    throw ValidationException::withMessages([
+                        'transaction' => 'Detail pengiriman hanya dapat diedit setelah pesanan dikirim.',
+                    ]);
+                }
+
+                $lockedTransaction->update([
+                    'courier' => trim($validated['courier']),
+                    'tracking_number' => trim($validated['tracking_number']),
+                ]);
+
+                return $lockedTransaction->fresh();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Detail pengiriman berhasil diperbarui.',
+                'data' => [
+                    'id' => $updatedTransaction->id,
+                    'status' => $updatedTransaction->status,
+                    'courier' => $updatedTransaction->courier,
+                    'tracking_number' => $updatedTransaction->tracking_number,
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui detail pengiriman.',
+            ], 500);
+        }
+    }
 }

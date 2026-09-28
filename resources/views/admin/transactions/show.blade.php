@@ -137,7 +137,6 @@
         </div>
     </div>
 
-
     {{-- ========================================================= --}}
     {{-- INFORMASI PELANGGAN --}}
     {{-- ========================================================= --}}
@@ -219,7 +218,6 @@
 
         </div>
     </div>
-
 
     {{-- ========================================================= --}}
     {{-- PRODUK + PEMBAYARAN --}}
@@ -320,7 +318,6 @@
 
         </div>
 
-
         {{-- PEMBAYARAN + RINGKASAN --}}
         <div class="space-y-4 sm:space-y-6">
 
@@ -379,7 +376,6 @@
                 </div>
 
             </div>
-
 
             {{-- SUMMARY --}}
             <div class="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
@@ -440,7 +436,6 @@
 
     </div>
 
-
     {{-- ========================================================= --}}
     {{-- SHIPPING + TIMELINE --}}
     {{-- ========================================================= --}}
@@ -475,7 +470,6 @@
                         </div>
 
                     </div>
-
 
                     {{-- ORDER PROCESSING --}}
                     @if($transaction->status === 'ORDER_PROCESSING')
@@ -539,7 +533,6 @@
 
                         </form>
 
-
                     {{-- ORDER SHIPPED / COMPLETED --}}
                     @else
 
@@ -590,10 +583,10 @@
 
                         </div>
 
-
                         {{-- EDIT SHIPPING --}}
                         <form
                             id="edit-shipping-form"
+                            onsubmit="updateShipping(event, '{{ $transaction->id }}')"
                             class="hidden mt-4"
                         >
 
@@ -658,13 +651,11 @@
                                     </button>
 
                                     <button
-                                        type="button"
-                                        disabled
-                                        title="Fitur simpan akan diaktifkan pada tahap backend berikutnya"
-                                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-2 text-xs sm:text-sm font-semibold text-white opacity-50 cursor-not-allowed"
+                                        type="submit"
+                                        id="update-shipping-btn"
+                                        class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30"
                                     >
                                         <x-heroicon-o-check class="h-4 w-4" />
-
                                         Simpan Perubahan
                                     </button>
 
@@ -679,7 +670,6 @@
                 </div>
 
             </div>
-
 
             {{-- TIMELINE --}}
             <div>
@@ -774,7 +764,6 @@
 
 </div>
 
-
 <script>
 
 function checkDokuPayment(id)
@@ -819,7 +808,6 @@ function checkDokuPayment(id)
     });
 }
 
-
 function processOrder(id)
 {
     const btn = document.getElementById('process-order-btn');
@@ -861,7 +849,6 @@ function processOrder(id)
 
     });
 }
-
 
 function shipOrder(event, id)
 {
@@ -910,7 +897,6 @@ function shipOrder(event, id)
     });
 }
 
-
 function toggleShippingEdit()
 {
     const display = document.getElementById('shipping-display');
@@ -924,6 +910,68 @@ function toggleShippingEdit()
     form.classList.toggle('hidden');
 }
 
+function updateShipping(event, id)
+{
+    event.preventDefault();
+
+    const form = document.getElementById('edit-shipping-form');
+    const btn = document.getElementById('update-shipping-btn');
+
+    if (!form || !btn) {
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    btn.disabled = true;
+    btn.innerText = 'Menyimpan...';
+
+    fetch(
+        `/admin/transactions/${id}/shipping`,
+        {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'X-HTTP-Method-Override': 'PATCH'
+            },
+            body: formData
+        }
+    )
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw data;
+        }
+
+        return data;
+    })
+    .then(data => {
+        alert(data.message);
+
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => {
+        if (error?.errors) {
+            const firstError = Object.values(error.errors)[0]?.[0];
+
+            alert(firstError ?? error.message ?? 'Gagal memperbarui detail pengiriman.');
+            return;
+        }
+
+        alert(
+            error?.message ??
+            'Terjadi kesalahan saat memperbarui detail pengiriman.'
+        );
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerText = 'Simpan Perubahan';
+    });
+}
 </script>
 
 @endsection

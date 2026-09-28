@@ -121,6 +121,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             ->name('transactions.process');
         Route::patch('/transactions/{transaction}/ship', [TransactionController::class, 'ship'])
             ->name('transactions.ship');
+        Route::patch(
+            '/transactions/{transaction}/shipping',
+            [TransactionController::class, 'updateShipping']
+        )->name('transactions.shipping.update');
         Route::get('/api-logs', [ApiLogController::class, 'index'])->name('api-logs');
     });
 

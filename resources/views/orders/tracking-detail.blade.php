@@ -57,7 +57,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
 
 <section class="bg-slate-50/80 py-6 sm:py-10">
     <x-ui.container>
-        <div class="mx-auto max-w-6xl space-y-4 sm:space-y-6">
+        <div class="mx-auto max-w-6xl space-y-5">
 
             {{-- HEADER / INVOICE CARD --}}
             <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
@@ -70,7 +70,8 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                             {{ $transaction->invoice_number }}
                         </h1>
                         <p class="mt-0.5 text-xs sm:text-sm text-slate-500">
-                            Waktu Transaksi: {{ $transaction->created_at->setTimezone('Asia/Makassar')->format('d M Y, h:i A') }}
+                            Waktu Transaksi:
+                            {{ $transaction->created_at->setTimezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
                         </p>
                     </div>
 
@@ -82,39 +83,114 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                 </div>
             </div>
 
-            {{-- NAVIGATION BUTTONS (SIDE BY SIDE IN MOBILE & DESKTOP) --}}
-            <div class="grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-3">
+            {{-- NAVIGATION BUTTONS --}}
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <a
                     href="{{ route('orders.tracking') }}"
-                    class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl border border-slate-200 bg-white px-3 sm:px-5 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
                 >
-                    <x-heroicon-o-arrow-left class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"/>
-                    <span class="truncate">Cek Pesanan Lain</span>
+                    <x-heroicon-o-arrow-left class="h-4 w-4 shrink-0"/>
+                    <span>Cek Pesanan Lain</span>
                 </a>
 
                 <a
                     href="{{ route('home') }}"
-                    class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-[#AE7C18] px-3 sm:px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-[#8F6514] transition"
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-[#8F6514] transition"
                 >
-                    <x-heroicon-o-home class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"/>
-                    <span class="truncate">Kembali ke Home</span>
+                    <x-heroicon-o-home class="h-4 w-4 shrink-0"/>
+                    <span>Kembali ke Home</span>
                 </a>
             </div>
 
-            {{-- MAIN GRID: LEFT (TIMELINE & PRODUCTS), RIGHT (SUMMARY & CUSTOMER INFO) --}}
+            {{-- MAIN GRID --}}
             <div class="grid gap-6 lg:grid-cols-12 items-start">
 
-                {{-- KOLOM KIRI --}}
+                {{-- =====================================================
+                    KOLOM KIRI (7/12)
+                    1. Rincian Produk
+                    2. Status Pesanan (Timeline)
+                ====================================================== --}}
                 <div class="flex flex-col gap-6 lg:col-span-7">
 
-                    {{-- TIMELINE STATUS --}}
+                    {{-- RINCIAN PRODUK --}}
                     <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
-                        <h2 class="mb-4 text-base font-bold text-slate-900">
+                        <h2 class="mb-4 text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
+                            Rincian Produk
+                        </h2>
+
+                        <div class="divide-y divide-slate-100">
+                            @foreach($transaction->items as $item)
+                                @php
+                                    $product = $item->productVariant?->product;
+                                @endphp
+
+                                <div class="flex gap-3 py-3.5 first:pt-0 last:pb-0 sm:gap-4">
+                                    <div class="h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100 border border-slate-200/60">
+                                        @if($product?->images?->first())
+                                            <img
+                                                src="{{ asset('storage/'.$product->images->first()->image) }}"
+                                                class="h-full w-full object-cover"
+                                            >
+                                        @else
+                                            <div class="flex h-full items-center justify-center text-[10px] text-slate-400">
+                                                No Image
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <div class="flex flex-1 flex-col justify-between">
+                                        <div>
+                                            <p class="text-xs sm:text-sm font-semibold text-slate-900 line-clamp-2">
+                                                {{ $product?->name ?? '-' }}
+                                            </p>
+
+                                            <p class="text-xs text-slate-500 mt-1">
+                                                Ukuran:
+                                                <span class="font-medium text-slate-700">
+                                                    {{ $item->productVariant?->size?->name ?? '-' }}
+                                                </span>
+                                            </p>
+
+                                            @if($item->custom_name || $item->custom_number)
+                                                <div class="mt-1 flex flex-wrap gap-x-3 text-xs">
+                                                    @if($item->custom_name)
+                                                        <span class="text-[#AE7C18] font-medium">
+                                                            Nama Jersey: {{ $item->custom_name }}
+                                                        </span>
+                                                    @endif
+
+                                                    @if($item->custom_number)
+                                                        <span class="text-slate-600 font-medium">
+                                                            No: {{ $item->custom_number }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        <div class="mt-2 flex items-center justify-between text-xs sm:text-sm">
+                                            <span class="text-slate-500">
+                                                {{ $item->qty }} x Rp {{ number_format($item->price ?? ($item->subtotal / $item->qty), 0, ',', '.') }}
+                                            </span>
+
+                                            <span class="font-bold text-slate-900">
+                                                Rp {{ number_format($item->subtotal, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- STATUS PESANAN (TIMELINE) --}}
+                    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
+                        <h2 class="mb-4 text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
                             Status Pesanan
                         </h2>
 
                         <div class="space-y-4">
-                            @forelse($transaction->orderStatusHistories->sortBy('created_at') as $history)
+                            @forelse($transaction->orderStatusHistories->sortByDesc('created_at') as $history)
                                 @php
                                     $status = $statusMap[$history->status] ?? [
                                         'label' => $history->status,
@@ -165,9 +241,9 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                             </p>
                                         @endif
 
-                                        <p class="mt-0.5 text-[11px] text-slate-400">
-                                            {{ $history->created_at->format('d M Y, H:i') }}
-                                        </p>
+                                            <p class="mt-0.5 text-[11px] text-slate-400">
+                                                {{ $history->created_at->copy()->setTimezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
+                                            </p>
                                     </div>
                                 </div>
                             @empty
@@ -178,80 +254,42 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                         </div>
                     </div>
 
-                    {{-- DETAIL PRODUK --}}
-                    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
-                        <h2 class="mb-4 text-base font-bold text-slate-900">
-                            Rincian Produk
-                        </h2>
-
-                        <div class="divide-y divide-slate-100">
-                            @foreach($transaction->items as $item)
-                                @php
-                                    $product = $item->productVariant?->product;
-                                @endphp
-
-                                <div class="flex gap-3 py-3 first:pt-0 last:pb-0 sm:gap-4">
-                                    <div class="h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100 border border-slate-200/60">
-                                        @if($product?->images?->first())
-                                            <img src="{{ asset('storage/'.$product->images->first()->image) }}" class="h-full w-full object-cover">
-                                        @else
-                                            <div class="flex h-full items-center justify-center text-[10px] text-slate-400">
-                                                No Image
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    <div class="flex flex-1 flex-col justify-between">
-                                        <div>
-                                            <p class="text-xs sm:text-sm font-semibold text-slate-900 line-clamp-2">
-                                                {{ $product?->name ?? '-' }}
-                                            </p>
-                                            <p class="text-xs text-slate-500 mt-0.5">
-                                                Ukuran: <span class="font-medium text-slate-700">{{ $item->productVariant?->size?->name ?? '-' }}</span>
-                                            </p>
-
-                                            @if($item->custom_name || $item->custom_number)
-                                                <div class="mt-1 flex flex-wrap gap-x-3 text-xs">
-                                                    @if($item->custom_name)
-                                                        <span class="text-[#AE7C18] font-medium">
-                                                            Nama Jersey: {{ $item->custom_name }}
-                                                        </span>
-                                                    @endif
-                                                    @if($item->custom_number)
-                                                        <span class="text-slate-600 font-medium">
-                                                            No: {{ $item->custom_number }}
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            @endif
-                                        </div>
-
-                                        <div class="mt-2 flex items-center justify-between text-xs sm:text-sm">
-                                            <span class="text-slate-500">{{ $item->qty }} x Rp {{ number_format($item->price ?? ($item->subtotal / $item->qty), 0, ',', '.') }}</span>
-                                            <span class="font-bold text-slate-900">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-
                 </div>
 
-                {{-- KOLOM KANAN --}}
-                <div class="flex flex-col gap-6 lg:col-span-5 h-full">
 
-                    {{-- INFORMASI PELANGGAN & PENGIRIMAN --}}
-                    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
-                        <div class="mb-3.5 flex items-center gap-2.5">
+                {{-- =====================================================
+                    KOLOM KANAN (5/12)
+                    1. Pengiriman (Gabungan Alamat & Resi Kurir)
+                    2. Ringkasan Pembayaran
+                ====================================================== --}}
+                <div class="flex flex-col gap-6 lg:col-span-5">
+
+                    {{-- INFORMASI & DETAIL PENGIRIMAN (DIBUAT TERPADU) --}}
+                    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm space-y-4">
+                        <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
                             <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#AE7C18]/10 text-[#AE7C18]">
-                                <x-heroicon-o-user class="h-4 w-4"/>
+                                <x-heroicon-o-truck class="h-4 w-4"/>
                             </div>
                             <h2 class="text-base font-bold text-slate-900">
-                                Informasi Pengiriman
+                                Pengiriman
                             </h2>
                         </div>
 
+                        {{-- DETAIL RESI (JIKA TERSEDIA) --}}
+                        @if(in_array($transaction->status, ['ORDER_SHIPPED', 'ORDER_COMPLETED'], true))
+                            <div class="rounded-xl bg-slate-50 p-3.5 space-y-2 text-xs sm:text-sm border border-slate-200/60">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-500">Kurir Express</span>
+                                    <span class="font-bold text-slate-900">{{ $transaction->courier ?? $transaction->shipping_method ?? '-' }}</span>
+                                </div>
+                                <div class="flex justify-between items-center border-t border-slate-200/60 pt-2">
+                                    <span class="text-slate-500">Nomor Resi</span>
+                                    <span class="font-mono font-semibold text-slate-900 break-all">{{ $transaction->tracking_number ?? '-' }}</span>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- DETAIL ALAMAT --}}
                         <div class="space-y-3 text-xs sm:text-sm">
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Penerima</p>
@@ -268,7 +306,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                     </p>
                                 </div>
                                 <div>
-                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Kurir / Metode</p>
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Metode Layanan</p>
                                     <p class="mt-0.5 font-medium text-slate-800">
                                         {{ $transaction->shipping_method ?? '-' }}
                                     </p>
@@ -294,70 +332,35 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                         </div>
                     </div>
 
-                    {{-- DETAIL PENGIRIMAN --}}
-                    @if(in_array($transaction->status, ['ORDER_SHIPPED', 'ORDER_COMPLETED'], true))
-                        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
-                            <div class="mb-3.5 flex items-center gap-2.5">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                                    <x-heroicon-o-truck class="h-4 w-4"/>
-                                </div>
-
-                                <h2 class="text-base font-bold text-slate-900">
-                                    Detail Pengiriman
-                                </h2>
-                            </div>
-
-                            <div class="space-y-3 text-xs sm:text-sm">
-                                <div class="flex items-start justify-between gap-4">
-                                    <span class="text-slate-500">
-                                        Kurir
-                                    </span>
-
-                                    <span class="text-right font-semibold text-slate-900">
-                                        {{ $transaction->courier ?? '-' }}
-                                    </span>
-                                </div>
-
-                                <div class="flex items-start justify-between gap-4 border-t border-slate-100 pt-3">
-                                    <span class="text-slate-500">
-                                        Nomor Resi
-                                    </span>
-
-                                    <span class="text-right font-semibold text-slate-900 break-all">
-                                        {{ $transaction->tracking_number ?? '-' }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
                     {{-- RINGKASAN PEMBAYARAN --}}
                     <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
-                        <h2 class="mb-4 text-base font-bold text-slate-900">
+                        <h2 class="mb-4 text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
                             Ringkasan Pembayaran
                         </h2>
 
                         <div class="space-y-2.5 text-xs sm:text-sm">
-                            <div class="flex justify-between text-slate-600">
+                            <div class="flex justify-between gap-3 text-slate-600">
                                 <span>Subtotal Produk</span>
-                                <span class="font-medium text-slate-900">Rp {{ number_format($transaction->subtotal, 0, ',', '.') }}</span>
+                                <span class="font-medium text-slate-900 text-right">
+                                    Rp {{ number_format($transaction->subtotal, 0, ',', '.') }}
+                                </span>
                             </div>
 
-                            <div class="flex justify-between text-slate-600">
+                            <div class="flex justify-between gap-3 text-slate-600">
                                 <span>Biaya Pengiriman</span>
-                                <span class="font-medium text-slate-900">Rp {{ number_format($transaction->shipping, 0, ',', '.') }}</span>
+                                <span class="font-medium text-slate-900 text-right">
+                                    Rp {{ number_format($transaction->shipping, 0, ',', '.') }}
+                                </span>
                             </div>
 
-                            <div class="border-t border-slate-100 pt-3 mt-3 flex items-center justify-between">
+                            <div class="border-t border-slate-100 pt-3 mt-3 flex items-center justify-between gap-3">
                                 <span class="font-bold text-slate-900 text-sm sm:text-base">Total Bayar</span>
-                                <span class="text-base sm:text-lg font-extrabold text-[#AE7C18]">
+                                <span class="text-base sm:text-lg font-extrabold text-[#AE7C18] text-right">
                                     Rp {{ number_format($transaction->total, 0, ',', '.') }}
                                 </span>
                             </div>
                         </div>
                     </div>
-
-
 
                 </div>
 

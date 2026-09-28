@@ -12,12 +12,14 @@ use App\Models\StockMovement;
 use App\Services\DokuService;
 use App\Services\InventoryStockService;
 use App\Services\TransactionPaymentService;
+use App\Mail\OrderShippedMail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Mail;
 
 class TransactionController extends Controller
 {
@@ -545,6 +547,125 @@ class TransactionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal membatalkan transaksi.',
+            ], 500);
+        }
+    }
+
+    public function process(Transaction $transaction)
+    {
+        try {
+            $processedTransaction = DB::transaction(function () use ($transaction) {
+                $lockedTransaction = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($lockedTransaction->status !== 'PAID') {
+                    throw ValidationException::withMessages([
+                        'transaction' => 'Hanya pesanan dengan status PAID yang dapat diproses.',
+                    ]);
+                }
+
+                $lockedTransaction->updateStatus(
+                    'ORDER_PROCESSING',
+                    'Pesanan mulai diproses oleh admin.'
+                );
+
+                return $lockedTransaction->fresh();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesanan berhasil diproses.',
+                'data' => [
+                    'id' => $processedTransaction->id,
+                    'status' => $processedTransaction->status,
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses pesanan.',
+            ], 500);
+        }
+    }
+
+    public function ship(Request $request, Transaction $transaction)
+    {
+        $validated = $request->validate([
+            'courier' => ['required', 'string', 'max:100'],
+            'tracking_number' => ['required', 'string', 'max:100'],
+        ], [
+            'courier.required' => 'Kurir wajib diisi.',
+            'tracking_number.required' => 'Nomor resi wajib diisi.',
+        ]);
+
+        try {
+            $shippedTransaction = DB::transaction(function () use (
+                $transaction,
+                $validated
+            ) {
+                $lockedTransaction = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($lockedTransaction->status !== 'ORDER_PROCESSING') {
+                    throw ValidationException::withMessages([
+                        'transaction' => 'Hanya pesanan dengan status ORDER_PROCESSING yang dapat dikirim.',
+                    ]);
+                }
+
+                $lockedTransaction->update([
+                    'courier' => trim($validated['courier']),
+                    'tracking_number' => trim($validated['tracking_number']),
+                ]);
+
+                $lockedTransaction->updateStatus(
+                    'ORDER_SHIPPED',
+                    'Pesanan telah dikirim oleh admin.'
+                );
+
+                return $lockedTransaction->fresh();
+            });
+
+            try {
+                Mail::to($shippedTransaction->shipping_email)
+                    ->send(new OrderShippedMail($shippedTransaction));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesanan berhasil ditandai sebagai dikirim.',
+                'data' => [
+                    'id' => $shippedTransaction->id,
+                    'status' => $shippedTransaction->status,
+                    'courier' => $shippedTransaction->courier,
+                    'tracking_number' => $shippedTransaction->tracking_number,
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menandai pesanan sebagai dikirim.',
             ], 500);
         }
     }

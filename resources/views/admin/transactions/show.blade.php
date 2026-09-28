@@ -66,6 +66,19 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? [
 
         <div class="flex items-center gap-2 sm:gap-3">
 
+            @if($transaction->status === 'PAID')
+                <button
+                    type="button"
+                    onclick="processOrder('{{ $transaction->id }}')"
+                    id="process-order-btn"
+                    class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-amber-700">
+
+                    <x-heroicon-o-cog-6-tooth class="h-4 w-4" />
+
+                    Proses Pesanan
+                </button>
+            @endif
+
             @if(
                 $transaction->payment_method === 'VA'
                 && $transaction->status === 'PENDING'
@@ -272,6 +285,84 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? [
                 </div>
             </div>
 
+            {{-- SHIPPING --}}
+            @if(in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED'], true))
+                <div class="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+                    <div class="mb-4 flex items-center gap-2.5 sm:gap-3">
+                        <div class="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#AE7C18]/10 text-[#AE7C18]">
+                            <x-heroicon-o-truck class="h-4 w-4 sm:h-5 sm:w-5" />
+                        </div>
+
+                        <h2 class="font-bold text-slate-900 text-sm sm:text-base">
+                            Pengiriman
+                        </h2>
+                    </div>
+
+                    @if($transaction->status === 'ORDER_PROCESSING')
+                        <form
+                            id="ship-order-form"
+                            onsubmit="shipOrder(event, '{{ $transaction->id }}')"
+                            class="space-y-3"
+                        >
+                            <div>
+                                <label class="mb-1 block text-xs font-medium text-slate-600">
+                                    Kurir
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="courier"
+                                    required
+                                    maxlength="100"
+                                    placeholder="Contoh: JNE, J&T, SiCepat"
+                                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#AE7C18] focus:ring-1 focus:ring-[#AE7C18]"
+                                >
+                            </div>
+
+                            <div>
+                                <label class="mb-1 block text-xs font-medium text-slate-600">
+                                    Nomor Resi
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="tracking_number"
+                                    required
+                                    maxlength="100"
+                                    placeholder="Masukkan nomor resi"
+                                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#AE7C18] focus:ring-1 focus:ring-[#AE7C18]"
+                                >
+                            </div>
+
+                            <button
+                                type="submit"
+                                id="ship-order-btn"
+                                class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-indigo-700"
+                            >
+                                <x-heroicon-o-truck class="h-4 w-4" />
+                                Tandai Sudah Dikirim
+                            </button>
+                        </form>
+                    @else
+                        <div class="space-y-3 text-xs sm:text-sm">
+                            <div class="flex justify-between gap-4">
+                                <span class="text-slate-500">Kurir</span>
+                                <span class="font-bold text-slate-900 text-right">
+                                    {{ $transaction->courier ?? '-' }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between gap-4">
+                                <span class="text-slate-500">Nomor Resi</span>
+                                <span class="font-bold text-slate-900 text-right break-all">
+                                    {{ $transaction->tracking_number ?? '-' }}
+                                </span>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
             {{-- TIMELINE STATUS --}}
             <div class="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                 <h2 class="mb-4 sm:mb-6 font-bold text-slate-900 text-sm sm:text-base">Timeline Status</h2>
@@ -368,6 +459,89 @@ function checkDokuPayment(id)
 
     });
 
+}
+
+function processOrder(id)
+{
+    const btn = document.getElementById('process-order-btn');
+
+    if (!btn) {
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = 'Memproses...';
+
+    fetch(
+        `/admin/transactions/${id}/process`,
+        {
+            method: 'PATCH',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        }
+    )
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(() => {
+        alert('Terjadi kesalahan.');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerText = 'Proses Pesanan';
+    });
+}
+
+function shipOrder(event, id)
+{
+    event.preventDefault();
+
+    const form = document.getElementById('ship-order-form');
+    const btn = document.getElementById('ship-order-btn');
+
+    if (!form || !btn) {
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    btn.disabled = true;
+    btn.innerText = 'Memproses...';
+
+    fetch(
+        `/admin/transactions/${id}/ship`,
+        {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'X-HTTP-Method-Override': 'PATCH'
+            },
+            body: formData
+        }
+    )
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(() => {
+        alert('Terjadi kesalahan.');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerText = 'Tandai Sudah Dikirim';
+    });
 }
 
 </script>

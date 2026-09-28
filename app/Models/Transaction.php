@@ -41,6 +41,8 @@ class Transaction extends Model
         'shipping_province',
         'shipping_postal_code',
         'shipping_method',
+        'courier',
+        'tracking_number',
     ];
 
     protected $casts = [

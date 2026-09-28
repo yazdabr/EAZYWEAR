@@ -74,7 +74,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     Route::middleware('role:super_admin')->group(function () {
         Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
-
         Route::resource('products', ProductController::class)->names([
             'index' => 'products',
             'create' => 'products.create',
@@ -84,9 +83,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'update' => 'products.update',
             'destroy' => 'products.destroy',
         ]);
-
         Route::get('/categories/search', [CategoryController::class, 'search'])->name('categories.search');
-
         Route::resource('categories', CategoryController::class)->names([
             'index' => 'categories',
             'create' => 'categories.create',
@@ -96,7 +93,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'update' => 'categories.update',
             'destroy' => 'categories.destroy',
         ]);
-
         Route::resource('sizes', SizeController::class)->names([
             'index' => 'sizes',
             'create' => 'sizes.create',
@@ -106,7 +102,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'update' => 'sizes.update',
             'destroy' => 'sizes.destroy',
         ]);
-
         Route::get('/transactions/create', [TransactionController::class, 'create'])->name('transactions.create');
         Route::get('/transactions/customer-search', [TransactionController::class, 'customerSearch'])->name('transactions.customer-search');
         Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
@@ -122,7 +117,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             '/transactions/{transaction}',
             [TransactionController::class,'show']
         )->name('transactions.show');
-
+        Route::patch('/transactions/{transaction}/process', [TransactionController::class, 'process'])
+            ->name('transactions.process');
+        Route::patch('/transactions/{transaction}/ship', [TransactionController::class, 'ship'])
+            ->name('transactions.ship');
         Route::get('/api-logs', [ApiLogController::class, 'index'])->name('api-logs');
     });
 

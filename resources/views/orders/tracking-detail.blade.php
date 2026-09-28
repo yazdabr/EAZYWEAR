@@ -294,6 +294,43 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                         </div>
                     </div>
 
+                    {{-- DETAIL PENGIRIMAN --}}
+                    @if(in_array($transaction->status, ['ORDER_SHIPPED', 'ORDER_COMPLETED'], true))
+                        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
+                            <div class="mb-3.5 flex items-center gap-2.5">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                                    <x-heroicon-o-truck class="h-4 w-4"/>
+                                </div>
+
+                                <h2 class="text-base font-bold text-slate-900">
+                                    Detail Pengiriman
+                                </h2>
+                            </div>
+
+                            <div class="space-y-3 text-xs sm:text-sm">
+                                <div class="flex items-start justify-between gap-4">
+                                    <span class="text-slate-500">
+                                        Kurir
+                                    </span>
+
+                                    <span class="text-right font-semibold text-slate-900">
+                                        {{ $transaction->courier ?? '-' }}
+                                    </span>
+                                </div>
+
+                                <div class="flex items-start justify-between gap-4 border-t border-slate-100 pt-3">
+                                    <span class="text-slate-500">
+                                        Nomor Resi
+                                    </span>
+
+                                    <span class="text-right font-semibold text-slate-900 break-all">
+                                        {{ $transaction->tracking_number ?? '-' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- RINGKASAN PEMBAYARAN --}}
                     <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
                         <h2 class="mb-4 text-base font-bold text-slate-900">

@@ -6,7 +6,7 @@
     form:{
         id:'',name:'',category_id:'',product_code:'{{ $nextProductCode }}',description:'',material:'',price:'',stock:'',status:'Aktif',image:'',gallery:[],size_ids:[],
         variants:{
-            @foreach($sizes as $size)'{{ $size->id }}':{price:'',stock:''},@endforeach
+            @foreach($sizes as $size)'{{ $size->id }}':{price:'',stock:'',weight:''},@endforeach
         }
     },
     normalizeVariants(data){
@@ -16,12 +16,20 @@
             data.forEach(v=>{
                 if(!v||v.size_id===undefined||v.size_id===null)return;
                 const id=String(v.size_id);
-                result[id]={price:v.price!==undefined&&v.price!==null?parseInt(v.price):'',stock:v.stock!==undefined&&v.stock!==null?parseInt(v.stock):(v.inventory?.stock!==undefined?parseInt(v.inventory.stock):'')};
+                result[id]={price:v.price!==undefined&&v.price!==null?parseInt(v.price):'',stock:v.stock!==undefined&&v.stock!==null?parseInt(v.stock):(v.inventory?.stock!==undefined?parseInt(v.inventory.stock):''),weight:v.weight!==undefined&&v.weight!==null?parseInt(v.weight):''};
             });
         }else if(typeof data==='object'){
             Object.keys(data).forEach(id=>{
                 const v=data[id]||{};
-                result[String(id)]={price:v.price!==undefined&&v.price!==null?parseInt(v.price):'',stock:v.stock!==undefined&&v.stock!==null?parseInt(v.stock):(v.inventory?.stock!==undefined?parseInt(v.inventory.stock):'')};
+                result[String(id)]={
+                    price:v.price!==undefined&&v.price!==null?parseInt(v.price):'',
+                    stock:v.stock!==undefined&&v.stock!==null
+                        ?parseInt(v.stock)
+                        :(v.inventory?.stock!==undefined?parseInt(v.inventory.stock):''),
+                    weight:v.weight!==undefined&&v.weight!==null&&v.weight!==''
+                        ?parseInt(v.weight)
+                        :''
+                };
             });
         }
         return result;
@@ -35,8 +43,8 @@
     },
     syncVariants(){
         @foreach($sizes as $size)
-            if(!this.form.variants['{{ $size->id }}'])this.form.variants['{{ $size->id }}']={price:'',stock:''};
-            else{this.form.variants['{{ $size->id }}'].price??='';this.form.variants['{{ $size->id }}'].stock??='';}
+            if(!this.form.variants['{{ $size->id }}'])this.form.variants['{{ $size->id }}']={price:'',stock:'',weight:''};
+            else{this.form.variants['{{ $size->id }}'].price??='';this.form.variants['{{ $size->id }}'].stock??='';this.form.variants['{{ $size->id }}'].weight??='';}
         @endforeach
     },
     validateForm(){
@@ -51,6 +59,17 @@
             if(!variant){this.errors['variants.'+id]='Data ukuran belum lengkap.';return;}
             if(variant.price===''||variant.price===null||variant.price===undefined)this.errors['variants.'+id+'.price']='Harga ukuran wajib diisi.';
             if(variant.stock===''||variant.stock===null||variant.stock===undefined)this.errors['variants.'+id+'.stock']='Stok ukuran wajib diisi.';
+            if(
+                variant.weight!=='' &&
+                variant.weight!==null &&
+                variant.weight!==undefined &&
+                (
+                    !Number.isInteger(Number(variant.weight)) ||
+                    Number(variant.weight)<1
+                )
+            ){
+                this.errors['variants.'+id+'.weight']='Berat harus berupa angka bulat minimal 1 gram.';
+            }
         });
         if(Object.keys(this.errors).length>0){
             window.dispatchEvent(new CustomEvent('toast',{detail:{type:'error',title:'Data Belum Lengkap',message:'Mohon lengkapi data produk terlebih dahulu.'}}));
@@ -100,7 +119,7 @@
             image:'',
             gallery:[],
             size_ids:[],
-            variants:{@foreach($sizes as $size)'{{ $size->id }}':{price:'',stock:''},@endforeach}
+            variants:{@foreach($sizes as $size)'{{ $size->id }}':{price:'',stock:'',weight:''},@endforeach}
         };
         this.open=true;
         this.$nextTick(()=>window.dispatchEvent(new CustomEvent('product-gallery-update',{detail:{images:[]}})));
@@ -229,8 +248,10 @@
                 <div class="mb-4 flex items-start gap-3 sm:mb-6 sm:gap-4">
                     <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 sm:h-11 sm:w-11"><x-heroicon-o-banknotes class="h-5 w-5 text-emerald-600" /></div>
                     <div>
-                        <h3 class="text-base font-semibold text-slate-900">Harga & Stok per Ukuran</h3>
-                        <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">Atur harga dan stok untuk setiap ukuran produk.</p>
+                        <h3 class="text-base font-semibold text-slate-900">Harga, Stok & Berat per Ukuran</h3>
+                        <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">
+                            Atur harga, stok, dan berat untuk setiap ukuran produk.
+                        </p>
                     </div>
                 </div>
                 <div x-show="form.size_ids.length === 0" x-cloak class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center">
@@ -251,7 +272,7 @@
                                 </div>
                                 <span class="rounded-lg bg-[#AE7C18]/10 px-2.5 py-1 text-xs font-semibold text-[#AE7C18]">{{ $size->name }}</span>
                             </div>
-                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                 <div>
                                     <label for="variant-price-{{ $size->id }}" class="mb-2 block text-sm font-medium text-slate-700">Harga</label>
                                     <div class="relative">
@@ -265,7 +286,41 @@
                                     <label for="variant-stock-{{ $size->id }}" class="mb-2 block text-sm font-medium text-slate-700">Stok</label>
                                     <input id="variant-stock-{{ $size->id }}" type="number" min="0" step="1" x-model="form.variants['{{ $size->id }}'].stock" name="variants[{{ $size->id }}][stock]" placeholder="0" class="h-[50px] w-full rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20" :class="errors['variants.{{ $size->id }}.stock'] ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : ''">
                                     <template x-if="errors['variants.{{ $size->id }}.stock']"><p class="mt-1.5 text-xs text-red-500" x-text="errors['variants.{{ $size->id }}.stock']"></p></template>
-                                    <p class="mt-1.5 text-xs text-slate-400">Stok tersedia ukuran {{ $size->name }}.</p>
+                                    <p class="mt-1.5 text-xs text-slate-400">Stok ukuran {{ $size->name }}.</p>
+                                </div>
+                                <div>
+                                    <label for="variant-weight-{{ $size->id }}" class="mb-2 block text-sm font-medium text-slate-700">
+                                        Berat
+                                    </label>
+
+                                    <div class="relative">
+                                        <input
+                                            id="variant-weight-{{ $size->id }}"
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            x-model="form.variants['{{ $size->id }}'].weight"
+                                            name="variants[{{ $size->id }}][weight]"
+                                            placeholder="0"
+                                            class="h-[50px] w-full rounded-xl border border-slate-200 bg-white px-4 pr-16 text-sm font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+                                            :class="errors['variants.{{ $size->id }}.weight'] ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10' : ''"
+                                        >
+
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-sm font-semibold text-slate-500">
+                                            gram
+                                        </span>
+                                    </div>
+
+                                    <template x-if="errors['variants.{{ $size->id }}.weight']">
+                                        <p
+                                            class="mt-1.5 text-xs text-red-500"
+                                            x-text="errors['variants.{{ $size->id }}.weight']"
+                                        ></p>
+                                    </template>
+
+                                    <p class="mt-1.5 text-xs text-slate-400">
+                                        Berat produk per pcs.
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -276,7 +331,9 @@
                         <x-heroicon-o-information-circle class="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
                         <div>
                             <p class="text-xs font-semibold text-blue-700">Harga & stok disimpan per ukuran</p>
-                            <p class="mt-1 text-xs leading-5 text-blue-600">Setiap ukuran memiliki harga dan stok masing-masing. Perubahan harga atau stok tidak memengaruhi ukuran lainnya.</p>
+                            <p class="mt-1 text-xs leading-5 text-blue-600">
+                                Setiap ukuran memiliki harga, stok, dan berat masing-masing. Berat digunakan sebagai data dasar untuk perhitungan pengiriman.
+                            </p>
                         </div>
                     </div>
                 </div>

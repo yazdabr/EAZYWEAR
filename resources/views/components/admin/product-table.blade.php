@@ -95,6 +95,7 @@
                     'name' => $variant->size?->name ?? '',
                     'price' => (int) ($variant->price ?? 0),
                     'stock' => (int) ($variant->inventory?->stock ?? 0),
+                    'weight' => $variant->weight !== null ? (int) $variant->weight : null,
                 ];
             }
 

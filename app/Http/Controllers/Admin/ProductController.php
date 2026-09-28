@@ -57,6 +57,7 @@ class ProductController extends Controller
                             'size_name' => $variant->size?->name ?? '',
                             'price' => (int) $variant->price,
                             'stock' => (int) ($variant->inventory?->stock ?? 0),
+                            'weight' => $variant->weight !== null ? (int) $variant->weight : null,
                         ]
                     ];
                 })
@@ -153,6 +154,7 @@ class ProductController extends Controller
                 'variants' => ['required', 'array', 'min:1'],
                 'variants.*.price' => ['required', 'numeric', 'min:0'],
                 'variants.*.stock' => ['required', 'integer', 'min:0'],
+                'variants.*.weight' => ['nullable', 'integer', 'min:1'],
             ], [
                 'product_code.required' => 'Kode produk wajib diisi.',
                 'product_code.unique' => 'Kode produk sudah digunakan.',
@@ -229,6 +231,7 @@ class ProductController extends Controller
                         'color_id' => $color->id,
                         'sku' => $sku,
                         'price' => $variantData['price'],
+                        'weight' => $variantData['weight'] ?? null,
                     ]);
 
                     Inventory::create([
@@ -314,6 +317,7 @@ class ProductController extends Controller
             'variants' => ['required', 'array', 'min:1'],
             'variants.*.price' => ['required', 'numeric', 'min:0'],
             'variants.*.stock' => ['required', 'integer', 'min:0'],
+            'variants.*.weight' => ['nullable', 'integer', 'min:1'],
         ], [
             'product_code.required' => 'Kode produk wajib diisi.',
             'product_code.unique' => 'Kode produk sudah digunakan.',
@@ -402,6 +406,7 @@ class ProductController extends Controller
                         'color_id' => $variant->color_id ?: $color->id,
                         'sku' => $sku,
                         'price' => $variantData['price'],
+                        'weight' => $variantData['weight'] ?? null,
                     ]);
 
                     if ($variant->inventory) {
@@ -420,6 +425,7 @@ class ProductController extends Controller
                         'color_id' => $color->id,
                         'sku' => $sku,
                         'price' => $variantData['price'],
+                        'weight' => $variantData['weight'] ?? null,
                     ]);
 
                     Inventory::create([

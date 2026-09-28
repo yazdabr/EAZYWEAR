@@ -16,10 +16,12 @@ class ProductVariant extends Model
         'color_id',
         'sku',
         'price',
+        'weight',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'weight' => 'integer',
     ];
 
     public function product(): BelongsTo

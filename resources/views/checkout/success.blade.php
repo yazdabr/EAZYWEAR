@@ -179,7 +179,7 @@
                                         {{ $transaction->va_expired_at
                                             ->copy()
                                             ->setTimezone('Asia/Makassar')
-                                            ->format('d M Y, h:i A')
+                                            ->format('d M Y, H:i') . ' WITA'
                                         }}
                                     </span>
                                 </div>

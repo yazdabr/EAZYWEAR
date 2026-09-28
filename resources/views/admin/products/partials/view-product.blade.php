@@ -230,7 +230,23 @@ x-on:open-view-product.window="openView($event.detail)"
 
                                     <div>
                                         <p class="text-xs font-semibold text-slate-800" x-text="product.variants[String(sizeId)]?.name || ('Ukuran ' + sizeId)"></p>
-                                        <p class="text-[11px] text-slate-400">Stok: <span class="font-medium text-slate-700" x-text="product.variants[String(sizeId)]?.stock ?? 0"></span></p>
+                                        <p class="text-[11px] text-slate-400">
+                                            Stok:
+                                            <span
+                                                class="font-medium text-slate-700"
+                                                x-text="product.variants[String(sizeId)]?.stock ?? 0"
+                                            ></span>
+                                            <span class="mx-1 text-slate-300">•</span>
+                                            Berat:
+                                            <span
+                                                class="font-medium text-slate-700"
+                                                x-text="
+                                                    product.variants[String(sizeId)]?.weight
+                                                        ? Number(product.variants[String(sizeId)].weight).toLocaleString('id-ID') + ' gram'
+                                                        : '-'
+                                                "
+                                            ></span>
+                                        </p>
                                     </div>
                                 </div>
 

@@ -59,6 +59,16 @@ class CheckoutController extends Controller
             'shipping_city' => ['required', 'string', 'max:100'],
             'shipping_province' => ['required', 'string', 'max:100'],
             'shipping_postal_code' => ['required', 'string', 'max:10'],
+            'shipping_latitude' => [
+                'nullable',
+                'numeric',
+                'between:-90,90',
+            ],
+            'shipping_longitude' => [
+                'nullable',
+                'numeric',
+                'between:-180,180',
+            ],
             'shipping_method' => ['required', 'string', Rule::in(['Kurir', 'Ambil di Tempat'])],
             'payment_method' => ['required', 'string', Rule::in(['VA'])],
         ]);
@@ -195,6 +205,8 @@ class CheckoutController extends Controller
                     'shipping_city' => $validated['shipping_city'],
                     'shipping_province' => $validated['shipping_province'],
                     'shipping_postal_code' => $validated['shipping_postal_code'],
+                    'shipping_latitude' => $validated['shipping_latitude'] ?? null,
+                    'shipping_longitude' => $validated['shipping_longitude'] ?? null,
                     'shipping_method' => $validated['shipping_method'],
                 ]);
 

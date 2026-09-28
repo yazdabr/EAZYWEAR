@@ -40,6 +40,8 @@ class Transaction extends Model
         'shipping_city',
         'shipping_province',
         'shipping_postal_code',
+        'shipping_latitude',
+        'shipping_longitude',
         'shipping_method',
         'courier',
         'tracking_number',
@@ -49,12 +51,12 @@ class Transaction extends Model
         'transaction_date' => 'datetime',
         'va_expired_at' => 'datetime',
         'paid_at' => 'datetime',
-
         'subtotal' => 'decimal:2',
         'discount' => 'decimal:2',
         'shipping' => 'decimal:2',
         'total' => 'decimal:2',
-
+        'shipping_latitude' => 'decimal:7',
+        'shipping_longitude' => 'decimal:7',
         'doku_response' => 'array',
     ];
 

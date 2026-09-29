@@ -455,15 +455,24 @@
 
                     logo.onerror = function () {
                         logoWrapper.innerHTML = '';
+
                         const fallback = document.createElement('span');
                         fallback.className = 'text-[10px] font-bold text-gray-500';
-                        fallback.textContent = (rate.courier_name || rate.courier_code || 'Kurir').substring(0, 3).toUpperCase();
+                        fallback.textContent = (rate.courier_name || rate.courier_code || 'Kurir')
+                            .substring(0, 3)
+                            .toUpperCase();
+
                         logoWrapper.appendChild(fallback);
                     };
+
+                    logoWrapper.appendChild(logo);
                 } else {
                     const fallback = document.createElement('span');
                     fallback.className = 'text-[10px] font-bold text-gray-500';
-                    fallback.textContent = (rate.courier_name || rate.courier_code || 'Kurir').substring(0, 3).toUpperCase();
+                    fallback.textContent = (rate.courier_name || rate.courier_code || 'Kurir')
+                        .substring(0, 3)
+                        .toUpperCase();
+
                     logoWrapper.appendChild(fallback);
                 }
 

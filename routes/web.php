@@ -28,6 +28,8 @@ Route::delete('/cart/{key}', [CartController::class, 'remove'])->name('cart.remo
 Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::post('/checkout/shipping-rates', [CheckoutController::class, 'shippingRates'])
+    ->name('checkout.shipping-rates');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
 

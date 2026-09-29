@@ -8,9 +8,11 @@ use App\Models\ProductVariant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\OrderStatusHistory;
+use App\Services\BiteshipService;
 use App\Services\DokuService;
 use App\Mail\OrderCreatedMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +24,107 @@ use RuntimeException;
 
 class CheckoutController extends Controller
 {
+    public function shippingRates(
+        Request $request,
+        BiteshipService $biteshipService
+    ): JsonResponse {
+        $validated = $request->validate([
+            'shipping_postal_code' => ['required', 'string', 'max:10'],
+            'shipping_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'shipping_longitude' => ['nullable', 'numeric', 'between:-180,180'],
+        ]);
+
+        $cart = collect($request->session()->get('cart', []));
+
+        if ($cart->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Keranjang masih kosong.',
+            ], 422);
+        }
+
+        try {
+            $items = [];
+
+            foreach ($cart as $cartItem) {
+                $variantId = (int) ($cartItem['variant_id'] ?? 0);
+                $qty = (int) ($cartItem['qty'] ?? 0);
+
+                if ($variantId <= 0 || $qty <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Data keranjang tidak valid.',
+                    ], 422);
+                }
+
+                $variant = ProductVariant::query()
+                    ->with('product')
+                    ->find($variantId);
+
+                if (
+                    ! $variant ||
+                    ! $variant->product ||
+                    ! $variant->product->status
+                ) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Salah satu produk di keranjang sudah tidak tersedia.',
+                    ], 422);
+                }
+
+                if (
+                    $variant->weight === null ||
+                    (float) $variant->weight <= 0
+                ) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Berat produk {$variant->product->name} belum tersedia. Ongkir belum dapat dihitung.",
+                    ], 422);
+                }
+
+                $items[] = [
+                    'name' => $variant->product->name,
+                    'value' => (int) round((float) $variant->price),
+                    'quantity' => $qty,
+                    'weight' => (int) round((float) $variant->weight),
+                ];
+            }
+
+            $result = $biteshipService->getCourierRates([
+                'destination_postal_code' => $validated['shipping_postal_code'],
+                'destination_latitude' => $validated['shipping_latitude'] ?? null,
+                'destination_longitude' => $validated['shipping_longitude'] ?? null,
+                'items' => $items,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $result['rates'] ?? [],
+            ]);
+        } catch (\RuntimeException $e) {
+            if ($e->getCode() >= 400 && $e->getCode() < 600) {
+                report($e);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Layanan pengiriman sedang tidak dapat digunakan. Silakan coba lagi.',
+                ], 502);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil pilihan pengiriman. Silakan coba lagi.',
+            ], 500);
+        }
+    }
+
     public function index(Request $request): View|RedirectResponse
     {
         $cart = collect($request->session()->get('cart', []));

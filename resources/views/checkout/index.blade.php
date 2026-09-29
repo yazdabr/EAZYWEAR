@@ -484,17 +484,6 @@
                 serviceWrapper.appendChild(logoWrapper);
                 serviceWrapper.appendChild(serviceContent);
 
-                const courierName = document.createElement('p');
-                courierName.className = 'text-xs font-semibold text-slate-900 sm:text-sm';
-                courierName.textContent = rate.courier_name || rate.courier_code || 'Kurir';
-
-                const serviceName = document.createElement('p');
-                serviceName.className = 'mt-0.5 text-[10px] font-medium text-gray-500 sm:text-xs';
-                serviceName.textContent = rate.service_name || rate.service_code || 'Layanan';
-
-                serviceWrapper.appendChild(courierName);
-                serviceWrapper.appendChild(serviceName);
-
                 const price = document.createElement('p');
                 price.className = 'shrink-0 text-xs font-bold text-[#AE7C18] sm:text-sm';
                 price.textContent = formatRupiah(rate.price);

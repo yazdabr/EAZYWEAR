@@ -3,7 +3,6 @@
 @section('content')
 <section class="bg-gray-50 py-5 sm:py-10 lg:py-12">
     <x-ui.container>
-        {{-- Header --}}
         <div class="mb-5 sm:mb-7">
             <a href="{{ route('cart.index') }}" class="inline-flex items-center gap-2 text-xs font-semibold text-gray-500 transition hover:text-[#AE7C18] sm:text-sm">
                 <x-heroicon-o-arrow-left class="h-4 w-4"/>
@@ -33,11 +32,8 @@
 
         <form method="POST" action="{{ route('checkout.store') }}" id="checkout-form">
             @csrf
-            {{-- Wrapper Utama Mobile & Desktop --}}
             <div class="flex flex-col gap-5 lg:grid lg:grid-cols-3 lg:items-start lg:gap-6">
-                {{-- FORM KIRI --}}
-                <div class="order-2 space-y-4 lg:order-1 lg:col-span-2">
-                    {{-- Customer Information --}}
+                <div class="order-1 space-y-4 lg:order-1 lg:col-span-2">
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
                         <div class="mb-4">
                             <h2 class="text-base font-bold text-slate-900 sm:text-lg">Data Pemesan</h2>
@@ -59,20 +55,17 @@
                         </div>
                     </div>
 
-                    {{-- Shipping Address --}}
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
                         <div class="mb-4">
                             <h2 class="text-base font-bold text-slate-900 sm:text-lg">Alamat Pengiriman</h2>
                             <p class="mt-1 text-[11px] leading-4 text-gray-500 sm:text-xs">Pastikan alamat pengiriman ditulis dengan lengkap dan benar.</p>
                         </div>
                         <div class="space-y-3.5">
-                            {{-- Alamat Lengkap --}}
                             <div>
                                 <label for="shipping_address" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Alamat Lengkap <span class="text-red-500">*</span></label>
                                 <textarea id="shipping_address" name="shipping_address" rows="2" required autocomplete="street-address" placeholder="Nama jalan, nomor rumah, RT/RW, patokan, dan detail lainnya" class="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs leading-5 text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm sm:leading-6">{{ old('shipping_address') }}</textarea>
                             </div>
 
-                            {{-- Map Lokasi Penerima --}}
                             <div>
                                 <div class="mb-1.5 flex items-center justify-between gap-3">
                                     <label class="block text-xs font-semibold text-slate-700 sm:text-sm" for="shipping-map">Titik Lokasi Penerima</label>
@@ -84,7 +77,6 @@
                                 <input type="hidden" id="shipping_longitude" name="shipping_longitude" value="{{ old('shipping_longitude') }}">
                             </div>
 
-                            {{-- District / City / Province / Postal Code --}}
                             <div class="grid grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <label for="shipping_district" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kecamatan <span class="text-red-500">*</span></label>
@@ -106,7 +98,6 @@
                         </div>
                     </div>
 
-                    {{-- Shipping Method --}}
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
                         <div class="mb-4">
                             <h2 class="text-base font-bold text-slate-900 sm:text-lg">Pengiriman</h2>
@@ -123,7 +114,6 @@
                             @endforeach
                         </div>
 
-                        {{-- Shipping Rates --}}
                         <div id="shipping-rates-section" class="mt-4 hidden">
                             <div class="mb-2.5 flex items-center justify-between gap-3">
                                 <div>
@@ -136,7 +126,6 @@
                             <p id="shipping-rates-error" class="mt-2 hidden rounded-lg bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600 sm:text-xs"></p>
                         </div>
 
-                        {{-- Selected shipping identifiers --}}
                         <input type="hidden" name="courier_code" id="courier_code" value="{{ old('courier_code') }}">
                         <input type="hidden" name="courier_service_code" id="courier_service_code" value="{{ old('courier_service_code') }}">
 
@@ -146,10 +135,8 @@
                     </div>
                 </div>
 
-                {{-- SIDEBAR KANAN --}}
                 <div class="contents lg:flex lg:flex-col lg:gap-5 lg:order-2 lg:col-span-1">
-                    {{-- ORDER SUMMARY --}}
-                    <div class="order-1 lg:order-none">
+                    <div class="order-2 lg:order-none">
                         <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -207,7 +194,6 @@
                         </div>
                     </div>
 
-                    {{-- PAYMENT --}}
                     <div class="order-3 space-y-4 lg:order-none">
                         <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
                             <div class="mb-4">
@@ -234,7 +220,6 @@
                             </div>
                         </div>
 
-                        {{-- Submit --}}
                         <button type="submit" id="checkout-submit" class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#AE7C18] px-6 text-xs font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#8F6514] active:scale-[0.99] sm:h-12 sm:text-sm">
                             Buat Pesanan
                             <x-heroicon-o-arrow-right class="h-4 w-4 sm:h-5 sm:w-5"/>
@@ -246,10 +231,6 @@
     </x-ui.container>
 </section>
 @endsection
-
-{{-- ========================================================= --}}
-{{-- LEAFLET MAP ASSET --}}
-{{-- ========================================================= --}}
 
 @push('head')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -269,11 +250,6 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        /*
-         * =========================================================
-         * LEAFLET MAP
-         * =========================================================
-         */
         const mapElement = document.getElementById('shipping-map');
         if (!mapElement || typeof L === 'undefined') {
             return;
@@ -287,13 +263,6 @@
             return;
         }
 
-        /*
-         * Default map position.
-         *
-         * Ini hanya posisi awal tampilan peta.
-         * Tidak disimpan sebagai lokasi customer sampai
-         * customer memilih / menggeser titik lokasi.
-         */
         const defaultLatitude = -3.3194;
         const defaultLongitude = 114.5908;
         const oldLatitude = parseFloat(latitudeInput.value);
@@ -302,29 +271,17 @@
         const initialLatitude = hasOldLocation ? oldLatitude : defaultLatitude;
         const initialLongitude = hasOldLocation ? oldLongitude : defaultLongitude;
 
-        /*
-         * Initialize map.
-         */
         const map = L.map(mapElement).setView([initialLatitude, initialLongitude], hasOldLocation ? 16 : 12);
 
-        /*
-         * OpenStreetMap tiles.
-         */
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        /*
-         * Draggable marker.
-         */
         const marker = L.marker([initialLatitude, initialLongitude], {
             draggable: true
         }).addTo(map);
 
-        /*
-         * Update hidden coordinate inputs.
-         */
         function setLocation(latitude, longitude) {
             latitudeInput.value = Number(latitude).toFixed(7);
             longitudeInput.value = Number(longitude).toFixed(7);
@@ -332,24 +289,15 @@
             map.setView([latitude, longitude], 16);
         }
 
-        /*
-         * When marker is dragged.
-         */
         marker.on('dragend', function () {
             const position = marker.getLatLng();
             setLocation(position.lat, position.lng);
         });
 
-        /*
-         * Restore old location after validation error.
-         */
         if (hasOldLocation) {
             setLocation(oldLatitude, oldLongitude);
         }
 
-        /*
-         * "Gunakan Lokasi Saya"
-         */
         if (locationButton) {
             locationButton.addEventListener('click', function () {
                 if (!navigator.geolocation) {
@@ -385,24 +333,6 @@
         }, 200);
     });
 
-    /*
-     * =========================================================
-     * SHIPPING RATES
-     * =========================================================
-     *
-     * STEP 1:
-     * - Menampilkan pilihan layanan Biteship.
-     * - Mengambil rates berdasarkan kode pos.
-     * - Menampilkan ongkir dan total secara dinamis.
-     * - Menyimpan courier_code dan courier_service_code.
-     *
-     * Harga yang tampil di browser BELUM menjadi sumber
-     * kebenaran final transaksi.
-     *
-     * Final shipping dan total wajib divalidasi ulang
-     * server-side pada CheckoutController::store().
-     * =========================================================
-     */
     document.addEventListener('DOMContentLoaded', function () {
         const form = document.getElementById('checkout-form');
         const postalInput = document.getElementById('shipping_postal_code');
@@ -428,16 +358,10 @@
         let requestSequence = 0;
         let selectedRate = null;
 
-        /*
-         * Format Rupiah.
-         */
         function formatRupiah(value) {
             return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
         }
 
-        /*
-         * Reset selected shipping.
-         */
         function resetShippingSelection() {
             selectedRate = null;
             courierCodeInput.value = '';
@@ -448,26 +372,17 @@
             totalNote.textContent = 'Belum termasuk ongkir';
         }
 
-        /*
-         * Show error.
-         */
         function showRatesError(message) {
             ratesError.textContent = message;
             ratesError.classList.remove('hidden');
             ratesStatus.textContent = '';
         }
 
-        /*
-         * Hide error.
-         */
         function hideRatesError() {
             ratesError.textContent = '';
             ratesError.classList.add('hidden');
         }
 
-        /*
-         * Select a shipping rate.
-         */
         function selectRate(rate, labelElement) {
             selectedRate = rate;
             courierCodeInput.value = rate.courier_code || '';
@@ -477,24 +392,15 @@
             totalAmount.textContent = formatRupiah(subtotal + Number(rate.price || 0));
             totalNote.textContent = 'Termasuk ongkir';
 
-            /*
-             * Reset visual selection.
-             */
             ratesList.querySelectorAll('[data-shipping-rate]').forEach(function (element) {
                 element.classList.remove('border-[#AE7C18]', 'bg-[#AE7C18]/5');
                 element.classList.add('border-gray-200');
             });
 
-            /*
-             * Highlight selected rate.
-             */
             labelElement.classList.remove('border-gray-200');
             labelElement.classList.add('border-[#AE7C18]', 'bg-[#AE7C18]/5');
         }
 
-        /*
-         * Render rates returned by server.
-         */
         function renderRates(rates) {
             ratesList.innerHTML = '';
             resetShippingSelection();
@@ -530,7 +436,53 @@
                 topRow.className = 'flex items-start justify-between gap-3';
 
                 const serviceWrapper = document.createElement('div');
-                serviceWrapper.className = 'min-w-0';
+                serviceWrapper.className = 'flex min-w-0 items-center gap-3';
+
+                const logoWrapper = document.createElement('div');
+                logoWrapper.className = 'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white';
+
+                const logo = document.createElement('img');
+                logo.className = 'h-full w-full object-contain p-1.5';
+                logo.alt = rate.courier_name || rate.courier_code || 'Kurir';
+
+                const courierLogos = {
+                    jnt: '{{ asset('images/shipping/jnt.png') }}',
+                    lion: '{{ asset('images/shipping/lion-parcel.png') }}'
+                };
+
+                if (courierLogos[rate.courier_code]) {
+                    logo.src = courierLogos[rate.courier_code];
+
+                    logo.onerror = function () {
+                        logoWrapper.innerHTML = '';
+                        const fallback = document.createElement('span');
+                        fallback.className = 'text-[10px] font-bold text-gray-500';
+                        fallback.textContent = (rate.courier_name || rate.courier_code || 'Kurir').substring(0, 3).toUpperCase();
+                        logoWrapper.appendChild(fallback);
+                    };
+                } else {
+                    const fallback = document.createElement('span');
+                    fallback.className = 'text-[10px] font-bold text-gray-500';
+                    fallback.textContent = (rate.courier_name || rate.courier_code || 'Kurir').substring(0, 3).toUpperCase();
+                    logoWrapper.appendChild(fallback);
+                }
+
+                const serviceContent = document.createElement('div');
+                serviceContent.className = 'min-w-0';
+
+                const courierName = document.createElement('p');
+                courierName.className = 'text-xs font-semibold text-slate-900 sm:text-sm';
+                courierName.textContent = rate.courier_name || rate.courier_code || 'Kurir';
+
+                const serviceName = document.createElement('p');
+                serviceName.className = 'mt-0.5 text-[10px] font-medium text-gray-500 sm:text-xs';
+                serviceName.textContent = rate.service_name || rate.service_code || 'Layanan';
+
+                serviceContent.appendChild(courierName);
+                serviceContent.appendChild(serviceName);
+
+                serviceWrapper.appendChild(logoWrapper);
+                serviceWrapper.appendChild(serviceContent);
 
                 const courierName = document.createElement('p');
                 courierName.className = 'text-xs font-semibold text-slate-900 sm:text-sm';
@@ -579,10 +531,6 @@
                 ratesList.appendChild(label);
             });
 
-            /*
-             * Jika sebelumnya ada pilihan yang masih valid,
-             * coba restore berdasarkan courier + service.
-             */
             const oldCourierCode = courierCodeInput.value;
             const oldServiceCode = courierServiceCodeInput.value;
 
@@ -604,15 +552,9 @@
             }
         }
 
-        /*
-         * Load shipping rates.
-         */
         async function loadRates() {
             const postalCode = postalInput.value.trim();
 
-            /*
-             * Batalkan tampilan jika kode pos belum valid.
-             */
             if (!/^\d{5,10}$/.test(postalCode)) {
                 ratesSection.classList.add('hidden');
                 ratesList.innerHTML = '';
@@ -648,10 +590,6 @@
 
                 const data = await response.json();
 
-                /*
-                 * Abaikan response lama jika user
-                 * sudah mengubah kode pos lagi.
-                 */
                 if (currentRequest !== requestSequence) {
                     return;
                 }
@@ -676,65 +614,29 @@
             }
         }
 
-        /*
-         * Debounce input kode pos.
-         *
-         * Testing Rates dikenakan biaya per hit,
-         * jadi jangan request pada setiap karakter.
-         */
         postalInput.addEventListener('input', function () {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(loadRates, 700);
         });
 
-        /*
-         * Change event untuk memastikan
-         * rates diperbarui setelah input selesai.
-         */
         postalInput.addEventListener('change', function () {
             clearTimeout(debounceTimer);
             loadRates();
         });
 
-        /*
-         * Jika titik lokasi berubah,
-         * rates dapat dihitung ulang berdasarkan
-         * koordinat terbaru.
-         *
-         * Tidak otomatis request pada setiap perubahan
-         * marker agar tidak menambah hit Rates.
-         */
         if (latitudeInput) {
             latitudeInput.addEventListener('change', function () {
-                /*
-                 * Tidak melakukan request otomatis.
-                 * Kode pos tetap menjadi trigger utama.
-                 */
             });
         }
 
         if (longitudeInput) {
             longitudeInput.addEventListener('change', function () {
-                /*
-                 * Tidak melakukan request otomatis.
-                 */
             });
         }
 
-        /*
-         * Jangan submit jika customer belum memilih
-         * layanan pengiriman.
-         *
-         * Catatan:
-         * server-side validation final akan ditambahkan
-         * pada tahap CheckoutController::store().
-         */
         form.addEventListener('submit', function (event) {
             const shippingMethod = form.querySelector('input[name="shipping_method"]:checked')?.value;
 
-            /*
-             * Step 1 hanya mendukung alur Kurir.
-             */
             if (shippingMethod === 'Kurir' && (!courierCodeInput.value || !courierServiceCodeInput.value)) {
                 event.preventDefault();
                 ratesSection.classList.remove('hidden');

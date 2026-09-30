@@ -104,14 +104,78 @@
                         </div>
                         <div class="space-y-2.5">
                             @foreach($shippingMethods as $method)
-                                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-[#AE7C18] bg-[#AE7C18]/5 px-3.5 py-3 sm:gap-4 sm:px-4">
-                                    <input type="radio" name="shipping_method" value="{{ $method['value'] }}" class="h-4 w-4 accent-[#AE7C18]" {{ $loop->first ? 'checked' : '' }}>
+                                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition sm:gap-4 sm:px-4 has-[:checked]:border-[#AE7C18] has-[:checked]:bg-[#AE7C18]/5">
+                                    <input
+                                        type="radio"
+                                        name="shipping_method"
+                                        value="{{ $method['value'] }}"
+                                        class="h-4 w-4 accent-[#AE7C18]"
+                                        @checked(old('shipping_method') === $method['value'])
+                                    >
                                     <div class="min-w-0 flex-1">
                                         <p class="text-xs font-semibold text-slate-900 sm:text-sm">{{ $method['name'] }}</p>
                                         <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">{{ $method['description'] }}</p>
                                     </div>
                                 </label>
                             @endforeach
+                        </div>
+
+                        <div id="pickup-section" class="mt-4 hidden">
+                            <div class="rounded-xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-3.5 sm:p-4">
+                                <div class="mb-3">
+                                    <p class="text-xs font-semibold text-slate-900 sm:text-sm">
+                                        Jadwal Pengambilan
+                                    </p>
+                                    <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">
+                                        Tentukan tanggal dan waktu untuk mengambil pesanan Anda.
+                                    </p>
+                                </div>
+
+                                <div class="grid gap-3 sm:grid-cols-3 sm:gap-4">
+                                    <div>
+                                        <label for="pickup_date" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">
+                                            Tanggal <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            id="pickup_date"
+                                            name="pickup_date"
+                                            type="date"
+                                            value="{{ old('pickup_date') }}"
+                                            class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm"
+                                        >
+                                    </div>
+
+                                    <div>
+                                        <label for="pickup_time_start" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">
+                                            Mulai <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            id="pickup_time_start"
+                                            name="pickup_time_start"
+                                            type="time"
+                                            value="{{ old('pickup_time_start') }}"
+                                            class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm"
+                                        >
+                                    </div>
+
+                                    <div>
+                                        <label for="pickup_time_end" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">
+                                            Selesai <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            id="pickup_time_end"
+                                            name="pickup_time_end"
+                                            type="time"
+                                            value="{{ old('pickup_time_end') }}"
+                                            class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm"
+                                        >
+                                    </div>
+                                </div>
+
+                                <p id="pickup-validation-error"
+                                class="mt-2 hidden rounded-lg bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600 sm:text-xs">
+                                </p>
+                            </div>
                         </div>
 
                         <div id="shipping-rates-section" class="mt-4 hidden">
@@ -343,13 +407,32 @@
         const ratesStatus = document.getElementById('shipping-rates-status');
         const ratesError = document.getElementById('shipping-rates-error');
         const ratesHint = document.getElementById('shipping-rates-hint');
+        const pickupSection = document.getElementById('pickup-section');
+        const pickupDateInput = document.getElementById('pickup_date');
+        const pickupTimeStartInput = document.getElementById('pickup_time_start');
+        const pickupTimeEndInput = document.getElementById('pickup_time_end');
+        const pickupValidationError = document.getElementById('pickup-validation-error');
         const shippingCost = document.getElementById('shipping-cost');
         const totalAmount = document.getElementById('total-amount');
         const totalNote = document.getElementById('total-note');
         const courierCodeInput = document.getElementById('courier_code');
         const courierServiceCodeInput = document.getElementById('courier_service_code');
 
-        if (!form || !postalInput || !ratesSection || !ratesList || !shippingCost || !totalAmount || !totalNote || !courierCodeInput || !courierServiceCodeInput) {
+        if (
+            !form ||
+            !postalInput ||
+            !ratesSection ||
+            !ratesList ||
+            !shippingCost ||
+            !totalAmount ||
+            !totalNote ||
+            !courierCodeInput ||
+            !courierServiceCodeInput ||
+            !pickupSection ||
+            !pickupDateInput ||
+            !pickupTimeStartInput ||
+            !pickupTimeEndInput
+        ) {
             return;
         }
 
@@ -371,6 +454,7 @@
             totalAmount.textContent = formatRupiah(subtotal);
             totalNote.textContent = 'Belum termasuk ongkir';
         }
+
 
         function showRatesError(message) {
             ratesError.textContent = message;
@@ -399,6 +483,46 @@
 
             labelElement.classList.remove('border-gray-200');
             labelElement.classList.add('border-[#AE7C18]', 'bg-[#AE7C18]/5');
+        }
+
+        function updateShippingMethodUI() {
+            const shippingMethod = form.querySelector(
+                'input[name="shipping_method"]:checked'
+            )?.value;
+
+            const isPickup = shippingMethod === 'Ambil di Tempat';
+
+            pickupSection.classList.toggle('hidden', !isPickup);
+
+            if (isPickup) {
+                requestSequence++;
+
+                ratesSection.classList.add('hidden');
+                ratesList.innerHTML = '';
+                hideRatesError();
+                ratesStatus.textContent = '';
+
+                courierCodeInput.value = '';
+                courierServiceCodeInput.value = '';
+                selectedRate = null;
+
+                shippingCost.textContent = 'Rp 0';
+                totalAmount.textContent = formatRupiah(subtotal);
+                totalNote.textContent = 'Pengambilan di tempat';
+                ratesHint.textContent =
+                    'Pesanan akan diambil langsung di lokasi pickup.';
+            } else {
+                shippingCost.textContent = 'Akan dihitung';
+                totalAmount.textContent = formatRupiah(subtotal);
+                totalNote.textContent = 'Belum termasuk ongkir';
+
+                ratesHint.textContent =
+                    'Masukkan kode pos tujuan untuk melihat pilihan layanan pengiriman.';
+
+                if (/^\d{5,10}$/.test(postalInput.value.trim())) {
+                    loadRates();
+                }
+            }
         }
 
         function renderRates(rates) {
@@ -551,6 +675,13 @@
         }
 
         async function loadRates() {
+            const shippingMethod = form.querySelector(
+                'input[name="shipping_method"]:checked'
+            )?.value;
+
+            if (shippingMethod !== 'Kurir') {
+                return;
+            }
             const postalCode = postalInput.value.trim();
 
             if (!/^\d{5,10}$/.test(postalCode)) {
@@ -612,6 +743,12 @@
             }
         }
 
+        form.querySelectorAll('input[name="shipping_method"]').forEach(function (input) {
+            input.addEventListener('change', function () {
+                updateShippingMethodUI();
+            });
+        });
+
         postalInput.addEventListener('input', function () {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(loadRates, 700);
@@ -633,10 +770,16 @@
         }
 
         form.addEventListener('submit', function (event) {
-            const shippingMethod = form.querySelector('input[name="shipping_method"]:checked')?.value;
+            const shippingMethod = form.querySelector(
+                'input[name="shipping_method"]:checked'
+            )?.value;
 
-            if (shippingMethod === 'Kurir' && (!courierCodeInput.value || !courierServiceCodeInput.value)) {
+            if (
+                shippingMethod === 'Kurir' &&
+                (!courierCodeInput.value || !courierServiceCodeInput.value)
+            ) {
                 event.preventDefault();
+
                 ratesSection.classList.remove('hidden');
 
                 showRatesError('Silakan pilih layanan pengiriman terlebih dahulu.');
@@ -649,11 +792,38 @@
 
                 return;
             }
+
+            if (shippingMethod === 'Ambil di Tempat') {
+                const missingPickupField =
+                    !pickupDateInput.value ||
+                    !pickupTimeStartInput.value ||
+                    !pickupTimeEndInput.value;
+
+                if (missingPickupField) {
+                    event.preventDefault();
+
+                    pickupValidationError.textContent =
+                        'Silakan lengkapi tanggal dan waktu pengambilan terlebih dahulu.';
+
+                    pickupValidationError.classList.remove('hidden');
+
+                    pickupSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+
+                    return;
+                }
+
+                pickupValidationError.textContent = '';
+                pickupValidationError.classList.add('hidden');
+
+                courierCodeInput.value = '';
+                courierServiceCodeInput.value = '';
+            }
         });
 
-        if (/^\d{5,10}$/.test(postalInput.value.trim())) {
-            loadRates();
-        }
+        updateShippingMethodUI();
     });
 </script>
 @endpush

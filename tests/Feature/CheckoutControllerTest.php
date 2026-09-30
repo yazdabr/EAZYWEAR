@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Inventory;
 use App\Models\ProductVariant;
 use App\Services\DokuService;
+use App\Services\BiteshipService;
+use App\Models\Transaction;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Session;
 use Tests\TestCase;
@@ -31,13 +33,135 @@ class CheckoutControllerTest extends TestCase
         });
     }
 
-    public function test_checkout_creates_pending_transaction_with_va(): void
+    public function test_checkout_pickup_does_not_call_biteship_and_saves_pickup_details(): void
     {
         $variant = ProductVariant::query()
             ->whereHas('product', function ($query) {
                 $query->where('status', true);
             })
             ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        $databasePrice = (float) $variant->price;
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => $databasePrice,
+                'qty' => 1,
+                'custom_name' => 'MESSI',
+                'custom_number' => '10',
+            ],
+        ]);
+
+        $biteship = $this->mock(BiteshipService::class);
+
+        $biteship->shouldReceive('getCourierRates')
+            ->never();
+
+        $this->mockDokuSuccess();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Pickup Customer',
+            'email' => 'pickup-test@test.com',
+            'phone' => '08123456780',
+            'shipping_address' => 'Alamat Pickup',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+
+            'shipping_method' => 'Ambil di Tempat',
+
+            'pickup_date' => '2026-10-05',
+            'pickup_time_start' => '09:00',
+            'pickup_time_end' => '11:00',
+
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+
+            'payment_method' => 'VA',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'pickup-test@test.com')
+            ->firstOrFail();
+
+        $this->assertSame(
+            $databasePrice,
+            (float) $transaction->subtotal
+        );
+
+        $this->assertSame(
+            0.0,
+            (float) $transaction->shipping
+        );
+
+        $this->assertSame(
+            $databasePrice - (float) $transaction->discount,
+            (float) $transaction->total
+        );
+
+        $this->assertSame(
+            'Ambil di Tempat',
+            $transaction->shipping_method
+        );
+
+        $this->assertSame(
+            '2026-10-05',
+            $transaction->pickup_date
+        );
+
+        $this->assertSame(
+            '09:00:00',
+            $transaction->pickup_time_start
+        );
+
+        $this->assertSame(
+            '11:00:00',
+            $transaction->pickup_time_end
+        );
+
+        $this->assertNull($transaction->courier_code);
+        $this->assertNull($transaction->courier_service_code);
+
+        $this->assertDatabaseHas('transaction_items', [
+            'transaction_id' => $transaction->id,
+            'price' => $databasePrice,
+        ]);
+    }
+
+    public function test_checkout_creates_pending_transaction_with_va(): void
+    {
+
+    dump([
+        'env' => app()->environment(),
+        'db' => config('database.connections.mysql.database'),
+        'variants' => ProductVariant::count(),
+        'active_variants' => ProductVariant::whereHas('product', function ($query) {
+            $query->where('status', true);
+        })->count(),
+    ]);
+    $variant = ProductVariant::query()
+        ->whereHas('product', function ($query) {
+            $query->where('status', true);
+        })
+        ->firstOrFail();
+
+    $variant->update([
+        'weight' => 250,
+    ]);
 
         Inventory::query()
             ->where('product_variant_id', $variant->id)
@@ -55,6 +179,27 @@ class CheckoutControllerTest extends TestCase
             ],
         ]);
 
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [
+                        [
+                            'courier_code' => 'jnt',
+                            'courier_name' => 'J&T',
+                            'service_code' => 'ez',
+                            'service_name' => 'EZ',
+                            'price' => 8000,
+                            'duration' => '2-3 days',
+                            'service_type' => 'standard',
+                            'shipping_type' => 'parcel',
+                        ],
+                    ],
+                    'raw' => [],
+                ]);
+        });
+
         $this->mockDokuSuccess();
 
         $response = $this->post(route('checkout.store'), [
@@ -67,6 +212,8 @@ class CheckoutControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
             'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
             'payment_method' => 'VA',
         ]);
 
@@ -77,6 +224,380 @@ class CheckoutControllerTest extends TestCase
             'status' => 'PENDING',
             'va_number' => '190089123456789012',
             'payment_method' => 'VA',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'shipping' => 8000,
+        ]);
+
+        $transaction = \App\Models\Transaction::query()
+            ->where('va_number', '190089123456789012')
+            ->firstOrFail();
+
+        $this->assertSame(
+            (float) $transaction->subtotal + 8000 - (float) $transaction->discount,
+            (float) $transaction->total
+        );
+    }
+
+    public function test_checkout_uses_database_variant_price_not_session_cart_price(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        $databasePrice = (float) $variant->price;
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => 'MESSI',
+                'custom_number' => '10',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [
+                        [
+                            'courier_code' => 'jnt',
+                            'courier_name' => 'J&T',
+                            'service_code' => 'ez',
+                            'service_name' => 'EZ',
+                            'price' => 8000,
+                            'duration' => '2-3 days',
+                            'service_type' => 'standard',
+                            'shipping_type' => 'parcel',
+                        ],
+                    ],
+                    'raw' => [],
+                ]);
+        });
+
+        $this->mockDokuSuccess();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Customer Test',
+            'email' => 'price-test@test.com',
+            'phone' => '08123456780',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'payment_method' => 'VA',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = \App\Models\Transaction::query()
+            ->where('shipping_email', 'price-test@test.com')
+            ->firstOrFail();
+
+        $this->assertSame($databasePrice, (float) $transaction->subtotal);
+
+        $this->assertSame(
+            $databasePrice + 8000 - (float) $transaction->discount,
+            (float) $transaction->total
+        );
+
+        $this->assertDatabaseHas('transaction_items', [
+            'transaction_id' => $transaction->id,
+            'price' => $databasePrice,
+        ]);
+    }
+
+    public function test_checkout_keeps_quantity_and_subtotal_consistent(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        $databasePrice = (float) $variant->price;
+        $quantity = 3;
+        $expectedSubtotal = $databasePrice * $quantity;
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => $variant->price,
+                'qty' => $quantity,
+                'custom_name' => 'MESSI',
+                'custom_number' => '10',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [[
+                        'courier_code' => 'jnt',
+                        'courier_name' => 'J&T',
+                        'service_code' => 'ez',
+                        'service_name' => 'EZ',
+                        'price' => 8000,
+                        'duration' => '2-3 days',
+                        'service_type' => 'standard',
+                        'shipping_type' => 'parcel',
+                    ]],
+                    'raw' => [],
+                ]);
+        });
+
+        $this->mockDokuSuccess();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Customer Test',
+            'email' => 'quantity-test@test.com',
+            'phone' => '08123456782',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'payment_method' => 'VA',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = \App\Models\Transaction::query()
+            ->where('shipping_email', 'quantity-test@test.com')
+            ->firstOrFail();
+
+        $transactionItem = $transaction->items()->firstOrFail();
+
+        $this->assertSame($quantity, (int) $transactionItem->qty);
+
+        $this->assertSame(
+            $expectedSubtotal,
+            (float) $transactionItem->subtotal
+        );
+
+        $this->assertSame(
+            $expectedSubtotal,
+            (float) $transaction->subtotal
+        );
+
+        $this->assertSame(
+            $expectedSubtotal + 8000 - (float) $transaction->discount,
+            (float) $transaction->total
+        );
+    }
+
+    public function test_checkout_keeps_multiple_items_consistent(): void
+    {
+        $variants = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->orderBy('id')
+            ->take(2)
+            ->get();
+
+        $this->assertCount(2, $variants);
+
+        $quantityA = 2;
+        $quantityB = 3;
+
+        foreach ($variants as $variant) {
+            $variant->update([
+                'weight' => 250,
+            ]);
+
+            Inventory::query()
+                ->where('product_variant_id', $variant->id)
+                ->update([
+                    'stock' => 10,
+                ]);
+        }
+
+        $priceA = (float) $variants[0]->price;
+        $priceB = (float) $variants[1]->price;
+
+        $subtotalA = $priceA * $quantityA;
+        $subtotalB = $priceB * $quantityB;
+        $expectedSubtotal = $subtotalA + $subtotalB;
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variants[0]->id,
+                'price' => $variants[0]->price,
+                'qty' => $quantityA,
+                'custom_name' => 'MESSI',
+                'custom_number' => '10',
+            ],
+            [
+                'variant_id' => $variants[1]->id,
+                'price' => $variants[1]->price,
+                'qty' => $quantityB,
+                'custom_name' => 'RONALDO',
+                'custom_number' => '7',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [[
+                        'courier_code' => 'jnt',
+                        'courier_name' => 'J&T',
+                        'service_code' => 'ez',
+                        'service_name' => 'EZ',
+                        'price' => 8000,
+                        'duration' => '2-3 days',
+                        'service_type' => 'standard',
+                        'shipping_type' => 'parcel',
+                    ]],
+                    'raw' => [],
+                ]);
+        });
+
+        $this->mockDokuSuccess();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Customer Test',
+            'email' => 'multi-item@test.com',
+            'phone' => '08123456783',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'payment_method' => 'VA',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'multi-item@test.com')
+            ->firstOrFail();
+
+        $transactionItems = $transaction->items()
+            ->orderBy('product_variant_id')
+            ->get();
+
+        $this->assertCount(2, $transactionItems);
+
+        $itemA = $transactionItems->firstWhere(
+            'product_variant_id',
+            $variants[0]->id
+        );
+
+        $itemB = $transactionItems->firstWhere(
+            'product_variant_id',
+            $variants[1]->id
+        );
+
+        $this->assertNotNull($itemA);
+        $this->assertNotNull($itemB);
+
+        $this->assertSame($quantityA, (int) $itemA->qty);
+        $this->assertSame($priceA, (float) $itemA->price);
+        $this->assertSame($subtotalA, (float) $itemA->subtotal);
+
+        $this->assertSame($quantityB, (int) $itemB->qty);
+        $this->assertSame($priceB, (float) $itemB->price);
+        $this->assertSame($subtotalB, (float) $itemB->subtotal);
+
+        $this->assertSame(
+            $expectedSubtotal,
+            (float) $transaction->subtotal
+        );
+
+        $this->assertSame(
+            $expectedSubtotal + 8000 - (float) $transaction->discount,
+            (float) $transaction->total
+        );
+    }
+
+    public function test_checkout_fails_when_cart_quantity_exceeds_stock(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => $variant->price,
+                'qty' => 11,
+                'custom_name' => 'MESSI',
+                'custom_number' => '10',
+            ],
+        ]);
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Customer Test',
+            'email' => 'stock-test@test.com',
+            'phone' => '08123456781',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'payment_method' => 'VA',
+        ]);
+
+        $response->assertSessionHasErrors('cart');
+
+        $this->assertDatabaseMissing('transactions', [
+            'shipping_email' => 'stock-test@test.com',
         ]);
     }
 
@@ -87,6 +608,10 @@ class CheckoutControllerTest extends TestCase
                 $query->where('status', true);
             })
             ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
 
         Session::put('cart', [
             [
@@ -119,6 +644,8 @@ class CheckoutControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
             'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
             'payment_method' => 'VA',
         ]);
 
@@ -144,6 +671,8 @@ class CheckoutControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
             'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
             'payment_method' => 'VA',
         ]);
 

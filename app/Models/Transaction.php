@@ -45,6 +45,11 @@ class Transaction extends Model
         'shipping_method',
         'courier',
         'tracking_number',
+        'courier_code',
+        'courier_service_code',
+        'pickup_date',
+        'pickup_time_start',
+        'pickup_time_end',
     ];
 
     protected $casts = [

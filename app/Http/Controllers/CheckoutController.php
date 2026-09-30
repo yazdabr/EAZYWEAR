@@ -136,11 +136,18 @@ class CheckoutController extends Controller
         $subtotal = $cart->sum(fn ($item) => (float) $item['price'] * (int) $item['qty']);
         $totalItems = $cart->sum('qty');
 
-        $shippingMethods = [[
-            'value' => 'Kurir',
-            'name' => 'Kurir',
-            'description' => 'Pengiriman ke alamat yang Anda masukkan.',
-        ]];
+        $shippingMethods = [
+            [
+                'value' => 'Kurir',
+                'name' => 'Kurir',
+                'description' => 'Pengiriman ke alamat yang Anda masukkan.',
+            ],
+            [
+                'value' => 'Ambil di Tempat',
+                'name' => 'Ambil di Tempat',
+                'description' => 'Ambil pesanan langsung di Kantor Eazywear.',
+            ],
+        ];
 
         $paymentMethods = [[
             'value' => 'VA',
@@ -151,7 +158,11 @@ class CheckoutController extends Controller
         return view('checkout.index', compact('cart', 'subtotal', 'totalItems', 'shippingMethods', 'paymentMethods'));
     }
 
-    public function store(Request $request, DokuService $dokuService): RedirectResponse
+    public function store(
+        Request $request,
+        DokuService $dokuService,
+        BiteshipService $biteshipService
+    ): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -173,6 +184,41 @@ class CheckoutController extends Controller
                 'between:-180,180',
             ],
             'shipping_method' => ['required', 'string', Rule::in(['Kurir', 'Ambil di Tempat'])],
+            'courier_code' => [
+                Rule::requiredIf(fn () => $request->input('shipping_method') === 'Kurir'),
+                'nullable',
+                'string',
+                'max:50',
+            ],
+            'courier_service_code' => [
+                Rule::requiredIf(fn () => $request->input('shipping_method') === 'Kurir'),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'pickup_date' => [
+                Rule::requiredIf(
+                    fn () => $request->input('shipping_method') === 'Ambil di Tempat'
+                ),
+                'nullable',
+                'date',
+            ],
+
+            'pickup_time_start' => [
+                Rule::requiredIf(
+                    fn () => $request->input('shipping_method') === 'Ambil di Tempat'
+                ),
+                'nullable',
+                'date_format:H:i',
+            ],
+
+            'pickup_time_end' => [
+                Rule::requiredIf(
+                    fn () => $request->input('shipping_method') === 'Ambil di Tempat'
+                ),
+                'nullable',
+                'date_format:H:i',
+            ],
             'payment_method' => ['required', 'string', Rule::in(['VA'])],
         ]);
 
@@ -183,7 +229,7 @@ class CheckoutController extends Controller
         }
 
         try {
-            $transaction = DB::transaction(function () use ($validated, $cart, $dokuService) {
+            $transaction = DB::transaction(function () use ($validated, $cart, $dokuService, $biteshipService) {
                 if (! $dokuService->isConfigured()) {
                     throw new RuntimeException('Konfigurasi DOKU belum lengkap.');
                 }
@@ -284,8 +330,52 @@ class CheckoutController extends Controller
                     ];
                 }
 
-                $discount = 0;
                 $shipping = 0;
+
+                if ($validated['shipping_method'] === 'Kurir') {
+                    $shippingItems = [];
+
+                    foreach ($items as $item) {
+                        $weight = $item['variant']->weight;
+
+                    if ($weight === null || (float) $weight <= 0) {
+                        throw ValidationException::withMessages([
+                            'cart' => "Berat produk {$item['variant']->product->name} belum tersedia. Ongkir belum dapat dihitung.",
+                        ]);
+                    }
+
+                    $shippingItems[] = [
+                        'name' => $item['variant']->product->name,
+                        'value' => (int) round($item['price']),
+                        'quantity' => $item['qty'],
+                        'weight' => (int) round((float) $weight),
+                    ];
+                }
+
+                $shippingRates = $biteshipService->getCourierRates([
+                    'destination_postal_code' => $validated['shipping_postal_code'],
+                    'destination_latitude' => $validated['shipping_latitude'] ?? null,
+                    'destination_longitude' => $validated['shipping_longitude'] ?? null,
+                    'items' => $shippingItems,
+                ]);
+
+                $selectedRate = collect($shippingRates['rates'] ?? [])
+                    ->first(function (array $rate) use ($validated) {
+                        return $rate['courier_code'] === $validated['courier_code']
+                            && $rate['service_code'] === $validated['courier_service_code'];
+                    });
+
+                if (! $selectedRate) {
+                    throw ValidationException::withMessages([
+                        'courier_code' => 'Pilihan kurir atau layanan pengiriman sudah tidak tersedia. Silakan pilih kembali.',
+                    ]);
+                }
+
+                $shipping = (int) ($selectedRate['price'] ?? 0);
+            }
+
+                $discount = 0;
+
                 $total = $subtotal - $discount + $shipping;
                 $invoiceNumber = $this->generateInvoiceNumber();
 
@@ -311,6 +401,26 @@ class CheckoutController extends Controller
                     'shipping_latitude' => $validated['shipping_latitude'] ?? null,
                     'shipping_longitude' => $validated['shipping_longitude'] ?? null,
                     'shipping_method' => $validated['shipping_method'],
+
+                    'courier_code' => $validated['shipping_method'] === 'Kurir'
+                        ? $validated['courier_code']
+                        : null,
+
+                    'courier_service_code' => $validated['shipping_method'] === 'Kurir'
+                        ? $validated['courier_service_code']
+                        : null,
+
+                    'pickup_date' => $validated['shipping_method'] === 'Ambil di Tempat'
+                        ? $validated['pickup_date']
+                        : null,
+
+                    'pickup_time_start' => $validated['shipping_method'] === 'Ambil di Tempat'
+                        ? $validated['pickup_time_start']
+                        : null,
+
+                    'pickup_time_end' => $validated['shipping_method'] === 'Ambil di Tempat'
+                        ? $validated['pickup_time_end']
+                        : null,
                 ]);
 
                 foreach ($items as $item) {

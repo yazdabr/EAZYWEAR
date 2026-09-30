@@ -8,6 +8,7 @@ use App\Models\StockMovement;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Services\InventoryStockService;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -259,6 +260,44 @@ class InventoryStockServiceTest extends TestCase
             'CANCELLED',
             $transaction->refresh()->status
         );
+    }
+
+    public function test_stock_is_not_deducted_when_stock_is_insufficient(): void
+    {
+        $transaction = $this->createTestTransaction(2);
+
+        $item = $transaction->items()->firstOrFail();
+
+        $inventory = Inventory::query()
+            ->where('product_variant_id', $item->product_variant_id)
+            ->firstOrFail();
+
+        $inventory->update([
+            'stock' => 1,
+        ]);
+
+        $stockBefore = (int) $inventory->fresh()->stock;
+
+        $service = app(InventoryStockService::class);
+
+        $this->expectException(ValidationException::class);
+
+        try {
+            $service->decreaseForTransaction($transaction);
+        } finally {
+            $inventoryAfter = $inventory->fresh();
+
+            $this->assertSame(
+                $stockBefore,
+                (int) $inventoryAfter->stock
+            );
+
+            $this->assertDatabaseMissing('stock_movements', [
+                'transaction_id' => $transaction->id,
+                'transaction_item_id' => $item->id,
+                'type' => 'OUT',
+            ]);
+        }
     }
 
     public function test_stock_restoration_creates_in_movement_with_transaction_references(): void

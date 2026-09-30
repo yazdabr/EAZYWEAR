@@ -468,6 +468,8 @@
         }
 
         function selectRate(rate, labelElement) {
+            hideRatesError();
+
             selectedRate = rate;
             courierCodeInput.value = rate.courier_code || '';
             courierServiceCodeInput.value = rate.service_code || '';

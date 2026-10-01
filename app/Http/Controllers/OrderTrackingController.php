@@ -14,7 +14,6 @@ class OrderTrackingController extends Controller
         return view('orders.tracking-search');
     }
 
-
     public function search(Request $request): View|RedirectResponse
     {
         $validated = $request->validate([
@@ -31,7 +30,6 @@ class OrderTrackingController extends Controller
             ],
         ]);
 
-
         $transaction = Transaction::with([
             'items.productVariant.product',
             'items.productVariant.size',
@@ -42,7 +40,6 @@ class OrderTrackingController extends Controller
         ->where('shipping_email', $validated['email'])
         ->first();
 
-
         if (! $transaction) {
             return back()
                 ->withInput()
@@ -51,7 +48,6 @@ class OrderTrackingController extends Controller
                     'Pesanan tidak ditemukan. Pastikan nomor invoice dan email sudah benar.'
                 );
         }
-
 
         return view(
             'orders.tracking-detail',

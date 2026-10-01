@@ -9,6 +9,10 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
 use App\Services\DokuService;
+use App\Http\Controllers\Admin\TransactionController;
+use App\Mail\OrderShippedMail;
+use App\Models\TransactionNotification;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -525,6 +529,70 @@ class TransactionControllerTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_complete_pickup_order(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'status' => 'ORDER_PROCESSING',
+            'shipping_method' => 'Ambil di Tempat',
+        ]);
+
+        $response = app(TransactionController::class)
+            ->complete($transaction);
+
+        $this->assertSame(200, $response->status());
+
+        $this->assertSame([
+            'success' => true,
+            'message' => 'Pesanan berhasil diselesaikan.',
+            'data' => [
+                'id' => $transaction->id,
+                'status' => 'ORDER_COMPLETED',
+            ],
+        ], $response->getData(true));
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => 'ORDER_COMPLETED',
+        ]);
+
+        $this->assertDatabaseHas('order_status_histories', [
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::ORDER_COMPLETED,
+        ]);
+    }
+
+    public function test_admin_can_complete_courier_order(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'status' => 'ORDER_SHIPPED',
+            'shipping_method' => 'Kurir',
+        ]);
+
+        $response = app(TransactionController::class)
+            ->complete($transaction);
+
+        $this->assertSame(200, $response->status());
+
+        $this->assertSame([
+            'success' => true,
+            'message' => 'Pesanan berhasil diselesaikan.',
+            'data' => [
+                'id' => $transaction->id,
+                'status' => 'ORDER_COMPLETED',
+            ],
+        ], $response->getData(true));
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => 'ORDER_COMPLETED',
+        ]);
+
+        $this->assertDatabaseHas('order_status_histories', [
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::ORDER_COMPLETED,
+        ]);
+    }
+
     public function test_admin_can_view_transaction_detail(): void
     {
         $user = $this->superAdmin();
@@ -559,5 +627,85 @@ class TransactionControllerTest extends TestCase
             ->assertOk()
             ->assertViewIs('admin.transactions.print')
             ->assertViewHas('transaction');
+    }
+
+    public function test_admin_shipping_sends_only_one_shipping_email(): void
+    {
+        Mail::fake();
+
+        $user = $this->superAdmin();
+
+        $transaction = Transaction::factory()->create([
+            'status' => 'ORDER_PROCESSING',
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(
+                route('admin.transactions.ship', $transaction),
+                [
+                    'courier' => 'JNE',
+                    'tracking_number' => 'JNE123456789',
+                ]
+            );
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'id' => $transaction->id,
+                    'status' => 'ORDER_SHIPPED',
+                    'courier' => 'JNE',
+                    'tracking_number' => 'JNE123456789',
+                ],
+            ]);
+
+        Mail::assertSent(
+            OrderShippedMail::class,
+            1
+        );
+
+        Mail::assertSent(
+            OrderShippedMail::class,
+            function (OrderShippedMail $mail) use ($transaction) {
+                return $mail->transaction->id === $transaction->id;
+            }
+        );
+
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_SHIPPED_EMAIL',
+        ]);
+
+        $this->assertDatabaseCount('transaction_notifications', 1);
+
+        $this->assertNotNull(
+            TransactionNotification::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('type', 'ORDER_SHIPPED_EMAIL')
+                ->value('sent_at')
+        );
+
+        $secondResponse = $this
+            ->actingAs($user)
+            ->patchJson(
+                route('admin.transactions.ship', $transaction),
+                [
+                    'courier' => 'JNE',
+                    'tracking_number' => 'JNE123456789',
+                ]
+            );
+
+        $secondResponse->assertStatus(422);
+
+        Mail::assertSent(
+            OrderShippedMail::class,
+            1
+        );
+
+        $this->assertDatabaseCount('transaction_notifications', 1);
     }
 }

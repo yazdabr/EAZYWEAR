@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OrderCreatedMail;
 use App\Models\Customer;
 use App\Models\Inventory;
+use App\Models\OrderStatusHistory;
 use App\Models\ProductVariant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
-use App\Models\OrderStatusHistory;
 use App\Services\BiteshipService;
 use App\Services\DokuService;
-use App\Mail\OrderCreatedMail;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -24,10 +24,8 @@ use RuntimeException;
 
 class CheckoutController extends Controller
 {
-    public function shippingRates(
-        Request $request,
-        BiteshipService $biteshipService
-    ): JsonResponse {
+    public function shippingRates(Request $request, BiteshipService $biteshipService): JsonResponse
+    {
         $validated = $request->validate([
             'shipping_postal_code' => ['required', 'string', 'max:10'],
             'shipping_latitude' => ['nullable', 'numeric', 'between:-90,90'],
@@ -37,10 +35,7 @@ class CheckoutController extends Controller
         $cart = collect($request->session()->get('cart', []));
 
         if ($cart->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Keranjang masih kosong.',
-            ], 422);
+            return response()->json(['success' => false, 'message' => 'Keranjang masih kosong.'], 422);
         }
 
         try {
@@ -51,35 +46,17 @@ class CheckoutController extends Controller
                 $qty = (int) ($cartItem['qty'] ?? 0);
 
                 if ($variantId <= 0 || $qty <= 0) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Data keranjang tidak valid.',
-                    ], 422);
+                    return response()->json(['success' => false, 'message' => 'Data keranjang tidak valid.'], 422);
                 }
 
-                $variant = ProductVariant::query()
-                    ->with('product')
-                    ->find($variantId);
+                $variant = ProductVariant::query()->with('product')->find($variantId);
 
-                if (
-                    ! $variant ||
-                    ! $variant->product ||
-                    ! $variant->product->status
-                ) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Salah satu produk di keranjang sudah tidak tersedia.',
-                    ], 422);
+                if (! $variant || ! $variant->product || ! $variant->product->status) {
+                    return response()->json(['success' => false, 'message' => 'Salah satu produk di keranjang sudah tidak tersedia.'], 422);
                 }
 
-                if (
-                    $variant->weight === null ||
-                    (float) $variant->weight <= 0
-                ) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Berat produk {$variant->product->name} belum tersedia. Ongkir belum dapat dihitung.",
-                    ], 422);
+                if ($variant->weight === null || (float) $variant->weight <= 0) {
+                    return response()->json(['success' => false, 'message' => "Berat produk {$variant->product->name} belum tersedia. Ongkir belum dapat dihitung."], 422);
                 }
 
                 $items[] = [
@@ -97,31 +74,30 @@ class CheckoutController extends Controller
                 'items' => $items,
             ]);
 
-            return response()->json([
-                'success' => true,
-                'data' => $result['rates'] ?? [],
-            ]);
+            return response()->json(['success' => true, 'data' => $result['rates'] ?? []]);
         } catch (\RuntimeException $e) {
             if ($e->getCode() >= 400 && $e->getCode() < 600) {
                 report($e);
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Layanan pengiriman sedang tidak dapat digunakan. Silakan coba lagi.',
+                    'message' => 'Layanan pengiriman sedang tidak dapat digunakan. Silakan coba lagi.'
                 ], 502);
             }
 
+            report($e);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Gagal mengambil pilihan pengiriman. Silakan coba lagi.'
             ], 422);
         } catch (\Throwable $e) {
             report($e);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengambil pilihan pengiriman. Silakan coba lagi.',
-            ], 500);
+                'message' => 'Gagal mengambil pilihan pengiriman. Silakan coba lagi.'
+            ], 422);
         }
     }
 
@@ -137,16 +113,8 @@ class CheckoutController extends Controller
         $totalItems = $cart->sum('qty');
 
         $shippingMethods = [
-            [
-                'value' => 'Kurir',
-                'name' => 'Kurir',
-                'description' => 'Pengiriman ke alamat yang Anda masukkan.',
-            ],
-            [
-                'value' => 'Ambil di Tempat',
-                'name' => 'Ambil di Tempat',
-                'description' => 'Ambil pesanan langsung di Kantor Eazywear.',
-            ],
+            ['value' => 'Kurir', 'name' => 'Kurir', 'description' => 'Pengiriman ke alamat yang Anda masukkan.'],
+            ['value' => 'Ambil di Tempat', 'name' => 'Ambil di Tempat', 'description' => 'Ambil pesanan langsung di Kantor Eazywear.'],
         ];
 
         $paymentMethods = [[
@@ -158,11 +126,7 @@ class CheckoutController extends Controller
         return view('checkout.index', compact('cart', 'subtotal', 'totalItems', 'shippingMethods', 'paymentMethods'));
     }
 
-    public function store(
-        Request $request,
-        DokuService $dokuService,
-        BiteshipService $biteshipService
-    ): RedirectResponse
+    public function store(Request $request, DokuService $dokuService, BiteshipService $biteshipService): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -173,16 +137,8 @@ class CheckoutController extends Controller
             'shipping_city' => ['required', 'string', 'max:100'],
             'shipping_province' => ['required', 'string', 'max:100'],
             'shipping_postal_code' => ['required', 'string', 'max:10'],
-            'shipping_latitude' => [
-                'nullable',
-                'numeric',
-                'between:-90,90',
-            ],
-            'shipping_longitude' => [
-                'nullable',
-                'numeric',
-                'between:-180,180',
-            ],
+            'shipping_latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'shipping_longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'shipping_method' => ['required', 'string', Rule::in(['Kurir', 'Ambil di Tempat'])],
             'courier_code' => [
                 Rule::requiredIf(fn () => $request->input('shipping_method') === 'Kurir'),
@@ -196,29 +152,9 @@ class CheckoutController extends Controller
                 'string',
                 'max:100',
             ],
-            'pickup_date' => [
-                Rule::requiredIf(
-                    fn () => $request->input('shipping_method') === 'Ambil di Tempat'
-                ),
-                'nullable',
-                'date',
-            ],
-
-            'pickup_time_start' => [
-                Rule::requiredIf(
-                    fn () => $request->input('shipping_method') === 'Ambil di Tempat'
-                ),
-                'nullable',
-                'date_format:H:i',
-            ],
-
-            'pickup_time_end' => [
-                Rule::requiredIf(
-                    fn () => $request->input('shipping_method') === 'Ambil di Tempat'
-                ),
-                'nullable',
-                'date_format:H:i',
-            ],
+            'pickup_date' => [Rule::requiredIf(fn () => $request->input('shipping_method') === 'Ambil di Tempat'), 'nullable', 'date'],
+            'pickup_time_start' => [Rule::requiredIf(fn () => $request->input('shipping_method') === 'Ambil di Tempat'), 'nullable', 'date_format:H:i'],
+            'pickup_time_end' => [Rule::requiredIf(fn () => $request->input('shipping_method') === 'Ambil di Tempat'), 'nullable', 'date_format:H:i'],
             'payment_method' => ['required', 'string', Rule::in(['VA'])],
         ]);
 
@@ -235,10 +171,7 @@ class CheckoutController extends Controller
                 }
 
                 $customer = Customer::query()
-                    ->where(function ($query) use ($validated) {
-                        $query->where('phone', $validated['phone'])
-                            ->orWhere('email', $validated['email']);
-                    })
+                    ->where(fn ($query) => $query->where('phone', $validated['phone'])->orWhere('email', $validated['email']))
                     ->first();
 
                 if (! $customer) {
@@ -282,37 +215,26 @@ class CheckoutController extends Controller
                         throw ValidationException::withMessages(['cart' => 'Nomor punggung hanya boleh berisi 1-2 angka.']);
                     }
 
-                    $variant = ProductVariant::with(['product', 'size', 'color'])
-                        ->lockForUpdate()
-                        ->find($variantId);
+                    $variant = ProductVariant::with(['product', 'size', 'color'])->lockForUpdate()->find($variantId);
 
                     if (! $variant) {
                         throw ValidationException::withMessages(['cart' => 'Salah satu produk sudah tidak tersedia.']);
                     }
 
                     if (! $variant->product || ! $variant->product->status) {
-                        throw ValidationException::withMessages([
-                            'cart' => "Produk {$variant->product?->name} sudah tidak aktif.",
-                        ]);
+                        throw ValidationException::withMessages(['cart' => "Produk {$variant->product?->name} sudah tidak aktif."]);
                     }
 
-                    $inventory = Inventory::query()
-                        ->where('product_variant_id', $variant->id)
-                        ->lockForUpdate()
-                        ->first();
+                    $inventory = Inventory::query()->where('product_variant_id', $variant->id)->lockForUpdate()->first();
 
                     if (! $inventory) {
-                        throw ValidationException::withMessages([
-                            'cart' => "Stok untuk {$variant->sku} tidak ditemukan.",
-                        ]);
+                        throw ValidationException::withMessages(['cart' => "Stok untuk {$variant->sku} tidak ditemukan."]);
                     }
 
                     $stock = (int) $inventory->stock;
 
                     if ($stock < $qty) {
-                        throw ValidationException::withMessages([
-                            'cart' => "Stok {$variant->product->name} tidak mencukupi. Stok tersedia: {$stock}.",
-                        ]);
+                        throw ValidationException::withMessages(['cart' => "Stok {$variant->product->name} tidak mencukupi. Stok tersedia: {$stock}."]);
                     }
 
                     $price = (float) $variant->price;
@@ -338,44 +260,36 @@ class CheckoutController extends Controller
                     foreach ($items as $item) {
                         $weight = $item['variant']->weight;
 
-                    if ($weight === null || (float) $weight <= 0) {
-                        throw ValidationException::withMessages([
-                            'cart' => "Berat produk {$item['variant']->product->name} belum tersedia. Ongkir belum dapat dihitung.",
-                        ]);
+                        if ($weight === null || (float) $weight <= 0) {
+                            throw ValidationException::withMessages(['cart' => "Berat produk {$item['variant']->product->name} belum tersedia. Ongkir belum dapat dihitung."]);
+                        }
+
+                        $shippingItems[] = [
+                            'name' => $item['variant']->product->name,
+                            'value' => (int) round($item['price']),
+                            'quantity' => $item['qty'],
+                            'weight' => (int) round((float) $weight),
+                        ];
                     }
 
-                    $shippingItems[] = [
-                        'name' => $item['variant']->product->name,
-                        'value' => (int) round($item['price']),
-                        'quantity' => $item['qty'],
-                        'weight' => (int) round((float) $weight),
-                    ];
-                }
-
-                $shippingRates = $biteshipService->getCourierRates([
-                    'destination_postal_code' => $validated['shipping_postal_code'],
-                    'destination_latitude' => $validated['shipping_latitude'] ?? null,
-                    'destination_longitude' => $validated['shipping_longitude'] ?? null,
-                    'items' => $shippingItems,
-                ]);
-
-                $selectedRate = collect($shippingRates['rates'] ?? [])
-                    ->first(function (array $rate) use ($validated) {
-                        return $rate['courier_code'] === $validated['courier_code']
-                            && $rate['service_code'] === $validated['courier_service_code'];
-                    });
-
-                if (! $selectedRate) {
-                    throw ValidationException::withMessages([
-                        'courier_code' => 'Pilihan kurir atau layanan pengiriman sudah tidak tersedia. Silakan pilih kembali.',
+                    $shippingRates = $biteshipService->getCourierRates([
+                        'destination_postal_code' => $validated['shipping_postal_code'],
+                        'destination_latitude' => $validated['shipping_latitude'] ?? null,
+                        'destination_longitude' => $validated['shipping_longitude'] ?? null,
+                        'items' => $shippingItems,
                     ]);
-                }
 
-                $shipping = (int) ($selectedRate['price'] ?? 0);
-            }
+                    $selectedRate = collect($shippingRates['rates'] ?? [])
+                        ->first(fn (array $rate) => $rate['courier_code'] === $validated['courier_code'] && $rate['service_code'] === $validated['courier_service_code']);
+
+                    if (! $selectedRate) {
+                        throw ValidationException::withMessages(['courier_code' => 'Pilihan kurir atau layanan pengiriman sudah tidak tersedia. Silakan pilih kembali.']);
+                    }
+
+                    $shipping = (int) ($selectedRate['price'] ?? 0);
+                }
 
                 $discount = 0;
-
                 $total = $subtotal - $discount + $shipping;
                 $invoiceNumber = $this->generateInvoiceNumber();
 
@@ -401,26 +315,11 @@ class CheckoutController extends Controller
                     'shipping_latitude' => $validated['shipping_latitude'] ?? null,
                     'shipping_longitude' => $validated['shipping_longitude'] ?? null,
                     'shipping_method' => $validated['shipping_method'],
-
-                    'courier_code' => $validated['shipping_method'] === 'Kurir'
-                        ? $validated['courier_code']
-                        : null,
-
-                    'courier_service_code' => $validated['shipping_method'] === 'Kurir'
-                        ? $validated['courier_service_code']
-                        : null,
-
-                    'pickup_date' => $validated['shipping_method'] === 'Ambil di Tempat'
-                        ? $validated['pickup_date']
-                        : null,
-
-                    'pickup_time_start' => $validated['shipping_method'] === 'Ambil di Tempat'
-                        ? $validated['pickup_time_start']
-                        : null,
-
-                    'pickup_time_end' => $validated['shipping_method'] === 'Ambil di Tempat'
-                        ? $validated['pickup_time_end']
-                        : null,
+                    'courier_code' => $validated['shipping_method'] === 'Kurir' ? $validated['courier_code'] : null,
+                    'courier_service_code' => $validated['shipping_method'] === 'Kurir' ? $validated['courier_service_code'] : null,
+                    'pickup_date' => $validated['shipping_method'] === 'Ambil di Tempat' ? $validated['pickup_date'] : null,
+                    'pickup_time_start' => $validated['shipping_method'] === 'Ambil di Tempat' ? $validated['pickup_time_start'] : null,
+                    'pickup_time_end' => $validated['shipping_method'] === 'Ambil di Tempat' ? $validated['pickup_time_end'] : null,
                 ]);
 
                 foreach ($items as $item) {
@@ -436,10 +335,7 @@ class CheckoutController extends Controller
                     ]);
                 }
 
-                $transaction->addStatusHistory(
-                    Transaction::ORDER_CREATED,
-                    'Pesanan berhasil dibuat melalui website.'
-                );
+                $transaction->addStatusHistory(Transaction::ORDER_CREATED, 'Pesanan berhasil dibuat melalui website.');
 
                 $amount = number_format((float) $total, 2, '.', '');
                 $vaExpiredAt = now()->addMinutes(10);
@@ -453,37 +349,23 @@ class CheckoutController extends Controller
                     'trxId' => $transaction->invoice_number,
                     'amount' => $amount,
                     'channel' => 'VIRTUAL_ACCOUNT_BCA',
-                    'expiredDate' => $vaExpiredAt
-                        ->copy()
-                        ->setTimezone('Asia/Makassar')
-                        ->format('Y-m-d\TH:i:sP'),
+                    'expiredDate' => $vaExpiredAt->copy()->setTimezone('Asia/Makassar')->format('Y-m-d\TH:i:sP'),
                 ]);
 
                 $responseCode = (string) ($dokuResponse['responseCode'] ?? '');
 
                 if ($responseCode === '' || ! str_starts_with($responseCode, '200')) {
-                    throw new RuntimeException(
-                        'Create VA DOKU gagal: ' .
-                        ($dokuResponse['responseMessage'] ?? 'Respons tidak valid.')
-                    );
+                    throw new RuntimeException('Create VA DOKU gagal: ' . ($dokuResponse['responseMessage'] ?? 'Respons tidak valid.'));
                 }
 
-                $vaNumber = $this->extractDokuValue($dokuResponse, [
-                    'virtualAccountNo',
-                    'virtualAccountNumber',
-                ]);
-
+                $vaNumber = $this->extractDokuValue($dokuResponse, ['virtualAccountNo', 'virtualAccountNumber']);
                 $vaNumber = preg_replace('/\s+/', '', (string) $vaNumber);
 
                 if (! $vaNumber || ! preg_match('/^\d+$/', $vaNumber)) {
-                    throw new RuntimeException(
-                        'Create VA berhasil dipanggil, tetapi nomor VA tidak valid pada respons DOKU.'
-                    );
+                    throw new RuntimeException('Create VA berhasil dipanggil, tetapi nomor VA tidak valid pada respons DOKU.');
                 }
 
-                $paymentRequestId = $this->extractDokuValue($dokuResponse, [
-                    'paymentRequestId',
-                ]);
+                $paymentRequestId = $this->extractDokuValue($dokuResponse, ['paymentRequestId']);
 
                 $transaction->update([
                     'doku_request_id' => $dokuResponse['_external_id'] ?? null,
@@ -494,18 +376,12 @@ class CheckoutController extends Controller
                     'doku_response' => $dokuResponse,
                 ]);
 
-
-                $transaction->load([
-                    'items.productVariant.product',
-                ]);
-
+                $transaction->load(['items.productVariant.product']);
 
                 return $transaction;
             });
 
-            Mail::to($transaction->shipping_email)
-                ->send(new OrderCreatedMail($transaction));
-
+            Mail::to($transaction->shipping_email)->send(new OrderCreatedMail($transaction));
             $request->session()->put('checkout_success_invoice', $transaction->invoice_number);
             $request->session()->forget('cart');
 
@@ -514,6 +390,7 @@ class CheckoutController extends Controller
             throw $e;
         } catch (\Throwable $e) {
             report($e);
+
             return back()->withInput()->with('error', 'Pesanan gagal dibuat. Silakan coba lagi.');
         }
     }

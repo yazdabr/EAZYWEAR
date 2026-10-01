@@ -18,17 +18,11 @@ public function index()
     $totalCategories = Category::count();
     $totalCustomers = Customer::count();
 
-    $totalOrders = Transaction::whereIn('status', [
-        'PAID',
-        'COMPLETED',
-    ])->count();
+    $totalOrders = Transaction::whereIn('status', Transaction::SALES_REPORT_STATUSES)->count();
 
     $pendingOrders = Transaction::where('status', 'PENDING')->count();
 
-    $totalRevenue = Transaction::whereIn('status', [
-        'PAID',
-        'COMPLETED',
-    ])->sum('total');
+    $totalRevenue = Transaction::whereIn('status', Transaction::SALES_REPORT_STATUSES)->sum('total');
 
     $salesChart = $this->getSalesChart();
 
@@ -59,7 +53,7 @@ public function index()
                 DB::raw('MONTH(transaction_date) as month'),
                 DB::raw('SUM(total) as total')
             )
-            ->whereIn('status', ['PAID', 'COMPLETED'])
+            ->whereIn('status', Transaction::SALES_REPORT_STATUSES)
             ->whereBetween('transaction_date', [$start, $end])
             ->groupBy(
                 DB::raw('YEAR(transaction_date)'),
@@ -99,7 +93,7 @@ public function index()
                 $join->on('product_images.product_id', '=', 'products.id')
                     ->where('product_images.is_thumbnail', true);
             })
-            ->whereIn('transactions.status', ['PAID', 'COMPLETED'])
+            ->whereIn('transactions.status', Transaction::SALES_REPORT_STATUSES)
             ->select(
                 'products.id',
                 'products.name',

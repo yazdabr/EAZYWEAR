@@ -9,6 +9,7 @@ use App\Models\ProductVariant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\StockMovement;
+use App\Models\TransactionNotification;
 use App\Services\DokuService;
 use App\Services\InventoryStockService;
 use App\Services\TransactionPaymentService;
@@ -25,12 +26,7 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaction::with([
-            'customer',
-            'items.productVariant.product.images',
-            'items.productVariant.size',
-            'items.productVariant.color',
-        ]);
+        $query = Transaction::with(['customer', 'items.productVariant.product.images', 'items.productVariant.size', 'items.productVariant.color']);
 
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
@@ -48,26 +44,16 @@ class TransactionController extends Controller
                         $customer->where('email', 'like', "%{$search}%");
                     });
                 } else {
-                    $q->where('invoice_number', 'like', "%{$search}%")
-                        ->orWhereHas('customer', function ($customer) use ($search) {
-                            $customer->where('name', 'like', "%{$search}%")
-                                ->orWhere('email', 'like', "%{$search}%");
-                        });
+                    $q->where('invoice_number', 'like', "%{$search}%")->orWhereHas('customer', function ($customer) use ($search) {
+                        $customer->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%");
+                    });
                 }
             });
         }
 
-        if ($request->filled('month')) {
-            $query->whereMonth('transaction_date', $request->integer('month'));
-        }
-
-        if ($request->filled('year')) {
-            $query->whereYear('transaction_date', $request->integer('year'));
-        }
-
-        if ($request->filled('customer_id')) {
-            $query->where('customer_id', $request->integer('customer_id'));
-        }
+        if ($request->filled('month')) $query->whereMonth('transaction_date', $request->integer('month'));
+        if ($request->filled('year')) $query->whereYear('transaction_date', $request->integer('year'));
+        if ($request->filled('customer_id')) $query->where('customer_id', $request->integer('customer_id'));
 
         $transactions = $query->latest('transaction_date')->paginate(10)->withQueryString();
 
@@ -75,9 +61,7 @@ class TransactionController extends Controller
             return [
                 'id' => $transaction->id,
                 'invoice' => $transaction->invoice_number,
-                'date' => $transaction->transaction_date
-                    ? $transaction->transaction_date->copy()->setTimezone('Asia/Makassar')->format('d M Y H:i')
-                    : '-',
+                'date' => $transaction->transaction_date ? $transaction->transaction_date->copy()->setTimezone('Asia/Makassar')->format('d M Y H:i') : '-',
                 'customer' => $transaction->shipping_name ?? $transaction->customer?->name ?? '-',
                 'customer_phone' => $transaction->shipping_phone ?? $transaction->customer?->phone ?? '-',
                 'customer_email' => $transaction->shipping_email ?? $transaction->customer?->email ?? '-',
@@ -99,10 +83,7 @@ class TransactionController extends Controller
                 'items' => $transaction->items->map(function ($item) {
                     $variant = $item->productVariant;
                     $product = $variant?->product;
-                    $image = $product?->images?->sortBy([
-                        ['is_thumbnail', 'desc'],
-                        ['sort_order', 'asc'],
-                    ])->first();
+                    $image = $product?->images?->sortBy([['is_thumbnail', 'desc'], ['sort_order', 'asc']])->first();
 
                     return [
                         'id' => $item->id,
@@ -121,70 +102,26 @@ class TransactionController extends Controller
         });
 
         $totalTransactions = Transaction::count();
-
-        $totalRevenue = Transaction::where('status', 'PAID')
-            ->sum('total');
-
-        $completedOrders = Transaction::where('status', 'PAID')->count();
-
+        $totalRevenue = Transaction::where('status', 'PAID')->sum('total');
+        $completedOrders = Transaction::where('status', Transaction::ORDER_COMPLETED)->count();
         $pendingTransactions = Transaction::where('status', 'PENDING')->count();
         $currentMonth = Carbon::now()->startOfMonth();
         $previousMonth = Carbon::now()->subMonth()->startOfMonth();
 
-        $currentTransactions = Transaction::whereBetween('transaction_date', [
-            $currentMonth->copy()->startOfMonth(),
-            $currentMonth->copy()->endOfMonth(),
-        ])
-        ->where('status', 'PAID')
-        ->count();
-
-        $previousTransactions = Transaction::whereBetween('transaction_date', [
-            $previousMonth->copy()->startOfMonth(),
-            $previousMonth->copy()->endOfMonth(),
-        ])
-        ->where('status', 'PAID')
-        ->count();
-
-        $currentRevenue = Transaction::whereBetween('transaction_date', [
-            $currentMonth->copy()->startOfMonth(),
-            $currentMonth->copy()->endOfMonth(),
-        ])
-        ->where('status', 'PAID')
-        ->sum('total');
-
-
-        $previousRevenue = Transaction::whereBetween('transaction_date', [
-            $previousMonth->copy()->startOfMonth(),
-            $previousMonth->copy()->endOfMonth(),
-        ])
-        ->where('status', 'PAID')
-        ->sum('total');
-
-        $currentCompleted = Transaction::whereBetween('transaction_date', [
-            $currentMonth->copy()->startOfMonth(),
-            $currentMonth->copy()->endOfMonth(),
-        ])->where('status', 'PAID')->count();
-
-        $previousCompleted = Transaction::whereBetween('transaction_date', [
-            $previousMonth->copy()->startOfMonth(),
-            $previousMonth->copy()->endOfMonth(),
-        ])->where('status', 'PAID')->count();
+        $currentTransactions = Transaction::whereBetween('transaction_date', [$currentMonth->copy()->startOfMonth(), $currentMonth->copy()->endOfMonth()])->where('status', 'PAID')->count();
+        $previousTransactions = Transaction::whereBetween('transaction_date', [$previousMonth->copy()->startOfMonth(), $previousMonth->copy()->endOfMonth()])->where('status', 'PAID')->count();
+        $currentRevenue = Transaction::whereBetween('transaction_date', [$currentMonth->copy()->startOfMonth(), $currentMonth->copy()->endOfMonth()])->where('status', 'PAID')->sum('total');
+        $previousRevenue = Transaction::whereBetween('transaction_date', [$previousMonth->copy()->startOfMonth(), $previousMonth->copy()->endOfMonth()])->where('status', 'PAID')->sum('total');
+        $currentCompleted = Transaction::whereBetween('transaction_date', [$currentMonth->copy()->startOfMonth(), $currentMonth->copy()->endOfMonth()])->where('status', Transaction::ORDER_COMPLETED)->count();
+        $previousCompleted = Transaction::whereBetween('transaction_date', [$previousMonth->copy()->startOfMonth(), $previousMonth->copy()->endOfMonth()])->where('status', Transaction::ORDER_COMPLETED)->count();
 
         $calculateGrowth = function ($current, $previous) {
             if ((float) $previous === 0.0) {
                 if ((float) $current === 0.0) {
-                    return [
-                        'value' => '0%',
-                        'positive' => true,
-                        'neutral' => true,
-                    ];
+                    return ['value' => '0%', 'positive' => true, 'neutral' => true];
                 }
 
-                return [
-                    'value' => '+100%',
-                    'positive' => true,
-                    'neutral' => false,
-                ];
+                return ['value' => '+100%', 'positive' => true, 'neutral' => false];
             }
 
             $growth = (($current - $previous) / $previous) * 100;
@@ -216,15 +153,9 @@ class TransactionController extends Controller
     {
         $search = trim($request->input('search', ''));
 
-        if (strlen($search) < 2) {
-            return response()->json(['data' => []]);
-        }
+        if (strlen($search) < 2) return response()->json(['data' => []]);
 
-        $customers = Customer::query()
-            ->where('name', 'like', "%{$search}%")
-            ->orderBy('name')
-            ->limit(10)
-            ->get(['id', 'name', 'email']);
+        $customers = Customer::query()->where('name', 'like', "%{$search}%")->orderBy('name')->limit(10)->get(['id', 'name', 'email']);
 
         return response()->json(['data' => $customers]);
     }
@@ -284,18 +215,12 @@ class TransactionController extends Controller
             $transaction = DB::transaction(function () use ($validated) {
                 $customerData = $validated['customer'];
                 $shippingData = $validated['shipping_data'];
-
                 $customer = null;
 
-                if (! empty($customerData['phone'])) {
-                    $customer = Customer::where('phone', $customerData['phone'])->first();
-                }
+                if (!empty($customerData['phone'])) $customer = Customer::where('phone', $customerData['phone'])->first();
+                if (!$customer && !empty($customerData['email'])) $customer = Customer::where('email', $customerData['email'])->first();
 
-                if (! $customer && ! empty($customerData['email'])) {
-                    $customer = Customer::where('email', $customerData['email'])->first();
-                }
-
-                if (! $customer) {
+                if (!$customer) {
                     $customer = Customer::create([
                         'name' => $customerData['name'],
                         'phone' => $customerData['phone'] ?? null,
@@ -307,17 +232,15 @@ class TransactionController extends Controller
                 $subtotal = 0;
 
                 foreach ($validated['items'] as $item) {
-                    $variant = ProductVariant::with(['product', 'size'])
-                        ->lockForUpdate()
-                        ->findOrFail($item['product_variant_id']);
+                    $variant = ProductVariant::with(['product', 'size'])->lockForUpdate()->findOrFail($item['product_variant_id']);
 
-                    if (! $variant->product || ! $variant->product->status) {
+                    if (!$variant->product || !$variant->product->status) {
                         throw ValidationException::withMessages(['items' => 'Produk yang dipilih tidak aktif.']);
                     }
 
                     $inventory = Inventory::where('product_variant_id', $variant->id)->lockForUpdate()->first();
 
-                    if (! $inventory) {
+                    if (!$inventory) {
                         throw ValidationException::withMessages(['items' => "Stok untuk {$variant->sku} tidak ditemukan."]);
                     }
 
@@ -331,21 +254,10 @@ class TransactionController extends Controller
                     $customName = trim($item['custom_name']);
                     $customNumber = trim($item['custom_number']);
 
-                    if ($customName === '') {
-                        throw ValidationException::withMessages(['items' => 'Nama jersey wajib diisi.']);
-                    }
-
-                    if (! preg_match('/^[\pL\s]+$/u', $customName)) {
-                        throw ValidationException::withMessages(['items' => 'Nama jersey hanya boleh berisi huruf dan spasi.']);
-                    }
-
-                    if ($customNumber === '') {
-                        throw ValidationException::withMessages(['items' => 'Nomor punggung wajib diisi.']);
-                    }
-
-                    if (! preg_match('/^[0-9]{1,2}$/', $customNumber)) {
-                        throw ValidationException::withMessages(['items' => 'Nomor punggung hanya boleh berisi 1-2 angka.']);
-                    }
+                    if ($customName === '') throw ValidationException::withMessages(['items' => 'Nama jersey wajib diisi.']);
+                    if (!preg_match('/^[\pL\s]+$/u', $customName)) throw ValidationException::withMessages(['items' => 'Nama jersey hanya boleh berisi huruf dan spasi.']);
+                    if ($customNumber === '') throw ValidationException::withMessages(['items' => 'Nomor punggung wajib diisi.']);
+                    if (!preg_match('/^[0-9]{1,2}$/', $customNumber)) throw ValidationException::withMessages(['items' => 'Nomor punggung hanya boleh berisi 1-2 angka.']);
 
                     $price = (float) $variant->price;
                     $itemSubtotal = $price * $qty;
@@ -372,11 +284,7 @@ class TransactionController extends Controller
                 $total = $subtotal - $discount + $shipping;
                 $invoiceNumber = $this->generateInvoiceNumber();
 
-                $transactionDate = Carbon::createFromFormat(
-                    'Y-m-d\TH:i',
-                    $validated['transaction_date'],
-                    'Asia/Makassar'
-                )->utc();
+                $transactionDate = Carbon::createFromFormat('Y-m-d\TH:i', $validated['transaction_date'], 'Asia/Makassar')->utc();
 
                 $transaction = Transaction::create([
                     'customer_id' => $customer->id,
@@ -447,85 +355,47 @@ class TransactionController extends Controller
 
     public function show(Transaction $transaction)
     {
-        $transaction->load([
-            'customer',
-            'items.productVariant.product.images',
-            'items.productVariant.size',
-            'items.productVariant.color',
-            'orderStatusHistories',
-        ]);
+        $transaction->load(['customer', 'items.productVariant.product.images', 'items.productVariant.size', 'items.productVariant.color', 'orderStatusHistories']);
 
         return view('admin.transactions.show', compact('transaction'));
     }
 
     public function print($invoice)
     {
-        $transaction = Transaction::with([
-            'customer',
-            'items.productVariant.product.images',
-            'items.productVariant.size',
-            'items.productVariant.color',
-        ])->where('invoice_number', $invoice)->firstOrFail();
+        $transaction = Transaction::with(['customer', 'items.productVariant.product.images', 'items.productVariant.size', 'items.productVariant.color'])->where('invoice_number', $invoice)->firstOrFail();
 
         return view('admin.transactions.print', compact('transaction'));
     }
 
-    public function cancel(
-        Transaction $transaction,
-        InventoryStockService $inventoryStockService
-    ) {
+    public function cancel(Transaction $transaction, InventoryStockService $inventoryStockService)
+    {
         try {
-            $cancelledTransaction = DB::transaction(function () use (
-                $transaction,
-                $inventoryStockService
-            ) {
-                $lockedTransaction = Transaction::query()
-                    ->whereKey($transaction->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+            $cancelledTransaction = DB::transaction(function () use ($transaction, $inventoryStockService) {
+                $lockedTransaction = Transaction::query()->whereKey($transaction->id)->lockForUpdate()->firstOrFail();
 
                 if ($lockedTransaction->status === 'CANCELLED') {
-                    throw ValidationException::withMessages([
-                        'transaction' => 'Transaksi sudah dibatalkan sebelumnya.',
-                    ]);
+                    throw ValidationException::withMessages(['transaction' => 'Transaksi sudah dibatalkan sebelumnya.']);
                 }
 
                 if ($lockedTransaction->status === 'COMPLETED') {
-                    throw ValidationException::withMessages([
-                        'transaction' => 'Transaksi yang sudah selesai tidak dapat dibatalkan.',
-                    ]);
+                    throw ValidationException::withMessages(['transaction' => 'Transaksi yang sudah selesai tidak dapat dibatalkan.']);
                 }
 
                 if ($lockedTransaction->status === 'PENDING') {
-                    $lockedTransaction->update([
-                        'status' => 'CANCELLED',
-                    ]);
-
-                    $lockedTransaction->addStatusHistory(
-                        'ORDER_CANCELLED',
-                        'Pesanan dibatalkan oleh admin.'
-                    );
+                    $lockedTransaction->update(['status' => 'CANCELLED']);
+                    $lockedTransaction->addStatusHistory('ORDER_CANCELLED', 'Pesanan dibatalkan oleh admin.');
 
                     return $lockedTransaction->fresh();
                 }
 
                 if ($lockedTransaction->status === 'PAID') {
-                    $inventoryStockService->restoreForTransaction(
-                        $lockedTransaction,
-                        "Stock restored due to cancellation - {$lockedTransaction->invoice_number}"
-                    );
-
-                    $lockedTransaction->addStatusHistory(
-                        'ORDER_CANCELLED',
-                        'Pesanan dibatalkan oleh admin dan stok dikembalikan.'
-                    );
+                    $inventoryStockService->restoreForTransaction($lockedTransaction, "Stock restored due to cancellation - {$lockedTransaction->invoice_number}");
+                    $lockedTransaction->addStatusHistory('ORDER_CANCELLED', 'Pesanan dibatalkan oleh admin dan stok dikembalikan.');
 
                     return $lockedTransaction->fresh();
                 }
 
-                throw ValidationException::withMessages([
-                    'transaction' => 'Status transaksi tidak dapat dibatalkan.',
-                ]);
+                throw ValidationException::withMessages(['transaction' => 'Status transaksi tidak dapat dibatalkan.']);
             });
 
             return response()->json([
@@ -556,21 +426,13 @@ class TransactionController extends Controller
     {
         try {
             $processedTransaction = DB::transaction(function () use ($transaction) {
-                $lockedTransaction = Transaction::query()
-                    ->whereKey($transaction->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+                $lockedTransaction = Transaction::query()->whereKey($transaction->id)->lockForUpdate()->firstOrFail();
 
                 if ($lockedTransaction->status !== 'PAID') {
-                    throw ValidationException::withMessages([
-                        'transaction' => 'Hanya pesanan dengan status PAID yang dapat diproses.',
-                    ]);
+                    throw ValidationException::withMessages(['transaction' => 'Hanya pesanan dengan status PAID yang dapat diproses.']);
                 }
 
-                $lockedTransaction->updateStatus(
-                    'ORDER_PROCESSING',
-                    'Pesanan mulai diproses oleh admin.'
-                );
+                $lockedTransaction->updateStatus('ORDER_PROCESSING', 'Pesanan mulai diproses oleh admin.');
 
                 return $lockedTransaction->fresh();
             });
@@ -610,10 +472,7 @@ class TransactionController extends Controller
         ]);
 
         try {
-            $shippedTransaction = DB::transaction(function () use (
-                $transaction,
-                $validated
-            ) {
+            $shippedTransaction = DB::transaction(function () use ($transaction, $validated) {
                 $lockedTransaction = Transaction::query()
                     ->whereKey($transaction->id)
                     ->lockForUpdate()
@@ -621,7 +480,7 @@ class TransactionController extends Controller
 
                 if ($lockedTransaction->status !== 'ORDER_PROCESSING') {
                     throw ValidationException::withMessages([
-                        'transaction' => 'Hanya pesanan dengan status ORDER_PROCESSING yang dapat dikirim.',
+                        'transaction' => 'Hanya pesanan dengan status ORDER_PROCESSING yang dapat dikirim.'
                     ]);
                 }
 
@@ -638,11 +497,27 @@ class TransactionController extends Controller
                 return $lockedTransaction->fresh();
             });
 
-            try {
-                Mail::to($shippedTransaction->shipping_email)
-                    ->send(new OrderShippedMail($shippedTransaction));
-            } catch (\Throwable $e) {
-                report($e);
+            $notification = TransactionNotification::firstOrCreate(
+                [
+                    'transaction_id' => $shippedTransaction->id,
+                    'type' => 'ORDER_SHIPPED_EMAIL',
+                ],
+                [
+                    'sent_at' => null,
+                ]
+            );
+
+            if (is_null($notification->sent_at)) {
+                try {
+                    Mail::to($shippedTransaction->shipping_email)
+                        ->send(new OrderShippedMail($shippedTransaction));
+
+                    $notification->update([
+                        'sent_at' => now(),
+                    ]);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
             }
 
             return response()->json([
@@ -680,9 +555,7 @@ class TransactionController extends Controller
             ], 422);
         }
 
-        $hasStockMovements = StockMovement::query()
-            ->where('transaction_id', $transaction->id)
-            ->exists();
+        $hasStockMovements = StockMovement::query()->where('transaction_id', $transaction->id)->exists();
 
         if ($hasStockMovements) {
             return response()->json([
@@ -700,25 +573,15 @@ class TransactionController extends Controller
 
         try {
             DB::transaction(function () use ($transaction) {
-                $lockedTransaction = Transaction::query()
-                    ->whereKey($transaction->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                $hasStockMovements = StockMovement::query()
-                    ->where('transaction_id', $lockedTransaction->id)
-                    ->exists();
+                $lockedTransaction = Transaction::query()->whereKey($transaction->id)->lockForUpdate()->firstOrFail();
+                $hasStockMovements = StockMovement::query()->where('transaction_id', $lockedTransaction->id)->exists();
 
                 if ($hasStockMovements) {
-                    throw ValidationException::withMessages([
-                        'transaction' => 'Transaksi memiliki riwayat stok dan tidak dapat dihapus.',
-                    ]);
+                    throw ValidationException::withMessages(['transaction' => 'Transaksi memiliki riwayat stok dan tidak dapat dihapus.']);
                 }
 
                 if ($lockedTransaction->status !== 'CANCELLED') {
-                    throw ValidationException::withMessages([
-                        'transaction' => 'Status transaksi tidak dapat dihapus.',
-                    ]);
+                    throw ValidationException::withMessages(['transaction' => 'Status transaksi tidak dapat dihapus.']);
                 }
 
                 $lockedTransaction->items()->delete();
@@ -745,71 +608,39 @@ class TransactionController extends Controller
         }
     }
 
-    public function checkPayment(
-        Transaction $transaction,
-        DokuService $dokuService,
-        TransactionPaymentService $paymentService
-    )
+    public function checkPayment(Transaction $transaction, DokuService $dokuService, TransactionPaymentService $paymentService)
     {
         if ($transaction->status !== 'PENDING') {
-            return response()->json([
-                'message' => 'Transaksi sudah diproses.'
-            ], 422);
+            return response()->json(['message' => 'Transaksi sudah diproses.'], 422);
         }
 
-
         $result = $dokuService->checkVirtualAccountStatus([
-            'partnerServiceId' => trim(
-                data_get(
-                    $transaction->doku_response,
-                    'virtualAccountData.partnerServiceId'
-                )
-            ),
-
-            'customerNo' => data_get(
-                $transaction->doku_response,
-                'virtualAccountData.customerNo'
-            ),
-
-            'virtualAccountNo' => data_get(
-                $transaction->doku_response,
-                'virtualAccountData.virtualAccountNo'
-            ),
-
+            'partnerServiceId' => trim(data_get($transaction->doku_response, 'virtualAccountData.partnerServiceId')),
+            'customerNo' => data_get($transaction->doku_response, 'virtualAccountData.customerNo'),
+            'virtualAccountNo' => data_get($transaction->doku_response, 'virtualAccountData.virtualAccountNo'),
             'trxId' => $transaction->invoice_number,
         ]);
 
-
         $response = $result['response'] ?? [];
 
-
-        if (
-            ($response['responseCode'] ?? null) === '2002600'
-        ) {
-
+        if (($response['responseCode'] ?? null) === '2002600') {
             \Log::info('Manual DOKU payment confirmed', [
                 'transaction_id' => $transaction->id,
                 'invoice' => $transaction->invoice_number,
                 'amount' => data_get($response, 'virtualAccountData.paidAmount.value'),
             ]);
 
-            $paymentService->processSuccessfulPayment(
-                $transaction,
-                $response,
-                'Manual DOKU payment check'
-            );
-
+            $paymentService->processSuccessfulPayment($transaction, $response, 'Manual DOKU payment check');
 
             return response()->json([
-                'success'=>true,
-                'message'=>'Pembayaran berhasil dikonfirmasi.'
+                'success' => true,
+                'message' => 'Pembayaran berhasil dikonfirmasi.',
             ]);
         }
 
-
         return response()->json([
-            'success'=>false,
-            'message'=>'Pembayaran belum diterima DOKU.'
+            'success' => false,
+            'message' => 'Pembayaran belum diterima DOKU.',
         ]);
     }
 
@@ -824,23 +655,11 @@ class TransactionController extends Controller
         ]);
 
         try {
-            $updatedTransaction = DB::transaction(function () use (
-                $transaction,
-                $validated
-            ) {
-                $lockedTransaction = Transaction::query()
-                    ->whereKey($transaction->id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+            $updatedTransaction = DB::transaction(function () use ($transaction, $validated) {
+                $lockedTransaction = Transaction::query()->whereKey($transaction->id)->lockForUpdate()->firstOrFail();
 
-                if (! in_array(
-                    $lockedTransaction->status,
-                    ['ORDER_SHIPPED', 'ORDER_COMPLETED'],
-                    true
-                )) {
-                    throw ValidationException::withMessages([
-                        'transaction' => 'Detail pengiriman hanya dapat diedit setelah pesanan dikirim.',
-                    ]);
+                if (!in_array($lockedTransaction->status, ['ORDER_SHIPPED', 'ORDER_COMPLETED'], true)) {
+                    throw ValidationException::withMessages(['transaction' => 'Detail pengiriman hanya dapat diedit setelah pesanan dikirim.']);
                 }
 
                 $lockedTransaction->update([
@@ -873,6 +692,47 @@ class TransactionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal memperbarui detail pengiriman.',
+            ], 500);
+        }
+    }
+
+    public function complete(Transaction $transaction)
+    {
+        try {
+            $completedTransaction = DB::transaction(function () use ($transaction) {
+                $lockedTransaction = Transaction::query()->whereKey($transaction->id)->lockForUpdate()->firstOrFail();
+
+                $allowed = ($lockedTransaction->shipping_method === 'Ambil di Tempat' && $lockedTransaction->status === 'ORDER_PROCESSING') || ($lockedTransaction->shipping_method === 'Kurir' && $lockedTransaction->status === 'ORDER_SHIPPED');
+
+                if (!$allowed) {
+                    throw ValidationException::withMessages(['transaction' => 'Status transaksi belum dapat diselesaikan.']);
+                }
+
+                $lockedTransaction->updateStatus('ORDER_COMPLETED', 'Pesanan telah diselesaikan oleh admin.');
+
+                return $lockedTransaction->fresh();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pesanan berhasil diselesaikan.',
+                'data' => [
+                    'id' => $completedTransaction->id,
+                    'status' => $completedTransaction->status,
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyelesaikan pesanan.',
             ], 500);
         }
     }

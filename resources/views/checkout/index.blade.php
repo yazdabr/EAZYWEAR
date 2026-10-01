@@ -265,22 +265,58 @@
                                 <p class="mt-1 text-[11px] text-gray-500 sm:text-xs">Pilih metode pembayaran yang akan digunakan.</p>
                             </div>
                             <div class="space-y-2.5">
-                                @foreach($paymentMethods as $method)
-                                    <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3.5 py-3 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 has-[:checked]:border-[#AE7C18] has-[:checked]:bg-[#AE7C18]/5 sm:gap-4 sm:px-4">
-                                        <input type="radio" name="payment_method" value="{{ $method['value'] }}" @checked($loop->first) class="h-4 w-4 accent-[#AE7C18]">
-                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#AE7C18]/10">
-                                            @if($method['value'] === 'QRIS')
-                                                <x-heroicon-o-qr-code class="h-4 w-4 text-[#AE7C18]"/>
-                                            @else
-                                                <x-heroicon-o-building-library class="h-4 w-4 text-[#AE7C18]"/>
-                                            @endif
-                                        </div>
-                                        <div class="min-w-0">
-                                            <p class="text-xs font-semibold text-slate-900 sm:text-sm">{{ $method['name'] }}</p>
-                                            <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">{{ $method['description'] }}</p>
-                                        </div>
-                                    </label>
-                                @endforeach
+                                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3.5 py-3 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 has-[:checked]:border-[#AE7C18] has-[:checked]:bg-[#AE7C18]/5 sm:gap-4 sm:px-4">
+                                    <input
+                                        type="radio"
+                                        name="payment_method"
+                                        value="VA"
+                                        checked
+                                        class="h-4 w-4 accent-[#AE7C18]"
+                                    >
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#AE7C18]/10">
+                                        <x-heroicon-o-building-library class="h-4 w-4 text-[#AE7C18]"/>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-semibold text-slate-900 sm:text-sm">Virtual Account</p>
+                                        <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">
+                                            Bayar menggunakan Virtual Account dari bank yang tersedia.
+                                        </p>
+                                    </div>
+                                </label>
+
+                                <div class="rounded-xl border border-gray-200 bg-gray-50/50 p-3 sm:p-4">
+                                    <p class="mb-3 text-[11px] font-semibold text-slate-700 sm:text-xs">
+                                        Pilih Bank
+                                    </p>
+
+                                    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                        @foreach([
+                                            'BCA' => 'bca.png',
+                                            'MANDIRI' => 'mandiri.png',
+                                            'BNI' => 'bni.png',
+                                            'BRI' => 'bri.png',
+                                            'BSI' => 'bsi.png',
+                                        ] as $bank => $logo)
+                                            <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-2.5 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 has-[:checked]:border-[#AE7C18] has-[:checked]:bg-[#AE7C18]/5">
+                                                <input
+                                                    type="radio"
+                                                    name="va_bank"
+                                                    value="{{ $bank }}"
+                                                    @checked(old('va_bank', 'BCA') === $bank)
+                                                    class="h-3.5 w-3.5 shrink-0 accent-[#AE7C18]"
+                                                >
+
+                                                <div class="flex h-7 flex-1 items-center justify-center">
+                                                    <img
+                                                        src="{{ asset('images/payment/' . $logo) }}"
+                                                        alt="{{ $bank }}"
+                                                        class="max-h-7 max-w-full object-contain"
+                                                    >
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

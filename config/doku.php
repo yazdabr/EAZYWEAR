@@ -53,5 +53,47 @@ return [
             'DOKU_VA_CUSTOMER_PREFIX',
             '9'
         ),
+
+        'banks' => [
+            'BCA' => [
+                'name' => 'BCA',
+                'partner_service_id' => '19008',
+                'customer_no' => '9',
+                'merchant_bin' => '190089',
+                'channel' => 'VIRTUAL_ACCOUNT_BCA',
+            ],
+
+            'MANDIRI' => [
+                'name' => 'Mandiri',
+                'partner_service_id' => '86188',
+                'customer_no' => '0',
+                'merchant_bin' => '861880',
+                'channel' => 'VIRTUAL_ACCOUNT_BANK_MANDIRI',
+            ],
+
+            'BNI' => [
+                'name' => 'BNI',
+                'partner_service_id' => '8492',
+                'customer_no' => '3',
+                'merchant_bin' => '84923',
+                'channel' => 'VIRTUAL_ACCOUNT_BNI',
+            ],
+
+            'BRI' => [
+                'name' => 'BRI',
+                'partner_service_id' => '13925',
+                'customer_no' => '6',
+                'merchant_bin' => '139256',
+                'channel' => 'VIRTUAL_ACCOUNT_BRI',
+            ],
+
+            'BSI' => [
+                'name' => 'BSI',
+                'partner_service_id' => '2020',
+                'customer_no' => '20',
+                'merchant_bin' => '202020',
+                'channel' => 'VIRTUAL_ACCOUNT_BSI',
+            ],
+        ],
     ],
 ];

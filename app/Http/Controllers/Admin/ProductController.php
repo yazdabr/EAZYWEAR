@@ -267,7 +267,10 @@ class ProductController extends Controller
             report($e);
 
             if ($request->ajax() || $request->expectsJson() || $request->header('Accept') === 'application/json') {
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk gagal ditambahkan. Silakan coba lagi.'
+                ], 500);
             }
 
             throw $e;
@@ -542,7 +545,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Produk gagal dihapus. ' . $e->getMessage(),
+                'message' => 'Produk gagal dihapus. Silakan coba lagi.',
             ], 500);
         }
     }

@@ -37,6 +37,45 @@ class DokuNotificationController extends Controller
             ], 400);
         }
 
+        try {
+            $parsedTimestamp = false;
+
+            $timestampFormats = [
+                'Y-m-d\TH:i:sP',
+                'Y-m-d\TH:i:s.v\Z',
+            ];
+
+            foreach ($timestampFormats as $format) {
+                $parsed = \DateTimeImmutable::createFromFormat($format, $timestamp);
+
+                if ($parsed !== false) {
+                    $errors = \DateTimeImmutable::getLastErrors();
+
+                    if (
+                        $errors === false ||
+                        ($errors['warning_count'] === 0 && $errors['error_count'] === 0)
+                    ) {
+                        $parsedTimestamp = $parsed;
+                        break;
+                    }
+                }
+            }
+
+            if ($parsedTimestamp === false) {
+                throw new \RuntimeException('Invalid timestamp format.');
+            }
+        } catch (\Throwable $e) {
+            Log::warning('DOKU notification has invalid timestamp.', [
+                'external_id' => $externalId,
+                'timestamp' => $timestamp,
+            ]);
+
+            return response()->json([
+                'responseCode' => '4002502',
+                'responseMessage' => 'Invalid timestamp.',
+            ], 400);
+        }
+
         if ($partnerId !== (string) config('doku.client_id')) {
             Log::warning('DOKU notification partner ID mismatch.', [
                 'partner_id' => $partnerId,

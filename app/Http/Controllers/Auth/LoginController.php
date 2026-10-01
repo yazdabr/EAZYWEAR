@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -21,39 +23,50 @@ class LoginController extends Controller
 
         $remember = $request->boolean('remember');
 
+        $throttleKey = Str::transliterate(
+            Str::lower($credentials['username']) . '|' . $request->ip()
+        );
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            return back()
+                ->withErrors([
+                    'username' => 'Terlalu banyak percobaan login. Silakan coba lagi dalam ' . ceil($seconds / 60) . ' menit.',
+                ])
+                ->withInput([
+                    'username' => $request->username,
+                    'remember' => $request->boolean('remember'),
+                ]);
+        }
+
         if (Auth::attempt([
             'name' => $credentials['username'],
             'password' => $credentials['password'],
         ], $remember)) {
 
+            RateLimiter::clear($throttleKey);
+
             $request->session()->regenerate();
 
             $user = $request->user();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Redirect Berdasarkan Role
-            |--------------------------------------------------------------------------
-            */
-
-            // User Production
             if ($user->role === 'production') {
                 return redirect()->route('admin.production-reports');
             }
 
-            // User Management
             if ($user->role === 'management') {
                 return redirect()->route('admin.transactions');
             }
 
-            // User Super Admin
             if ($user->role === 'super_admin') {
                 return redirect()->route('admin.dashboard');
             }
 
-            // Fallback jika role tidak dikenali
             return redirect()->route('home');
         }
+
+        RateLimiter::hit($throttleKey);
 
         return back()
             ->withErrors([

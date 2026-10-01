@@ -353,9 +353,7 @@ class ProductionController extends Controller
 
             return back()
                 ->withErrors([
-                    'error' =>
-                        'Terjadi kesalahan saat menyimpan produksi: '
-                        . $e->getMessage(),
+                    'error' => 'Terjadi kesalahan saat menyimpan produksi. Silakan coba lagi.',
                 ])
                 ->withInput();
         }
@@ -713,9 +711,7 @@ class ProductionController extends Controller
 
             return back()
                 ->withErrors([
-                    'error' =>
-                        'Terjadi kesalahan saat memperbarui data produksi: '
-                        . $e->getMessage(),
+                    'error' => 'Terjadi kesalahan saat memperbarui data produksi. Silakan coba lagi.',
                 ])
                 ->withInput();
         }
@@ -884,9 +880,7 @@ class ProductionController extends Controller
 
             report($e);
 
-            $errorMessage =
-                'Terjadi kesalahan saat menghapus produksi: '
-                . $e->getMessage();
+            $errorMessage = 'Terjadi kesalahan saat menghapus produksi. Silakan coba lagi.';
 
             /*
             |--------------------------------------------------------------------------

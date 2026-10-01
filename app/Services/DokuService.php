@@ -143,7 +143,9 @@ class DokuService
             'endpoint' => $endpoint,
             'external_id' => $externalId,
             'timestamp' => $timestamp,
-            'body' => $body,
+            'channel' => $data['channel'] ?? null,
+            'trx_id' => $data['trxId'] ?? null,
+            'amount_currency' => $body['totalAmount']['currency'] ?? null,
         ]);
 
         $response = Http::timeout(30)
@@ -166,7 +168,9 @@ class DokuService
 
         \Log::info('DOKU CREATE VA RESPONSE', [
             'external_id' => $externalId,
-            'response' => $responseData,
+            'http_status' => $response->status(),
+            'response_code' => $responseData['responseCode'] ?? null,
+            'response_message' => $responseData['responseMessage'] ?? null,
         ]);
 
         if (! is_array($responseData)) {
@@ -215,24 +219,9 @@ class DokuService
             'trxId' => (string) ($data['trxId'] ?? ''),
         ];
 
-        \Log::info('DOKU BEFORE JSON BODY', [
-            'virtualAccountNo_raw' => $virtualAccountNo,
-            'virtualAccountNo_length' => strlen($virtualAccountNo),
-            'json' => json_encode($body),
-        ]);
-
         if (! empty($data['paymentRequestId'])) {
             $body['paymentRequestId'] = (string) $data['paymentRequestId'];
         }
-        \Log::info('DOKU CHECK STATUS REQUEST', [
-            'partnerServiceId' => $partnerServiceId,
-            'partnerServiceId_length' => strlen($partnerServiceId),
-            'customerNo' => $customerNo,
-            'virtualAccountNo' => $virtualAccountNo,
-            'virtualAccountNo_length' => strlen($virtualAccountNo),
-            'trxId' => $data['trxId'] ?? null,
-            'paymentRequestId' => $data['paymentRequestId'] ?? null,
-        ]);
 
         $requestBody = json_encode($body, JSON_UNESCAPED_SLASHES);
 
@@ -244,7 +233,8 @@ class DokuService
         \Log::info('DOKU CHECK STATUS REQUEST', [
             'endpoint' => $endpoint,
             'external_id' => $externalId,
-            'body' => $body,
+            'trx_id' => $data['trxId'] ?? null,
+            'has_payment_request_id' => ! empty($data['paymentRequestId']),
         ]);
         $response = Http::timeout(30)
             ->acceptJson()
@@ -264,7 +254,9 @@ class DokuService
 
         \Log::info('DOKU CHECK STATUS RESPONSE', [
             'external_id' => $externalId,
-            'response' => $responseData,
+            'http_status' => $response->status(),
+            'response_code' => $responseData['responseCode'] ?? null,
+            'response_message' => $responseData['responseMessage'] ?? null,
         ]);
 
         if (! is_array($responseData)) {

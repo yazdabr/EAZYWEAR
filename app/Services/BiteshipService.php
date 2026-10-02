@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use InvalidArgumentException;
 
 class BiteshipService
 {
@@ -238,6 +239,32 @@ class BiteshipService
             'tracking_id' => $response['courier']['tracking_id'] ?? null,
             'waybill_id' => $response['courier']['waybill_id'] ?? null,
             'status' => $response['status'] ?? null,
+            'raw' => $response,
+        ];
+    }
+
+    public function getOrder(string $orderId): array
+    {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException('Konfigurasi Biteship belum lengkap.');
+        }
+
+        if ($orderId === '') {
+            throw new InvalidArgumentException('Biteship order ID wajib diisi.');
+        }
+
+        $response = $this->request('GET', '/v1/orders/' . rawurlencode($orderId));
+
+        return [
+            'success' => ! empty($response['success']),
+            'order_id' => $response['id'] ?? null,
+            'reference_id' => $response['reference_id'] ?? null,
+            'tracking_id' => $response['courier']['tracking_id'] ?? null,
+            'waybill_id' => $response['courier']['waybill_id'] ?? null,
+            'courier_code' => $response['courier']['company'] ?? null,
+            'courier_type' => $response['courier']['type'] ?? null,
+            'status' => $response['status'] ?? null,
+            'price' => $response['price'] ?? null,
             'raw' => $response,
         ];
     }

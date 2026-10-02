@@ -26,7 +26,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 <h1 class="text-lg sm:text-xl font-bold text-slate-900 break-all">{{ $transaction->invoice_number }}</h1>
                 <span class="rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs font-bold {{ $currentStatus['color'] }}">{{ $currentStatus['label'] }}</span>
             </div>
-            <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500">{{ $transaction->transaction_date?->setTimezone('Asia/Makassar')->format('d M Y H:i') }}</p>
+            <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500">{{ $transaction->transaction_date?->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y H:i') }} WITA</p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -127,7 +127,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                         <div class="flex justify-between gap-4"><span class="text-slate-500">VA Number</span><span class="font-bold text-slate-900 text-right break-all">{{ $transaction->va_number }}</span></div>
                         <div class="flex justify-between gap-4">
                             <span class="text-slate-500">Expired</span>
-                            <span class="text-slate-700 text-right">{{ $transaction->va_expired_at ? $transaction->va_expired_at->setTimezone('Asia/Makassar')->format('d M Y H:i') : '-' }}</span>
+                            <span class="text-slate-700 text-right">{{ $transaction->va_expired_at ? $transaction->va_expired_at->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y H:i') . ' WITA' : '-' }}</span>
                         </div>
                     @endif
                 </div>
@@ -276,7 +276,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 <div class="min-w-0 flex-1">
                                     <p class="font-bold text-slate-900 text-xs sm:text-sm">{{ $status['label'] ?? $history->status }}</p>
                                     @if($history->note)<p class="mt-0.5 text-xs leading-relaxed text-slate-500">{{ $history->note }}</p>@endif
-                                    <p class="mt-0.5 text-[10px] sm:text-xs text-slate-400">{{ $history->created_at->setTimezone('Asia/Makassar')->format('d M Y H:i') }}</p>
+                                    <p class="mt-0.5 text-[10px] sm:text-xs text-slate-400">{{ $history->created_at->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y H:i') }} WITA</p>
                                 </div>
                             </div>
                         @endforeach

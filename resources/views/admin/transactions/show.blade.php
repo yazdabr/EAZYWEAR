@@ -1,4 +1,4 @@
-﻿@extends('admin.layouts.app')
+@extends('admin.layouts.app')
 
 @section('title', 'Detail Transaksi')
 @section('page-title', 'Detail Transaksi')
@@ -164,17 +164,18 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div>
                                     <label class="mb-1.5 block text-xs font-medium text-slate-600">Kurir</label>
-                                    <input type="text" name="courier" required maxlength="100" placeholder="Contoh: JNE, J&T, SiCepat" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10">
+                                    <input type="text" name="courier" maxlength="100" value="{{ $transaction->courier ?? '' }}" placeholder="Contoh: J&T, JNE, SiCepat" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10">
                                 </div>
                                 <div>
                                     <label class="mb-1.5 block text-xs font-medium text-slate-600">Nomor Resi</label>
-                                    <input type="text" name="tracking_number" required maxlength="100" placeholder="Masukkan nomor resi" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10">
+                                    <input type="text" name="tracking_number" maxlength="100" placeholder="Otomatis dari Biteship" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10">
                                 </div>
                             </div>
+                            <p class="text-xs text-slate-400">Jika data kurir Biteship tersedia, nomor resi akan dibuat otomatis saat pengiriman diproses.</p>
                             <div class="flex justify-end">
                                 <button type="submit" id="ship-order-btn" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-3 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F]">
                                     <x-heroicon-o-check class="h-4 w-4" />
-                                    Simpan
+                                    Buat Pengiriman
                                 </button>
                             </div>
                         </form>
@@ -360,7 +361,7 @@ function shipOrder(event, id) {
     })
     .finally(() => {
         btn.disabled = false;
-        btn.innerText = 'Simpan';
+        btn.innerText = 'Buat Pengiriman';
     });
 }
 

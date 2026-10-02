@@ -240,9 +240,8 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                                 {{ $history->note }}
                                             </p>
                                         @endif
-
                                             <p class="mt-0.5 text-[11px] text-slate-400">
-                                                {{ $history->created_at->copy()->setTimezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
+                                                {{ $history->created_at->copy()->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y, H:i') }} WITA
                                             </p>
                                     </div>
                                 </div>

@@ -351,7 +351,6 @@ class CheckoutController extends Controller
                 $dokuResponse = $dokuService->createVirtualAccount([
                     'partnerServiceId' => $vaConfig['partner_service_id'],
                     'customerNo' => $vaConfig['customer_no'],
-                    'virtualAccountNo' => $vaConfig['merchant_bin'],
                     'virtualAccountName' => $validated['name'],
                     'virtualAccountEmail' => $validated['email'],
                     'virtualAccountPhone' => $validated['phone'],

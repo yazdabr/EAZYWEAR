@@ -90,6 +90,7 @@ class CheckoutControllerTest extends TestCase
             'courier_service_code' => 'ez',
 
             'payment_method' => 'VA',
+            'va_bank' => 'BCA',
         ]);
 
         $response->assertRedirect(route('checkout.success'));
@@ -215,6 +216,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
+            'va_bank' => 'BCA',
         ]);
 
         $response
@@ -305,6 +307,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
+            'va_bank' => 'BCA',
         ]);
 
         $response->assertRedirect(route('checkout.success'));
@@ -392,6 +395,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
+            'va_bank' => 'BCA',
         ]);
 
         $response->assertRedirect(route('checkout.success'));
@@ -505,6 +509,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
+            'va_bank' => 'BCA',
         ]);
 
         $response->assertRedirect(route('checkout.success'));
@@ -592,6 +597,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
+            'va_bank' => 'BCA',
         ]);
 
         $response->assertSessionHasErrors('cart');
@@ -647,6 +653,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
+            'va_bank' => 'BCA',
         ]);
 
         $response->assertSessionHas('error');
@@ -674,6 +681,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
+            'va_bank' => 'BCA',
         ]);
 
         $response

@@ -83,13 +83,13 @@
 
         {{-- View Detail Button --}}
         <div class="pt-2.5 sm:pt-3 lg:pt-4">
-            {{-- <x-ui.button
+            <x-ui.button
                 :href="$detailUrl"
                 variant="outline"
                 class="h-9 w-full rounded-lg px-3 text-[10px] font-semibold sm:h-9 sm:text-[11px] lg:h-10 lg:text-xs"
             >
                 View Detail
-            </x-ui.button> --}}
+            </x-ui.button>
         </div>
 
     </div>

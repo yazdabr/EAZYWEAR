@@ -71,7 +71,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                         </h1>
                         <p class="mt-0.5 text-xs sm:text-sm text-slate-500">
                             Waktu Transaksi:
-                            {{ $transaction->created_at->setTimezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
+                            {{ $transaction->created_at->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y, H:i') }} WITA
                         </p>
                     </div>
 

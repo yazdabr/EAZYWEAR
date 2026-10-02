@@ -205,10 +205,10 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             </div>
 
                             <div class="mt-4 flex justify-end">
-                                <button type="button" id="edit-shipping-btn" onclick="toggleShippingEdit()" class="inline-flex items-center justify-center gap-2 rounded-xl border border-[#AE7C18]/30 bg-[#AE7C18]/10 px-4 py-2 text-xs sm:text-sm font-semibold text-[#96690F] transition hover:bg-[#AE7C18]/15">
+                                {{-- <button type="button" id="edit-shipping-btn" onclick="toggleShippingEdit()" class="inline-flex items-center justify-center gap-2 rounded-xl border border-[#AE7C18]/30 bg-[#AE7C18]/10 px-4 py-2 text-xs sm:text-sm font-semibold text-[#96690F] transition hover:bg-[#AE7C18]/15">
                                     <x-heroicon-o-pencil-square class="h-4 w-4" />
                                     Edit Pengiriman
-                                </button>
+                                </button> --}}
                             </div>
 
                             @if($transaction->status === 'ORDER_SHIPPED')

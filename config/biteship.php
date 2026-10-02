@@ -15,9 +15,12 @@ return [
     |
     */
     'origin' => [
+        'contact_name' => env('BITESHIP_ORIGIN_CONTACT_NAME'),
+        'contact_phone' => env('BITESHIP_ORIGIN_CONTACT_PHONE'),
+        'address' => env('BITESHIP_ORIGIN_ADDRESS'),
+        'postal_code' => env('BITESHIP_ORIGIN_POSTAL_CODE'),
         'latitude' => env('BITESHIP_ORIGIN_LATITUDE'),
         'longitude' => env('BITESHIP_ORIGIN_LONGITUDE'),
-        'postal_code' => env('BITESHIP_ORIGIN_POSTAL_CODE'),
     ],
 
     /*

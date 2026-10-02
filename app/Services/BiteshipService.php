@@ -198,4 +198,47 @@ class BiteshipService
 
         return $response->json() ?? [];
     }
+
+    public function createOrder(array $data): array
+    {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException('Konfigurasi Biteship belum lengkap.');
+        }
+
+        $payload = [
+            'reference_id' => (string) $data['reference_id'],
+            'origin_contact_name' => (string) config('biteship.origin.contact_name'),
+            'origin_contact_phone' => (string) config('biteship.origin.contact_phone'),
+            'origin_address' => (string) config('biteship.origin.address'),
+            'origin_postal_code' => (int) config('biteship.origin.postal_code'),
+            'destination_contact_name' => (string) $data['destination_contact_name'],
+            'destination_contact_phone' => (string) $data['destination_contact_phone'],
+            'destination_address' => (string) $data['destination_address'],
+            'destination_postal_code' => (int) $data['destination_postal_code'],
+            'courier_company' => (string) $data['courier_company'],
+            'courier_type' => (string) $data['courier_type'],
+            'delivery_type' => (string) ($data['delivery_type'] ?? 'now'),
+            'items' => $this->normalizeItems($data['items']),
+        ];
+
+        if (! empty($data['destination_area_id'])) {
+            $payload['destination_area_id'] = $data['destination_area_id'];
+        }
+
+        if (! empty($data['destination_latitude']) && ! empty($data['destination_longitude'])) {
+            $payload['destination_latitude'] = (float) $data['destination_latitude'];
+            $payload['destination_longitude'] = (float) $data['destination_longitude'];
+        }
+
+        $response = $this->request('POST', '/v1/orders', $payload);
+
+        return [
+            'success' => ! empty($response['success']),
+            'order_id' => $response['id'] ?? null,
+            'tracking_id' => $response['courier']['tracking_id'] ?? null,
+            'waybill_id' => $response['courier']['waybill_id'] ?? null,
+            'status' => $response['status'] ?? null,
+            'raw' => $response,
+        ];
+    }
 }

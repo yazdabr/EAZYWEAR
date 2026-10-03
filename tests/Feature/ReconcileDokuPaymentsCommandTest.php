@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Services\DokuService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class ReconcileDokuPaymentsCommandTest extends TestCase
@@ -31,6 +32,16 @@ class ReconcileDokuPaymentsCommandTest extends TestCase
             'va_number' => '190089000000123456',
             'va_expired_at' => now('UTC')->addMinutes(5),
             'doku_payment_id' => null,
+        ]);
+
+        $transaction->update([
+            'doku_response' => [
+                'virtualAccountData' => [
+                    'partnerServiceId' => '19008',
+                    'customerNo' => (string) $transaction->id,
+                    'virtualAccountNo' => '190089000000123456',
+                ],
+            ],
         ]);
 
         TransactionItem::query()->create([
@@ -206,5 +217,31 @@ class ReconcileDokuPaymentsCommandTest extends TestCase
 
         $this->assertSame('PENDING', $transaction->status);
         $this->assertNull($transaction->doku_payment_id);
+    }
+
+    public function test_reconciliation_skips_when_another_process_holds_the_lock(): void
+    {
+        $transaction = $this->createPendingTransaction();
+
+        $lock = Cache::lock('transactions:reconcile-doku', 240);
+
+        $this->assertTrue($lock->get());
+
+        try {
+            $dokuService = $this->mock(DokuService::class);
+
+            $dokuService
+                ->shouldReceive('checkVirtualAccountStatus')
+                ->never();
+
+            $this->artisan('transactions:reconcile-doku')
+                ->assertExitCode(0);
+
+            $transaction->refresh();
+
+            $this->assertSame('PENDING', $transaction->status);
+        } finally {
+            $lock->release();
+        }
     }
 }

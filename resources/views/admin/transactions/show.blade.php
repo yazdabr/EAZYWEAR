@@ -151,36 +151,75 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                     <div class="mb-4 sm:mb-5 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-2.5 sm:gap-3">
-                            <div class="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#AE7C18]/10 text-[#AE7C18]"><x-heroicon-o-truck class="h-4 w-4 sm:h-5 sm:w-5" /></div>
+                            <div class="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#AE7C18]/10 text-[#AE7C18]">
+                                <x-heroicon-o-truck class="h-4 w-4 sm:h-5 sm:w-5" />
+                            </div>
+
                             <div>
-                                <h2 class="font-bold text-slate-900 text-sm sm:text-base">Pengiriman</h2>
-                                <p class="mt-0.5 text-[10px] sm:text-xs text-slate-400">Informasi kurir dan nomor resi</p>
+                                <h2 class="font-bold text-slate-900 text-sm sm:text-base">
+                                    Pengiriman
+                                </h2>
+
+                                <p class="mt-0.5 text-[10px] sm:text-xs text-slate-400">
+                                    Pengiriman otomatis melalui Biteship
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     @if($transaction->status === 'ORDER_PROCESSING' && $transaction->shipping_method === 'Kurir')
-                        <form id="ship-order-form" onsubmit="shipOrder(event, '{{ $transaction->id }}')" class="space-y-4">
-                            <div class="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label class="mb-1.5 block text-xs font-medium text-slate-600">Kurir</label>
-                                    <input type="text" name="courier" maxlength="100" value="{{ $transaction->courier ?? '' }}" placeholder="Contoh: J&T, JNE, SiCepat" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10">
+
+                        {{-- BELUM ADA PENGIRIMAN --}}
+                        <div class="rounded-2xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-5 sm:p-6">
+                            <div class="flex flex-col items-center text-center">
+
+                                <div class="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#AE7C18]/10 text-[#AE7C18]">
+                                    <x-heroicon-o-truck class="h-6 w-6 sm:h-7 sm:w-7" />
                                 </div>
-                                <div>
-                                    <label class="mb-1.5 block text-xs font-medium text-slate-600">Nomor Resi</label>
-                                    <input type="text" name="tracking_number" maxlength="100" placeholder="Otomatis dari Biteship" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10">
+
+                                <p class="mt-4 font-bold text-slate-900 text-sm sm:text-base">
+                                    Siap Diproses
+                                </p>
+
+                                <p class="mt-1.5 max-w-lg text-xs sm:text-sm leading-relaxed text-slate-500">
+                                    Pengiriman akan dibuat otomatis melalui
+                                    <strong class="text-slate-700">Biteship</strong>.
+                                    Kurir dan nomor resi akan ditentukan secara otomatis
+                                    berdasarkan layanan pengiriman yang tersedia.
+                                </p>
+
+                                <div class="mt-4 w-full rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
+                                    <div class="flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
+                                        <x-heroicon-o-information-circle class="h-4 w-4 shrink-0 text-[#AE7C18]" />
+
+                                        <span>
+                                            Tidak perlu memasukkan kurir atau nomor resi secara manual.
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                            <p class="text-xs text-slate-400">Jika data kurir Biteship tersedia, nomor resi akan dibuat otomatis saat pengiriman diproses.</p>
-                            <div class="flex justify-end">
-                                <button type="submit" id="ship-order-btn" class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-3 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F]">
-                                    <x-heroicon-o-check class="h-4 w-4" />
-                                    Buat Pengiriman
+
+                                <button
+                                    type="button"
+                                    id="ship-order-btn"
+                                    onclick="shipOrder('{{ $transaction->id }}')"
+                                    class="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30"
+                                >
+                                    <x-heroicon-o-truck class="h-4 w-4" />
+                                    Proses Pengiriman
                                 </button>
+
+                                <p class="mt-3 text-[11px] leading-relaxed text-slate-400">
+                                    Setelah pengiriman berhasil dibuat, informasi kurir dan nomor resi
+                                    akan muncul otomatis di halaman ini.
+                                </p>
                             </div>
-                        </form>
+                        </div>
+
                     @elseif($transaction->status === 'ORDER_PROCESSING' && $transaction->shipping_method === 'Ambil di Tempat')
+
+                        {{-- AMBIL DI TEMPAT --}}
                         <div class="flex flex-col items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 p-6 text-center">
+
                             <div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                                 <x-heroicon-o-check-circle class="h-6 w-6" />
                             </div>
@@ -208,42 +247,84 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 Tombol ini hanya digunakan setelah pesanan benar-benar diambil pelanggan.
                             </p>
                         </div>
+
                     @else
+
+                        {{-- PENGIRIMAN SUDAH DIBUAT --}}
                         <div id="shipping-display">
+
                             <div class="grid gap-3 sm:grid-cols-2">
+
                                 <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                                    <p class="text-[10px] uppercase font-medium tracking-wide text-slate-400">Kurir</p>
-                                    <p class="mt-1.5 font-bold text-slate-900 text-sm sm:text-base">{{ $transaction->courier ?? '-' }}</p>
+                                    <p class="text-[10px] uppercase font-medium tracking-wide text-slate-400">
+                                        Kurir
+                                    </p>
+
+                                    <p class="mt-1.5 font-bold text-slate-900 text-sm sm:text-base">
+                                        {{ $transaction->courier ?? '-' }}
+                                    </p>
                                 </div>
+
                                 <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                                    <p class="text-[10px] uppercase font-medium tracking-wide text-slate-400">Nomor Resi</p>
-                                    <p class="mt-1.5 font-bold text-slate-900 text-sm sm:text-base break-all">{{ $transaction->tracking_number ?? '-' }}</p>
+                                    <p class="text-[10px] uppercase font-medium tracking-wide text-slate-400">
+                                        Nomor Resi
+                                    </p>
+
+                                    <p class="mt-1.5 font-bold text-slate-900 text-sm sm:text-base break-all">
+                                        {{ $transaction->tracking_number ?? '-' }}
+                                    </p>
                                 </div>
+
                             </div>
 
-                            <div class="mt-4 flex justify-end">
-                                {{-- <button type="button" id="edit-shipping-btn" onclick="toggleShippingEdit()" class="inline-flex items-center justify-center gap-2 rounded-xl border border-[#AE7C18]/30 bg-[#AE7C18]/10 px-4 py-2 text-xs sm:text-sm font-semibold text-[#96690F] transition hover:bg-[#AE7C18]/15">
-                                    <x-heroicon-o-pencil-square class="h-4 w-4" />
-                                    Edit Pengiriman
-                                </button> --}}
-                            </div>
+                            @if($transaction->biteship_order_id)
+                                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+
+                                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                                        <p class="text-[10px] uppercase font-medium tracking-wide text-slate-400">
+                                            Status Biteship
+                                        </p>
+
+                                        <p class="mt-1.5 font-bold text-slate-900 text-sm sm:text-base">
+                                            {{ $transaction->biteship_status
+                                                ? str_replace('_', ' ', ucfirst($transaction->biteship_status))
+                                                : '-' }}
+                                        </p>
+                                    </div>
+
+                                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                                        <p class="text-[10px] uppercase font-medium tracking-wide text-slate-400">
+                                            Biteship Order ID
+                                        </p>
+
+                                        <p class="mt-1.5 font-semibold text-slate-700 text-xs sm:text-sm break-all">
+                                            {{ $transaction->biteship_order_id }}
+                                        </p>
+                                    </div>
+
+                                </div>
+                            @endif
 
                             @if($transaction->status === 'ORDER_SHIPPED' && $transaction->shipping_method === 'Kurir')
+
                                 <div class="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 p-4">
                                     <div class="flex items-start gap-3">
+
                                         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
                                             <x-heroicon-o-information-circle class="h-5 w-5" />
                                         </div>
 
                                         <div class="min-w-0">
+
                                             <p class="text-sm font-bold text-indigo-900">
                                                 Menunggu Konfirmasi Pengiriman
                                             </p>
 
                                             <p class="mt-1 text-xs sm:text-sm leading-relaxed text-indigo-700">
-                                                Pesanan ini dikirim melalui kurir.
-                                                Status selesai akan diperbarui otomatis setelah Biteship
-                                                menerima status <strong>delivered</strong>.
+                                                Pesanan ini dikirim melalui Biteship.
+                                                Status pesanan akan diperbarui otomatis setelah Biteship
+                                                menerima status
+                                                <strong>delivered</strong>.
                                             </p>
 
                                             @if($transaction->biteship_status)
@@ -254,43 +335,51 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                                     </span>
                                                 </p>
                                             @endif
+
                                         </div>
                                     </div>
                                 </div>
+
+                            @elseif($transaction->status === 'ORDER_COMPLETED' && $transaction->shipping_method === 'Kurir')
+
+                                <div class="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                                    <div class="flex items-start gap-3">
+
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                                            <x-heroicon-o-check-circle class="h-5 w-5" />
+                                        </div>
+
+                                        <div class="min-w-0">
+
+                                            <p class="text-sm font-bold text-emerald-900">
+                                                Pengiriman Selesai
+                                            </p>
+
+                                            <p class="mt-1 text-xs sm:text-sm leading-relaxed text-emerald-700">
+                                                Pesanan telah diterima pelanggan dan status
+                                                pengiriman telah dikonfirmasi oleh Biteship.
+                                            </p>
+
+                                            @if($transaction->biteship_status)
+                                                <p class="mt-2 text-xs text-emerald-600">
+                                                    Status Biteship:
+                                                    <span class="font-bold">
+                                                        {{ str_replace('_', ' ', ucfirst($transaction->biteship_status)) }}
+                                                    </span>
+                                                </p>
+                                            @endif
+
+                                        </div>
+                                    </div>
+                                </div>
+
                             @endif
+
                         </div>
 
-                        <form id="edit-shipping-form" onsubmit="updateShipping(event, '{{ $transaction->id }}')" class="hidden mt-4">
-                            <div class="rounded-2xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-4 sm:p-5">
-                                <div class="mb-4">
-                                    <p class="text-sm font-bold text-slate-900">Edit Detail Pengiriman</p>
-                                    <p class="mt-0.5 text-xs text-slate-500">Perbarui kurir atau nomor resi pesanan.</p>
-                                </div>
-
-                                <div class="grid gap-4 sm:grid-cols-2">
-                                    <div>
-                                        <label class="mb-1.5 block text-xs font-medium text-slate-600">Kurir</label>
-                                        <input type="text" name="courier" value="{{ $transaction->courier }}" maxlength="100" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10">
-                                    </div>
-                                    <div>
-                                        <label class="mb-1.5 block text-xs font-medium text-slate-600">Nomor Resi</label>
-                                        <input type="text" name="tracking_number" value="{{ $transaction->tracking_number }}" maxlength="100" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10">
-                                    </div>
-                                </div>
-
-                                <div class="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                                    <button type="button" onclick="toggleShippingEdit()" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Batal</button>
-                                    <button type="submit" id="update-shipping-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30">
-                                        <x-heroicon-o-check class="h-4 w-4" />
-                                        Simpan Perubahan
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
                     @endif
                 </div>
             </div>
-
             <div>
                 <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                     <h2 class="mb-4 sm:mb-5 font-bold text-slate-900 text-sm sm:text-base">Timeline Status</h2>
@@ -375,32 +464,57 @@ function processOrder(id) {
     });
 }
 
-function shipOrder(event, id) {
-    event.preventDefault();
-    const form = document.getElementById('ship-order-form');
+function shipOrder(id) {
     const btn = document.getElementById('ship-order-btn');
-    if (!form || !btn) return;
 
-    const formData = new FormData(form);
+    if (!btn) return;
+
     btn.disabled = true;
-    btn.innerText = 'Memproses...';
+    btn.innerHTML = `
+        <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v3m6.364.636l-2.121 2.121M21 12h-3m-.636 6.364l-2.121-2.121M12 21v-3m-6.364-.636l2.121-2.121M3 12h3m.636-6.364l2.121 2.121"/>
+        </svg>
+        Membuat Pengiriman...
+    `;
 
     fetch(`/admin/transactions/${id}/ship`, {
         method: 'POST',
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'X-HTTP-Method-Override': 'PATCH'},
-        body: formData
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        }
     })
-    .then(res => res.json())
+    .then(async res => {
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw data;
+        }
+
+        return data;
+    })
     .then(data => {
         alert(data.message);
-        if (data.success) location.reload();
+
+        if (data.success) {
+            location.reload();
+        }
     })
-    .catch(() => {
-        alert('Terjadi kesalahan.');
+    .catch(error => {
+        alert(
+            error?.message ??
+            'Terjadi kesalahan saat membuat pengiriman.'
+        );
     })
     .finally(() => {
         btn.disabled = false;
-        btn.innerText = 'Buat Pengiriman';
+
+        btn.innerHTML = `
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l2-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+            </svg>
+            Proses Pengiriman
+        `;
     });
 }
 
@@ -433,52 +547,6 @@ function completeOrder(id) {
     .finally(() => {
         btn.disabled = false;
         btn.innerText = 'Selesaikan Pesanan';
-    });
-}
-
-function toggleShippingEdit() {
-    const display = document.getElementById('shipping-display');
-    const form = document.getElementById('edit-shipping-form');
-    if (!display || !form) return;
-    display.classList.toggle('hidden');
-    form.classList.toggle('hidden');
-}
-
-function updateShipping(event, id) {
-    event.preventDefault();
-    const form = document.getElementById('edit-shipping-form');
-    const btn = document.getElementById('update-shipping-btn');
-    if (!form || !btn) return;
-
-    const formData = new FormData(form);
-    btn.disabled = true;
-    btn.innerText = 'Menyimpan...';
-
-    fetch(`/admin/transactions/${id}/shipping`, {
-        method: 'POST',
-        headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'X-HTTP-Method-Override': 'PATCH'},
-        body: formData
-    })
-    .then(async res => {
-        const data = await res.json();
-        if (!res.ok) throw data;
-        return data;
-    })
-    .then(data => {
-        alert(data.message);
-        if (data.success) location.reload();
-    })
-    .catch(error => {
-        if (error?.errors) {
-            const firstError = Object.values(error.errors)[0]?.[0];
-            alert(firstError ?? error.message ?? 'Gagal memperbarui detail pengiriman.');
-            return;
-        }
-        alert(error?.message ?? 'Terjadi kesalahan saat memperbarui detail pengiriman.');
-    })
-    .finally(() => {
-        btn.disabled = false;
-        btn.innerText = 'Simpan Perubahan';
     });
 }
 </script>

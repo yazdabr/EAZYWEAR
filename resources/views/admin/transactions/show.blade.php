@@ -464,6 +464,7 @@ function processOrder(id) {
     });
 }
 
+
 function shipOrder(id) {
     const btn = document.getElementById('ship-order-btn');
 
@@ -472,19 +473,37 @@ function shipOrder(id) {
     btn.disabled = true;
     btn.innerHTML = `
         <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v3m6.364.636l-2.121 2.121M21 12h-3m-.636 6.364l-2.121-2.121M12 21v-3m-6.364-.636l2.121-2.121M3 12h3m.636-6.364l2.121 2.121"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v3m6.364.636l-2.121 2.121M21 12h-3m-.636 6.364l-2.121-2.121M12 21v-3m-6.364-.636l2.121-2.121M3 12h3m.636-6.364l2.121 2.121"/>
         </svg>
         Membuat Pengiriman...
     `;
 
     fetch(`/admin/transactions/${id}/ship`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
         }
     })
     .then(async res => {
+        const contentType = res.headers.get('content-type') || '';
+
+        if (!contentType.includes('application/json')) {
+            const text = await res.text();
+
+            console.error('Response bukan JSON:', {
+                status: res.status,
+                contentType,
+                response: text
+            });
+
+            throw {
+                message: `Server mengembalikan response tidak valid (HTTP ${res.status}).`
+            };
+        }
+
         const data = await res.json();
 
         if (!res.ok) {
@@ -501,6 +520,8 @@ function shipOrder(id) {
         }
     })
     .catch(error => {
+        console.error('Gagal membuat pengiriman:', error);
+
         alert(
             error?.message ??
             'Terjadi kesalahan saat membuat pengiriman.'
@@ -511,12 +532,14 @@ function shipOrder(id) {
 
         btn.innerHTML = `
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7l2-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 7l2-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
             </svg>
             Proses Pengiriman
         `;
     });
 }
+
 
 function completeOrder(id) {
     const btn = document.getElementById('complete-order-btn');

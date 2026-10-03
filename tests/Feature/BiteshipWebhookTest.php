@@ -27,34 +27,85 @@ class BiteshipWebhookTest extends TestCase
             ]);
     }
 
-    public function test_biteship_webhook_returns_ok_for_empty_json_installation_request(): void
+    public function test_biteship_webhook_accepts_valid_signature(): void
     {
         config([
-            'biteship.webhook.signature_key' => null,
-            'biteship.webhook.signature_secret' => null,
+            'biteship.webhook.signature_key' => 'X-Eazywear-Biteship-Signature',
+            'biteship.webhook.signature_secret' => 'test-secret-value',
         ]);
 
-        $response = $this->call(
-            'POST',
+        $response = $this->postJson(
             '/webhooks/biteship',
-            [],
-            [],
-            [],
             [
-                'CONTENT_TYPE' => 'application/json',
+                'event' => 'order.status',
+                'order_id' => 'TEST-001',
+                'status' => 'allocated',
             ],
-            ''
+            [
+                'X-Eazywear-Biteship-Signature' => 'test-secret-value',
+            ]
         );
 
         $response
             ->assertOk()
             ->assertJson([
                 'success' => true,
-                'message' => 'Webhook endpoint ready.',
+                'message' => 'Webhook diterima.',
             ]);
     }
 
-    public function test_biteship_webhook_logs_header_metadata_without_logging_secret(): void
+    public function test_biteship_webhook_rejects_invalid_signature(): void
+    {
+        config([
+            'biteship.webhook.signature_key' => 'X-Eazywear-Biteship-Signature',
+            'biteship.webhook.signature_secret' => 'test-secret-value',
+        ]);
+
+        $response = $this->postJson(
+            '/webhooks/biteship',
+            [
+                'event' => 'order.status',
+                'order_id' => 'TEST-001',
+                'status' => 'allocated',
+            ],
+            [
+                'X-Eazywear-Biteship-Signature' => 'wrong-signature',
+            ]
+        );
+
+        $response
+            ->assertStatus(401)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Webhook signature tidak valid.',
+            ]);
+    }
+
+    public function test_biteship_webhook_rejects_missing_signature(): void
+    {
+        config([
+            'biteship.webhook.signature_key' => 'X-Eazywear-Biteship-Signature',
+            'biteship.webhook.signature_secret' => 'test-secret-value',
+        ]);
+
+        $response = $this->postJson(
+            '/webhooks/biteship',
+            [
+                'event' => 'order.status',
+                'order_id' => 'TEST-001',
+                'status' => 'allocated',
+            ]
+        );
+
+        $response
+            ->assertStatus(401)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Webhook signature tidak valid.',
+            ]);
+    }
+
+    public function test_biteship_webhook_signature_check_does_not_log_secret_or_signature_value(): void
     {
         config([
             'biteship.webhook.signature_key' => 'X-Eazywear-Biteship-Signature',
@@ -71,27 +122,19 @@ class BiteshipWebhookTest extends TestCase
                 'status' => 'allocated',
             ],
             [
-                'X-Eazywear-Biteship-Signature' => 'abcdef1234567890',
+                'X-Eazywear-Biteship-Signature' => 'test-secret-value',
             ]
         );
 
-        $response->assertStatus(503);
+        $response->assertOk();
 
         \Log::shouldHaveReceived('info')
             ->withArgs(function ($message, $context) {
-                $signatureHeader = 'x-eazywear-biteship-signature';
-
-                return $message === 'BITESHIP WEBHOOK DIAGNOSTIC'
-                    && in_array(
-                        $signatureHeader,
-                        $context['header_names'],
-                        true
-                    )
-                    && isset($context['headers_metadata'][$signatureHeader])
-                    && $context['headers_metadata'][$signatureHeader]['length'] === 16
-                    && ! isset(
-                        $context['headers_metadata'][$signatureHeader]['value']
-                    );
+                return $message === 'BITESHIP WEBHOOK SIGNATURE CHECK'
+                    && $context['matches_secret'] === true
+                    && $context['signature_length'] === 17
+                    && ! isset($context['signature'])
+                    && ! isset($context['secret']);
             });
     }
 }

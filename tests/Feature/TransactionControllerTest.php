@@ -639,16 +639,33 @@ class TransactionControllerTest extends TestCase
             'status' => 'ORDER_PROCESSING',
             'shipping_method' => 'Kurir',
             'shipping_email' => 'customer@example.com',
+            'courier_code' => null,
+            'courier_service_code' => null,
+            'biteship_order_id' => null,
+            'biteship_tracking_id' => null,
+            'biteship_waybill_id' => null,
+            'biteship_status' => null,
+            'courier' => null,
+            'tracking_number' => null,
         ]);
+
+        $requestData = [
+            'courier' => 'JNE',
+            'tracking_number' => 'JNE123456789',
+        ];
+
+        // Pastikan fixture dan payload test memang sesuai dengan
+        // branch manual shipping yang sedang diaudit.
+        $this->assertNull($transaction->courier_code);
+        $this->assertNull($transaction->courier_service_code);
+        $this->assertSame('JNE', $requestData['courier']);
+        $this->assertSame('JNE123456789', $requestData['tracking_number']);
 
         $response = $this
             ->actingAs($user)
             ->patchJson(
                 route('admin.transactions.ship', $transaction),
-                [
-                    'courier' => 'JNE',
-                    'tracking_number' => 'JNE123456789',
-                ]
+                $requestData
             );
 
         $response
@@ -675,12 +692,25 @@ class TransactionControllerTest extends TestCase
             }
         );
 
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => 'ORDER_SHIPPED',
+            'courier' => 'JNE',
+            'tracking_number' => 'JNE123456789',
+        ]);
+
         $this->assertDatabaseHas('transaction_notifications', [
             'transaction_id' => $transaction->id,
             'type' => 'ORDER_SHIPPED_EMAIL',
         ]);
 
-        $this->assertDatabaseCount('transaction_notifications', 1);
+        $this->assertSame(
+            1,
+            TransactionNotification::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('type', 'ORDER_SHIPPED_EMAIL')
+                ->count()
+        );
 
         $this->assertNotNull(
             TransactionNotification::query()
@@ -689,23 +719,42 @@ class TransactionControllerTest extends TestCase
                 ->value('sent_at')
         );
 
+        /*
+        * Second request:
+        * transaksi sudah ORDER_SHIPPED, sehingga tidak boleh
+        * mengirim email kedua atau membuat notification kedua.
+        */
+        $transaction->refresh();
+
         $secondResponse = $this
             ->actingAs($user)
             ->patchJson(
                 route('admin.transactions.ship', $transaction),
-                [
-                    'courier' => 'JNE',
-                    'tracking_number' => 'JNE123456789',
-                ]
+                $requestData
             );
 
-        $secondResponse->assertStatus(422);
+        $secondResponse
+            ->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+        ]);
 
         Mail::assertSent(
             OrderShippedMail::class,
             1
         );
 
-        $this->assertDatabaseCount('transaction_notifications', 1);
+        $this->assertSame(
+            1,
+            TransactionNotification::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('type', 'ORDER_SHIPPED_EMAIL')
+                ->count()
+        );
+
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_SHIPPED_EMAIL',
+        ]);
     }
 }

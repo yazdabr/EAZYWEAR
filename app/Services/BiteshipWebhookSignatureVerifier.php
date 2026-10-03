@@ -29,17 +29,9 @@ class BiteshipWebhookSignatureVerifier
             return false;
         }
 
-        $matchesSecret = hash_equals(
+        return hash_equals(
             $signatureSecret,
             $providedSignature
         );
-
-        \Log::info('BITESHIP WEBHOOK SIGNATURE CHECK', [
-            'matches_secret' => $matchesSecret,
-            'signature_length' => strlen($providedSignature),
-        ]);
-
-        return $matchesSecret;
-
     }
 }

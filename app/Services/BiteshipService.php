@@ -165,7 +165,12 @@ class BiteshipService
         ));
     }
 
-    protected function request(string $method, string $endpoint, array $payload = []): array
+    protected function request(
+        string $method,
+        string $endpoint,
+        array $payload = [],
+        bool $allowDuplicateReference = false
+    ): array
     {
         $response = Http::timeout($this->timeout)
             ->acceptJson()
@@ -188,6 +193,14 @@ class BiteshipService
                 'code' => $body['code'] ?? null,
                 'message' => $body['message'] ?? null,
             ]);
+
+            if (
+                $allowDuplicateReference
+                && $response->status() === 400
+                && (int) ($body['code'] ?? 0) === 40002060
+            ) {
+                return $body;
+            }
 
             $message = $body['message'] ?? 'Permintaan ke Biteship gagal.';
 
@@ -231,7 +244,43 @@ class BiteshipService
             $payload['destination_longitude'] = (float) $data['destination_longitude'];
         }
 
-        $response = $this->request('POST', '/v1/orders', $payload);
+        $response = $this->request(
+            'POST',
+            '/v1/orders',
+            $payload,
+            true
+        );
+
+        if (
+            (int) ($response['code'] ?? 0) === 40002060
+        ) {
+            $existingOrderId = (string) ($response['order_id'] ?? '');
+
+            if ($existingOrderId === '') {
+                throw new RuntimeException(
+                    'Biteship duplicate reference tidak menyertakan order ID.'
+                );
+            }
+
+            $existingOrder = $this->getOrder($existingOrderId);
+
+            if (! $existingOrder['success']) {
+                throw new RuntimeException(
+                    'Biteship duplicate reference ditemukan, tetapi existing order tidak dapat diverifikasi.'
+                );
+            }
+
+            if (
+                (string) ($existingOrder['reference_id'] ?? '')
+                !== (string) $data['reference_id']
+            ) {
+                throw new RuntimeException(
+                    'Biteship existing order memiliki reference ID yang berbeda.'
+                );
+            }
+
+            return $existingOrder;
+        }
 
         return [
             'success' => ! empty($response['success']),

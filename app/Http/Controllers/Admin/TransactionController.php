@@ -480,7 +480,7 @@ class TransactionController extends Controller
         }
 
         try {
-            $snapshot = DB::transaction(function () use ($transaction) {
+            $snapshot = DB::transaction(function () use ($transaction, $validated) {
                 $lockedTransaction = Transaction::query()
                     ->with(['items.productVariant.product'])
                     ->whereKey($transaction->id)

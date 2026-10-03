@@ -146,14 +146,6 @@ class CheckoutControllerTest extends TestCase
     public function test_checkout_creates_pending_transaction_with_va(): void
     {
 
-    dump([
-        'env' => app()->environment(),
-        'db' => config('database.connections.mysql.database'),
-        'variants' => ProductVariant::count(),
-        'active_variants' => ProductVariant::whereHas('product', function ($query) {
-            $query->where('status', true);
-        })->count(),
-    ]);
     $variant = ProductVariant::query()
         ->whereHas('product', function ($query) {
             $query->where('status', true);

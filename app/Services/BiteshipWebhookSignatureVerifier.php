@@ -12,29 +12,43 @@ class BiteshipWebhookSignatureVerifier
         $signatureKey = config('biteship.webhook.signature_key');
         $signatureSecret = config('biteship.webhook.signature_secret');
 
-        if (
-            ! is_string($signatureKey)
-            || trim($signatureKey) === ''
-            || ! is_string($signatureSecret)
-            || trim($signatureSecret) === ''
-        ) {
-            throw new RuntimeException(
-                'Konfigurasi signature webhook Biteship belum lengkap.'
-            );
-        }
+        $headers = collect($request->headers->all())
+            ->mapWithKeys(function (array $values, string $name): array {
+                $value = (string) ($values[0] ?? '');
 
-        /*
-         * IMPORTANT:
-         *
-         * Biteship dashboard confirms that a Signature Key and
-         * Signature Secret are configured and sent with webhook
-         * requests.
-         *
-         * The exact outbound header names and signature algorithm
-         * have not yet been confirmed.
-         *
-         * Do NOT implement guessed HMAC/header logic here.
-         */
+                return [
+                    strtolower($name) => [
+                        'length' => strlen($value),
+                        'has_value' => $value !== '',
+                        'looks_hex' => $value !== '' && ctype_xdigit($value),
+                        'looks_base64' => $value !== ''
+                            && base64_encode(base64_decode($value, true)) === $value,
+                    ],
+                ];
+            })
+            ->all();
+
+        \Log::info('BITESHIP WEBHOOK DIAGNOSTIC', [
+            'content_type' => $request->header('Content-Type'),
+            'method' => $request->method(),
+            'header_names' => array_keys($headers),
+            'headers_metadata' => $headers,
+
+            'configured_signature_key' => is_string($signatureKey)
+                ? $signatureKey
+                : null,
+
+            'signature_key_present' => is_string($signatureKey)
+                && $signatureKey !== ''
+                && $request->hasHeader($signatureKey),
+
+            'signature_secret_configured' => is_string($signatureSecret)
+                && trim($signatureSecret) !== '',
+
+            'payload_length' => strlen($request->getContent()),
+            'payload_sha256' => hash('sha256', $request->getContent()),
+        ]);
+
         throw new RuntimeException(
             'Protocol signature webhook Biteship belum terkonfirmasi.'
         );

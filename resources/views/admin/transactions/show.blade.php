@@ -184,12 +184,29 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             <div class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
                                 <x-heroicon-o-check-circle class="h-6 w-6" />
                             </div>
-                            <p class="mt-3 font-bold text-slate-900">Pesanan Siap Diselesaikan</p>
-                            <p class="mt-1 text-xs sm:text-sm text-slate-500">Pesanan diambil langsung oleh pelanggan di Kantor Eazywear.</p>
-                            <button type="button" id="complete-order-btn" onclick="completeOrder('{{ $transaction->id }}')" class="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30">
+
+                            <p class="mt-3 font-bold text-slate-900">
+                                Pesanan Ambil di Tempat
+                            </p>
+
+                            <p class="mt-1 max-w-md text-xs sm:text-sm leading-relaxed text-slate-500">
+                                Pesanan ini akan diselesaikan secara manual setelah pelanggan
+                                mengambil pesanan langsung di Kantor Eazywear.
+                            </p>
+
+                            <button
+                                type="button"
+                                id="complete-order-btn"
+                                onclick="completeOrder('{{ $transaction->id }}')"
+                                class="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30"
+                            >
                                 <x-heroicon-o-check-circle class="h-4 w-4" />
-                                Selesaikan Pesanan
+                                Konfirmasi Pesanan Diambil
                             </button>
+
+                            <p class="mt-3 text-[11px] text-slate-400">
+                                Tombol ini hanya digunakan setelah pesanan benar-benar diambil pelanggan.
+                            </p>
                         </div>
                     @else
                         <div id="shipping-display">
@@ -211,12 +228,34 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 </button> --}}
                             </div>
 
-                            @if($transaction->status === 'ORDER_SHIPPED')
-                                <div class="mt-3 flex justify-end">
-                                    <button type="button" id="complete-order-btn" onclick="completeOrder('{{ $transaction->id }}')" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30">
-                                        <x-heroicon-o-check-circle class="h-4 w-4" />
-                                        Selesaikan Pesanan
-                                    </button>
+                            @if($transaction->status === 'ORDER_SHIPPED' && $transaction->shipping_method === 'Kurir')
+                                <div class="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 p-4">
+                                    <div class="flex items-start gap-3">
+                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                                            <x-heroicon-o-information-circle class="h-5 w-5" />
+                                        </div>
+
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-bold text-indigo-900">
+                                                Menunggu Konfirmasi Pengiriman
+                                            </p>
+
+                                            <p class="mt-1 text-xs sm:text-sm leading-relaxed text-indigo-700">
+                                                Pesanan ini dikirim melalui kurir.
+                                                Status selesai akan diperbarui otomatis setelah Biteship
+                                                menerima status <strong>delivered</strong>.
+                                            </p>
+
+                                            @if($transaction->biteship_status)
+                                                <p class="mt-2 text-xs text-indigo-600">
+                                                    Status Biteship:
+                                                    <span class="font-bold">
+                                                        {{ str_replace('_', ' ', ucfirst($transaction->biteship_status)) }}
+                                                    </span>
+                                                </p>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
                             @endif
                         </div>

@@ -14,6 +14,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\OrderTrackingController;
+use App\Http\Controllers\BiteshipWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'pages.home')->name('home');
@@ -43,6 +44,9 @@ Route::post('/cek-pesanan', [OrderTrackingController::class, 'search'])
 Route::view('/about', 'pages.about')->name('about');
 Route::view('/contact', 'pages.contact')->name('contact');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+
+Route::post('/webhooks/biteship', [BiteshipWebhookController::class, 'handle'])
+    ->name('webhooks.biteship');
 
 Route::get('/login', function () {
     if (auth()->check()) {

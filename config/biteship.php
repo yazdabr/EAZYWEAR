@@ -23,6 +23,11 @@ return [
         'longitude' => env('BITESHIP_ORIGIN_LONGITUDE'),
     ],
 
+    'webhook' => [
+        'signature_key' => env('BITESHIP_WEBHOOK_SIGNATURE_KEY'),
+        'signature_secret' => env('BITESHIP_WEBHOOK_SIGNATURE_SECRET'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Courier Allowlist

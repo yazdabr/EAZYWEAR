@@ -26,4 +26,31 @@ class BiteshipWebhookTest extends TestCase
                 'message' => 'Webhook belum dapat diproses.',
             ]);
     }
+
+    public function test_biteship_webhook_returns_ok_for_empty_json_installation_request(): void
+    {
+        config([
+            'biteship.webhook.signature_key' => null,
+            'biteship.webhook.signature_secret' => null,
+        ]);
+
+        $response = $this->call(
+            'POST',
+            '/webhooks/biteship',
+            [],
+            [],
+            [],
+            [
+                'CONTENT_TYPE' => 'application/json',
+            ],
+            ''
+        );
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Webhook endpoint ready.',
+            ]);
+    }
 }

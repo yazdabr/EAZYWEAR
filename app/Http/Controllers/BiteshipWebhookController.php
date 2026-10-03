@@ -17,6 +17,20 @@ class BiteshipWebhookController extends Controller
     public function handle(Request $request): JsonResponse
     {
         try {
+            if (
+                $request->isMethod('POST')
+                && str_contains(
+                    strtolower((string) $request->header('Content-Type')),
+                    'application/json'
+                )
+                && trim($request->getContent()) === ''
+            ) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Webhook endpoint ready.',
+                ]);
+            }
+
             if (! $this->signatureVerifier->verify($request)) {
                 return response()->json([
                     'success' => false,
@@ -37,4 +51,5 @@ class BiteshipWebhookController extends Controller
             ], 503);
         }
     }
+
 }

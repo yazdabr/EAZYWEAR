@@ -119,7 +119,10 @@ class BiteshipCreateOrderRecoveryTest extends TestCase
                     'success' => false,
                     'code' => 40002060,
                     'message' => 'Reference ID already exists.',
-                    'order_id' => 'BITE-E2-001',
+                    'details' => [
+                        'order_id' => 'BITE-E2-001',
+                        'reference_id' => $transaction->invoice_number,
+                    ],
                 ], 400);
             }
 

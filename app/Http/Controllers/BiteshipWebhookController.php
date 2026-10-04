@@ -238,6 +238,10 @@ class BiteshipWebhookController extends Controller
             return true;
         }
 
+        if ($currentStatus === 'return_in_transit') {
+            return $incomingStatus !== 'returned';
+        }
+
         /*
          * Status terminal provider lainnya dianggap final untuk
          * lifecycle provider. Kita tidak mengubahnya otomatis.

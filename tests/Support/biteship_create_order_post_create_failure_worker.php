@@ -164,7 +164,10 @@ try {
                 'success' => false,
                 'code' => 40002060,
                 'message' => 'Reference ID already exists.',
-                'order_id' => 'BITE-E4-001',
+                'details' => [
+                    'order_id' => 'BITE-E4-001',
+                    'reference_id' => $referenceId,
+                ],
             ], 400);
         }
 

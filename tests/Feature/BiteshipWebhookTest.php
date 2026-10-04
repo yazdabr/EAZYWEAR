@@ -36,6 +36,332 @@ class BiteshipWebhookTest extends TestCase
         return 'BITESHIP-' . $suffix . '-' . Str::uuid();
     }
 
+    public function test_on_hold_can_be_entered_from_in_transit(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-ON-HOLD-001');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'in_transit',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'on_hold',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('on_hold', $transaction->biteship_status);
+        $this->assertSame(Transaction::ORDER_SHIPPED, $transaction->status);
+    }
+
+    public function test_on_hold_can_resume_to_in_transit(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-ON-HOLD-002');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'on_hold',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'in_transit',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('in_transit', $transaction->biteship_status);
+        $this->assertSame(Transaction::ORDER_SHIPPED, $transaction->status);
+    }
+
+    public function test_in_transit_can_enter_return_in_transit(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-RETURN-001');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'in_transit',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'return_in_transit',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('return_in_transit', $transaction->biteship_status);
+        $this->assertSame(Transaction::ORDER_SHIPPED, $transaction->status);
+    }
+
+    public function test_return_in_transit_cannot_become_delivered(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-RETURN-DELIVERED-001');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'return_in_transit',
+        ]);
+
+        Mail::fake();
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'delivered',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame(
+            'return_in_transit',
+            $transaction->biteship_status
+        );
+
+        $this->assertSame(
+            Transaction::ORDER_SHIPPED,
+            $transaction->status
+        );
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_return_in_transit_can_become_returned(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-RETURN-002');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'return_in_transit',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'returned',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('returned', $transaction->biteship_status);
+        $this->assertSame(Transaction::ORDER_SHIPPED, $transaction->status);
+    }
+
+    public function test_returned_is_terminal_for_later_progress_status(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-RETURN-003');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'returned',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'in_transit',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('returned', $transaction->biteship_status);
+        $this->assertSame(Transaction::ORDER_SHIPPED, $transaction->status);
+    }
+
+    public function test_rejected_is_terminal_for_later_progress_status(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-REJECTED-001');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'rejected',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'allocated',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('rejected', $transaction->biteship_status);
+        $this->assertSame(Transaction::ORDER_SHIPPED, $transaction->status);
+    }
+
+    public function test_courier_not_found_is_terminal_for_later_progress_status(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-COURIER-001');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'courier_not_found',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'allocated',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('courier_not_found', $transaction->biteship_status);
+        $this->assertSame(Transaction::ORDER_SHIPPED, $transaction->status);
+    }
+
+    public function test_disposed_is_terminal_for_later_delivered_status(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-DISPOSED-001');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'disposed',
+        ]);
+
+        Mail::fake();
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'delivered',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('disposed', $transaction->biteship_status);
+        $this->assertSame(Transaction::ORDER_SHIPPED, $transaction->status);
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_in_transit_cannot_regress_to_allocated(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-ORDER-001');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'in_transit',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'allocated',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('in_transit', $transaction->biteship_status);
+    }
+
+    public function test_dropping_off_cannot_regress_to_picked(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-ORDER-002');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'dropping_off',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'picked',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('dropping_off', $transaction->biteship_status);
+    }
+
+    public function test_cancelled_cannot_regress_to_old_progress_status(): void
+    {
+        $orderId = $this->biteshipOrderId('EDGE-ORDER-003');
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'cancelled',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'in_transit',
+            ]);
+
+        $response->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('cancelled', $transaction->biteship_status);
+    }
+
     public function test_valid_webhook_updates_biteship_status(): void
     {
         $orderId = $this->biteshipOrderId('LIFECYCLE-001');

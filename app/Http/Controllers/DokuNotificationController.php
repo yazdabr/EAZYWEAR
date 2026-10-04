@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class DokuNotificationController extends Controller
 {
-    public function bcaPayment(
+    public function paymentNotification(
         Request $request,
         TransactionPaymentService $transactionPaymentService
     ): JsonResponse {
@@ -198,7 +198,7 @@ class DokuNotificationController extends Controller
                 $transactionPaymentService->processSuccessfulPayment(
                     $lockedTransaction,
                     $payload,
-                    'DOKU BCA payment notification'
+                    'DOKU payment notification'
                 );
             });
         } catch (ValidationException $e) {
@@ -225,7 +225,7 @@ class DokuNotificationController extends Controller
             ], 500);
         }
 
-        Log::info('DOKU BCA payment notification processed.', [
+        Log::info('DOKU payment notification processed.', [
             'transaction_id' => $transaction->id,
             'invoice_number' => $transaction->invoice_number,
             'payment_request_id' => $paymentRequestId,

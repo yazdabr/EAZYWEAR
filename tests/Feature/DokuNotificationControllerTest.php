@@ -46,7 +46,7 @@ class DokuNotificationControllerTest extends TestCase
         $signature = base64_encode(
             hash_hmac(
                 'sha512',
-                'POST:/api/doku/bca/notification:' . $token . ':' . $hash . ':' . $timestamp,
+                'POST:/api/doku/notification:' . $token . ':' . $hash . ':' . $timestamp,
                 config('doku.secret_key'),
                 true
             )
@@ -90,7 +90,7 @@ class DokuNotificationControllerTest extends TestCase
         $response = $this
             ->withHeaders($this->headers($body))
             ->postJson(
-                url('/api/doku/bca/notification'),
+                url('/api/doku/notification'),
                 $payload
             );
 
@@ -118,7 +118,7 @@ class DokuNotificationControllerTest extends TestCase
                 'Authorization' => 'Bearer TEST',
             ])
             ->postJson(
-                url('/api/doku/bca/notification'),
+                url('/api/doku/notification'),
                 $payload
             );
 
@@ -144,7 +144,7 @@ class DokuNotificationControllerTest extends TestCase
         $response = $this
             ->withHeaders($this->headers($body))
             ->postJson(
-                url('/api/doku/bca/notification'),
+                url('/api/doku/notification'),
                 $payload
             );
 

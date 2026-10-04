@@ -30,8 +30,12 @@ Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout/shipping-rates', [CheckoutController::class, 'shippingRates'])
+    ->middleware('throttle:20,1')
     ->name('checkout.shipping-rates');
-Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+
+Route::post('/checkout', [CheckoutController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('checkout.store');
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
 
 Route::get('/cek-pesanan', [OrderTrackingController::class, 'index'])

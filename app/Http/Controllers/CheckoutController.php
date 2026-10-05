@@ -159,7 +159,7 @@ class CheckoutController extends Controller
             'va_bank' => [
                 'required',
                 'string',
-                Rule::in(array_keys(config('doku.va.banks', []))),
+                Rule::in(['MANDIRI', 'BNI', 'BRI', 'BSI']),
             ],
         ]);
 

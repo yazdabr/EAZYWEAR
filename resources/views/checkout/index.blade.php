@@ -291,7 +291,6 @@
 
                                     <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                                         @foreach([
-                                            'BCA' => 'bca.png',
                                             'MANDIRI' => 'mandiri.png',
                                             'BNI' => 'bni.png',
                                             'BRI' => 'bri.png',
@@ -302,7 +301,7 @@
                                                     type="radio"
                                                     name="va_bank"
                                                     value="{{ $bank }}"
-                                                    @checked(old('va_bank', 'BCA') === $bank)
+                                                    @checked(old('va_bank') === $bank)
                                                     class="h-3.5 w-3.5 shrink-0 accent-[#AE7C18]"
                                                 >
 

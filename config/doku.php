@@ -73,25 +73,25 @@ return [
 
             'BNI' => [
                 'name' => 'BNI',
-                'partner_service_id' => '8492',
+                'partner_service_id' => '98829172',
                 'customer_no' => '3',
-                'merchant_bin' => '84923',
+                'merchant_bin' => '988291723',
                 'channel' => 'VIRTUAL_ACCOUNT_BNI',
             ],
 
             'BRI' => [
                 'name' => 'BRI',
                 'partner_service_id' => '13925',
-                'customer_no' => '6',
-                'merchant_bin' => '139256',
+                'customer_no' => '0',
+                'merchant_bin' => '139250',
                 'channel' => 'VIRTUAL_ACCOUNT_BRI',
             ],
 
             'BSI' => [
                 'name' => 'BSI',
-                'partner_service_id' => '2020',
-                'customer_no' => '20',
-                'merchant_bin' => '202020',
+                'partner_service_id' => '6059',
+                'customer_no' => '9',
+                'merchant_bin' => '60599',
                 'channel' => 'VIRTUAL_ACCOUNT_BSI',
             ],
         ],

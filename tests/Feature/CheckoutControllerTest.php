@@ -90,7 +90,7 @@ class CheckoutControllerTest extends TestCase
             'courier_service_code' => 'ez',
 
             'payment_method' => 'VA',
-            'va_bank' => 'BCA',
+            'va_bank' => 'MANDIRI',
         ]);
 
         $response->assertRedirect(route('checkout.success'));
@@ -208,7 +208,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
-            'va_bank' => 'BCA',
+            'va_bank' => 'MANDIRI',
         ]);
 
         $response
@@ -299,7 +299,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
-            'va_bank' => 'BCA',
+            'va_bank' => 'MANDIRI',
         ]);
 
         $response->assertRedirect(route('checkout.success'));
@@ -387,7 +387,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
-            'va_bank' => 'BCA',
+            'va_bank' => 'MANDIRI',
         ]);
 
         $response->assertRedirect(route('checkout.success'));
@@ -501,7 +501,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
-            'va_bank' => 'BCA',
+            'va_bank' => 'MANDIRI',
         ]);
 
         $response->assertRedirect(route('checkout.success'));
@@ -589,7 +589,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
-            'va_bank' => 'BCA',
+            'va_bank' => 'MANDIRI',
         ]);
 
         $response->assertSessionHasErrors('cart');
@@ -645,7 +645,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
-            'va_bank' => 'BCA',
+            'va_bank' => 'MANDIRI',
         ]);
 
         $response->assertSessionHas('error');
@@ -654,6 +654,144 @@ class CheckoutControllerTest extends TestCase
             'payment_method' => 'VA',
             'shipping_email' => 'customer@test.com',
         ]);
+    }
+
+    public function test_checkout_accepts_all_supported_va_banks(): void
+    {
+        $supportedBanks = ['MANDIRI', 'BNI', 'BRI', 'BSI'];
+
+        foreach ($supportedBanks as $bank) {
+            $variant = ProductVariant::query()
+                ->whereHas('product', function ($query) {
+                    $query->where('status', true);
+                })
+                ->firstOrFail();
+
+            $variant->update([
+                'weight' => 250,
+            ]);
+
+            Inventory::query()
+                ->where('product_variant_id', $variant->id)
+                ->update([
+                    'stock' => 10,
+                ]);
+
+            Session::put('cart', [
+                [
+                    'variant_id' => $variant->id,
+                    'price' => $variant->price,
+                    'qty' => 1,
+                    'custom_name' => 'BANKTEST',
+                    'custom_number' => '10',
+                ],
+            ]);
+
+            $this->mock(BiteshipService::class, function ($mock) {
+                $mock->shouldReceive('getCourierRates')
+                    ->once()
+                    ->andReturn([
+                        'success' => true,
+                        'rates' => [
+                            [
+                                'courier_code' => 'jnt',
+                                'courier_name' => 'J&T',
+                                'service_code' => 'ez',
+                                'service_name' => 'EZ',
+                                'price' => 8000,
+                                'duration' => '2-3 days',
+                                'service_type' => 'standard',
+                                'shipping_type' => 'parcel',
+                            ],
+                        ],
+                        'raw' => [],
+                    ]);
+            });
+
+            $this->mockDokuSuccess();
+
+            $response = $this->post(route('checkout.store'), [
+                'name' => 'Bank Test',
+                'email' => "bank-test-{$bank}@test.com",
+                'phone' => '08123456789',
+                'shipping_address' => 'Alamat Test',
+                'shipping_district' => 'District',
+                'shipping_city' => 'Banjarmasin',
+                'shipping_province' => 'Kalimantan Selatan',
+                'shipping_postal_code' => '70111',
+                'shipping_method' => 'Kurir',
+                'courier_code' => 'jnt',
+                'courier_service_code' => 'ez',
+                'payment_method' => 'VA',
+                'va_bank' => $bank,
+            ]);
+
+            $this->assertSame(
+                302,
+                $response->status(),
+                "Bank {$bank} seharusnya diterima oleh checkout."
+            );
+
+            $this->assertDatabaseHas('transactions', [
+                'payment_method' => 'VA',
+                'va_bank' => $bank,
+                'status' => 'PENDING',
+            ]);
+        }
+    }
+
+    public function test_checkout_rejects_bca_and_empty_va_bank(): void
+    {
+        foreach (['BCA', null] as $bank) {
+            $variant = ProductVariant::query()
+                ->whereHas('product', function ($query) {
+                    $query->where('status', true);
+                })
+                ->firstOrFail();
+
+            $variant->update([
+                'weight' => 250,
+            ]);
+
+            Inventory::query()
+                ->where('product_variant_id', $variant->id)
+                ->update([
+                    'stock' => 10,
+                ]);
+
+            Session::put('cart', [
+                [
+                    'variant_id' => $variant->id,
+                    'price' => (float) $variant->price,
+                    'qty' => 1,
+                    'custom_name' => 'BANKTEST',
+                    'custom_number' => '10',
+                ],
+            ]);
+
+            $response = $this->post(route('checkout.store'), [
+                'name' => 'Bank Test',
+                'email' => 'bank-test@test.com',
+                'phone' => '08123456789',
+                'shipping_address' => 'Alamat Test',
+                'shipping_district' => 'District',
+                'shipping_city' => 'Banjarmasin',
+                'shipping_province' => 'Kalimantan Selatan',
+                'shipping_postal_code' => '70111',
+                'shipping_method' => 'Kurir',
+                'courier_code' => 'jnt',
+                'courier_service_code' => 'ez',
+                'payment_method' => 'VA',
+                'va_bank' => $bank,
+            ]);
+
+            $response->assertSessionHasErrors('va_bank');
+
+            $this->assertDatabaseMissing('transactions', [
+                'payment_method' => 'VA',
+                'shipping_email' => 'bank-test@test.com',
+            ]);
+        }
     }
 
     public function test_checkout_rejects_empty_cart(): void
@@ -673,7 +811,7 @@ class CheckoutControllerTest extends TestCase
             'courier_code' => 'jnt',
             'courier_service_code' => 'ez',
             'payment_method' => 'VA',
-            'va_bank' => 'BCA',
+            'va_bank' => 'MANDIRI',
         ]);
 
         $response

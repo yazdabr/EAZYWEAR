@@ -1,54 +1,25 @@
 <?php
 
 return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | DOKU QRIS Configuration
-    |--------------------------------------------------------------------------
-    */
-
     'env' => env('DOKU_QRIS_ENV', 'sandbox'),
-
     'base_url' => env(
         'DOKU_QRIS_BASE_URL',
         'https://api-sandbox.doku.com'
     ),
 
-    /*
-    |--------------------------------------------------------------------------
-    | QRIS Credentials
-    |--------------------------------------------------------------------------
-    |
-    | These are intentionally separate from the VA credentials in doku.php.
-    |
-    */
+    'notification_secret' => env('DOKU_QRIS_NOTIFICATION_SECRET'),
 
     'client_id' => env('DOKU_QRIS_CLIENT_ID'),
-
     'client_secret' => env('DOKU_QRIS_CLIENT_SECRET'),
 
     'shared_key' => env('DOKU_QRIS_SHARED_KEY'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Merchant Identification
-    |--------------------------------------------------------------------------
-    |
-    | MPAN / NMID mapping must follow DOKU's confirmed QRIS contract.
-    | Do not assume either value is merchantId or terminalId.
-    |
-    */
-
     'mpan' => env('DOKU_QRIS_MPAN'),
-
     'nmid' => env('DOKU_QRIS_NMID'),
 
-    /*
-    |--------------------------------------------------------------------------
-    | SNAP
-    |--------------------------------------------------------------------------
-    */
+    'merchant_id' => env('DOKU_QRIS_MERCHANT_ID'),
+    'terminal_id' => env('DOKU_QRIS_TERMINAL_ID'),
+    'postal_code' => env('DOKU_QRIS_POSTAL_CODE'),
+    'fee_type' => env('DOKU_QRIS_FEE_TYPE', '1'),
 
     'channel_id' => env('DOKU_QRIS_CHANNEL_ID', 'H2H'),
 
@@ -61,5 +32,4 @@ return [
         'DOKU_QRIS_QUERY_ENDPOINT',
         '/snap-adapter/b2b/v1.0/qr/qr-mpm-query'
     ),
-
 ];

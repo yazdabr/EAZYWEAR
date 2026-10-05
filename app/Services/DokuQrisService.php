@@ -88,22 +88,10 @@ class DokuQrisService
 
         $stringToSign = $this->clientId . '|' . $timestamp;
 
-        $signature = '';
-
-        $signed = openssl_sign(
+        $signatureBase64 = $this->createB2bTokenSignature(
             $stringToSign,
-            $signature,
-            $privateKey,
-            OPENSSL_ALGO_SHA256
+            $privateKey
         );
-
-        if (! $signed) {
-            throw new RuntimeException(
-                'Gagal membuat signature Get Token B2B QRIS.'
-            );
-        }
-
-        $signatureBase64 = base64_encode($signature);
 
         $endpoint = '/authorization/v1/access-token/b2b';
 
@@ -133,6 +121,246 @@ class DokuQrisService
         }
 
         return $responseData;
+    }
+
+    public function generateQr(
+        string $partnerReferenceNo,
+        float|int|string $amount,
+        ?string $validityPeriod = null
+    ): array {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException(
+                'DOKU QRIS belum dikonfigurasi.'
+            );
+        }
+
+        $merchantId = config('doku-qris.merchant_id');
+        $terminalId = config('doku-qris.terminal_id');
+        $postalCode = config('doku-qris.postal_code');
+        $feeType = config('doku-qris.fee_type', '1');
+
+        if (blank($merchantId)) {
+            throw new RuntimeException(
+                'DOKU QRIS Merchant ID belum dikonfigurasi.'
+            );
+        }
+
+        if (blank($terminalId)) {
+            throw new RuntimeException(
+                'DOKU QRIS Terminal ID belum dikonfigurasi.'
+            );
+        }
+
+        if (blank($postalCode)) {
+            throw new RuntimeException(
+                'DOKU QRIS Postal Code belum dikonfigurasi.'
+            );
+        }
+
+        $tokenResponse = $this->getAccessToken();
+
+        $accessToken = $tokenResponse['accessToken']
+            ?? $tokenResponse['access_token']
+            ?? null;
+
+        if (blank($accessToken)) {
+            throw new RuntimeException(
+                'Access token DOKU QRIS tidak ditemukan.'
+            );
+        }
+
+        $timestamp = now()->format('Y-m-d\TH:i:sP');
+
+        $payload = [
+            'partnerReferenceNo' => $partnerReferenceNo,
+            'amount' => [
+                'value' => number_format(
+                    (float) $amount,
+                    2,
+                    '.',
+                    ''
+                ),
+                'currency' => 'IDR',
+            ],
+            'merchantId' => $merchantId,
+            'terminalId' => $terminalId,
+            'additionalInfo' => [
+                'postalCode' => $postalCode,
+                'feeType' => $feeType,
+            ],
+        ];
+
+        if (filled($validityPeriod)) {
+            $payload['validityPeriod'] = $validityPeriod;
+        }
+
+        $requestBody = json_encode(
+            $payload,
+            JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_UNICODE
+        );
+
+        if ($requestBody === false) {
+            throw new RuntimeException(
+                'Gagal membuat request body DOKU QRIS.'
+            );
+        }
+
+        $signature = $this->generateSymmetricSignature(
+            'POST',
+            $this->generateEndpoint,
+            $accessToken,
+            $requestBody,
+            $timestamp
+        );
+
+        $externalId = $this->generateExternalId();
+
+        $response = Http::timeout(30)
+            ->acceptJson()
+            ->withHeaders([
+                'X-PARTNER-ID' => $this->clientId,
+                'X-EXTERNAL-ID' => $externalId,
+                'X-TIMESTAMP' => $timestamp,
+                'X-SIGNATURE' => $signature,
+                'Authorization' => 'Bearer ' . $accessToken,
+                'CHANNEL-ID' => $this->channelId,
+                'Content-Type' => 'application/json',
+            ])
+            ->withBody($requestBody, 'application/json')
+            ->post(
+                $this->baseUrl . $this->generateEndpoint
+            );
+
+        $response->throw();
+
+        $responseData = $response->json();
+
+        if (! is_array($responseData)) {
+            throw new RuntimeException(
+                'Response Generate QRIS tidak valid.'
+            );
+        }
+
+        return [
+            ...$responseData,
+            '_external_id' => $externalId,
+        ];
+    }
+
+    public function queryQr(
+        string $originalReferenceNo,
+        string $originalPartnerReferenceNo
+    ): array {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException(
+                'DOKU QRIS belum dikonfigurasi.'
+            );
+        }
+
+        $merchantId = config('doku-qris.merchant_id');
+
+        if (blank($merchantId)) {
+            throw new RuntimeException(
+                'DOKU QRIS Merchant ID belum dikonfigurasi.'
+            );
+        }
+
+        $tokenResponse = $this->getAccessToken();
+
+        $accessToken = $tokenResponse['accessToken']
+            ?? $tokenResponse['access_token']
+            ?? null;
+
+        if (blank($accessToken)) {
+            throw new RuntimeException(
+                'Access token DOKU QRIS tidak ditemukan.'
+            );
+        }
+
+        $timestamp = now()->format('Y-m-d\TH:i:sP');
+
+        $payload = [
+            'originalReferenceNo' => $originalReferenceNo,
+            'originalPartnerReferenceNo' => $originalPartnerReferenceNo,
+            'merchantId' => $merchantId,
+            'serviceCode' => '47',
+        ];
+
+        $requestBody = json_encode(
+            $payload,
+            JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_UNICODE
+        );
+
+        if ($requestBody === false) {
+            throw new RuntimeException(
+                'Gagal membuat request body Query QRIS.'
+            );
+        }
+
+        $signature = $this->generateSymmetricSignature(
+            'POST',
+            $this->queryEndpoint,
+            $accessToken,
+            $requestBody,
+            $timestamp
+        );
+
+        $externalId = $this->generateExternalId();
+
+        $response = Http::timeout(30)
+            ->acceptJson()
+            ->withHeaders([
+                'X-PARTNER-ID' => $this->clientId,
+                'X-EXTERNAL-ID' => $externalId,
+                'X-TIMESTAMP' => $timestamp,
+                'X-SIGNATURE' => $signature,
+                'Authorization' => 'Bearer ' . $accessToken,
+                'CHANNEL-ID' => $this->channelId,
+                'Content-Type' => 'application/json',
+            ])
+            ->withBody($requestBody, 'application/json')
+            ->post(
+                $this->baseUrl . $this->queryEndpoint
+            );
+
+        $response->throw();
+
+        $responseData = $response->json();
+
+        if (! is_array($responseData)) {
+            throw new RuntimeException(
+                'Response Query QRIS tidak valid.'
+            );
+        }
+
+        return [
+            ...$responseData,
+            '_external_id' => $externalId,
+        ];
+    }
+
+    protected function createB2bTokenSignature(
+        string $stringToSign,
+        string $privateKey
+    ): string {
+        $signature = '';
+
+        $signed = openssl_sign(
+            $stringToSign,
+            $signature,
+            $privateKey,
+            OPENSSL_ALGO_SHA256
+        );
+
+        if (! $signed) {
+            throw new RuntimeException(
+                'Gagal membuat signature Get Token B2B QRIS.'
+            );
+        }
+
+        return base64_encode($signature);
     }
 
     public function generateSymmetricSignature(

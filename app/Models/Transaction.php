@@ -23,6 +23,11 @@ class Transaction extends Model
         'va_bank',
         'va_expired_at',
 
+        'qris_reference_no',
+        'qris_content',
+        'qris_expired_at',
+        'qris_response',
+
         'subtotal',
         'discount',
         'shipping',
@@ -67,6 +72,8 @@ class Transaction extends Model
         'shipping_latitude' => 'decimal:7',
         'shipping_longitude' => 'decimal:7',
         'doku_response' => 'array',
+        'qris_expired_at' => 'datetime',
+        'qris_response' => 'array',
     ];
 
     /*

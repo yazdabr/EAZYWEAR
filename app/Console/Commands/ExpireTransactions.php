@@ -18,8 +18,21 @@ class ExpireTransactions extends Command
 
         Transaction::query()
             ->where('status', 'PENDING')
-            ->whereNotNull('va_expired_at')
-            ->where('va_expired_at', '<=', now('UTC'))
+            ->where(function ($query) {
+                $query
+                    ->where(function ($query) {
+                        $query
+                            ->where('payment_method', 'VA')
+                            ->whereNotNull('va_expired_at')
+                            ->where('va_expired_at', '<=', now('UTC'));
+                    })
+                    ->orWhere(function ($query) {
+                        $query
+                            ->where('payment_method', 'QRIS')
+                            ->whereNotNull('qris_expired_at')
+                            ->where('qris_expired_at', '<=', now('UTC'));
+                    });
+            })
             ->orderBy('id')
             ->each(function (Transaction $transaction) use (
                 $expiryService,

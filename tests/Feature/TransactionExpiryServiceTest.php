@@ -8,6 +8,8 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 use App\Models\Inventory;
 use App\Models\StockMovement;
+use App\Mail\PaymentExpiredMail;
+use Illuminate\Support\Facades\Mail;
 
 class TransactionExpiryServiceTest extends TestCase
 {
@@ -35,6 +37,44 @@ class TransactionExpiryServiceTest extends TestCase
         $transaction = Transaction::factory()->create([
             'status' => 'PENDING',
             'va_expired_at' => now('UTC')->addMinute(),
+        ]);
+
+        $result = app(TransactionExpiryService::class)->expire($transaction);
+
+        $this->assertFalse($result);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => 'PENDING',
+        ]);
+    }
+
+    public function test_pending_qris_transaction_expires_after_qris_deadline(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'payment_method' => 'QRIS',
+            'va_expired_at' => null,
+            'qris_expired_at' => now('UTC')->subMinute(),
+        ]);
+
+        $result = app(TransactionExpiryService::class)->expire($transaction);
+
+        $this->assertTrue($result);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => 'EXPIRED',
+        ]);
+    }
+
+    public function test_pending_qris_transaction_does_not_expire_before_qris_deadline(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'payment_method' => 'QRIS',
+            'va_expired_at' => null,
+            'qris_expired_at' => now('UTC')->addMinute(),
         ]);
 
         $result = app(TransactionExpiryService::class)->expire($transaction);
@@ -123,5 +163,25 @@ class TransactionExpiryServiceTest extends TestCase
             $initialMovementCount,
             StockMovement::query()->count()
         );
+    }
+
+    public function test_expiring_qris_transaction_sends_payment_expired_email(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'payment_method' => 'QRIS',
+            'va_expired_at' => null,
+            'qris_expired_at' => now('UTC')->subMinute(),
+        ]);
+
+        $result = app(TransactionExpiryService::class)->expire($transaction);
+
+        $this->assertTrue($result);
+
+        Mail::assertSent(PaymentExpiredMail::class, function ($mail) use ($transaction) {
+            return $mail->transaction->id === $transaction->id;
+        });
     }
 }

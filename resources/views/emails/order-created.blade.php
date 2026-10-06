@@ -36,6 +36,27 @@
                         <div style="font-size:14px; line-height:1.7; color:#555555;">
                             Pesanan Anda berhasil dibuat. Silakan lakukan pembayaran sebelum batas waktu yang ditentukan.
                         </div>
+
+                        @if($transaction->payment_method === 'VA')
+                            <div style="margin-top:18px; padding:14px 16px; background:#fff8e8; border:1px solid #f0d99a; border-radius:8px;">
+                                <div style="font-size:13px; font-weight:bold; color:#7a5a12;">
+                                    Cara Pembayaran
+                                </div>
+                                <div style="margin-top:6px; font-size:13px; line-height:1.7; color:#666666;">
+                                    Gunakan nomor Virtual Account di atas untuk menyelesaikan pembayaran sebelum batas waktu pembayaran.
+                                </div>
+                            </div>
+                        @elseif($transaction->payment_method === 'QRIS')
+                            <div style="margin-top:18px; padding:14px 16px; background:#fff8e8; border:1px solid #f0d99a; border-radius:8px;">
+                                <div style="font-size:13px; font-weight:bold; color:#7a5a12;">
+                                    Cara Pembayaran QRIS
+                                </div>
+                                <div style="margin-top:6px; font-size:13px; line-height:1.7; color:#666666;">
+                                    Gunakan QRIS pada halaman pembayaran untuk menyelesaikan transaksi.
+                                    Pastikan nominal pembayaran sesuai dengan total invoice ini dan lakukan pembayaran sebelum batas waktu.
+                                </div>
+                            </div>
+                        @endif
                     </td>
                 </tr>
 
@@ -67,21 +88,66 @@
 
                             <tr>
                                 <td style="padding:14px 16px; color:#777777; font-size:13px;">
-                                    Virtual Account
+                                    Metode Pembayaran
                                 </td>
-                                <td style="padding:14px 16px; font-size:14px; color:#222222;">
-                                    {{ $transaction->va_bank }} - {{ $transaction->va_number }}
+                                <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#222222;">
+                                    {{ $transaction->payment_method === 'VA' ? 'Virtual Account' : $transaction->payment_method }}
                                 </td>
                             </tr>
 
-                            <tr>
-                                <td style="padding:14px 16px; color:#777777; font-size:13px;">
-                                    Batas Pembayaran
-                                </td>
-                                <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#AE7C18;">
-                                    {{ $transaction->va_expired_at?->copy()->timezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
-                                </td>
-                            </tr>
+                            @if($transaction->payment_method === 'VA')
+                                <tr>
+                                    <td style="padding:14px 16px; color:#777777; font-size:13px;">
+                                        Bank
+                                    </td>
+                                    <td style="padding:14px 16px; font-size:14px; color:#222222;">
+                                        {{ $transaction->va_bank }}
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="padding:14px 16px; color:#777777; font-size:13px;">
+                                        Nomor Virtual Account
+                                    </td>
+                                    <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#222222;">
+                                        {{ $transaction->va_number }}
+                                    </td>
+                                </tr>
+
+                                @if($transaction->va_expired_at)
+                                    <tr>
+                                        <td style="padding:14px 16px; color:#777777; font-size:13px;">
+                                            Batas Pembayaran
+                                        </td>
+                                        <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#AE7C18;">
+                                            {{ $transaction->va_expired_at->copy()->timezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
+                                        </td>
+                                    </tr>
+                                @endif
+
+                            @elseif($transaction->payment_method === 'QRIS')
+                                @if($transaction->qris_reference_no)
+                                    <tr>
+                                        <td style="padding:14px 16px; color:#777777; font-size:13px;">
+                                            Referensi QRIS
+                                        </td>
+                                        <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#222222; word-break:break-all;">
+                                            {{ $transaction->qris_reference_no }}
+                                        </td>
+                                    </tr>
+                                @endif
+
+                                @if($transaction->qris_expired_at)
+                                    <tr>
+                                        <td style="padding:14px 16px; color:#777777; font-size:13px;">
+                                            Batas Pembayaran
+                                        </td>
+                                        <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#AE7C18;">
+                                            {{ $transaction->qris_expired_at->copy()->timezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
+                                        </td>
+                                    </tr>
+                                @endif
+                            @endif
                         </table>
                     </td>
                 </tr>

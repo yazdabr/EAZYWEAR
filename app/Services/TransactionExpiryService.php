@@ -28,11 +28,15 @@ class TransactionExpiryService
                 return false;
             }
 
-            if (!$lockedTransaction->va_expired_at) {
+            $expiredAt = $lockedTransaction->payment_method === 'QRIS'
+                ? $lockedTransaction->qris_expired_at
+                : $lockedTransaction->va_expired_at;
+
+            if (!$expiredAt) {
                 return false;
             }
 
-            if ($lockedTransaction->va_expired_at->isFuture()) {
+            if ($expiredAt->isFuture()) {
                 return false;
             }
 

@@ -15,16 +15,19 @@ class ExpireTransactionsCommandTest extends TestCase
     {
         $expiredTransaction = Transaction::factory()->create([
             'status' => 'PENDING',
+            'payment_method' => 'VA',
             'va_expired_at' => now('UTC')->subMinute(),
         ]);
 
         $activeTransaction = Transaction::factory()->create([
             'status' => 'PENDING',
+            'payment_method' => 'VA',
             'va_expired_at' => now('UTC')->addMinute(),
         ]);
 
         $paidTransaction = Transaction::factory()->create([
             'status' => 'PAID',
+            'payment_method' => 'VA',
             'va_expired_at' => now('UTC')->subMinute(),
         ]);
 
@@ -61,6 +64,36 @@ class ExpireTransactionsCommandTest extends TestCase
 
         $this->assertDatabaseHas('transactions', [
             'id' => $transaction->id,
+            'status' => 'PENDING',
+        ]);
+    }
+    public function test_command_expires_pending_qris_transaction_past_qris_deadline(): void
+    {
+        $expiredTransaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'payment_method' => 'QRIS',
+            'va_expired_at' => null,
+            'qris_expired_at' => now('UTC')->subMinute(),
+        ]);
+
+        $activeTransaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'payment_method' => 'QRIS',
+            'va_expired_at' => null,
+            'qris_expired_at' => now('UTC')->addMinute(),
+        ]);
+
+        $exitCode = Artisan::call('transactions:expire');
+
+        $this->assertSame(0, $exitCode);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $expiredTransaction->id,
+            'status' => 'EXPIRED',
+        ]);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $activeTransaction->id,
             'status' => 'PENDING',
         ]);
     }

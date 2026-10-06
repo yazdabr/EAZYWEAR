@@ -70,7 +70,13 @@ class TransactionController extends Controller
             return [
                 'id' => $transaction->id,
                 'invoice' => $transaction->invoice_number,
-                'date' => $transaction->transaction_date ? $transaction->transaction_date->copy()->setTimezone('Asia/Makassar')->format('d M Y H:i') : '-',
+                'date' => $transaction->transaction_date
+                ? $transaction->transaction_date
+                    ->copy()
+                    ->setTimezone('Asia/Makassar')
+                    ->locale('id')
+                    ->translatedFormat('d M Y H:i')
+                : '-',
                 'customer' => $transaction->shipping_name ?? $transaction->customer?->name ?? '-',
                 'customer_phone' => $transaction->shipping_phone ?? $transaction->customer?->phone ?? '-',
                 'customer_email' => $transaction->shipping_email ?? $transaction->customer?->email ?? '-',

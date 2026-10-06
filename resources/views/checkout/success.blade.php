@@ -178,7 +178,8 @@
                                         {{ $transaction->va_expired_at
                                             ->copy()
                                             ->setTimezone('Asia/Makassar')
-                                            ->format('d M Y, H:i') . ' WITA'
+                                            ->locale('id')
+                                            ->translatedFormat('d M Y, H:i') . ' WITA'
                                         }}
                                     </span>
                                 </div>
@@ -285,7 +286,8 @@
                                         {{ $transaction->qris_expired_at
                                             ->copy()
                                             ->setTimezone('Asia/Makassar')
-                                            ->format('d M Y, H:i') . ' WITA'
+                                            ->locale('id')
+                                            ->translatedFormat('d M Y, H:i') . ' WITA'
                                         }}
                                     </span>
                                 </div>

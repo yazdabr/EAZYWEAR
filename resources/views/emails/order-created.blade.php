@@ -120,7 +120,12 @@
                                             Batas Pembayaran
                                         </td>
                                         <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#AE7C18;">
-                                            {{ $transaction->va_expired_at->copy()->timezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
+                                            {{ $transaction->va_expired_at
+                                                ->copy()
+                                                ->timezone('Asia/Makassar')
+                                                ->locale('id')
+                                                ->translatedFormat('d M Y, H:i')
+                                            }} WITA
                                         </td>
                                     </tr>
                                 @endif
@@ -143,7 +148,12 @@
                                             Batas Pembayaran
                                         </td>
                                         <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#AE7C18;">
-                                            {{ $transaction->qris_expired_at->copy()->timezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
+                                            {{ $transaction->qris_expired_at
+                                                ->copy()
+                                                ->timezone('Asia/Makassar')
+                                                ->locale('id')
+                                                ->translatedFormat('d M Y, H:i')
+                                            }} WITA
                                         </td>
                                     </tr>
                                 @endif

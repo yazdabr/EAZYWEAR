@@ -84,7 +84,11 @@
                                     Waktu Pembayaran
                                 </td>
                                 <td style="padding:14px 16px; font-size:14px;">
-                                    {{ $transaction->paid_at?->copy()->timezone('Asia/Makassar')->format('d M Y, H:i') }} WITA
+                                    {{ $transaction->paid_at?->copy()
+                                        ->timezone('Asia/Makassar')
+                                        ->locale('id')
+                                        ->translatedFormat('d M Y, H:i')
+                                    }} WITA
                                 </td>
                             </tr>
                         </table>

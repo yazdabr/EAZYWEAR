@@ -227,6 +227,7 @@ class DokuQrisNotificationControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
             'shipping_method' => 'Ambil di Tempat',
+            'qris_reference_no' => 'DOKU-REFERENCE-001',
         ]);
 
         TransactionItem::create([
@@ -403,8 +404,12 @@ class DokuQrisNotificationControllerTest extends TestCase
         );
 
         $this->assertSame(
-            'QRIS-REF-001',
+            'DOKU-REFERENCE-001',
             $transaction->qris_reference_no
+        );
+
+        $this->assertNotNull(
+            $transaction->qris_response
         );
 
         $variantId = $transaction
@@ -506,6 +511,11 @@ class DokuQrisNotificationControllerTest extends TestCase
             $transaction->paid_at
         );
 
+        $this->assertSame(
+            'DOKU-REFERENCE-001',
+            $transaction->qris_reference_no
+        );
+
         // Notification kedua tidak boleh mengurangi stok lagi.
         $this->assertSame(
             9,
@@ -513,6 +523,78 @@ class DokuQrisNotificationControllerTest extends TestCase
                 'product_variant_id',
                 $variantId
             )->value('stock')
+        );
+    }
+
+    public function test_expired_qris_transaction_rejects_success_notification(): void
+    {
+        $transaction = $this->createPayableTransaction();
+
+        $transaction->update([
+            'qris_expired_at' => now()->subMinute(),
+        ]);
+
+        $transaction->refresh();
+
+        $this->assertTrue(
+            app(\App\Services\TransactionExpiryService::class)
+                ->expire($transaction)
+        );
+
+        $transaction->refresh();
+
+        $this->assertSame(
+            'EXPIRED',
+            $transaction->status
+        );
+
+        $variantId = $transaction
+            ->items()
+            ->first()
+            ->product_variant_id;
+
+        $stockBefore = Inventory::where(
+            'product_variant_id',
+            $variantId
+        )->value('stock');
+
+        $response = $this->postNotification(
+            $this->payload(
+                $transaction->invoice_number,
+                150000
+            )
+        );
+
+        $response->assertStatus(409)
+            ->assertJson([
+                'responseCode' => '4092500',
+                'responseMessage' => 'Payment processing rejected.',
+            ]);
+
+        $transaction->refresh();
+
+        $this->assertSame(
+            'EXPIRED',
+            $transaction->status
+        );
+
+        $this->assertNull(
+            $transaction->paid_at
+        );
+
+        $this->assertSame(
+            'DOKU-REFERENCE-001',
+            $transaction->qris_reference_no
+        );
+
+        $stockAfter = Inventory::where(
+            'product_variant_id',
+            $variantId
+        )->value('stock');
+
+        $this->assertSame(
+            $stockBefore,
+            $stockAfter
         );
     }
 }

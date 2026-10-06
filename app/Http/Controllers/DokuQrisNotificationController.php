@@ -392,12 +392,6 @@ class DokuQrisNotificationController extends Controller
                     );
 
                     $lockedTransaction->update([
-                        'qris_reference_no' =>
-                            data_get(
-                                $payload,
-                                'transaction.original_request_id'
-                            ),
-
                         'qris_response' => $payload,
                     ]);
                 }

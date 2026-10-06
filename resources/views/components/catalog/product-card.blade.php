@@ -38,10 +38,10 @@
             description: @js($product->description)
         })"
     >
-    
+
         {{-- Pre-Order Badge --}}
         <div
-            class="pointer-events-none absolute left-4 top-4 z-10 rounded-full bg-[#AE7C18] px-3 py-1.5 text-[9px] font-bold tracking-[0.14em] text-white shadow-md sm:left-5 sm:top-5 sm:px-3.5 sm:py-1.5 sm:text-[10px]"
+            class="pointer-events-none absolute left-4 top-6 z-10 rounded-full bg-[#AE7C18] px-3 py-1.5 text-[9px] font-bold tracking-[0.14em] text-white shadow-md sm:left-5 sm:top-7 sm:px-3.5 sm:py-1.5 sm:text-[10px]"
         >
             Pre-Order
         </div>

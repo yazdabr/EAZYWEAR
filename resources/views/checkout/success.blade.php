@@ -88,7 +88,7 @@
                             <div class="flex justify-between text-xs text-gray-600 sm:text-sm">
                                 <span>Metode Pembayaran</span>
                                 <span class="font-bold text-slate-900">
-                                    {{ $transaction->payment_method === 'VA' ? 'Virtual Account' :$transaction->payment_method }}
+                                    {{ $transaction->payment_method === 'VA' ? 'Virtual Account' : $transaction->payment_method }}
                                 </span>
                             </div>
                             <div class="border-t border-gray-100 pt-2.5 sm:pt-4">
@@ -102,7 +102,7 @@
                 </div>
             </div>
 
-            {{-- INFORMASI PEMBAYARAN VA --}}
+            {{-- INFORMASI PEMBAYARAN --}}
             @if($transaction->payment_method === 'VA')
                 <div class="mt-4 overflow-hidden rounded-xl border border-blue-200 bg-white shadow-sm sm:mt-6 sm:rounded-3xl">
                     <div class="bg-blue-50 px-4 py-3.5 sm:px-8 sm:py-6">
@@ -136,6 +136,7 @@
                                     >
                                         {{ $transaction->va_number }}
                                     </p>
+
                                     <button
                                         type="button"
                                         id="copy-va-button"
@@ -156,9 +157,7 @@
                                             />
                                         </svg>
 
-                                        <span>
-                                            Salin
-                                        </span>
+                                        <span>Salin</span>
                                     </button>
                                 </div>
                             </div>
@@ -230,6 +229,112 @@
                         @endif
                     </div>
                 </div>
+            @elseif($transaction->payment_method === 'QRIS')
+                <div class="mt-4 overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm sm:mt-6 sm:rounded-3xl">
+                    <div class="bg-emerald-50 px-4 py-3.5 sm:px-8 sm:py-6">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 sm:h-10 sm:w-10">
+                                <x-heroicon-o-qr-code class="h-4 w-4 text-emerald-700 sm:h-5 sm:w-5"/>
+                            </div>
+
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-emerald-700 sm:text-sm">
+                                    Pembayaran QRIS
+                                </p>
+                                <p class="mt-0.5 text-[10px] text-emerald-600 sm:text-xs">
+                                    Scan QRIS berikut menggunakan aplikasi pembayaran yang mendukung QRIS.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 px-4 py-5 sm:space-y-5 sm:px-8 sm:py-7">
+                        @if($qrisQrCode)
+                            <div class="flex justify-center">
+                                <div class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+                                    <div class="h-64 w-64 sm:h-80 sm:w-80">
+                                        {!! $qrisQrCode !!}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <p class="text-xs text-gray-500 sm:text-sm">
+                                    Total pembayaran
+                                </p>
+                                <p class="mt-0.5 text-xl font-extrabold text-[#AE7C18] sm:text-2xl">
+                                    Rp {{ number_format($transaction->total, 0, ',', '.') }}
+                                </p>
+                            </div>
+
+                            @if($transaction->qris_reference_no)
+                                <div class="flex items-center justify-between gap-4 text-xs sm:text-sm">
+                                    <span class="text-gray-500">Referensi QRIS</span>
+                                    <span class="break-all text-right font-bold text-slate-900">
+                                        {{ $transaction->qris_reference_no }}
+                                    </span>
+                                </div>
+                            @endif
+
+                            @if($transaction->qris_expired_at)
+                                <div class="flex items-center justify-between gap-4 text-xs sm:text-sm">
+                                    <span class="text-gray-500">Batas Pembayaran</span>
+                                    <span class="text-right font-bold text-slate-900">
+                                        {{ $transaction->qris_expired_at
+                                            ->copy()
+                                            ->setTimezone('Asia/Makassar')
+                                            ->format('d M Y, H:i') . ' WITA'
+                                        }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    id="qris-payment-countdown"
+                                    data-expires-at="{{ $transaction->qris_expired_at->timestamp * 1000 }}"
+                                    class="rounded-xl border border-red-200 bg-red-50 p-3 sm:px-4 sm:py-3"
+                                >
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="text-xs font-semibold text-red-700 sm:text-sm">
+                                            Waktu pembayaran tersisa
+                                        </span>
+
+                                        <span
+                                            id="qris-payment-countdown-timer"
+                                            class="text-base font-extrabold tabular-nums text-red-700 sm:text-xl"
+                                        >
+                                            00:00
+                                        </span>
+                                    </div>
+
+                                    <p
+                                        id="qris-payment-countdown-message"
+                                        class="mt-0.5 text-[11px] text-red-600 sm:mt-1 sm:text-xs"
+                                    >
+                                        Segera selesaikan pembayaran Anda.
+                                    </p>
+                                </div>
+                            @endif
+
+                            <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 sm:p-4">
+                                <p class="text-xs leading-relaxed text-amber-800 sm:text-sm sm:leading-6">
+                                    Setelah pembayaran berhasil, sistem akan menerima konfirmasi pembayaran dari DOKU.
+                                    Jangan melakukan pembayaran lebih dari satu kali untuk invoice ini.
+                                </p>
+                            </div>
+                        @else
+                            <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 sm:p-4">
+                                <p class="text-xs font-semibold text-amber-900 sm:text-sm">
+                                    QRIS belum tersedia
+                                </p>
+
+                                <p class="mt-1 text-[11px] leading-relaxed text-amber-800 sm:text-sm sm:leading-5">
+                                    Pesanan sudah tercatat, tetapi QRIS belum berhasil dibuat.
+                                    Silakan tunggu informasi pembayaran berikutnya.
+                                </p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
             @endif
 
             {{-- NOTIFIKASI PEMBAYARAN --}}
@@ -240,7 +345,12 @@
                         <p class="text-[11px] leading-relaxed text-amber-800 sm:text-sm sm:leading-6">
                             Pesanan Anda telah tercatat dengan status
                             <strong>{{ $transaction->status }}</strong>.
-                            Nomor Virtual Account akan ditampilkan setelah berhasil dibuat oleh sistem.
+
+                            @if($transaction->payment_method === 'VA')
+                                Nomor Virtual Account dapat digunakan untuk menyelesaikan pembayaran Anda.
+                            @elseif($transaction->payment_method === 'QRIS')
+                                Silakan selesaikan pembayaran menggunakan QRIS di atas.
+                            @endif
                         </p>
                     </div>
                 </div>
@@ -259,18 +369,30 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-    const countdown = document.getElementById('payment-countdown');
-    const timer = document.getElementById('payment-countdown-timer');
-    const message = document.getElementById('payment-countdown-message');
+    const startCountdown = ({
+        countdownId,
+        timerId,
+        messageId,
+    }) => {
+        const countdown = document.getElementById(countdownId);
+        const timer = document.getElementById(timerId);
+        const message = document.getElementById(messageId);
 
-    if (countdown && timer && message) {
+        if (!countdown || !timer || !message) {
+            return;
+        }
 
         const expiresAt = Number(
             countdown.dataset.expiresAt
         );
 
-        const updateCountdown = () => {
+        if (!Number.isFinite(expiresAt)) {
+            return;
+        }
 
+        let interval;
+
+        const updateCountdown = () => {
             const remaining = Math.max(
                 0,
                 expiresAt - Date.now()
@@ -290,7 +412,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
             if (remaining <= 0) {
-
                 timer.textContent = '00:00';
 
                 message.textContent =
@@ -312,11 +433,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateCountdown();
 
-        const interval = setInterval(
+        interval = setInterval(
             updateCountdown,
             1000
         );
-    }
+    };
+
+    startCountdown({
+        countdownId: 'payment-countdown',
+        timerId: 'payment-countdown-timer',
+        messageId: 'payment-countdown-message',
+    });
+
+    startCountdown({
+        countdownId: 'qris-payment-countdown',
+        timerId: 'qris-payment-countdown-timer',
+        messageId: 'qris-payment-countdown-message',
+    });
 
     const copyButton =
         document.getElementById('copy-va-button');
@@ -325,11 +458,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('va-number');
 
     if (copyButton && vaNumber) {
-
         copyButton.addEventListener(
             'click',
             async () => {
-
                 await navigator.clipboard.writeText(
                     vaNumber.innerText.trim()
                 );
@@ -338,15 +469,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Tersalin';
 
                 setTimeout(() => {
-
                     copyButton.querySelector('span').textContent =
                         'Salin';
-
                 }, 2000);
-
             }
         );
-
     }
 
 });

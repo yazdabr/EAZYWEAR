@@ -12,6 +12,11 @@ return [
     'client_id' => env('DOKU_QRIS_CLIENT_ID'),
     'client_secret' => env('DOKU_QRIS_CLIENT_SECRET'),
 
+    'merchant_private_key_path' => env(
+        'DOKU_QRIS_MERCHANT_PRIVATE_KEY_PATH',
+        'storage/app/private/doku/merchant-private.pem'
+    ),
+
     'shared_key' => env('DOKU_QRIS_SHARED_KEY'),
     'mpan' => env('DOKU_QRIS_MPAN'),
     'nmid' => env('DOKU_QRIS_NMID'),

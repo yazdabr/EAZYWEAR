@@ -24,8 +24,7 @@ class DokuQrisService
 
         $this->privateKeyPath = base_path(
             config(
-                'doku.merchant_private_key_path',
-                'storage/app/private/doku/merchant-private.pem'
+                'doku-qris.merchant_private_key_path',
             )
         );
 

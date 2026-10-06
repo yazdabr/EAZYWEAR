@@ -23,7 +23,7 @@ class DokuQrisServiceTest extends TestCase
         file_put_contents($dummyKeyPath, 'TEST-PRIVATE-KEY');
 
         config()->set(
-            'doku.merchant_private_key_path',
+            'doku-qris.merchant_private_key_path',
             'storage/framework/testing/doku-qris-dummy-private.pem'
         );
 
@@ -147,7 +147,7 @@ class DokuQrisServiceTest extends TestCase
         file_put_contents($dummyKeyPath, 'TEST-PRIVATE-KEY');
 
         config()->set(
-            'doku.merchant_private_key_path',
+            'doku-qris.merchant_private_key_path',
             'storage/framework/testing/doku-qris-dummy-private.pem'
         );
 
@@ -344,7 +344,7 @@ class DokuQrisServiceTest extends TestCase
         );
 
         config()->set(
-            'doku.merchant_private_key_path',
+            'doku-qris.merchant_private_key_path',
             'storage/framework/testing/doku-qris-dummy-private.pem'
         );
 

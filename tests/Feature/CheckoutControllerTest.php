@@ -7,6 +7,7 @@ use App\Models\ProductVariant;
 use App\Services\DokuService;
 use App\Services\BiteshipService;
 use App\Models\Transaction;
+use App\Services\DokuQrisService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Session;
 use Tests\TestCase;
@@ -30,6 +31,32 @@ class CheckoutControllerTest extends TestCase
                     'paymentRequestId' => 'PAY-TEST-001',
                     '_external_id' => 'EXT-TEST-001',
                 ]);
+        });
+    }
+
+    private function mockQrisSuccess(): void
+    {
+        $this->mock(DokuQrisService::class, function ($mock) {
+            $mock->shouldReceive('isConfigured')
+                ->andReturn(true);
+
+            $mock->shouldReceive('generateQr')
+                ->once()
+                ->andReturnUsing(function (
+                    string $partnerReferenceNo,
+                    $amount,
+                    ?string $validityPeriod = null
+                ) {
+                    return [
+                        'responseCode' => '2004700',
+                        'responseMessage' => 'Successful',
+                        'referenceNo' => 'DOKU-QRIS-REF-001',
+                        'partnerReferenceNo' => $partnerReferenceNo,
+                        'qrContent' => '000201010212...',
+                        'terminalId' => 'TEST-TERMINAL-ID',
+                        '_external_id' => 'EXT-QRIS-001',
+                    ];
+                });
         });
     }
 
@@ -792,6 +819,269 @@ class CheckoutControllerTest extends TestCase
                 'shipping_email' => 'bank-test@test.com',
             ]);
         }
+    }
+
+    public function test_checkout_creates_pending_transaction_with_qris(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        $databasePrice = (float) $variant->price;
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => $databasePrice,
+                'qty' => 1,
+                'custom_name' => 'QRIS',
+                'custom_number' => '11',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [
+                        [
+                            'courier_code' => 'jnt',
+                            'courier_name' => 'J&T',
+                            'service_code' => 'ez',
+                            'service_name' => 'EZ',
+                            'price' => 8000,
+                            'duration' => '2-3 days',
+                            'service_type' => 'standard',
+                            'shipping_type' => 'parcel',
+                        ],
+                    ],
+                    'raw' => [],
+                ]);
+        });
+
+        $this->mockQrisSuccess();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'QRIS Customer',
+            'email' => 'qris-test@test.com',
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat QRIS',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+
+            'payment_method' => 'QRIS',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'qris-test@test.com')
+            ->firstOrFail();
+
+        $this->assertSame('QRIS', $transaction->payment_method);
+        $this->assertSame('PENDING', $transaction->status);
+
+        $this->assertSame(
+            'DOKU-QRIS-REF-001',
+            $transaction->qris_reference_no
+        );
+
+        $this->assertSame(
+            '000201010212...',
+            $transaction->qris_content
+        );
+
+        $this->assertNotNull($transaction->qris_expired_at);
+        $this->assertNotNull($transaction->qris_response);
+
+        $this->assertNull($transaction->va_number);
+        $this->assertNull($transaction->va_bank);
+
+        $this->assertSame(
+            $databasePrice + 8000 - (float) $transaction->discount,
+            (float) $transaction->total
+        );
+    }
+
+    public function test_checkout_fails_when_qris_generate_failed(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => $variant->price,
+                'qty' => 1,
+                'custom_name' => 'QRISFAIL',
+                'custom_number' => '10',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [
+                        [
+                            'courier_code' => 'jnt',
+                            'courier_name' => 'J&T',
+                            'service_code' => 'ez',
+                            'service_name' => 'EZ',
+                            'price' => 8000,
+                            'duration' => '2-3 days',
+                            'service_type' => 'standard',
+                            'shipping_type' => 'parcel',
+                        ],
+                    ],
+                    'raw' => [],
+                ]);
+        });
+
+        $this->mock(DokuQrisService::class, function ($mock) {
+            $mock->shouldReceive('isConfigured')
+                ->andReturn(true);
+
+            $mock->shouldReceive('generateQr')
+                ->once()
+                ->andReturn([
+                    'responseCode' => '4000000',
+                    'responseMessage' => 'Failed',
+                ]);
+        });
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'QRIS Failed Customer',
+            'email' => 'qris-failed@test.com',
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+
+            'payment_method' => 'QRIS',
+        ]);
+
+        $response->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('transactions', [
+            'payment_method' => 'QRIS',
+            'shipping_email' => 'qris-failed@test.com',
+        ]);
+    }
+
+    public function test_checkout_qris_does_not_call_doku_virtual_account(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+            'stock' => 10,
+        ]);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => $variant->price,
+                'qty' => 1,
+                'custom_name' => 'QRIS',
+                'custom_number' => '99',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [
+                        [
+                            'courier_code' => 'jnt',
+                            'courier_name' => 'J&T',
+                            'service_code' => 'ez',
+                            'service_name' => 'EZ',
+                            'price' => 8000,
+                            'duration' => '2-3 days',
+                            'service_type' => 'standard',
+                            'shipping_type' => 'parcel',
+                        ],
+                    ],
+                    'raw' => [],
+                ]);
+        });
+
+        $doku = $this->mock(DokuService::class);
+
+        $doku->shouldReceive('createVirtualAccount')
+            ->never();
+
+        $this->mockQrisSuccess();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'QRIS Customer',
+            'email' => 'qris-no-va@test.com',
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+
+            'payment_method' => 'QRIS',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
     }
 
     public function test_checkout_rejects_empty_cart(): void

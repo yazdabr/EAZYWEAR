@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Mail\OrderCreatedMail;
 use App\Models\Customer;
 use App\Models\Inventory;
-use App\Models\OrderStatusHistory;
 use App\Models\ProductVariant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Services\BiteshipService;
 use App\Services\DokuService;
+use App\Services\DokuQrisService;
+use App\Services\QrisQrCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -126,7 +127,12 @@ class CheckoutController extends Controller
         return view('checkout.index', compact('cart', 'subtotal', 'totalItems', 'shippingMethods', 'paymentMethods'));
     }
 
-    public function store(Request $request, DokuService $dokuService, BiteshipService $biteshipService): RedirectResponse
+    public function store(
+        Request $request,
+        DokuService $dokuService,
+        DokuQrisService $dokuQrisService,
+        BiteshipService $biteshipService
+    ): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -155,9 +161,15 @@ class CheckoutController extends Controller
             'pickup_date' => [Rule::requiredIf(fn () => $request->input('shipping_method') === 'Ambil di Tempat'), 'nullable', 'date'],
             'pickup_time_start' => [Rule::requiredIf(fn () => $request->input('shipping_method') === 'Ambil di Tempat'), 'nullable', 'date_format:H:i'],
             'pickup_time_end' => [Rule::requiredIf(fn () => $request->input('shipping_method') === 'Ambil di Tempat'), 'nullable', 'date_format:H:i'],
-            'payment_method' => ['required', 'string', Rule::in(['VA'])],
-            'va_bank' => [
+            'payment_method' => [
                 'required',
+                'string',
+                Rule::in(['VA', 'QRIS']),
+            ],
+
+            'va_bank' => [
+                Rule::requiredIf(fn () => $request->input('payment_method') === 'VA'),
+                'nullable',
                 'string',
                 Rule::in(['MANDIRI', 'BNI', 'BRI', 'BSI']),
             ],
@@ -170,9 +182,25 @@ class CheckoutController extends Controller
         }
 
         try {
-            $transaction = DB::transaction(function () use ($validated, $cart, $dokuService, $biteshipService) {
-                if (! $dokuService->isConfigured()) {
+            $transaction = DB::transaction(function () use (
+                $validated,
+                $cart,
+                $dokuService,
+                $dokuQrisService,
+                $biteshipService
+            ) {
+                if (
+                    $validated['payment_method'] === 'VA'
+                    && ! $dokuService->isConfigured()
+                ) {
                     throw new RuntimeException('Konfigurasi DOKU belum lengkap.');
+                }
+
+                if (
+                    $validated['payment_method'] === 'QRIS'
+                    && ! $dokuQrisService->isConfigured()
+                ) {
+                    throw new RuntimeException('Konfigurasi DOKU QRIS belum lengkap.');
                 }
 
                 $customer = Customer::query()
@@ -343,46 +371,121 @@ class CheckoutController extends Controller
                 $transaction->addStatusHistory(Transaction::ORDER_CREATED, 'Pesanan berhasil dibuat melalui website.');
 
                 $amount = number_format((float) $total, 2, '.', '');
-                $vaExpiredAt = now()->addMinutes(10);
 
-                $vaBank = $validated['va_bank'];
-                $vaConfig = config("doku.va.banks.{$vaBank}");
+                if ($validated['payment_method'] === 'VA') {
+                    $vaExpiredAt = now()->addMinutes(10);
 
-                $dokuResponse = $dokuService->createVirtualAccount([
-                    'partnerServiceId' => $vaConfig['partner_service_id'],
-                    'customerNo' => $vaConfig['customer_no'],
-                    'virtualAccountName' => $validated['name'],
-                    'virtualAccountEmail' => $validated['email'],
-                    'virtualAccountPhone' => $validated['phone'],
-                    'trxId' => $transaction->invoice_number,
-                    'amount' => $amount,
-                    'channel' => $vaConfig['channel'],
-                    'expiredDate' => $vaExpiredAt->copy()->setTimezone('Asia/Makassar')->format('Y-m-d\TH:i:sP'),
-                ]);
+                    $vaBank = $validated['va_bank'];
+                    $vaConfig = config("doku.va.banks.{$vaBank}");
 
-                $responseCode = (string) ($dokuResponse['responseCode'] ?? '');
+                    $dokuResponse = $dokuService->createVirtualAccount([
+                        'partnerServiceId' => $vaConfig['partner_service_id'],
+                        'customerNo' => $vaConfig['customer_no'],
+                        'virtualAccountName' => $validated['name'],
+                        'virtualAccountEmail' => $validated['email'],
+                        'virtualAccountPhone' => $validated['phone'],
+                        'trxId' => $transaction->invoice_number,
+                        'amount' => $amount,
+                        'channel' => $vaConfig['channel'],
+                        'expiredDate' => $vaExpiredAt
+                            ->copy()
+                            ->setTimezone('Asia/Makassar')
+                            ->format('Y-m-d\TH:i:sP'),
+                    ]);
 
-                if ($responseCode === '' || ! str_starts_with($responseCode, '200')) {
-                    throw new RuntimeException('Create VA DOKU gagal: ' . ($dokuResponse['responseMessage'] ?? 'Respons tidak valid.'));
+                    $responseCode = (string) ($dokuResponse['responseCode'] ?? '');
+
+                    if ($responseCode === '' || ! str_starts_with($responseCode, '200')) {
+                        throw new RuntimeException(
+                            'Create VA DOKU gagal: '
+                            . ($dokuResponse['responseMessage'] ?? 'Respons tidak valid.')
+                        );
+                    }
+
+                    $vaNumber = $this->extractDokuValue(
+                        $dokuResponse,
+                        ['virtualAccountNo', 'virtualAccountNumber']
+                    );
+
+                    $vaNumber = preg_replace('/\s+/', '', (string) $vaNumber);
+
+                    if (! $vaNumber || ! preg_match('/^\d+$/', $vaNumber)) {
+                        throw new RuntimeException(
+                            'Create VA berhasil dipanggil, tetapi nomor VA tidak valid pada respons DOKU.'
+                        );
+                    }
+
+                    $paymentRequestId = $this->extractDokuValue(
+                        $dokuResponse,
+                        ['paymentRequestId']
+                    );
+
+                    $transaction->update([
+                        'doku_request_id' => $dokuResponse['_external_id'] ?? null,
+                        'doku_payment_id' => $paymentRequestId,
+                        'va_number' => $vaNumber,
+                        'va_bank' => $vaBank,
+                        'va_expired_at' => $vaExpiredAt,
+                        'doku_response' => $dokuResponse,
+                    ]);
+                } else {
+                    $qrisExpiredAt = now()->addMinutes(10);
+
+                    $qrisResponse = $dokuQrisService->generateQr(
+                        $transaction->invoice_number,
+                        $amount,
+                        $qrisExpiredAt
+                            ->copy()
+                            ->setTimezone('Asia/Makassar')
+                            ->format('Y-m-d\TH:i:sP'),
+                    );
+
+                    $responseCode = (string) ($qrisResponse['responseCode'] ?? '');
+
+                    if ($responseCode !== '2004700') {
+                        throw new RuntimeException(
+                            'Generate QRIS DOKU gagal: '
+                            . ($qrisResponse['responseMessage'] ?? 'Respons tidak valid.')
+                        );
+                    }
+
+                    $qrisReferenceNo = trim(
+                        (string) ($qrisResponse['referenceNo'] ?? '')
+                    );
+
+                    $qrisContent = trim(
+                        (string) ($qrisResponse['qrContent'] ?? '')
+                    );
+
+                    $partnerReferenceNo = trim(
+                        (string) ($qrisResponse['partnerReferenceNo'] ?? '')
+                    );
+
+                    if ($qrisReferenceNo === '') {
+                        throw new RuntimeException(
+                            'Generate QRIS berhasil dipanggil, tetapi referenceNo tidak tersedia.'
+                        );
+                    }
+
+                    if ($qrisContent === '') {
+                        throw new RuntimeException(
+                            'Generate QRIS berhasil dipanggil, tetapi qrContent tidak tersedia.'
+                        );
+                    }
+
+                    if ($partnerReferenceNo !== $transaction->invoice_number) {
+                        throw new RuntimeException(
+                            'Respons QRIS tidak sesuai dengan invoice transaksi.'
+                        );
+                    }
+
+                    $transaction->update([
+                        'qris_reference_no' => $qrisReferenceNo,
+                        'qris_content' => $qrisContent,
+                        'qris_expired_at' => $qrisExpiredAt,
+                        'qris_response' => $qrisResponse,
+                    ]);
                 }
-
-                $vaNumber = $this->extractDokuValue($dokuResponse, ['virtualAccountNo', 'virtualAccountNumber']);
-                $vaNumber = preg_replace('/\s+/', '', (string) $vaNumber);
-
-                if (! $vaNumber || ! preg_match('/^\d+$/', $vaNumber)) {
-                    throw new RuntimeException('Create VA berhasil dipanggil, tetapi nomor VA tidak valid pada respons DOKU.');
-                }
-
-                $paymentRequestId = $this->extractDokuValue($dokuResponse, ['paymentRequestId']);
-
-                $transaction->update([
-                    'doku_request_id' => $dokuResponse['_external_id'] ?? null,
-                    'doku_payment_id' => $paymentRequestId,
-                    'va_number' => $vaNumber,
-                    'va_bank' => $vaBank,
-                    'va_expired_at' => $vaExpiredAt,
-                    'doku_response' => $dokuResponse,
-                ]);
 
                 $transaction->load(['items.productVariant.product']);
 
@@ -403,7 +506,10 @@ class CheckoutController extends Controller
         }
     }
 
-    public function success(Request $request): View|RedirectResponse
+    public function success(
+        Request $request,
+        QrisQrCodeService $qrisQrCodeService
+    ): View|RedirectResponse
     {
         $invoice = $request->session()->pull('checkout_success_invoice');
 
@@ -422,7 +528,21 @@ class CheckoutController extends Controller
             return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        return view('checkout.success', compact('transaction'));
+        $qrisQrCode = null;
+
+        if (
+            $transaction->payment_method === 'QRIS' &&
+            filled($transaction->qris_content)
+        ) {
+            $qrisQrCode = $qrisQrCodeService->generateSvg(
+                $transaction->qris_content
+            );
+        }
+
+        return view('checkout.success', [
+            'transaction' => $transaction,
+            'qrisQrCode' => $qrisQrCode,
+        ]);
     }
 
     private function generateInvoiceNumber(): string

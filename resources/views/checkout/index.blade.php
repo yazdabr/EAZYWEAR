@@ -270,7 +270,8 @@
                                         type="radio"
                                         name="payment_method"
                                         value="VA"
-                                        checked
+                                        @checked(old('payment_method') === 'VA')
+                                        required
                                         class="h-4 w-4 accent-[#AE7C18]"
                                     >
                                     <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#AE7C18]/10">
@@ -284,7 +285,29 @@
                                     </div>
                                 </label>
 
-                                <div class="rounded-xl border border-gray-200 bg-gray-50/50 p-3 sm:p-4">
+                                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3.5 py-3 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 has-[:checked]:border-[#AE7C18] has-[:checked]:bg-[#AE7C18]/5 sm:gap-4 sm:px-4">
+                                    <input
+                                        type="radio"
+                                        name="payment_method"
+                                        value="QRIS"
+                                        @checked(old('payment_method') === 'QRIS')
+                                        class="h-4 w-4 accent-[#AE7C18]"
+                                    >
+                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#AE7C18]/10">
+                                        <x-heroicon-o-qr-code class="h-4 w-4 text-[#AE7C18]"/>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-semibold text-slate-900 sm:text-sm">QRIS</p>
+                                        <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">
+                                            Bayar dengan scan QRIS melalui aplikasi pembayaran yang mendukung QRIS.
+                                        </p>
+                                    </div>
+                                </label>
+
+                                <div
+                                    id="va-bank-section"
+                                    class="{{ old('payment_method') === 'VA' ? '' : 'hidden' }} rounded-xl border border-gray-200 bg-gray-50/50 p-3 sm:p-4"
+                                >
                                     <p class="mb-3 text-[11px] font-semibold text-slate-700 sm:text-xs">
                                         Pilih Bank
                                     </p>
@@ -302,6 +325,7 @@
                                                     name="va_bank"
                                                     value="{{ $bank }}"
                                                     @checked(old('va_bank') === $bank)
+                                                    @disabled(old('payment_method') !== 'VA')
                                                     class="h-3.5 w-3.5 shrink-0 accent-[#AE7C18]"
                                                 >
 
@@ -452,10 +476,20 @@
         const totalNote = document.getElementById('total-note');
         const courierCodeInput = document.getElementById('courier_code');
         const courierServiceCodeInput = document.getElementById('courier_service_code');
+        const vaBankSection = document.getElementById('va-bank-section');
+        const paymentMethodInputs = form.querySelectorAll(
+            'input[name="payment_method"]'
+        );
+        const vaBankInputs = form.querySelectorAll(
+            'input[name="va_bank"]'
+        );
 
         if (
             !form ||
             !postalInput ||
+            !vaBankSection ||
+            paymentMethodInputs.length === 0 ||
+            vaBankInputs.length === 0 ||
             !ratesSection ||
             !ratesList ||
             !shippingCost ||
@@ -476,6 +510,20 @@
         let requestSequence = 0;
         let selectedRate = null;
 
+        function updatePaymentMethodUI() {
+            const paymentMethod = form.querySelector(
+                'input[name="payment_method"]:checked'
+            )?.value;
+
+            const isVa = paymentMethod === 'VA';
+
+            vaBankSection.classList.toggle('hidden', !isVa);
+
+            vaBankInputs.forEach(function (input) {
+                input.disabled = !isVa;
+            });
+        }
+
         function formatRupiah(value) {
             return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
         }
@@ -489,7 +537,6 @@
             totalAmount.textContent = formatRupiah(subtotal);
             totalNote.textContent = 'Belum termasuk ongkir';
         }
-
 
         function showRatesError(message) {
             ratesError.textContent = message;
@@ -780,6 +827,12 @@
             }
         }
 
+        paymentMethodInputs.forEach(function (input) {
+            input.addEventListener('change', function () {
+                updatePaymentMethodUI();
+            });
+        });
+
         form.querySelectorAll('input[name="shipping_method"]').forEach(function (input) {
             input.addEventListener('change', function () {
                 updateShippingMethodUI();
@@ -807,6 +860,24 @@
         }
 
         form.addEventListener('submit', function (event) {
+            const paymentMethod = form.querySelector(
+                'input[name="payment_method"]:checked'
+            )?.value;
+
+            if (!paymentMethod) {
+                event.preventDefault();
+
+                const firstPaymentMethod = form.querySelector(
+                    'input[name="payment_method"]'
+                );
+
+                if (firstPaymentMethod) {
+                    firstPaymentMethod.reportValidity();
+                }
+
+                return;
+            }
+
             const shippingMethod = form.querySelector(
                 'input[name="shipping_method"]:checked'
             )?.value;
@@ -860,6 +931,7 @@
             }
         });
 
+        updatePaymentMethodUI();
         updateShippingMethodUI();
     });
 </script>

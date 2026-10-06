@@ -13,6 +13,7 @@ use App\Models\TransactionNotification;
 use App\Services\DokuService;
 use App\Services\InventoryStockService;
 use App\Services\TransactionPaymentService;
+use App\Services\TransactionCompletionService;
 use App\Mail\OrderShippedMail;
 use App\Services\BiteshipService;
 use Carbon\Carbon;
@@ -27,6 +28,11 @@ use RuntimeException;
 
 class TransactionController extends Controller
 {
+    public function __construct(
+        private readonly TransactionCompletionService $transactionCompletionService,
+    ) {
+    }
+
     public function index(Request $request)
     {
         $query = Transaction::with(['customer', 'items.productVariant.product.images', 'items.productVariant.size', 'items.productVariant.color']);
@@ -876,19 +882,8 @@ class TransactionController extends Controller
     public function complete(Transaction $transaction)
     {
         try {
-            $completedTransaction = DB::transaction(function () use ($transaction) {
-                $lockedTransaction = Transaction::query()->whereKey($transaction->id)->lockForUpdate()->firstOrFail();
-
-                $allowed = ($lockedTransaction->shipping_method === 'Ambil di Tempat' && $lockedTransaction->status === 'ORDER_PROCESSING') || ($lockedTransaction->shipping_method === 'Kurir' && $lockedTransaction->status === 'ORDER_SHIPPED');
-
-                if (!$allowed) {
-                    throw ValidationException::withMessages(['transaction' => 'Status transaksi belum dapat diselesaikan.']);
-                }
-
-                $lockedTransaction->updateStatus('ORDER_COMPLETED', 'Pesanan telah diselesaikan oleh admin.');
-
-                return $lockedTransaction->fresh();
-            });
+            $completedTransaction = $this->transactionCompletionService
+                ->completeManually($transaction);
 
             return response()->json([
                 'success' => true,

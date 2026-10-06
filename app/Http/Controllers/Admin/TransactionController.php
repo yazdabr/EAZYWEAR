@@ -37,11 +37,6 @@ class TransactionController extends Controller
     {
         $query = Transaction::with(['customer', 'items.productVariant.product.images', 'items.productVariant.size', 'items.productVariant.color']);
 
-        $query->whereNotIn(
-            'invoice_number',
-            config('admin.hidden_transaction_invoices', [])
-        );
-
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
             $searchBy = $request->input('search_by', 'all');

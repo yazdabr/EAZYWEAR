@@ -41,7 +41,7 @@
 
         {{-- Pre-Order Badge --}}
         <div
-            class="pointer-events-none absolute left-4 top-5 z-10 -translate-y-0.5 rounded-full bg-[#AE7C18] px-2.5 py-1 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:left-5 sm:top-6 sm:translate-y-0 sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]"
+            class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-[#AE7C18] px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]"
         >
             Pre-Order
         </div>

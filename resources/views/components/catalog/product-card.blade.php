@@ -41,9 +41,11 @@
 
         {{-- Pre-Order Badge --}}
         <div
-            class="pointer-events-none absolute left-4 top-5 z-10 -translate-y-0.5 rounded-full bg-[#AE7C18] px-2.5 py-1 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:left-5 sm:top-6 sm:translate-y-0 sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]"
+            class="pointer-events-none absolute left-2.5 top-2.5 z-10 inline-flex items-center gap-1 rounded-full bg-[#AE7C18] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md shadow-[#AE7C18]/20 backdrop-blur-md sm:left-3.5 sm:top-3.5 sm:px-3 sm:py-1 sm:text-xs"
         >
-            Pre-Order
+            {{-- Dot Indikator Opsional --}}
+            <span class="h-1.5 w-1.5 rounded-full bg-white/80 animate-pulse"></span>
+            <span>Pre-Order</span>
         </div>
         
         <img

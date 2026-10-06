@@ -10,7 +10,7 @@
         ->filter(fn ($variant) => (float) $variant->price > 0)
         ->min('price') ?? 0;
     $whatsappMessage = 'Halo Eazywear, saya ingin bertanya mengenai jersey dan informasi lebih lanjut.';
-    $whatsappUrl = 'https://wa.me/6285754431105?text=' . urlencode($whatsappMessage);
+    $whatsappUrl = 'https://wa.me/628138377763?text=' . urlencode($whatsappMessage);
 @endphp
 
 <section x-data="galleryProduct()" class="bg-white py-6 sm:py-10 lg:py-14">
@@ -332,7 +332,7 @@
                                 Production Time
                             </h4>
                             <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">
-                                10–14 Working Days
+                                Ready from 30 October
                             </p>
                         </div>
                     </div>

@@ -38,6 +38,13 @@
             description: @js($product->description)
         })"
     >
+        {{-- Pre-Order Badge --}}
+        <div
+            class="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-[#AE7C18] px-3 py-1.5 text-[9px] font-bold tracking-[0.14em] text-white shadow-md sm:left-4 sm:top-4 sm:px-3.5 sm:py-1.5 sm:text-[10px]"
+        >
+            Pre-Order
+        </div>
+        
         <img
             src="{{ $image }}"
             alt="{{ $hasImage ? $product->name . ' - Eazywear Indonesia' : 'Product image coming soon - Eazywear Indonesia' }}"
@@ -83,13 +90,13 @@
 
         {{-- View Detail Button --}}
         <div class="pt-2.5 sm:pt-3 lg:pt-4">
-            {{-- <x-ui.button
+            <!-- <x-ui.button
                 :href="$detailUrl"
                 variant="outline"
                 class="h-9 w-full rounded-lg px-3 text-[10px] font-semibold sm:h-9 sm:text-[11px] lg:h-10 lg:text-xs"
             >
                 View Detail
-            </x-ui.button> --}}
+            </x-ui.button> -->
         </div>
 
     </div>

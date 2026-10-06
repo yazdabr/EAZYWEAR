@@ -250,9 +250,11 @@
 
                     <div class="space-y-4 px-4 py-5 sm:space-y-5 sm:px-8 sm:py-7">
                         @if($qrisQrCode)
-                            <div class="flex justify-center">
-                                <div class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
-                                    <div class="h-64 w-64 sm:h-80 sm:w-80">
+                            <div class="flex w-full justify-center">
+                                <div class="w-full max-w-[320px] rounded-2xl border border-gray-200 bg-white p-3 shadow-sm sm:max-w-[360px] sm:p-4">
+                                    <div
+                                        class="mx-auto flex w-full items-center justify-center [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
+                                    >
                                         {!! $qrisQrCode !!}
                                     </div>
                                 </div>

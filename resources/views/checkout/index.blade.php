@@ -92,7 +92,7 @@
                                 </div>
                                 <div>
                                     <label for="shipping_postal_code" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kode Pos <span class="text-red-500">*</span></label>
-                                    <input id="shipping_postal_code" name="shipping_postal_code" type="text" value="{{ old('shipping_postal_code') }}" required inputmode="numeric" autocomplete="postal-code" placeholder="70654" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
+                                    <input id="shipping_postal_code" name="shipping_postal_code" type="text" value="{{ old('shipping_postal_code') }}" required inputmode="numeric" autocomplete="postal-code" placeholder="Kode Pos" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
                                 </div>
                             </div>
                         </div>

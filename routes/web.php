@@ -29,9 +29,14 @@ Route::delete('/cart/{key}', [CartController::class, 'remove'])->name('cart.remo
 Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+
 Route::post('/checkout/shipping-rates', [CheckoutController::class, 'shippingRates'])
     ->middleware('throttle:20,1')
     ->name('checkout.shipping-rates');
+
+Route::get('/checkout/fulfillment-availability', [CheckoutController::class, 'fulfillmentAvailability'])
+    ->middleware('throttle:30,1')
+    ->name('checkout.fulfillment-availability');
 
 Route::post('/checkout', [CheckoutController::class, 'store'])
     ->middleware('throttle:5,1')

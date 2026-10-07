@@ -9,6 +9,8 @@ use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\User;
 use App\Services\DokuService;
+use App\Models\FulfillmentHold;
+use App\Models\FulfillmentSlot;
 use App\Http\Controllers\Admin\TransactionController;
 use App\Mail\OrderShippedMail;
 use App\Models\TransactionNotification;
@@ -756,5 +758,126 @@ class TransactionControllerTest extends TestCase
             'transaction_id' => $transaction->id,
             'type' => 'ORDER_SHIPPED_EMAIL',
         ]);
+    }
+    public function test_pending_special_batch_transaction_cancellation_releases_fulfillment_hold(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = $this->createTestTransaction();
+
+        $transaction->update([
+            'status' => 'PENDING',
+            'fulfillment_date' => '2026-10-30',
+        ]);
+
+        $slot = FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->firstOrFail();
+
+        $hold = FulfillmentHold::query()->create([
+            'transaction_id' => $transaction->id,
+            'fulfillment_slot_id' => $slot->id,
+            'status' => FulfillmentHold::HELD,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(route('admin.transactions.cancel', $transaction));
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'status' => 'CANCELLED',
+                ],
+            ]);
+
+        $transaction->refresh();
+        $hold->refresh();
+        $slot->refresh();
+
+        $this->assertSame('CANCELLED', $transaction->status);
+        $this->assertSame(
+            FulfillmentHold::RELEASED,
+            $hold->status
+        );
+        $this->assertNotNull($hold->released_at);
+        $this->assertSame(0, (int) $slot->used_count);
+    }
+    public function test_paid_special_batch_transaction_cancellation_releases_allocation_and_capacity(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = $this->createTestTransaction();
+
+        $transaction->update([
+            'status' => 'PAID',
+            'fulfillment_date' => '2026-10-30',
+        ]);
+
+        $slot = FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->firstOrFail();
+
+        $hold = FulfillmentHold::query()->create([
+            'transaction_id' => $transaction->id,
+            'fulfillment_slot_id' => $slot->id,
+            'status' => FulfillmentHold::CONVERTED,
+        ]);
+
+        $slot->update([
+            'used_count' => 1,
+        ]);
+
+        $inventory = Inventory::query()
+            ->where(
+                'product_variant_id',
+                $transaction->items->first()->product_variant_id
+            )
+            ->firstOrFail();
+
+        $stockBeforeCancellation = (int) $inventory->stock;
+
+        $service = app(\App\Services\InventoryStockService::class);
+
+        $service->decreaseForTransaction(
+            $transaction,
+            'Controller cancellation test - fulfillment allocation'
+        );
+
+        $stockAfterPayment = (int) $inventory->refresh()->stock;
+
+        $this->assertSame(
+            $stockBeforeCancellation - $transaction->items->sum('qty'),
+            $stockAfterPayment
+        );
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson(route('admin.transactions.cancel', $transaction));
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'status' => 'CANCELLED',
+                ],
+            ]);
+
+        $transaction->refresh();
+        $hold->refresh();
+        $slot->refresh();
+        $inventory->refresh();
+
+        $this->assertSame('CANCELLED', $transaction->status);
+        $this->assertSame(
+            FulfillmentHold::RELEASED,
+            $hold->status
+        );
+        $this->assertNotNull($hold->released_at);
+        $this->assertSame(0, (int) $slot->used_count);
+        $this->assertSame($stockBeforeCancellation, (int) $inventory->stock);
     }
 }

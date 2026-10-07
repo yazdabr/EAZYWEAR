@@ -46,5 +46,9 @@ class DatabaseSeeder extends Seeder
             TransactionItemSeeder::class,
             UserSeeder::class,
         ]);
+
+        $this->call([
+            FulfillmentSlotSeeder::class,
+        ]);
     }
 }

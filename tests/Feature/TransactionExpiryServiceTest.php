@@ -10,6 +10,8 @@ use App\Models\Inventory;
 use App\Models\StockMovement;
 use App\Mail\PaymentExpiredMail;
 use Illuminate\Support\Facades\Mail;
+use App\Models\FulfillmentHold;
+use App\Models\FulfillmentSlot;
 
 class TransactionExpiryServiceTest extends TestCase
 {
@@ -183,5 +185,39 @@ class TransactionExpiryServiceTest extends TestCase
         Mail::assertSent(PaymentExpiredMail::class, function ($mail) use ($transaction) {
             return $mail->transaction->id === $transaction->id;
         });
+    }
+    public function test_expiring_special_batch_transaction_releases_fulfillment_hold(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'va_expired_at' => now('UTC')->subMinute(),
+            'fulfillment_date' => '2026-10-30',
+        ]);
+
+        $slot = FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->firstOrFail();
+
+        $hold = FulfillmentHold::query()->create([
+            'transaction_id' => $transaction->id,
+            'fulfillment_slot_id' => $slot->id,
+            'status' => FulfillmentHold::HELD,
+        ]);
+
+        $result = app(TransactionExpiryService::class)->expire($transaction);
+
+        $this->assertTrue($result);
+
+        $transaction->refresh();
+        $hold->refresh();
+        $slot->refresh();
+
+        $this->assertSame('EXPIRED', $transaction->status);
+        $this->assertSame(
+            FulfillmentHold::RELEASED,
+            $hold->status
+        );
+        $this->assertNotNull($hold->released_at);
+        $this->assertSame(0, (int) $slot->used_count);
     }
 }

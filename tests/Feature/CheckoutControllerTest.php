@@ -8,6 +8,9 @@ use App\Services\DokuService;
 use App\Services\BiteshipService;
 use App\Models\Transaction;
 use App\Services\DokuQrisService;
+use App\Models\FulfillmentSlot;
+use App\Models\FulfillmentHold;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Session;
 use Tests\TestCase;
@@ -109,7 +112,7 @@ class CheckoutControllerTest extends TestCase
 
             'shipping_method' => 'Ambil di Tempat',
 
-            'pickup_date' => '2026-10-05',
+            'pickup_date' => '2026-10-08',
             'pickup_time_start' => '09:00',
             'pickup_time_end' => '11:00',
 
@@ -147,8 +150,8 @@ class CheckoutControllerTest extends TestCase
         );
 
         $this->assertSame(
-            '2026-10-05',
-            $transaction->pickup_date
+            '2026-10-08',
+            $transaction->pickup_date->toDateString()
         );
 
         $this->assertSame(
@@ -168,6 +171,10 @@ class CheckoutControllerTest extends TestCase
             'transaction_id' => $transaction->id,
             'price' => $databasePrice,
         ]);
+        $this->assertSame(
+            '2026-10-08',
+            $transaction->fulfillment_date->toDateString()
+        );
     }
 
     public function test_checkout_creates_pending_transaction_with_va(): void
@@ -1519,5 +1526,324 @@ class CheckoutControllerTest extends TestCase
 
         $response
             ->assertRedirect(route('cart.index'));
+    }
+    public function test_checkout_pickup_special_batch_saves_selected_fulfillment_date(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => (float) $variant->price,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class)
+            ->shouldReceive('getCourierRates')
+            ->never();
+
+        $this->mockDokuSuccess();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Special Pickup Customer',
+            'email' => 'special-pickup@test.com',
+            'phone' => '08123456783',
+            'shipping_address' => 'Alamat Pickup',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+
+            'shipping_method' => 'Ambil di Tempat',
+
+            'pickup_date' => '2026-10-31',
+            'pickup_time_start' => '09:00',
+            'pickup_time_end' => '11:00',
+
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'special-pickup@test.com')
+            ->firstOrFail();
+
+        $this->assertSame(
+            '2026-10-31',
+            $transaction->fulfillment_date->toDateString()
+        );
+
+        $this->assertSame(
+            '2026-10-31',
+            $transaction->pickup_date->toDateString()
+        );
+
+        $this->assertSame(
+            0,
+            (int) FulfillmentSlot::query()
+                ->whereDate('date', '2026-10-31')
+                ->value('used_count')
+        );
+
+        $slotId = FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-31')
+            ->value('id');
+
+        $this->assertDatabaseHas('fulfillment_holds', [
+            'transaction_id' => $transaction->id,
+            'fulfillment_slot_id' => $slotId,
+            'status' => FulfillmentHold::HELD,
+        ]);
+    }
+    public function test_checkout_pickup_rejects_when_selected_fulfillment_date_is_full(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->update([
+                'capacity' => 100,
+                'used_count' => 100,
+            ]);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => (float) $variant->price,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class)
+            ->shouldReceive('getCourierRates')
+            ->never();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Full Slot Customer',
+            'email' => 'full-slot@test.com',
+            'phone' => '08123456784',
+            'shipping_address' => 'Alamat Pickup',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+
+            'shipping_method' => 'Ambil di Tempat',
+
+            'pickup_date' => '2026-10-30',
+            'pickup_time_start' => '09:00',
+            'pickup_time_end' => '11:00',
+
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+
+        $response->assertSessionHasErrors('pickup_date');
+
+        $this->assertDatabaseMissing('transactions', [
+            'shipping_email' => 'full-slot@test.com',
+        ]);
+
+        $this->assertSame(
+            100,
+            (int) FulfillmentSlot::query()
+                ->whereDate('date', '2026-10-30')
+                ->value('used_count')
+        );
+    }
+    public function test_checkout_courier_before_special_batch_saves_earliest_fulfillment_date(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Carbon::setTestNow(
+            Carbon::parse('2026-10-20 10:00:00')
+        );
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => (float) $variant->price,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [[
+                        'courier_code' => 'jnt',
+                        'courier_name' => 'J&T',
+                        'service_code' => 'ez',
+                        'service_name' => 'EZ',
+                        'price' => 8000,
+                        'duration' => '2-3 days',
+                        'service_type' => 'standard',
+                        'shipping_type' => 'parcel',
+                    ]],
+                    'raw' => [],
+                ]);
+        });
+
+        $this->mockDokuSuccess();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Special Courier Customer',
+            'email' => 'special-courier@test.com',
+            'phone' => '08123456784',
+            'shipping_address' => 'Alamat Kurir',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'special-courier@test.com')
+            ->firstOrFail();
+
+        $this->assertSame(
+            '2026-10-30',
+            $transaction->fulfillment_date->toDateString()
+        );
+
+        $this->assertNull($transaction->pickup_date);
+
+        $this->assertSame(
+            0,
+            (int) FulfillmentSlot::query()
+                ->whereDate('date', '2026-10-30')
+                ->value('used_count')
+        );
+
+        $slotId = FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->value('id');
+
+        $this->assertDatabaseHas('fulfillment_holds', [
+            'transaction_id' => $transaction->id,
+            'fulfillment_slot_id' => $slotId,
+            'status' => FulfillmentHold::HELD,
+        ]);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_fulfillment_availability_returns_available_for_open_special_batch_date(): void
+    {
+        FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->update([
+                'capacity' => 100,
+                'used_count' => 0,
+            ]);
+
+        $response = $this->getJson(
+            route('checkout.fulfillment-availability', [
+                'date' => '2026-10-30',
+            ])
+        );
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'available' => true,
+                'date' => '2026-10-30',
+            ]);
+    }
+    public function test_fulfillment_availability_returns_unavailable_when_special_batch_date_is_full(): void
+    {
+        FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->update([
+                'capacity' => 100,
+                'used_count' => 100,
+            ]);
+
+        $response = $this->getJson(
+            route('checkout.fulfillment-availability', [
+                'date' => '2026-10-30',
+            ])
+        );
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'available' => false,
+                'date' => '2026-10-30',
+            ])
+            ->assertJsonPath(
+                'message',
+                'Tanggal pickup tersebut sudah penuh. Silakan pilih tanggal lain.'
+            );
     }
 }

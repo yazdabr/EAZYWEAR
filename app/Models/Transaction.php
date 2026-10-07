@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Transaction extends Model
@@ -48,6 +49,7 @@ class Transaction extends Model
         'shipping_latitude',
         'shipping_longitude',
         'shipping_method',
+        'fulfillment_date',
         'biteship_order_id',
         'biteship_tracking_id',
         'biteship_waybill_id',
@@ -74,6 +76,8 @@ class Transaction extends Model
         'doku_response' => 'array',
         'qris_expired_at' => 'datetime',
         'qris_response' => 'array',
+        'fulfillment_date' => 'date',
+        'pickup_date' => 'date',
     ];
 
     /*
@@ -179,5 +183,9 @@ class Transaction extends Model
             'EXPIRED' => 'Pembayaran Kadaluarsa',
             default => $this->status,
         };
+    }
+    public function fulfillmentHold(): HasOne
+    {
+        return $this->hasOne(FulfillmentHold::class);
     }
 }

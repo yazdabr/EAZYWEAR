@@ -15,6 +15,8 @@ use App\Services\InventoryStockService;
 use App\Services\TransactionPaymentService;
 use App\Services\TransactionCompletionService;
 use App\Mail\OrderShippedMail;
+use App\Services\FulfillmentHoldService;
+use App\Models\FulfillmentHold;
 use App\Services\BiteshipService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -385,10 +387,18 @@ class TransactionController extends Controller
         return view('admin.transactions.print', compact('transaction'));
     }
 
-    public function cancel(Transaction $transaction, InventoryStockService $inventoryStockService)
+    public function cancel(
+        Transaction $transaction,
+        InventoryStockService $inventoryStockService,
+        FulfillmentHoldService $fulfillmentHoldService
+    )
     {
         try {
-            $cancelledTransaction = DB::transaction(function () use ($transaction, $inventoryStockService) {
+            $cancelledTransaction = DB::transaction(function () use (
+                $transaction,
+                $inventoryStockService,
+                $fulfillmentHoldService
+            ) {
                 $lockedTransaction = Transaction::query()->whereKey($transaction->id)->lockForUpdate()->firstOrFail();
 
                 if ($lockedTransaction->status === 'CANCELLED') {
@@ -401,14 +411,41 @@ class TransactionController extends Controller
 
                 if ($lockedTransaction->status === 'PENDING') {
                     $lockedTransaction->update(['status' => 'CANCELLED']);
-                    $lockedTransaction->addStatusHistory('ORDER_CANCELLED', 'Pesanan dibatalkan oleh admin.');
+
+                    if (
+                        $lockedTransaction->fulfillmentHold()
+                            ->where('status', FulfillmentHold::HELD)
+                            ->exists()
+                    ) {
+                        $fulfillmentHoldService->releaseHold($lockedTransaction);
+                    }
+
+                    $lockedTransaction->addStatusHistory(
+                        'ORDER_CANCELLED',
+                        'Pesanan dibatalkan oleh admin.'
+                    );
 
                     return $lockedTransaction->fresh();
                 }
 
                 if ($lockedTransaction->status === 'PAID') {
-                    $inventoryStockService->restoreForTransaction($lockedTransaction, "Stock restored due to cancellation - {$lockedTransaction->invoice_number}");
-                    $lockedTransaction->addStatusHistory('ORDER_CANCELLED', 'Pesanan dibatalkan oleh admin dan stok dikembalikan.');
+                    $inventoryStockService->restoreForTransaction(
+                        $lockedTransaction,
+                        "Stock restored due to cancellation - {$lockedTransaction->invoice_number}"
+                    );
+
+                    if (
+                        $lockedTransaction->fulfillmentHold()
+                            ->where('status', FulfillmentHold::CONVERTED)
+                            ->exists()
+                    ) {
+                        $fulfillmentHoldService->releasePaidAllocation($lockedTransaction);
+                    }
+
+                    $lockedTransaction->addStatusHistory(
+                        'ORDER_CANCELLED',
+                        'Pesanan dibatalkan oleh admin dan stok dikembalikan.'
+                    );
 
                     return $lockedTransaction->fresh();
                 }

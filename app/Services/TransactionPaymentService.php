@@ -7,11 +7,13 @@ use App\Mail\PaymentConfirmedMail;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Models\FulfillmentHold;
 
 class TransactionPaymentService
 {
     public function __construct(
         private readonly InventoryStockService $inventoryStockService,
+        private readonly FulfillmentHoldService $fulfillmentHoldService,
     ) {
     }
 
@@ -118,6 +120,16 @@ class TransactionPaymentService
             'doku_payment_id' => $paymentRequestId ?: $transaction->doku_payment_id,
             'doku_response' => $dokuResponse,
         ]);
+
+        $transaction->refresh();
+
+        if (
+            $transaction->fulfillmentHold()
+                ->where('status', FulfillmentHold::HELD)
+                ->exists()
+        ) {
+            $this->fulfillmentHoldService->convertHoldToAllocation($transaction);
+        }
 
         $transaction->addStatusHistory(
             Transaction::PAYMENT_CONFIRMED,

@@ -4,11 +4,18 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use App\Mail\PaymentExpiredMail;
+use App\Services\FulfillmentHoldService;
+use App\Models\FulfillmentHold;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class TransactionExpiryService
 {
+
+    public function __construct(
+        private readonly FulfillmentHoldService $fulfillmentHoldService,
+    ) {
+    }
     /**
      * Mengubah transaksi PENDING yang sudah melewati
      * batas pembayaran menjadi EXPIRED.
@@ -54,7 +61,15 @@ class TransactionExpiryService
 
 
         if ($expired) {
-            $expiredTransaction = Transaction::find($transaction->id);
+            $expiredTransaction = Transaction::findOrFail($transaction->id);
+
+            if (
+                $expiredTransaction->fulfillmentHold()
+                    ->where('status', FulfillmentHold::HELD)
+                    ->exists()
+            ) {
+                $this->fulfillmentHoldService->releaseHold($expiredTransaction);
+            }
 
             Mail::to($expiredTransaction->shipping_email)
                 ->send(new PaymentExpiredMail($expiredTransaction));

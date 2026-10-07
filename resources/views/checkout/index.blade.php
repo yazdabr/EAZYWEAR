@@ -30,7 +30,24 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('checkout.store') }}" id="checkout-form">
+        <form
+            method="POST"
+            action="{{ route('checkout.store') }}"
+            id="checkout-form"
+            data-shipping-rates-url="{{ route('checkout.shipping-rates') }}"
+            data-fulfillment-availability-url="{{ route('checkout.fulfillment-availability') }}"
+            data-subtotal="{{ (float) $subtotal }}"
+            data-special-batch-start="{{ config('fulfillment.special_batch.start_date') }}"
+            data-special-batch-end="{{ config('fulfillment.special_batch.end_date') }}"
+            data-special-batch-capacity="{{ config('fulfillment.special_batch.daily_capacity') }}"
+            data-pickup-start-time="{{ config('fulfillment.pickup.start_time') }}"
+            data-pickup-end-time="{{ config('fulfillment.pickup.end_time') }}"
+            data-pickup-same-day-cutoff="{{ config('fulfillment.pickup.same_day_cutoff') }}"
+            data-checkout-date="{{ now()->toDateString() }}"
+            data-checkout-time="{{ now()->format('H:i') }}"
+            data-jnt-logo="{{ asset('images/shipping/jnt.png') }}"
+            data-lion-logo="{{ asset('images/shipping/lion-parcel.png') }}"
+        >
             @csrf
             <div class="flex flex-col gap-5 lg:grid lg:grid-cols-3 lg:items-start lg:gap-6">
                 <div class="order-1 space-y-4 lg:order-1 lg:col-span-2">
@@ -122,59 +139,94 @@
 
                         <div id="pickup-section" class="mt-4 hidden">
                             <div class="rounded-xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-3.5 sm:p-4">
+
+                                {{-- Header --}}
                                 <div class="mb-3">
-                                    <p class="text-xs font-semibold text-slate-900 sm:text-sm">
-                                        Jadwal Pengambilan
-                                    </p>
-                                    <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">
-                                        Tentukan tanggal dan waktu untuk mengambil pesanan Anda.
-                                    </p>
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="text-xs font-semibold text-slate-900 sm:text-sm">
+                                                Jadwal Pengambilan
+                                            </p>
+
+                                            <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">
+                                                Tentukan tanggal dan waktu untuk mengambil pesanan Anda. Tersedia 30 Okt 2026–03 Nov 2026
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
 
+                                {{-- Pickup Fields --}}
                                 <div class="grid gap-3 sm:grid-cols-3 sm:gap-4">
+
+                                    {{-- Date --}}
                                     <div>
-                                        <label for="pickup_date" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">
+                                        <label
+                                            for="pickup_date"
+                                            class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm"
+                                        >
                                             Tanggal <span class="text-red-500">*</span>
                                         </label>
+
                                         <input
                                             id="pickup_date"
                                             name="pickup_date"
                                             type="date"
                                             value="{{ old('pickup_date') }}"
+                                            required
                                             class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm"
                                         >
+
+                                        <p
+                                            id="pickup-availability-status"
+                                            class="mt-1.5 hidden text-[10px] leading-4 sm:text-xs"
+                                        ></p>
                                     </div>
 
+                                    {{-- Start Time --}}
                                     <div>
-                                        <label for="pickup_time_start" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">
+                                        <label
+                                            for="pickup_time_start"
+                                            class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm"
+                                        >
                                             Mulai <span class="text-red-500">*</span>
                                         </label>
+
                                         <input
                                             id="pickup_time_start"
                                             name="pickup_time_start"
                                             type="time"
                                             value="{{ old('pickup_time_start') }}"
+                                            required
                                             class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm"
                                         >
                                     </div>
 
+                                    {{-- End Time --}}
                                     <div>
-                                        <label for="pickup_time_end" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">
+                                        <label
+                                            for="pickup_time_end"
+                                            class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm"
+                                        >
                                             Selesai <span class="text-red-500">*</span>
                                         </label>
+
                                         <input
                                             id="pickup_time_end"
                                             name="pickup_time_end"
                                             type="time"
                                             value="{{ old('pickup_time_end') }}"
+                                            required
                                             class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm"
                                         >
                                     </div>
                                 </div>
 
-                                <p id="pickup-validation-error"
-                                class="mt-2 hidden rounded-lg bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600 sm:text-xs">
-                                </p>
+                                {{-- Validation Error --}}
+                                <p
+                                    id="pickup-validation-error"
+                                    class="mt-2 hidden rounded-lg bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600 sm:text-xs"
+                                ></p>
+
                             </div>
                         </div>
 
@@ -371,568 +423,5 @@
 
 @push('scripts')
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const mapElement = document.getElementById('shipping-map');
-        if (!mapElement || typeof L === 'undefined') {
-            return;
-        }
-
-        const latitudeInput = document.getElementById('shipping_latitude');
-        const longitudeInput = document.getElementById('shipping_longitude');
-        const locationButton = document.getElementById('use-my-location');
-
-        if (!latitudeInput || !longitudeInput) {
-            return;
-        }
-
-        const defaultLatitude = -3.3194;
-        const defaultLongitude = 114.5908;
-        const oldLatitude = parseFloat(latitudeInput.value);
-        const oldLongitude = parseFloat(longitudeInput.value);
-        const hasOldLocation = Number.isFinite(oldLatitude) && Number.isFinite(oldLongitude);
-        const initialLatitude = hasOldLocation ? oldLatitude : defaultLatitude;
-        const initialLongitude = hasOldLocation ? oldLongitude : defaultLongitude;
-
-        const map = L.map(mapElement).setView([initialLatitude, initialLongitude], hasOldLocation ? 16 : 12);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-
-        const marker = L.marker([initialLatitude, initialLongitude], {
-            draggable: true
-        }).addTo(map);
-
-        function setLocation(latitude, longitude) {
-            latitudeInput.value = Number(latitude).toFixed(7);
-            longitudeInput.value = Number(longitude).toFixed(7);
-            marker.setLatLng([latitude, longitude]);
-            map.setView([latitude, longitude], 16);
-        }
-
-        marker.on('dragend', function () {
-            const position = marker.getLatLng();
-            setLocation(position.lat, position.lng);
-        });
-
-        if (hasOldLocation) {
-            setLocation(oldLatitude, oldLongitude);
-        }
-
-        if (locationButton) {
-            locationButton.addEventListener('click', function () {
-                if (!navigator.geolocation) {
-                    alert('Browser Anda tidak mendukung lokasi perangkat.');
-                    return;
-                }
-
-                locationButton.disabled = true;
-                locationButton.textContent = 'Mencari lokasi...';
-
-                navigator.geolocation.getCurrentPosition(
-                    function (position) {
-                        setLocation(position.coords.latitude, position.coords.longitude);
-                        locationButton.disabled = false;
-                        locationButton.textContent = 'Gunakan Lokasi Saya';
-                    },
-                    function () {
-                        alert('Lokasi tidak dapat diakses. Pastikan izin lokasi browser telah diberikan.');
-                        locationButton.disabled = false;
-                        locationButton.textContent = 'Gunakan Lokasi Saya';
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
-                    }
-                );
-            });
-        }
-
-        setTimeout(function () {
-            map.invalidateSize();
-        }, 200);
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('checkout-form');
-        const postalInput = document.getElementById('shipping_postal_code');
-        const latitudeInput = document.getElementById('shipping_latitude');
-        const longitudeInput = document.getElementById('shipping_longitude');
-        const ratesSection = document.getElementById('shipping-rates-section');
-        const ratesList = document.getElementById('shipping-rates-list');
-        const ratesStatus = document.getElementById('shipping-rates-status');
-        const ratesError = document.getElementById('shipping-rates-error');
-        const ratesHint = document.getElementById('shipping-rates-hint');
-        const pickupSection = document.getElementById('pickup-section');
-        const pickupDateInput = document.getElementById('pickup_date');
-        const pickupTimeStartInput = document.getElementById('pickup_time_start');
-        const pickupTimeEndInput = document.getElementById('pickup_time_end');
-        const pickupValidationError = document.getElementById('pickup-validation-error');
-        const shippingCost = document.getElementById('shipping-cost');
-        const totalAmount = document.getElementById('total-amount');
-        const totalNote = document.getElementById('total-note');
-        const courierCodeInput = document.getElementById('courier_code');
-        const courierServiceCodeInput = document.getElementById('courier_service_code');
-        const vaBankSection = document.getElementById('va-bank-section');
-        const paymentMethodInputs = form.querySelectorAll(
-            'input[name="payment_method"]'
-        );
-        const vaBankInputs = form.querySelectorAll(
-            'input[name="va_bank"]'
-        );
-
-        if (
-            !form ||
-            !postalInput ||
-            !vaBankSection ||
-            paymentMethodInputs.length === 0 ||
-            vaBankInputs.length === 0 ||
-            !ratesSection ||
-            !ratesList ||
-            !shippingCost ||
-            !totalAmount ||
-            !totalNote ||
-            !courierCodeInput ||
-            !courierServiceCodeInput ||
-            !pickupSection ||
-            !pickupDateInput ||
-            !pickupTimeStartInput ||
-            !pickupTimeEndInput
-        ) {
-            return;
-        }
-
-        const subtotal = {{ json_encode((float) $subtotal) }};
-        let debounceTimer = null;
-        let requestSequence = 0;
-        let selectedRate = null;
-
-        function updatePaymentMethodUI() {
-            const paymentMethod = form.querySelector(
-                'input[name="payment_method"]:checked'
-            )?.value;
-
-            const isVa = paymentMethod === 'VA';
-
-            vaBankSection.classList.toggle('hidden', !isVa);
-
-            vaBankInputs.forEach(function (input) {
-                input.disabled = !isVa;
-            });
-        }
-
-        function formatRupiah(value) {
-            return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
-        }
-
-        function resetShippingSelection() {
-            selectedRate = null;
-            courierCodeInput.value = '';
-            courierServiceCodeInput.value = '';
-            shippingCost.textContent = 'Akan dihitung';
-            shippingCost.className = 'text-[10px] text-gray-400 sm:text-xs';
-            totalAmount.textContent = formatRupiah(subtotal);
-            totalNote.textContent = 'Belum termasuk ongkir';
-        }
-
-        function showRatesError(message) {
-            ratesError.textContent = message;
-            ratesError.classList.remove('hidden');
-            ratesStatus.textContent = '';
-        }
-
-        function hideRatesError() {
-            ratesError.textContent = '';
-            ratesError.classList.add('hidden');
-        }
-
-        function selectRate(rate, labelElement) {
-            hideRatesError();
-
-            selectedRate = rate;
-            courierCodeInput.value = rate.courier_code || '';
-            courierServiceCodeInput.value = rate.service_code || '';
-            shippingCost.textContent = formatRupiah(rate.price);
-            shippingCost.className = 'text-[10px] font-semibold text-[#AE7C18] sm:text-xs';
-            totalAmount.textContent = formatRupiah(subtotal + Number(rate.price || 0));
-            totalNote.textContent = 'Termasuk ongkir';
-
-            ratesList.querySelectorAll('[data-shipping-rate]').forEach(function (element) {
-                element.classList.remove('border-[#AE7C18]', 'bg-[#AE7C18]/5');
-                element.classList.add('border-gray-200');
-            });
-
-            labelElement.classList.remove('border-gray-200');
-            labelElement.classList.add('border-[#AE7C18]', 'bg-[#AE7C18]/5');
-        }
-
-        function updateShippingMethodUI() {
-            const shippingMethod = form.querySelector(
-                'input[name="shipping_method"]:checked'
-            )?.value;
-
-            const isPickup = shippingMethod === 'Ambil di Tempat';
-
-            pickupSection.classList.toggle('hidden', !isPickup);
-
-            if (isPickup) {
-                requestSequence++;
-
-                ratesSection.classList.add('hidden');
-                ratesList.innerHTML = '';
-                hideRatesError();
-                ratesStatus.textContent = '';
-
-                courierCodeInput.value = '';
-                courierServiceCodeInput.value = '';
-                selectedRate = null;
-
-                shippingCost.textContent = 'Rp 0';
-                totalAmount.textContent = formatRupiah(subtotal);
-                totalNote.textContent = 'Pengambilan di tempat';
-                ratesHint.textContent =
-                    'Pesanan akan diambil langsung di lokasi pickup.';
-            } else {
-                shippingCost.textContent = 'Akan dihitung';
-                totalAmount.textContent = formatRupiah(subtotal);
-                totalNote.textContent = 'Belum termasuk ongkir';
-
-                ratesHint.textContent =
-                    'Masukkan kode pos tujuan untuk melihat pilihan layanan pengiriman.';
-
-                if (/^\d{5,10}$/.test(postalInput.value.trim())) {
-                    loadRates();
-                }
-            }
-        }
-
-        function renderRates(rates) {
-            ratesList.innerHTML = '';
-            resetShippingSelection();
-
-            if (!Array.isArray(rates) || rates.length === 0) {
-                ratesSection.classList.remove('hidden');
-                ratesStatus.textContent = '';
-                showRatesError('Belum ada layanan pengiriman yang tersedia untuk alamat tersebut.');
-                ratesHint.textContent = 'Coba periksa kembali kode pos atau titik lokasi penerima.';
-                return;
-            }
-
-            ratesSection.classList.remove('hidden');
-            hideRatesError();
-            ratesStatus.textContent = rates.length + ' layanan tersedia';
-            ratesHint.textContent = 'Pilih salah satu layanan pengiriman yang tersedia.';
-
-            rates.forEach(function (rate) {
-                const label = document.createElement('label');
-                label.setAttribute('data-shipping-rate', 'true');
-                label.className = 'flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-3.5 py-3 transition hover:border-[#AE7C18] hover:bg-[#AE7C18]/5 sm:gap-4 sm:px-4';
-
-                const radio = document.createElement('input');
-                radio.type = 'radio';
-                radio.name = 'shipping_rate_selection';
-                radio.value = (rate.courier_code || '') + ':' + (rate.service_code || '');
-                radio.className = 'h-4 w-4 shrink-0 accent-[#AE7C18]';
-
-                const content = document.createElement('div');
-                content.className = 'min-w-0 flex-1';
-
-                const topRow = document.createElement('div');
-                topRow.className = 'flex items-start justify-between gap-3';
-
-                const serviceWrapper = document.createElement('div');
-                serviceWrapper.className = 'flex min-w-0 items-center gap-3';
-
-                const logoWrapper = document.createElement('div');
-                logoWrapper.className = 'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white';
-
-                const logo = document.createElement('img');
-                logo.className = 'h-full w-full object-contain p-1.5';
-                logo.alt = rate.courier_name || rate.courier_code || 'Kurir';
-
-                const courierLogos = {
-                    jnt: '{{ asset('images/shipping/jnt.png') }}',
-                    lion: '{{ asset('images/shipping/lion-parcel.png') }}'
-                };
-
-                if (courierLogos[rate.courier_code]) {
-                    logo.src = courierLogos[rate.courier_code];
-
-                    logo.onerror = function () {
-                        logoWrapper.innerHTML = '';
-
-                        const fallback = document.createElement('span');
-                        fallback.className = 'text-[10px] font-bold text-gray-500';
-                        fallback.textContent = (rate.courier_name || rate.courier_code || 'Kurir')
-                            .substring(0, 3)
-                            .toUpperCase();
-
-                        logoWrapper.appendChild(fallback);
-                    };
-
-                    logoWrapper.appendChild(logo);
-                } else {
-                    const fallback = document.createElement('span');
-                    fallback.className = 'text-[10px] font-bold text-gray-500';
-                    fallback.textContent = (rate.courier_name || rate.courier_code || 'Kurir')
-                        .substring(0, 3)
-                        .toUpperCase();
-
-                    logoWrapper.appendChild(fallback);
-                }
-
-                const serviceContent = document.createElement('div');
-                serviceContent.className = 'min-w-0';
-
-                const courierName = document.createElement('p');
-                courierName.className = 'text-xs font-semibold text-slate-900 sm:text-sm';
-                courierName.textContent = rate.courier_name || rate.courier_code || 'Kurir';
-
-                const serviceName = document.createElement('p');
-                serviceName.className = 'mt-0.5 text-[10px] font-medium text-gray-500 sm:text-xs';
-                serviceName.textContent = rate.service_name || rate.service_code || 'Layanan';
-
-                serviceContent.appendChild(courierName);
-                serviceContent.appendChild(serviceName);
-
-                serviceWrapper.appendChild(logoWrapper);
-                serviceWrapper.appendChild(serviceContent);
-
-                const price = document.createElement('p');
-                price.className = 'shrink-0 text-xs font-bold text-[#AE7C18] sm:text-sm';
-                price.textContent = formatRupiah(rate.price);
-
-                topRow.appendChild(serviceWrapper);
-                topRow.appendChild(price);
-
-                const bottomRow = document.createElement('div');
-                bottomRow.className = 'mt-1.5 flex flex-wrap gap-x-3 text-[10px] text-gray-400 sm:text-xs';
-
-                if (rate.duration) {
-                    const duration = document.createElement('span');
-                    duration.textContent = 'Estimasi ' + rate.duration;
-                    bottomRow.appendChild(duration);
-                }
-
-                if (rate.service_type) {
-                    const serviceType = document.createElement('span');
-                    serviceType.textContent = rate.service_type;
-                    bottomRow.appendChild(serviceType);
-                }
-
-                content.appendChild(topRow);
-                content.appendChild(bottomRow);
-                label.appendChild(radio);
-                label.appendChild(content);
-
-                radio.addEventListener('change', function () {
-                    if (radio.checked) {
-                        selectRate(rate, label);
-                    }
-                });
-
-                ratesList.appendChild(label);
-            });
-
-            const oldCourierCode = courierCodeInput.value;
-            const oldServiceCode = courierServiceCodeInput.value;
-
-            if (oldCourierCode && oldServiceCode) {
-                const restoredRate = rates.find(function (rate) {
-                    return rate.courier_code === oldCourierCode && rate.service_code === oldServiceCode;
-                });
-
-                if (restoredRate) {
-                    const radios = ratesList.querySelectorAll('input[name="shipping_rate_selection"]');
-
-                    rates.forEach(function (rate, index) {
-                        if (rate.courier_code === oldCourierCode && rate.service_code === oldServiceCode && radios[index]) {
-                            radios[index].checked = true;
-                            selectRate(restoredRate, radios[index].closest('label'));
-                        }
-                    });
-                }
-            }
-        }
-
-        async function loadRates() {
-            const shippingMethod = form.querySelector(
-                'input[name="shipping_method"]:checked'
-            )?.value;
-
-            if (shippingMethod !== 'Kurir') {
-                return;
-            }
-            const postalCode = postalInput.value.trim();
-
-            if (!/^\d{5,10}$/.test(postalCode)) {
-                ratesSection.classList.add('hidden');
-                ratesList.innerHTML = '';
-                hideRatesError();
-                ratesStatus.textContent = '';
-                ratesHint.textContent = 'Masukkan kode pos tujuan untuk melihat pilihan layanan pengiriman.';
-                resetShippingSelection();
-                return;
-            }
-
-            const currentRequest = ++requestSequence;
-            ratesSection.classList.remove('hidden');
-            ratesList.innerHTML = '';
-            hideRatesError();
-            ratesStatus.textContent = 'Menghitung...';
-            ratesHint.textContent = 'Sedang mengambil pilihan layanan pengiriman.';
-            resetShippingSelection();
-
-            try {
-                const response = await fetch('{{ route('checkout.shipping-rates') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')?.value || '',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        shipping_postal_code: postalCode,
-                        shipping_latitude: latitudeInput?.value || null,
-                        shipping_longitude: longitudeInput?.value || null
-                    })
-                });
-
-                const data = await response.json();
-
-                if (currentRequest !== requestSequence) {
-                    return;
-                }
-
-                if (!response.ok || !data.success) {
-                    throw new Error(data.message || 'Gagal mengambil pilihan pengiriman.');
-                }
-
-                renderRates(data.data || []);
-            } catch (error) {
-                if (currentRequest !== requestSequence) {
-                    return;
-                }
-
-                ratesSection.classList.remove('hidden');
-                ratesList.innerHTML = '';
-                resetShippingSelection();
-                ratesStatus.textContent = '';
-
-                showRatesError(error.message || 'Gagal mengambil pilihan pengiriman. Silakan coba lagi.');
-                ratesHint.textContent = 'Periksa kembali kode pos dan alamat tujuan.';
-            }
-        }
-
-        paymentMethodInputs.forEach(function (input) {
-            input.addEventListener('change', function () {
-                updatePaymentMethodUI();
-            });
-        });
-
-        form.querySelectorAll('input[name="shipping_method"]').forEach(function (input) {
-            input.addEventListener('change', function () {
-                updateShippingMethodUI();
-            });
-        });
-
-        postalInput.addEventListener('input', function () {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(loadRates, 700);
-        });
-
-        postalInput.addEventListener('change', function () {
-            clearTimeout(debounceTimer);
-            loadRates();
-        });
-
-        if (latitudeInput) {
-            latitudeInput.addEventListener('change', function () {
-            });
-        }
-
-        if (longitudeInput) {
-            longitudeInput.addEventListener('change', function () {
-            });
-        }
-
-        form.addEventListener('submit', function (event) {
-            const paymentMethod = form.querySelector(
-                'input[name="payment_method"]:checked'
-            )?.value;
-
-            if (!paymentMethod) {
-                event.preventDefault();
-
-                const firstPaymentMethod = form.querySelector(
-                    'input[name="payment_method"]'
-                );
-
-                if (firstPaymentMethod) {
-                    firstPaymentMethod.reportValidity();
-                }
-
-                return;
-            }
-
-            const shippingMethod = form.querySelector(
-                'input[name="shipping_method"]:checked'
-            )?.value;
-
-            if (
-                shippingMethod === 'Kurir' &&
-                (!courierCodeInput.value || !courierServiceCodeInput.value)
-            ) {
-                event.preventDefault();
-
-                ratesSection.classList.remove('hidden');
-
-                showRatesError('Silakan pilih layanan pengiriman terlebih dahulu.');
-                ratesHint.textContent = 'Pilih salah satu layanan pengiriman sebelum membuat pesanan.';
-
-                ratesSection.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-
-                return;
-            }
-
-            if (shippingMethod === 'Ambil di Tempat') {
-                const missingPickupField =
-                    !pickupDateInput.value ||
-                    !pickupTimeStartInput.value ||
-                    !pickupTimeEndInput.value;
-
-                if (missingPickupField) {
-                    event.preventDefault();
-
-                    pickupValidationError.textContent =
-                        'Silakan lengkapi tanggal dan waktu pengambilan terlebih dahulu.';
-
-                    pickupValidationError.classList.remove('hidden');
-
-                    pickupSection.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-
-                    return;
-                }
-
-                pickupValidationError.textContent = '';
-                pickupValidationError.classList.add('hidden');
-
-                courierCodeInput.value = '';
-                courierServiceCodeInput.value = '';
-            }
-        });
-
-        updatePaymentMethodUI();
-        updateShippingMethodUI();
-    });
-</script>
+@vite('resources/js/checkout.js')
 @endpush

@@ -11,6 +11,9 @@ use App\Models\TransactionItem;
 use App\Services\BiteshipService;
 use App\Services\DokuService;
 use App\Services\DokuQrisService;
+use App\Services\FulfillmentDateService;
+use App\Services\FulfillmentHoldService;
+use App\Services\FulfillmentSlotService;
 use App\Services\QrisQrCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -162,6 +165,44 @@ class CheckoutController extends Controller
         }
     }
 
+    public function fulfillmentAvailability(
+        Request $request,
+        FulfillmentSlotService $fulfillmentSlotService
+    ): JsonResponse {
+        $validated = $request->validate([
+            'date' => ['required', 'date_format:Y-m-d'],
+        ]);
+
+        $date = $validated['date'];
+
+        if (! $fulfillmentSlotService->isSpecialBatchDate($date)) {
+            return response()->json([
+                'success' => true,
+                'available' => false,
+                'date' => $date,
+                'message' => 'Tanggal pickup tersebut tidak tersedia untuk periode ini.',
+            ]);
+        }
+
+        try {
+            $fulfillmentSlotService->ensureDateAvailable($date);
+
+            return response()->json([
+                'success' => true,
+                'available' => true,
+                'date' => $date,
+            ]);
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'success' => true,
+                'available' => false,
+                'date' => $date,
+                'message' => $exception->errors()['pickup_date'][0]
+                    ?? 'Tanggal pickup tersebut sudah penuh. Silakan pilih tanggal lain.',
+            ]);
+        }
+    }
+
     public function index(Request $request): View|RedirectResponse
     {
         $cart = collect($request->session()->get('cart', []));
@@ -191,7 +232,10 @@ class CheckoutController extends Controller
         Request $request,
         DokuService $dokuService,
         DokuQrisService $dokuQrisService,
-        BiteshipService $biteshipService
+        BiteshipService $biteshipService,
+        FulfillmentDateService $fulfillmentDateService,
+        FulfillmentSlotService $fulfillmentSlotService,
+        FulfillmentHoldService $fulfillmentHoldService
     ): RedirectResponse
     {
         $validated = $request->validate([
@@ -247,7 +291,10 @@ class CheckoutController extends Controller
                 $cart,
                 $dokuService,
                 $dokuQrisService,
-                $biteshipService
+                $biteshipService,
+                $fulfillmentDateService,
+                $fulfillmentSlotService,
+                $fulfillmentHoldService
             ) {
                 if (
                     $validated['payment_method'] === 'VA'
@@ -420,6 +467,33 @@ class CheckoutController extends Controller
 
                     $shipping = (int) ($selectedRate['price'] ?? 0);
                 }
+                $checkoutAt = now();
+
+                $fulfillmentDate = $fulfillmentDateService->determine(
+                    $validated['shipping_method'],
+                    $checkoutAt,
+                    $validated['pickup_date'] ?? null,
+                );
+
+                if ($validated['shipping_method'] === 'Ambil di Tempat') {
+                    $fulfillmentDateService->validatePickupTime(
+                        $validated['pickup_time_start'],
+                        $validated['pickup_date'],
+                        $checkoutAt,
+                    );
+
+                    $fulfillmentDateService->validatePickupTime(
+                        $validated['pickup_time_end'],
+                        $validated['pickup_date'],
+                        $checkoutAt,
+                    );
+
+                    if ($validated['pickup_time_start'] >= $validated['pickup_time_end']) {
+                        throw ValidationException::withMessages([
+                            'pickup_time_end' => 'Waktu selesai pickup harus setelah waktu mulai pickup.',
+                        ]);
+                    }
+                }
 
                 $discount = 0;
                 $total = $subtotal - $discount + $shipping;
@@ -447,12 +521,32 @@ class CheckoutController extends Controller
                     'shipping_latitude' => $validated['shipping_latitude'] ?? null,
                     'shipping_longitude' => $validated['shipping_longitude'] ?? null,
                     'shipping_method' => $validated['shipping_method'],
+                    'fulfillment_date' => $fulfillmentDate->toDateString(),
                     'courier_code' => $validated['shipping_method'] === 'Kurir' ? $validated['courier_code'] : null,
                     'courier_service_code' => $validated['shipping_method'] === 'Kurir' ? $validated['courier_service_code'] : null,
                     'pickup_date' => $validated['shipping_method'] === 'Ambil di Tempat' ? $validated['pickup_date'] : null,
                     'pickup_time_start' => $validated['shipping_method'] === 'Ambil di Tempat' ? $validated['pickup_time_start'] : null,
                     'pickup_time_end' => $validated['shipping_method'] === 'Ambil di Tempat' ? $validated['pickup_time_end'] : null,
                 ]);
+
+                if ($fulfillmentSlotService->isSpecialBatchDate($fulfillmentDate)) {
+                    if ($validated['shipping_method'] === 'Kurir') {
+                        $hold = $fulfillmentHoldService->allocateEarliestAvailableHold(
+                            $transaction
+                        );
+
+                        $fulfillmentDate = $hold->fulfillmentSlot->date;
+
+                        $transaction->update([
+                            'fulfillment_date' => $fulfillmentDate->toDateString(),
+                        ]);
+                    } else {
+                        $fulfillmentHoldService->createHold(
+                            $transaction,
+                            $fulfillmentDate->toDateString()
+                        );
+                    }
+                }
 
                 foreach ($items as $item) {
                     TransactionItem::create([

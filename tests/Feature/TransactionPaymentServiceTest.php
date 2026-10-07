@@ -8,6 +8,8 @@ use App\Models\StockMovement;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Services\TransactionPaymentService;
+use App\Models\FulfillmentHold;
+use App\Models\FulfillmentSlot;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -111,6 +113,92 @@ class TransactionPaymentServiceTest extends TestCase
                 ->where('transaction_id', $transaction->id)
                 ->where('type', 'OUT')
                 ->exists()
+        );
+    }
+
+    public function test_successful_payment_converts_fulfillment_hold_to_paid_allocation(): void
+    {
+        $transaction = $this->createPaymentTransaction();
+
+        $slot = FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->firstOrFail();
+
+        $hold = FulfillmentHold::query()->create([
+            'transaction_id' => $transaction->id,
+            'fulfillment_slot_id' => $slot->id,
+            'status' => FulfillmentHold::HELD,
+        ]);
+
+        $this->assertSame(0, (int) $slot->fresh()->used_count);
+
+        app(TransactionPaymentService::class)->processSuccessfulPayment(
+            $transaction,
+            $this->successfulDokuResponse(),
+            'Fulfillment allocation test'
+        );
+
+        $transaction->refresh();
+        $hold->refresh();
+        $slot->refresh();
+
+        $this->assertSame('PAID', $transaction->status);
+        $this->assertSame(
+            FulfillmentHold::CONVERTED,
+            $hold->status
+        );
+        $this->assertSame(
+            1,
+            (int) $slot->used_count
+        );
+        $this->assertNull($hold->released_at);
+    }
+
+    public function test_repeated_successful_payment_does_not_double_allocate_fulfillment_slot(): void
+    {
+        $transaction = $this->createPaymentTransaction();
+
+        $slot = FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->firstOrFail();
+
+        FulfillmentHold::query()->create([
+            'transaction_id' => $transaction->id,
+            'fulfillment_slot_id' => $slot->id,
+            'status' => FulfillmentHold::HELD,
+        ]);
+
+        $service = app(TransactionPaymentService::class);
+
+        $response = $this->successfulDokuResponse(
+            paymentRequestId: 'PAYMENT-FULFILLMENT-IDEMPOTENT'
+        );
+
+        $service->processSuccessfulPayment(
+            $transaction,
+            $response,
+            'Fulfillment idempotency - first'
+        );
+
+        $slot->refresh();
+
+        $this->assertSame(1, (int) $slot->used_count);
+
+        $service->processSuccessfulPayment(
+            $transaction->refresh(),
+            $response,
+            'Fulfillment idempotency - second'
+        );
+
+        $slot->refresh();
+
+        $this->assertSame(1, (int) $slot->used_count);
+
+        $this->assertSame(
+            FulfillmentHold::CONVERTED,
+            FulfillmentHold::query()
+                ->where('transaction_id', $transaction->id)
+                ->value('status')
         );
     }
 

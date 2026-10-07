@@ -63,6 +63,9 @@ class TransactionController extends Controller
         if ($request->filled('month')) $query->whereMonth('transaction_date', $request->integer('month'));
         if ($request->filled('year')) $query->whereYear('transaction_date', $request->integer('year'));
         if ($request->filled('customer_id')) $query->where('customer_id', $request->integer('customer_id'));
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
 
         $transactions = $query->latest('transaction_date')->paginate(10)->withQueryString();
 

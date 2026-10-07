@@ -98,8 +98,52 @@
 
             <div class="md:col-span-2 lg:col-span-8">
                 <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-end sm:justify-end sm:gap-4">
+
+                    {{-- STATUS --}}
                     <div class="col-span-1 w-full sm:w-52">
-                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">Bulan</label>
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
+                            Status
+                        </label>
+
+                        <select
+                            name="status"
+                            onchange="this.form.submit()"
+                            class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
+                        >
+                            <option value="">Semua Status</option>
+
+                            <option value="PENDING" @selected(request('status') === 'PENDING')>
+                                Pending
+                            </option>
+
+                            <option value="PAID" @selected(request('status') === 'PAID')>
+                                Paid
+                            </option>
+
+                            <option value="ORDER_PROCESSING" @selected(request('status') === 'ORDER_PROCESSING')>
+                                Order Processing
+                            </option>
+
+                            <option value="ORDER_SHIPPED" @selected(request('status') === 'ORDER_SHIPPED')>
+                                Order Shipped
+                            </option>
+
+                            <option value="ORDER_COMPLETED" @selected(request('status') === 'ORDER_COMPLETED')>
+                                Order Completed
+                            </option>
+
+                            <option value="CANCELLED" @selected(request('status') === 'CANCELLED')>
+                                Cancelled
+                            </option>
+                        </select>
+                    </div>
+
+                    {{-- BULAN --}}
+                    <div class="col-span-1 w-full sm:w-52">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
+                            Bulan
+                        </label>
+
                         <select
                             name="month"
                             onchange="this.form.submit()"
@@ -121,14 +165,19 @@
                         </select>
                     </div>
 
+                    {{-- TAHUN --}}
                     <div class="col-span-1 w-full sm:w-40">
-                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">Tahun</label>
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
+                            Tahun
+                        </label>
+
                         <select
                             name="year"
                             onchange="this.form.submit()"
                             class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
                         >
                             <option value="">Semua Tahun</option>
+
                             @for($year = now()->year; $year >= now()->year - 5; $year--)
                                 <option value="{{ $year }}" @selected(request('year') == $year)>
                                     {{ $year }}
@@ -137,6 +186,7 @@
                         </select>
                     </div>
 
+                    {{-- RESET --}}
                     <div class="col-span-2 flex items-center justify-end sm:col-span-1">
                         <a
                             href="{{ route('admin.transactions') }}"
@@ -144,9 +194,12 @@
                             class="inline-flex h-[42px] w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98] sm:h-[50px] sm:w-[50px]"
                         >
                             <x-heroicon-o-arrow-path class="h-4 w-4"/>
-                            <span class="ml-2 text-xs font-medium sm:hidden">Reset Filter</span>
+                            <span class="ml-2 text-xs font-medium sm:hidden">
+                                Reset Filter
+                            </span>
                         </a>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -385,6 +438,7 @@ function transactionCustomerSearch() {
 
             const month = form.querySelector('[name="month"]')?.value;
             const year = form.querySelector('[name="year"]')?.value;
+            const status = form.querySelector('[name="status"]')?.value;
 
             if (month) {
                 url.searchParams.set('month', month);
@@ -392,6 +446,10 @@ function transactionCustomerSearch() {
 
             if (year) {
                 url.searchParams.set('year', year);
+            }
+
+            if (status) {
+                url.searchParams.set('status', status);
             }
 
             window.location.href = url.toString();

@@ -43,7 +43,23 @@
                             <p class="mt-0.5 text-xs leading-normal text-gray-500 sm:mt-1 sm:text-sm sm:leading-6">{{ $transaction->shipping_district }}, {{$transaction->shipping_city }}</p>
                             <p class="text-xs leading-normal text-gray-500 sm:text-sm sm:leading-6">{{ $transaction->shipping_province }} · {{$transaction->shipping_postal_code }}</p>
                             @if($transaction->shipping_method)
-                                <p class="mt-1.5 text-xs font-bold text-slate-900 sm:mt-3 sm:text-sm">Pengiriman: {{ $transaction->shipping_method }}</p>
+                                <div class="mt-1.5 sm:mt-3">
+                                    <p class="text-xs font-bold text-slate-900 sm:text-sm">
+                                        Pengiriman: {{ $transaction->shipping_method }}
+                                    </p>
+
+                                    @if(
+                                        $transaction->shipping_method === 'Ambil di Tempat' &&
+                                        $transaction->pickup_date &&
+                                        $transaction->pickup_time_start &&
+                                        $transaction->pickup_time_end
+                                    )
+                                        <p class="mt-0.5 text-xs font-semibold text-slate-600 sm:text-sm">
+                                            {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }},
+                                            {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
+                                        </p>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                     </div>

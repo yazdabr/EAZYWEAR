@@ -299,16 +299,36 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
 
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
-                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Telepon</p>
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        Telepon
+                                    </p>
                                     <p class="mt-0.5 font-medium text-slate-800">
                                         {{ $transaction->shipping_phone ?? '-' }}
                                     </p>
                                 </div>
+
                                 <div>
-                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Metode Layanan</p>
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        Pengiriman
+                                    </p>
+
                                     <p class="mt-0.5 font-medium text-slate-800">
                                         {{ $transaction->shipping_method ?? '-' }}
                                     </p>
+
+                                    @if(
+                                        $transaction->shipping_method === 'Ambil di Tempat' &&
+                                        $transaction->pickup_date &&
+                                        $transaction->pickup_time_start &&
+                                        $transaction->pickup_time_end
+                                    )
+                                        <p class="mt-0.5 text-xs font-semibold text-slate-600">
+                                            {{ \Carbon\Carbon::parse($transaction->pickup_date)
+                                                ->locale('id')
+                                                ->translatedFormat('l, d F Y') }},
+                                            {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
 

@@ -49,79 +49,79 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
         </div>
     </div>
 
-<div class="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
-    <!-- Header -->
-    <div class="mb-5 flex items-center gap-2.5 sm:gap-3 border-b border-slate-100 pb-4">
-        <div class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 text-[#AE7C18]">
-            <x-heroicon-o-user class="h-5 w-5" />
-        </div>
-        <div>
-            <h2 class="font-bold text-slate-900 text-sm sm:text-base">Informasi Pelanggan</h2>
-            <p class="text-xs text-slate-500">Rincian kontak dan pengiriman pesanan</p>
-        </div>
-    </div>
-
-    <!-- Grid Content (2 Kolom Seimbang) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm">
-        
-        <!-- Seksi 1: Kontak Pelanggan -->
-        <div class="space-y-4 rounded-xl bg-slate-50/70 p-4 border border-slate-100">
-            <span class="text-[12px] font-bold uppercase tracking-wider text-[#AE7C18]">Kontak Pelanggan</span>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-                <div class="sm:col-span-2">
-                    <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Nama</p>
-                    <p class="mt-0.5 font-semibold text-slate-900">{{ $transaction->shipping_name ?? $transaction->customer?->name }}</p>
-                </div>
-                <div>
-                    <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Telepon</p>
-                    <p class="mt-0.5 font-semibold text-slate-900">{{ $transaction->shipping_phone ?? '-' }}</p>
-                </div>
-                <div>
-                    <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Email</p>
-                    <p class="mt-0.5 font-semibold text-slate-900 break-all">{{ $transaction->shipping_email ?? '-' }}</p>
-                </div>
+    <div class="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+        <!-- Header -->
+        <div class="mb-5 flex items-center gap-2.5 sm:gap-3 border-b border-slate-100 pb-4">
+            <div class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 text-[#AE7C18]">
+                <x-heroicon-o-user class="h-5 w-5" />
+            </div>
+            <div>
+                <h2 class="font-bold text-slate-900 text-sm sm:text-base">Informasi Pelanggan</h2>
+                <p class="text-xs text-slate-500">Rincian kontak dan pengiriman pesanan</p>
             </div>
         </div>
 
-        <!-- Seksi 2: Metode & Alamat Pengiriman -->
-        <div class="space-y-4 rounded-xl bg-slate-50/70 p-4 border border-slate-100 flex flex-col justify-between">
-            <div class="space-y-3.5">
-                <span class="text-[12px] font-bold uppercase tracking-wider text-[#AE7C18]">Detail Logistik</span>
+        <!-- Grid Content (2 Kolom Seimbang) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm">
+            
+            <!-- Seksi 1: Kontak Pelanggan -->
+            <div class="space-y-4 rounded-xl bg-slate-50/70 p-4 border border-slate-100">
+                <span class="text-[12px] font-bold uppercase tracking-wider text-[#AE7C18]">Kontak Pelanggan</span>
                 
-                <!-- Grid Berdampingan untuk Metode & Jadwal -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                    <div class="sm:col-span-2">
+                        <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Nama</p>
+                        <p class="mt-0.5 font-semibold text-slate-900">{{ $transaction->shipping_name ?? $transaction->customer?->name }}</p>
+                    </div>
                     <div>
-                        <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Metode Pengiriman</p>
-                        <p class="mt-0.5 font-semibold text-slate-900">{{ $transaction->shipping_method ?? '-' }}</p>
+                        <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Telepon</p>
+                        <p class="mt-0.5 font-semibold text-slate-900">{{ $transaction->shipping_phone ?? '-' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Email</p>
+                        <p class="mt-0.5 font-semibold text-slate-900 break-all">{{ $transaction->shipping_email ?? '-' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seksi 2: Metode & Alamat Pengiriman -->
+            <div class="space-y-4 rounded-xl bg-slate-50/70 p-4 border border-slate-100 flex flex-col justify-between">
+                <div class="space-y-3.5">
+                    <span class="text-[12px] font-bold uppercase tracking-wider text-[#AE7C18]">Detail Logistik</span>
+                    
+                    <!-- Grid Berdampingan untuk Metode & Jadwal -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                        <div>
+                            <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Metode Pengiriman</p>
+                            <p class="mt-0.5 font-semibold text-slate-900">{{ $transaction->shipping_method ?? '-' }}</p>
+                        </div>
+
+                        @if(
+                            $transaction->shipping_method === 'Ambil di Tempat' &&
+                            $transaction->pickup_date &&
+                            $transaction->pickup_time_start &&
+                            $transaction->pickup_time_end
+                        )
+                            <div>
+                                <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Jadwal Pengambilan</p>
+                                <p class="mt-0.5 font-semibold text-slate-900">
+                                    {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}<span class="font-normal text-slate-500">, {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA</span>
+                                </p>
+                            </div>
+                        @endif
                     </div>
 
-                    @if(
-                        $transaction->shipping_method === 'Ambil di Tempat' &&
-                        $transaction->pickup_date &&
-                        $transaction->pickup_time_start &&
-                        $transaction->pickup_time_end
-                    )
-                        <div>
-                            <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Jadwal Pengambilan</p>
-                            <p class="mt-0.5 font-semibold text-slate-900">
-                                {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}, {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
-                            </p>
-                        </div>
-                    @endif
-                </div>
-
-                <!-- Alamat Pengiriman -->
-                <div class="pt-1">
-                    <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Alamat Pengiriman</p>
-                    <p class="mt-0.5 leading-snug font-semibold text-slate-900">{{ $transaction->shipping_address }}</p>
-                    <p class="mt-0.5 text-xs text-slate-500">{{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}</p>
+                    <!-- Alamat Pengiriman -->
+                    <div class="pt-1">
+                        <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Alamat Pengiriman</p>
+                        <p class="mt-0.5 leading-snug font-semibold text-slate-900">{{ $transaction->shipping_address }}</p>
+                        <p class="mt-0.5 text-xs text-slate-500">{{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
+        </div>
     </div>
-</div>
 
     <div class="grid gap-4 sm:gap-6 lg:grid-cols-3">
         <div class="lg:col-span-2">

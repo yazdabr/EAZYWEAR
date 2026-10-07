@@ -20,6 +20,18 @@ class FulfillmentHoldServiceTest extends TestCase
     {
         parent::setUp();
 
+        FulfillmentHold::query()->delete();
+
+        FulfillmentSlot::query()
+            ->whereBetween('date', [
+                '2026-10-30',
+                '2026-11-03',
+            ])
+            ->update([
+                'used_count' => 0,
+                'capacity' => 100,
+            ]);
+
         $this->service = app(FulfillmentHoldService::class);
     }
 

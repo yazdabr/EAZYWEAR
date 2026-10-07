@@ -1708,6 +1708,18 @@ class CheckoutControllerTest extends TestCase
             Carbon::parse('2026-10-20 10:00:00')
         );
 
+        FulfillmentSlot::query()
+            ->whereBetween('date', [
+                '2026-10-30',
+                '2026-11-03',
+            ])
+            ->update([
+                'capacity' => 100,
+                'used_count' => 0,
+            ]);
+
+        FulfillmentHold::query()->delete();
+
         Inventory::query()
             ->where('product_variant_id', $variant->id)
             ->update([

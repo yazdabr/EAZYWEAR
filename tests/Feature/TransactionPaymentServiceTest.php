@@ -18,6 +18,23 @@ class TransactionPaymentServiceTest extends TestCase
 {
     use DatabaseTransactions;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        FulfillmentHold::query()->delete();
+
+        FulfillmentSlot::query()
+            ->whereBetween('date', [
+                '2026-10-30',
+                '2026-11-03',
+            ])
+            ->update([
+                'used_count' => 0,
+                'capacity' => 100,
+            ]);
+    }
+
     private function createPaymentTransaction(
         int $quantity = 1,
         int $price = 100000

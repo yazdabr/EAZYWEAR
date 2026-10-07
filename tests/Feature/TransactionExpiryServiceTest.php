@@ -17,6 +17,23 @@ class TransactionExpiryServiceTest extends TestCase
 {
     use DatabaseTransactions;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        FulfillmentHold::query()->delete();
+
+        FulfillmentSlot::query()
+            ->whereBetween('date', [
+                '2026-10-30',
+                '2026-11-03',
+            ])
+            ->update([
+                'used_count' => 0,
+                'capacity' => 100,
+            ]);
+    }
+
     public function test_pending_transaction_expires_after_va_deadline(): void
     {
         $transaction = Transaction::factory()->create([

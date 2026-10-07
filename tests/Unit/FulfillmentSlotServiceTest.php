@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Models\FulfillmentSlot;
 use App\Services\FulfillmentSlotService;
+use App\Models\FulfillmentHold;
+use App\Models\Transaction;
 use Tests\TestCase;
 
 class FulfillmentSlotServiceTest extends TestCase
@@ -82,12 +84,15 @@ class FulfillmentSlotServiceTest extends TestCase
             'capacity' => 100,
         ]);
 
-        $transaction = \App\Models\Transaction::query()->firstOrFail();
+        $transaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'fulfillment_date' => '2026-10-30',
+        ]);
 
-        \App\Models\FulfillmentHold::query()->create([
+        FulfillmentHold::query()->create([
             'transaction_id' => $transaction->id,
             'fulfillment_slot_id' => $slot->id,
-            'status' => \App\Models\FulfillmentHold::HELD,
+            'status' => FulfillmentHold::HELD,
         ]);
 
         $availableDates = $this->service->getAvailableDates();

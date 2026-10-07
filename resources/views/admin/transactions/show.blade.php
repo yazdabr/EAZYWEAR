@@ -458,6 +458,75 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
     @endif
 </div>
 
+<!-- Confirmation Modal -->
+<div
+    id="action-confirmation-modal"
+    class="fixed inset-0 z-[100] hidden"
+    aria-labelledby="confirmation-modal-title"
+    role="dialog"
+    aria-modal="true"
+>
+    <!-- Backdrop -->
+    <div
+        id="confirmation-modal-backdrop"
+        class="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px] transition-opacity"
+    ></div>
+
+    <!-- Modal -->
+    <div class="relative flex min-h-full items-center justify-center p-4 sm:p-6">
+        <div
+            id="confirmation-modal-panel"
+            class="w-full max-w-md scale-95 rounded-2xl sm:rounded-3xl bg-white p-5 sm:p-6 shadow-2xl transition-transform"
+        >
+            <!-- Icon -->
+            <div class="flex items-start gap-3 sm:gap-4">
+                <div
+                    id="confirmation-modal-icon"
+                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 text-[#AE7C18]"
+                >
+                    <x-heroicon-o-exclamation-triangle class="h-5 w-5" />
+                </div>
+
+                <div class="min-w-0 flex-1">
+                    <h3
+                        id="confirmation-modal-title"
+                        class="text-sm sm:text-base font-bold text-slate-900"
+                    >
+                        Konfirmasi
+                    </h3>
+
+                    <p
+                        id="confirmation-modal-message"
+                        class="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-500"
+                    >
+                        Apakah Anda yakin ingin melanjutkan?
+                    </p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-5 sm:mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5">
+                <button
+                    type="button"
+                    id="confirmation-modal-cancel"
+                    class="inline-flex w-full sm:w-auto items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200"
+                >
+                    Batal
+                </button>
+
+                <button
+                    type="button"
+                    id="confirmation-modal-confirm"
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30"
+                >
+                    <x-heroicon-o-check class="h-4 w-4" />
+                    Ya, Lanjutkan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function checkDokuPayment(id) {
     const btn = document.getElementById('check-doku-btn');
@@ -507,8 +576,100 @@ function processOrder(id) {
     });
 }
 
+let confirmationAction = null;
+
+function openConfirmationModal({
+    title,
+    message,
+    confirmText = 'Ya, Lanjutkan',
+    action
+}) {
+    const modal = document.getElementById('action-confirmation-modal');
+    const panel = document.getElementById('confirmation-modal-panel');
+    const titleEl = document.getElementById('confirmation-modal-title');
+    const messageEl = document.getElementById('confirmation-modal-message');
+    const confirmBtn = document.getElementById('confirmation-modal-confirm');
+
+    if (!modal || !panel || !titleEl || !messageEl || !confirmBtn) return;
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    confirmBtn.innerHTML = `
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+            />
+        </svg>
+        ${confirmText}
+    `;
+
+    confirmationAction = action;
+
+    modal.classList.remove('hidden');
+
+    requestAnimationFrame(() => {
+        panel.classList.remove('scale-95');
+        panel.classList.add('scale-100');
+    });
+}
+
+function closeConfirmationModal() {
+    const modal = document.getElementById('action-confirmation-modal');
+    const panel = document.getElementById('confirmation-modal-panel');
+
+    if (!modal || !panel) return;
+
+    panel.classList.remove('scale-100');
+    panel.classList.add('scale-95');
+
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        confirmationAction = null;
+    }, 150);
+}
+
+document.getElementById('confirmation-modal-cancel')?.addEventListener('click', () => {
+    closeConfirmationModal();
+});
+
+document.getElementById('confirmation-modal-backdrop')?.addEventListener('click', () => {
+    closeConfirmationModal();
+});
+
+document.getElementById('confirmation-modal-confirm')?.addEventListener('click', () => {
+    if (typeof confirmationAction === 'function') {
+        const action = confirmationAction;
+
+        confirmationAction = null;
+        closeConfirmationModal();
+
+        action();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById('action-confirmation-modal');
+
+        if (modal && !modal.classList.contains('hidden')) {
+            closeConfirmationModal();
+        }
+    }
+});
 
 function shipOrder(id) {
+    openConfirmationModal({
+        title: 'Konfirmasi Proses Pengiriman',
+        message: 'Pastikan barang sudah siap untuk diantar. Setelah dikonfirmasi, sistem akan membuat pengiriman melalui Biteship dan nomor resi akan dibuat secara otomatis.',
+        confirmText: 'Ya, Proses Pengiriman',
+        action: () => executeShipOrder(id)
+    });
+}
+
+function executeShipOrder(id) {
     const btn = document.getElementById('ship-order-btn');
 
     if (!btn) return;
@@ -516,8 +677,12 @@ function shipOrder(id) {
     btn.disabled = true;
     btn.innerHTML = `
         <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 3v3m6.364.636l-2.121 2.121M21 12h-3m-.636 6.364l-2.121-2.121M12 21v-3m-6.364-.636l2.121-2.121M3 12h3m.636-6.364l2.121 2.121"/>
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 3v3m6.364.636l-2.121 2.121M21 12h-3m-.636 6.364l-2.121-2.121M12 21v-3m-6.364-.636l2.121-2.121M3 12h3m.636-6.364l2.121 2.121"
+            />
         </svg>
         Membuat Pengiriman...
     `;
@@ -575,8 +740,12 @@ function shipOrder(id) {
 
         btn.innerHTML = `
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 7l2-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 7l2-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
+                />
             </svg>
             Proses Pengiriman
         `;
@@ -585,11 +754,32 @@ function shipOrder(id) {
 
 
 function completeOrder(id) {
+    openConfirmationModal({
+        title: 'Konfirmasi Pesanan Diambil',
+        message: 'Pastikan pesanan sudah siap dan benar-benar sudah diambil oleh pelanggan. Jika dilanjutkan, pesanan akan langsung ditandai sebagai selesai.',
+        confirmText: 'Ya, Pesanan Sudah Diambil',
+        action: () => executeCompleteOrder(id)
+    });
+}
+
+function executeCompleteOrder(id) {
     const btn = document.getElementById('complete-order-btn');
+
     if (!btn) return;
 
     btn.disabled = true;
-    btn.innerText = 'Menyelesaikan...';
+
+    btn.innerHTML = `
+        <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 3v3m6.364.636l-2.121 2.121M21 12h-3m-.636 6.364l-2.121-2.121M12 21v-3m-6.364-.636l2.121-2.121M3 12h3m.636-6.364l2.121 2.121"
+            />
+        </svg>
+        Menyelesaikan...
+    `;
 
     fetch(`/admin/transactions/${id}/complete`, {
         method: 'PATCH',
@@ -600,19 +790,40 @@ function completeOrder(id) {
     })
     .then(async res => {
         const data = await res.json();
-        if (!res.ok) throw data;
+
+        if (!res.ok) {
+            throw data;
+        }
+
         return data;
     })
     .then(data => {
         alert(data.message);
-        if (data.success) location.reload();
+
+        if (data.success) {
+            location.reload();
+        }
     })
     .catch(error => {
-        alert(error?.message ?? 'Terjadi kesalahan saat menyelesaikan pesanan.');
+        alert(
+            error?.message ??
+            'Terjadi kesalahan saat menyelesaikan pesanan.'
+        );
     })
     .finally(() => {
         btn.disabled = false;
-        btn.innerText = 'Selesaikan Pesanan';
+
+        btn.innerHTML = `
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                />
+            </svg>
+            Konfirmasi Pesanan Diambil
+        `;
     });
 }
 </script>

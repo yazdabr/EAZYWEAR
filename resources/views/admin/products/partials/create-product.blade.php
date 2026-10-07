@@ -4,7 +4,20 @@
     errors:{},
     mode:'create',
     form:{
-        id:'',name:'',category_id:'',product_code:'{{ $nextProductCode }}',description:'',material:'',price:'',stock:'',status:'Aktif',image:'',gallery:[],size_ids:[],
+        id:'',
+        name:'',
+        category_id:'',
+        product_code:'{{ $nextProductCode }}',
+        description:'',
+        material:'',
+        customization_enabled:false,
+        customization_price:0,
+        price:'',
+        stock:'',
+        status:'Aktif',
+        image:'',
+        gallery:[],
+        size_ids:[],
         variants:{
             @foreach($sizes as $size)'{{ $size->id }}':{price:'',stock:'',weight:''},@endforeach
         }
@@ -52,6 +65,17 @@
         if(!this.form.name?.trim())this.errors.name='Nama produk wajib diisi.';
         if(!this.form.category_id)this.errors.category_id='Kategori wajib dipilih.';
         if(!this.form.product_code?.trim())this.errors.product_code='Kode produk wajib diisi.';
+        if(
+            this.form.customization_enabled &&
+            (
+                this.form.customization_price === '' ||
+                this.form.customization_price === null ||
+                this.form.customization_price === undefined ||
+                Number(this.form.customization_price) < 0
+            )
+        ){
+            this.errors.customization_price='Harga custom wajib diisi.';
+        }
         if(!this.form.size_ids||this.form.size_ids.length===0)this.errors.size_ids='Minimal satu ukuran produk harus dipilih.';
         this.syncVariants();
         this.form.size_ids.forEach(id=>{
@@ -71,6 +95,9 @@
                 this.errors['variants.'+id+'.weight']='Berat harus berupa angka bulat minimal 1 gram.';
             }
         });
+        if(!this.form.customization_enabled){
+            this.form.customization_price=0;
+        }
         if(Object.keys(this.errors).length>0){
             window.dispatchEvent(new CustomEvent('toast',{detail:{type:'error',title:'Data Belum Lengkap',message:'Mohon lengkapi data produk terlebih dahulu.'}}));
             return false;
@@ -113,6 +140,8 @@
             product_code:'{{ $nextProductCode }}',
             description:'',
             material:'',
+            customization_enabled:false,
+            customization_price:0,
             price:'',
             stock:'',
             status:'Aktif',
@@ -138,6 +167,10 @@
             product_code:product?.product_code||'',
             description:product?.description||'',
             material:product?.material||'',
+            customization_enabled:product?.customization_enabled===true||product?.customization_enabled===1||product?.customization_enabled==='1',
+            customization_price:product?.customization_price!==''&&product?.customization_price!==null&&product?.customization_price!==undefined
+                ? parseInt(product.customization_price)
+                : 0,
             price:product?.price!==''&&product?.price!==null&&product?.price!==undefined?parseInt(product.price):'',
             stock:product?.stock!==''&&product?.stock!==null&&product?.stock!==undefined?parseInt(product.stock):'',
             status:product?.status===true||product?.status===1||product?.status==='1'?'Aktif':'Tidak Aktif',
@@ -219,6 +252,122 @@
                     <x-admin.input x-model="form.material" name="material" placeholder="mis. Dry-Fit Premium" />
                     <p class="mt-1.5 text-xs text-slate-400 sm:mt-2">Material atau bahan utama produk.</p>
                     @error('material')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                </div>
+            </div>
+            {{-- CUSTOM NAMA & NOMOR --}}
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                <div class="mb-4 flex items-start gap-3 sm:mb-6 sm:gap-4">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 sm:h-11 sm:w-11">
+                        <x-heroicon-o-pencil-square class="h-5 w-5 text-amber-600" />
+                    </div>
+
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-900">
+                            Custom Nama & Nomor
+                        </h3>
+                        <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">
+                            Tentukan apakah pelanggan dapat menambahkan nama dan nomor pada produk ini.
+                        </p>
+                    </div>
+                </div>
+
+                {{-- TOGGLE --}}
+                <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="pr-4">
+                        <p class="text-sm font-semibold text-slate-800">
+                            Izinkan Customisasi
+                        </p>
+                        <p class="mt-1 text-xs leading-5 text-slate-500">
+                            Pelanggan dapat mengisi nama atau nomor jika fitur ini diaktifkan.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        role="switch"
+                        :aria-checked="form.customization_enabled"
+                        @click="form.customization_enabled = !form.customization_enabled"
+                        :class="form.customization_enabled ? 'bg-[#AE7C18]' : 'bg-slate-300'"
+                        class="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+                    >
+                        <span
+                            :class="form.customization_enabled ? 'translate-x-6' : 'translate-x-1'"
+                            class="inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                        ></span>
+                    </button>
+                </div>
+
+                {{-- HIDDEN VALUE --}}
+                <input
+                    type="hidden"
+                    name="customization_enabled"
+                    :value="form.customization_enabled ? 1 : 0"
+                >
+
+                {{-- HARGA CUSTOM --}}
+                <div
+                    x-show="form.customization_enabled"
+                    x-cloak
+                    x-transition
+                    class="mt-4"
+                >
+                    <label
+                        for="customization-price"
+                        class="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                        Harga Customisasi
+                    </label>
+
+                    <div class="relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-semibold text-slate-500">
+                            Rp
+                        </span>
+
+                        <input
+                            id="customization-price"
+                            type="number"
+                            min="0"
+                            step="1"
+                            name="customization_price"
+                            x-model="form.customization_price"
+                            placeholder="0"
+                            :class="errors.customization_price
+                                ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10'
+                                : 'border-slate-200 focus:border-[#AE7C18] focus:ring-[#AE7C18]/20'"
+                            class="h-[50px] w-full rounded-xl border bg-white pl-12 pr-4 text-sm font-medium text-slate-700 transition-all duration-200 focus:outline-none focus:ring-2"
+                        >
+                    </div>
+
+                    <template x-if="errors.customization_price">
+                        <p
+                            class="mt-1.5 text-xs text-red-500"
+                            x-text="errors.customization_price"
+                        ></p>
+                    </template>
+
+                    <p class="mt-1.5 text-xs text-slate-400">
+                        Biaya ini dikenakan satu kali jika pelanggan mengisi nama dan/atau nomor.
+                    </p>
+                </div>
+
+                {{-- INFO OFF --}}
+                <div
+                    x-show="!form.customization_enabled"
+                    x-cloak
+                    class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                >
+                    <div class="flex gap-3">
+                        <x-heroicon-o-information-circle class="mt-0.5 h-5 w-5 shrink-0 text-slate-400" />
+
+                        <div>
+                            <p class="text-xs font-semibold text-slate-600">
+                                Customisasi tidak tersedia
+                            </p>
+                            <p class="mt-1 text-xs leading-5 text-slate-500">
+                                Pelanggan tidak akan melihat pilihan nama dan nomor pada produk ini.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">

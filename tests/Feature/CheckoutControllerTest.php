@@ -85,8 +85,8 @@ class CheckoutControllerTest extends TestCase
                 'variant_id' => $variant->id,
                 'price' => $databasePrice,
                 'qty' => 1,
-                'custom_name' => 'MESSI',
-                'custom_number' => '10',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
         ]);
 
@@ -194,8 +194,8 @@ class CheckoutControllerTest extends TestCase
                 'variant_id' => $variant->id,
                 'price' => $variant->price,
                 'qty' => 1,
-                'custom_name' => 'MESSI',
-                'custom_number' => '10',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
         ]);
 
@@ -285,8 +285,8 @@ class CheckoutControllerTest extends TestCase
                 'variant_id' => $variant->id,
                 'price' => 1,
                 'qty' => 1,
-                'custom_name' => 'MESSI',
-                'custom_number' => '10',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
         ]);
 
@@ -375,8 +375,8 @@ class CheckoutControllerTest extends TestCase
                 'variant_id' => $variant->id,
                 'price' => $variant->price,
                 'qty' => $quantity,
-                'custom_name' => 'MESSI',
-                'custom_number' => '10',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
         ]);
 
@@ -482,15 +482,15 @@ class CheckoutControllerTest extends TestCase
                 'variant_id' => $variants[0]->id,
                 'price' => $variants[0]->price,
                 'qty' => $quantityA,
-                'custom_name' => 'MESSI',
-                'custom_number' => '10',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
             [
                 'variant_id' => $variants[1]->id,
                 'price' => $variants[1]->price,
                 'qty' => $quantityB,
-                'custom_name' => 'RONALDO',
-                'custom_number' => '7',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
         ]);
 
@@ -598,8 +598,8 @@ class CheckoutControllerTest extends TestCase
                 'variant_id' => $variant->id,
                 'price' => $variant->price,
                 'qty' => 11,
-                'custom_name' => 'MESSI',
-                'custom_number' => '10',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
         ]);
 
@@ -643,8 +643,8 @@ class CheckoutControllerTest extends TestCase
                 'variant_id' => $variant->id,
                 'price' => $variant->price,
                 'qty' => 1,
-                'custom_name' => 'TEST',
-                'custom_number' => '10',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
         ]);
 
@@ -709,8 +709,8 @@ class CheckoutControllerTest extends TestCase
                     'variant_id' => $variant->id,
                     'price' => $variant->price,
                     'qty' => 1,
-                    'custom_name' => 'BANKTEST',
-                    'custom_number' => '10',
+                    'custom_name' => '',
+                    'custom_number' => '',
                 ],
             ]);
 
@@ -791,8 +791,8 @@ class CheckoutControllerTest extends TestCase
                     'variant_id' => $variant->id,
                     'price' => (float) $variant->price,
                     'qty' => 1,
-                    'custom_name' => 'BANKTEST',
-                    'custom_number' => '10',
+                    'custom_name' => '',
+                    'custom_number' => '',
                 ],
             ]);
 
@@ -846,8 +846,8 @@ class CheckoutControllerTest extends TestCase
                 'variant_id' => $variant->id,
                 'price' => $databasePrice,
                 'qty' => 1,
-                'custom_name' => 'QRIS',
-                'custom_number' => '11',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
         ]);
 
@@ -945,8 +945,8 @@ class CheckoutControllerTest extends TestCase
                 'variant_id' => $variant->id,
                 'price' => $variant->price,
                 'qty' => 1,
-                'custom_name' => 'QRISFAIL',
-                'custom_number' => '10',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
         ]);
 
@@ -1031,8 +1031,8 @@ class CheckoutControllerTest extends TestCase
                 'variant_id' => $variant->id,
                 'price' => $variant->price,
                 'qty' => 1,
-                'custom_name' => 'QRIS',
-                'custom_number' => '99',
+                'custom_name' => '',
+                'custom_number' => '',
             ],
         ]);
 
@@ -1084,6 +1084,419 @@ class CheckoutControllerTest extends TestCase
         $response->assertRedirect(route('checkout.success'));
     }
 
+    private function customizationVariant(
+        bool $enabled,
+        int $price
+    ): ProductVariant {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->product->update([
+            'customization_enabled' => $enabled,
+            'customization_price' => $price,
+        ]);
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()->updateOrCreate(
+            [
+                'product_variant_id' => $variant->id,
+            ],
+            [
+                'stock' => 10,
+            ]
+        );
+
+        return $variant->fresh(['product']);
+    }
+
+    private function customizationCheckout(
+        ProductVariant $variant,
+        string $email,
+        string $customName = '',
+        string $customNumber = ''
+    ) {
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => $customName,
+                'custom_number' => $customNumber,
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [[
+                        'courier_code' => 'jnt',
+                        'courier_name' => 'J&T',
+                        'service_code' => 'ez',
+                        'service_name' => 'EZ',
+                        'price' => 8000,
+                        'duration' => '2-3 days',
+                        'service_type' => 'standard',
+                        'shipping_type' => 'parcel',
+                    ]],
+                    'raw' => [],
+                ]);
+        });
+
+        $this->mockDokuSuccess();
+
+        return $this->post(route('checkout.store'), [
+            'name' => 'Customization Test',
+            'email' => $email,
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+    }
+
+    public function test_checkout_custom_off_without_input_has_no_fee(): void
+    {
+        $variant = $this->customizationVariant(false, 125000);
+
+        $response = $this->customizationCheckout(
+            $variant,
+            'custom-off-empty@test.com'
+        );
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->latest('id')
+            ->firstOrFail();
+
+        $item = $transaction->items()->firstOrFail();
+
+        $this->assertSame(
+            (float) $variant->price,
+            (float) $item->price
+        );
+
+        $this->assertSame(
+            (float) $variant->price,
+            (float) $transaction->subtotal
+        );
+    }
+
+    public function test_checkout_custom_on_without_input_has_no_fee(): void
+    {
+        $variant = $this->customizationVariant(true, 125000);
+
+        $response = $this->customizationCheckout(
+            $variant,
+            'custom-on-empty@test.com'
+        );
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->latest('id')
+            ->firstOrFail();
+
+        $item = $transaction->items()->firstOrFail();
+
+        $this->assertSame(
+            (float) $variant->price,
+            (float) $item->price
+        );
+
+        $this->assertSame(
+            (float) $variant->price,
+            (float) $transaction->subtotal
+        );
+    }
+
+    public function test_checkout_custom_on_with_name_uses_database_fee_once(): void
+    {
+        $variant = $this->customizationVariant(true, 125000);
+
+        $response = $this->customizationCheckout(
+            $variant,
+            'custom-on-name@test.com',
+            'MESSI'
+        );
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->latest('id')
+            ->firstOrFail();
+
+        $item = $transaction->items()->firstOrFail();
+
+        $expectedPrice = (float) $variant->price + 125000;
+
+        $this->assertSame(
+            $expectedPrice,
+            (float) $item->price
+        );
+
+        $this->assertSame(
+            $expectedPrice,
+            (float) $transaction->subtotal
+        );
+    }
+
+    public function test_checkout_custom_on_with_name_and_number_uses_database_fee_only_once(): void
+    {
+        $variant = $this->customizationVariant(true, 125000);
+
+        $response = $this->customizationCheckout(
+            $variant,
+            'custom-on-both@test.com',
+            'MESSI',
+            '10'
+        );
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->latest('id')
+            ->firstOrFail();
+
+        $item = $transaction->items()->firstOrFail();
+
+        $expectedPrice = (float) $variant->price + 125000;
+
+        $this->assertSame(
+            $expectedPrice,
+            (float) $item->price
+        );
+
+        $this->assertSame(
+            $expectedPrice,
+            (float) $transaction->subtotal
+        );
+    }
+
+    public function test_checkout_custom_off_with_input_is_rejected(): void
+    {
+        $variant = $this->customizationVariant(false, 125000);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => 'MESSI',
+                'custom_number' => '10',
+            ],
+        ]);
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Customization Test',
+            'email' => 'custom-off-input@test.com',
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+
+        $response
+            ->assertRedirect()
+            ->assertSessionHasErrors(['cart' => 'Produk ini tidak menyediakan custom nama atau nomor.']);
+
+    }
+
+
+    public function test_shipping_rates_custom_off_without_input_uses_database_variant_price(): void
+    {
+        $variant = $this->customizationVariant(false, 125000);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) use ($variant) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->withArgs(function (array $payload) use ($variant) {
+                    return $payload['items'][0]['value'] === (int) round((float) $variant->price);
+                })
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [],
+                ]);
+        });
+
+        $response = $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJson(['success' => true]);
+    }
+
+    public function test_shipping_rates_custom_on_without_input_has_no_fee(): void
+    {
+        $variant = $this->customizationVariant(true, 125000);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) use ($variant) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->withArgs(function (array $payload) use ($variant) {
+                    return $payload['items'][0]['value'] === (int) round((float) $variant->price);
+                })
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [],
+                ]);
+        });
+
+        $response = $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJson(['success' => true]);
+    }
+
+    public function test_shipping_rates_custom_on_with_name_uses_database_fee_once(): void
+    {
+        $variant = $this->customizationVariant(true, 125000);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => 'MESSI',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) use ($variant) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->withArgs(function (array $payload) use ($variant) {
+                    $expectedValue = (int) round((float) $variant->price + 125000);
+
+                    return $payload['items'][0]['value'] === $expectedValue;
+                })
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [],
+                ]);
+        });
+
+        $response = $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJson(['success' => true]);
+    }
+
+    public function test_shipping_rates_custom_on_with_name_and_number_uses_database_fee_only_once(): void
+    {
+        $variant = $this->customizationVariant(true, 125000);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => 'MESSI',
+                'custom_number' => '10',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) use ($variant) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->withArgs(function (array $payload) use ($variant) {
+                    $expectedValue = (int) round((float) $variant->price + 125000);
+
+                    return $payload['items'][0]['value'] === $expectedValue;
+                })
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [],
+                ]);
+        });
+
+        $response = $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJson(['success' => true]);
+    }
+
+    public function test_shipping_rates_custom_off_with_input_is_rejected(): void
+    {
+        $variant = $this->customizationVariant(false, 125000);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => 'MESSI',
+                'custom_number' => '10',
+            ],
+        ]);
+
+        $biteship = $this->mock(BiteshipService::class);
+        $biteship->shouldNotReceive('getCourierRates');
+
+        $response = $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Produk ini tidak menyediakan custom nama atau nomor.',
+            ]);
+    }
     public function test_checkout_rejects_empty_cart(): void
     {
         Session::put('cart', []);

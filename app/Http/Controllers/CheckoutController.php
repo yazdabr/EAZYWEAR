@@ -42,31 +42,91 @@ class CheckoutController extends Controller
         try {
             $items = [];
 
-            foreach ($cart as $cartItem) {
-                $variantId = (int) ($cartItem['variant_id'] ?? 0);
-                $qty = (int) ($cartItem['qty'] ?? 0);
+                foreach ($cart as $cartItem) {
+                    $variantId = (int) ($cartItem['variant_id'] ?? 0);
+                    $qty = (int) ($cartItem['qty'] ?? 0);
 
-                if ($variantId <= 0 || $qty <= 0) {
-                    return response()->json(['success' => false, 'message' => 'Data keranjang tidak valid.'], 422);
+                    if ($variantId <= 0 || $qty <= 0) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Data keranjang tidak valid.',
+                        ], 422);
+                    }
+
+                    $customName = trim((string) ($cartItem['custom_name'] ?? ''));
+                    $customNumber = trim((string) ($cartItem['custom_number'] ?? ''));
+
+                    if ($customName !== '') {
+                        if (mb_strlen($customName) > 20) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Nama jersey maksimal 20 karakter.',
+                            ], 422);
+                        }
+
+                        if (! preg_match('/^[\pL\s]+$/u', $customName)) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
+                            ], 422);
+                        }
+                    }
+
+                    if ($customNumber !== '') {
+                        if (! preg_match('/^[0-9]{1,2}$/', $customNumber)) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Nomor punggung hanya boleh berisi 1-2 angka.',
+                            ], 422);
+                        }
+                    }
+
+                    $variant = ProductVariant::query()
+                        ->with('product')
+                        ->find($variantId);
+
+                    if (! $variant || ! $variant->product || ! $variant->product->status) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Salah satu produk di keranjang sudah tidak tersedia.',
+                        ], 422);
+                    }
+
+                    if (
+                        $variant->weight === null
+                        || (float) $variant->weight <= 0
+                    ) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Berat produk {$variant->product->name} belum tersedia. Ongkir belum dapat dihitung.",
+                        ], 422);
+                    }
+
+                    $hasCustomization = $customName !== '' || $customNumber !== '';
+                    $customizationEnabled = (bool) $variant->product->customization_enabled;
+
+                    if (! $customizationEnabled && $hasCustomization) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Produk ini tidak menyediakan custom nama atau nomor.',
+                        ], 422);
+                    }
+
+                    $customizationFee = (
+                        $customizationEnabled && $hasCustomization
+                    )
+                        ? (int) $variant->product->customization_price
+                        : 0;
+
+                    $itemValue = (float) $variant->price + $customizationFee;
+
+                    $items[] = [
+                        'name' => $variant->product->name,
+                        'value' => (int) round($itemValue),
+                        'quantity' => $qty,
+                        'weight' => (int) round((float) $variant->weight),
+                    ];
                 }
-
-                $variant = ProductVariant::query()->with('product')->find($variantId);
-
-                if (! $variant || ! $variant->product || ! $variant->product->status) {
-                    return response()->json(['success' => false, 'message' => 'Salah satu produk di keranjang sudah tidak tersedia.'], 422);
-                }
-
-                if ($variant->weight === null || (float) $variant->weight <= 0) {
-                    return response()->json(['success' => false, 'message' => "Berat produk {$variant->product->name} belum tersedia. Ongkir belum dapat dihitung."], 422);
-                }
-
-                $items[] = [
-                    'name' => $variant->product->name,
-                    'value' => (int) round((float) $variant->price),
-                    'quantity' => $qty,
-                    'weight' => (int) round((float) $variant->weight),
-                ];
-            }
 
             $result = $biteshipService->getCourierRates([
                 'destination_postal_code' => $validated['shipping_postal_code'],
@@ -225,52 +285,91 @@ class CheckoutController extends Controller
                     $customNumber = trim((string) ($cartItem['custom_number'] ?? ''));
 
                     if ($variantId <= 0 || $qty <= 0) {
-                        throw ValidationException::withMessages(['cart' => 'Data keranjang tidak valid.']);
+                        throw ValidationException::withMessages([
+                            'cart' => 'Data keranjang tidak valid.',
+                        ]);
                     }
 
-                    if ($customName === '') {
-                        throw ValidationException::withMessages(['cart' => 'Nama jersey belum diisi untuk salah satu produk.']);
+                    /*
+                    * Custom nama dan nomor bersifat opsional.
+                    * Tetapi jika diisi, formatnya tetap harus valid.
+                    */
+                    if ($customName !== '') {
+                        if (mb_strlen($customName) > 20) {
+                            throw ValidationException::withMessages([
+                                'cart' => 'Nama jersey maksimal 20 karakter.',
+                            ]);
+                        }
+
+                        if (! preg_match('/^[\pL\s]+$/u', $customName)) {
+                            throw ValidationException::withMessages([
+                                'cart' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
+                            ]);
+                        }
                     }
 
-                    if (mb_strlen($customName) > 20) {
-                        throw ValidationException::withMessages(['cart' => 'Nama jersey maksimal 20 karakter.']);
+                    if ($customNumber !== '') {
+                        if (! preg_match('/^[0-9]{1,2}$/', $customNumber)) {
+                            throw ValidationException::withMessages([
+                                'cart' => 'Nomor punggung hanya boleh berisi 1-2 angka.',
+                            ]);
+                        }
                     }
 
-                    if (! preg_match('/^[\pL\s]+$/u', $customName)) {
-                        throw ValidationException::withMessages(['cart' => 'Nama jersey hanya boleh berisi huruf dan spasi.']);
-                    }
-
-                    if ($customNumber === '') {
-                        throw ValidationException::withMessages(['cart' => 'Nomor punggung belum diisi untuk salah satu produk.']);
-                    }
-
-                    if (! preg_match('/^[0-9]{1,2}$/', $customNumber)) {
-                        throw ValidationException::withMessages(['cart' => 'Nomor punggung hanya boleh berisi 1-2 angka.']);
-                    }
-
-                    $variant = ProductVariant::with(['product', 'size', 'color'])->lockForUpdate()->find($variantId);
+                    $variant = ProductVariant::with([
+                        'product',
+                        'size',
+                        'color',
+                    ])->lockForUpdate()->find($variantId);
 
                     if (! $variant) {
-                        throw ValidationException::withMessages(['cart' => 'Salah satu produk sudah tidak tersedia.']);
+                        throw ValidationException::withMessages([
+                            'cart' => 'Salah satu produk sudah tidak tersedia.',
+                        ]);
                     }
 
                     if (! $variant->product || ! $variant->product->status) {
-                        throw ValidationException::withMessages(['cart' => "Produk {$variant->product?->name} sudah tidak aktif."]);
+                        throw ValidationException::withMessages([
+                            'cart' => "Produk {$variant->product?->name} sudah tidak aktif.",
+                        ]);
                     }
 
-                    $inventory = Inventory::query()->where('product_variant_id', $variant->id)->lockForUpdate()->first();
+                    $inventory = Inventory::query()
+                        ->where('product_variant_id', $variant->id)
+                        ->lockForUpdate()
+                        ->first();
 
                     if (! $inventory) {
-                        throw ValidationException::withMessages(['cart' => "Stok untuk {$variant->sku} tidak ditemukan."]);
+                        throw ValidationException::withMessages([
+                            'cart' => "Stok untuk {$variant->sku} tidak ditemukan.",
+                        ]);
                     }
 
                     $stock = (int) $inventory->stock;
 
                     if ($stock < $qty) {
-                        throw ValidationException::withMessages(['cart' => "Stok {$variant->product->name} tidak mencukupi. Stok tersedia: {$stock}."]);
+                        throw ValidationException::withMessages([
+                            'cart' => "Stok {$variant->product->name} tidak mencukupi. Stok tersedia: {$stock}.",
+                        ]);
                     }
 
-                    $price = (float) $variant->price;
+                    $hasCustomization = $customName !== '' || $customNumber !== '';
+                    $customizationEnabled = (bool) $variant->product->customization_enabled;
+
+                    if (! $customizationEnabled && $hasCustomization) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Produk ini tidak menyediakan custom nama atau nomor.',
+                        ]);
+                    }
+
+                    $customizationFee = (
+                        $customizationEnabled && $hasCustomization
+                    )
+                        ? (int) $variant->product->customization_price
+                        : 0;
+
+                    $price = (float) $variant->price + $customizationFee;
+
                     $itemSubtotal = $price * $qty;
                     $subtotal += $itemSubtotal;
 

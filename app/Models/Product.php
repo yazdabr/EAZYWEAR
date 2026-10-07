@@ -19,9 +19,14 @@ class Product extends Model
         'description',
         'material',
         'status',
+        'customization_enabled',
+        'customization_price',
     ];
+
     protected $casts = [
         'status' => 'boolean',
+        'customization_enabled' => 'boolean',
+        'customization_price' => 'integer',
     ];
     public function category(): BelongsTo
     {

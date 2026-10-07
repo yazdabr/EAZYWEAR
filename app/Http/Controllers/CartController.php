@@ -24,27 +24,17 @@ class CartController extends Controller
         $validated = $request->validate([
             'variant_id' => ['required', 'integer', 'exists:product_variants,id'],
             'qty' => ['required', 'integer', 'min:1'],
-            'custom_name' => ['required', 'string', 'max:20', 'regex:/^[\pL\s]+$/u'],
-            'custom_number' => ['required', 'string', 'max:2', 'regex:/^[0-9]{1,2}$/'],
+            'custom_name' => ['nullable', 'string', 'max:20', 'regex:/^[\pL\s]+$/u'],
+            'custom_number' => ['nullable', 'string', 'max:2', 'regex:/^[0-9]{1,2}$/'],
         ], [
-            'custom_name.required' => 'Nama jersey wajib diisi.',
             'custom_name.max' => 'Nama jersey maksimal 20 karakter.',
             'custom_name.regex' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
-            'custom_number.required' => 'Nomor punggung wajib diisi.',
             'custom_number.max' => 'Nomor punggung maksimal 2 digit.',
             'custom_number.regex' => 'Nomor punggung hanya boleh berisi angka.',
         ]);
 
-        $customName = trim($validated['custom_name']);
-        $customNumber = trim($validated['custom_number']);
-
-        if ($customName === '') {
-            return back()->with('error', 'Nama jersey wajib diisi.');
-        }
-
-        if ($customNumber === '') {
-            return back()->with('error', 'Nomor punggung wajib diisi.');
-        }
+        $customName = trim((string) ($validated['custom_name'] ?? ''));
+        $customNumber = trim((string) ($validated['custom_number'] ?? ''));
 
         $variant = ProductVariant::with([
             'product',
@@ -63,8 +53,10 @@ class CartController extends Controller
         }
 
         $cart = $request->session()->get('cart', []);
-        $customName = trim($validated['custom_name']);
-        $cartKey = $variant->id . '-' . sha1(mb_strtolower($customName) . '|' . $customNumber);
+
+        $cartKey = $variant->id . '-' . sha1(
+            mb_strtolower($customName) . '|' . $customNumber
+        );
 
         $currentQty = $cart[$cartKey]['qty'] ?? 0;
         $newQty = $currentQty + (int) $validated['qty'];
@@ -75,6 +67,30 @@ class CartController extends Controller
                 'Jumlah pembelian melebihi stok yang tersedia.'
             );
         }
+
+        /*
+        * Harga custom:
+        * - customization harus diizinkan oleh product
+        * - fee hanya dikenakan jika nama ATAU nomor diisi
+        * - fee diambil dari konfigurasi product di database
+        */
+        $hasCustomization = $customName !== '' || $customNumber !== '';
+        $customizationEnabled = (bool) $variant->product->customization_enabled;
+
+        if (!$customizationEnabled && $hasCustomization) {
+            return back()->with(
+                'error',
+                'Produk ini tidak menyediakan custom nama atau nomor.'
+            );
+        }
+
+        $customizationFee = (
+            $customizationEnabled && $hasCustomization
+        )
+            ? (int) $variant->product->customization_price
+            : 0;
+
+        $price = (float) $variant->price + $customizationFee;
 
         $thumbnail = $variant->product->images
             ->where('is_thumbnail', true)
@@ -95,8 +111,11 @@ class CartController extends Controller
             'color_id' => $variant->color_id,
             'color_name' => $variant->color?->name ?? null,
             'sku' => $variant->sku,
-            'price' => (float) $variant->price,
-            'qty' => $validated['qty'],
+
+            // Harga sudah termasuk customization fee.
+            'price' => $price,
+
+            'qty' => $newQty,
             'stock' => $stock,
             'image' => $image,
             'custom_name' => $customName,

@@ -141,7 +141,26 @@
                             selectedPrice: {{ $product->available_sizes[0]['price'] ?? 0 }},
                             selectedStock: {{ $product->available_sizes[0]['stock'] ?? 0 }},
                             customName: '',
-                            customNumber: ''
+                            customNumber: '',
+
+                            customizationEnabled: @js((bool) $product->customization_enabled),
+                            customizationPrice: @js((int) $product->customization_price),
+
+                            get hasCustomization() {
+                                return this.customName.trim() !== '' || this.customNumber.trim() !== '';
+                            },
+
+                            get customizationFee() {
+                                if (!this.customizationEnabled || !this.hasCustomization) {
+                                    return 0;
+                                }
+
+                                return Number(this.customizationPrice) || 0;
+                            },
+
+                            get finalPrice() {
+                                return Number(this.selectedPrice) + this.customizationFee;
+                            }
                         }"
                     >
                         <div class="mb-2 flex items-center justify-between sm:mb-3">
@@ -174,82 +193,165 @@
                         </div>
 
                         {{-- *JERSEY CUSTOMIZATION* --}}
-                        <div class="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-4">
-                            {{-- *JERSEY NAME* --}}
-                            <div>
-                                <div class="mb-2 flex items-end justify-between">
-                                    <div>
-                                        <label for="custom_name" class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm">
-                                            Name on Jersey
-                                        </label>
-                                        <p class="text-[10px] text-gray-400 sm:text-xs">
-                                            Enter the name to be printed
-                                        </p>
+                        <div
+                            x-show="customizationEnabled"
+                            x-cloak
+                            class="mt-5 sm:mt-6"
+                        >
+                            {{-- *CUSTOMIZATION NOTICE* --}}
+                            <div class="mb-4 rounded-2xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-3.5 sm:p-4">
+                                <div class="flex items-start gap-2.5">
+                                    <div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#AE7C18]/10 text-[#AE7C18]">
+                                        <x-heroicon-o-information-circle class="h-4 w-4"/>
                                     </div>
-                                    <span class="text-[10px] tabular-nums text-gray-400 sm:text-xs">
-                                        <span x-text="customName.length"></span>/20
-                                    </span>
+
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-bold text-slate-900 sm:text-sm">
+                                            Custom Nama & Nomor
+                                        </p>
+
+                                        <p class="mt-1 text-[10px] leading-relaxed text-slate-600 sm:text-xs">
+                                            Opsional. Isi nama atau nomor untuk custom jersey.
+                                        </p>
+
+                                        <div class="mt-2 space-y-1 text-[10px] font-medium sm:text-xs">
+                                            <p class="text-slate-600">
+                                                Biaya custom:
+                                                <span
+                                                    class="font-bold text-[#AE7C18]"
+                                                    x-text="'+ Rp ' + Number(customizationPrice).toLocaleString('id-ID')"
+                                                ></span>
+                                            </p>
+
+                                            <p class="text-[10px] leading-relaxed text-slate-500 sm:text-xs">
+                                                Biaya hanya dikenakan jika nama atau nomor diisi.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <input
-                                    id="custom_name"
-                                    type="text"
-                                    name="custom_name"
-                                    x-model="customName"
-                                    form="add-to-cart-form"
-                                    maxlength="20"
-                                    autocomplete="off"
-                                    placeholder="e.g. BARITO PUTERA"
-                                    pattern="[A-Za-zÀ-ÿ\s]+"
-                                    title="Jersey name may only contain letters and spaces."
-                                    required
-                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold uppercase tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base"
-                                >
-                                <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">
-                                    Letters and spaces only
-                                </p>
                             </div>
 
-                            {{-- *BACK NUMBER* --}}
-                            <div>
-                                <div class="mb-2">
-                                    <label for="custom_number" class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm">
-                                        Back Number
-                                    </label>
-                                    <p class="text-[10px] text-gray-400 sm:text-xs">
-                                        Enter the number to be printed
+                            {{-- *CUSTOMIZATION INPUTS* --}}
+                            <div class="grid grid-cols-2 gap-3 sm:gap-4">
+
+                                {{-- *JERSEY NAME* --}}
+                                <div>
+                                    <div class="mb-2 flex items-end justify-between">
+                                        <div>
+                                            <label
+                                                for="custom_name"
+                                                class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm"
+                                            >
+                                                Name on Jersey
+                                            </label>
+
+                                            <p class="text-[10px] text-gray-400 sm:text-xs">
+                                                Optional
+                                            </p>
+                                        </div>
+
+                                        <span class="text-[10px] tabular-nums text-gray-400 sm:text-xs">
+                                            <span x-text="customName.length"></span>/20
+                                        </span>
+                                    </div>
+
+                                    <input
+                                        id="custom_name"
+                                        type="text"
+                                        name="custom_name"
+                                        x-model="customName"
+                                        form="add-to-cart-form"
+                                        maxlength="20"
+                                        autocomplete="off"
+                                        placeholder="e.g. BARITO PUTERA"
+                                        pattern="[A-Za-zÀ-ÿ\s]+"
+                                        title="Jersey name may only contain letters and spaces."
+                                        class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold uppercase tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base"
+                                    >
+
+                                    <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">
+                                        Optional · Letters and spaces only
                                     </p>
                                 </div>
-                                <input
-                                    id="custom_number"
-                                    type="text"
-                                    name="custom_number"
-                                    x-model="customNumber"
-                                    form="add-to-cart-form"
-                                    maxlength="2"
-                                    inputmode="numeric"
-                                    autocomplete="off"
-                                    placeholder="e.g. 10"
-                                    pattern="[0-9]{1,2}"
-                                    title="Back number may only contain 1-2 digits."
-                                    required
-                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base"
-                                >
-                                <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">
-                                    Numbers only · Maximum 2 digits
-                                </p>
+
+                                {{-- *BACK NUMBER* --}}
+                                <div>
+                                    <div class="mb-2">
+                                        <label
+                                            for="custom_number"
+                                            class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm"
+                                        >
+                                            Back Number
+                                        </label>
+
+                                        <p class="text-[10px] text-gray-400 sm:text-xs">
+                                            Optional
+                                        </p>
+                                    </div>
+
+                                    <input
+                                        id="custom_number"
+                                        type="text"
+                                        name="custom_number"
+                                        x-model="customNumber"
+                                        form="add-to-cart-form"
+                                        maxlength="2"
+                                        inputmode="numeric"
+                                        autocomplete="off"
+                                        placeholder="e.g. 10"
+                                        pattern="[0-9]{1,2}"
+                                        title="Back number may only contain 1-2 digits."
+                                        class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base"
+                                    >
+
+                                    <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">
+                                        Optional · Numbers only · Maximum 2 digits
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
-                        {{-- SELECTED PRICE --}}
-                        <div class="mt-3 sm:mt-4">
-                            <p class="text-xs text-gray-500 sm:text-sm">
-                                Selected price
-                            </p>
-                            <p
-                                class="text-xl font-bold text-[#AE7C18] sm:text-2xl"
+                    {{-- SELECTED PRICE --}}
+                    <div class="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 sm:mt-4 sm:p-4">
+
+                        <div class="flex items-center justify-between gap-3 text-xs sm:text-sm">
+                            <span class="text-gray-500">
+                                Jersey Price
+                            </span>
+
+                            <span
+                                class="font-semibold text-slate-800"
                                 x-text="'Rp ' + Number(selectedPrice).toLocaleString('id-ID')"
-                            ></p>
+                            ></span>
                         </div>
+
+                        <div
+                            x-show="customizationFee > 0"
+                            x-transition
+                            class="mt-2 flex items-center justify-between gap-3 border-t border-slate-200 pt-2 text-xs sm:text-sm"
+                        >
+                            <span class="text-gray-500">
+                                Custom Nama / Nomor
+                            </span>
+
+                            <span
+                                class="font-semibold text-[#AE7C18]"
+                                x-text="'+ Rp ' + Number(customizationFee).toLocaleString('id-ID')"
+                            ></span>
+                        </div>
+
+                        <div class="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
+                            <span class="text-sm font-bold text-slate-900 sm:text-base">
+                                Selected Price
+                            </span>
+
+                            <span
+                                class="text-xl font-extrabold text-[#AE7C18] sm:text-2xl"
+                                x-text="'Rp ' + Number(finalPrice).toLocaleString('id-ID')"
+                            ></span>
+                        </div>
+
+                    </div>
 
                         <form
                             id="add-to-cart-form"

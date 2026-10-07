@@ -147,6 +147,8 @@ class ProductController extends Controller
                 'description' => ['nullable', 'string'],
                 'material' => ['nullable', 'string', 'max:100'],
                 'status' => ['required', 'boolean'],
+                'customization_enabled' => ['required', 'boolean'],
+                'customization_price' => ['nullable', 'integer', 'min:0'],
                 'image' => ['nullable', 'array', 'max:10'],
                 'image.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
                 'size_ids' => ['required', 'array', 'min:1'],
@@ -193,6 +195,13 @@ class ProductController extends Controller
             throw $e;
         }
 
+        $customizationEnabled = (bool) $validated['customization_enabled'];
+
+        $validated['customization_enabled'] = $customizationEnabled;
+        $validated['customization_price'] = $customizationEnabled
+            ? (int) ($validated['customization_price'] ?? 0)
+            : 0;
+
         try {
             $result = DB::transaction(function () use ($request, $validated) {
                 $product = Product::create([
@@ -203,9 +212,13 @@ class ProductController extends Controller
                     'description' => $validated['description'] ?? null,
                     'material' => $validated['material'] ?? null,
                     'status' => $validated['status'],
+                    'customization_enabled' => $validated['customization_enabled'],
+                    'customization_price' => $validated['customization_price'],
                 ]);
-
-                $sizeIds = collect($validated['size_ids'])->map(fn ($id) => (int) $id)->unique()->values();
+                $sizeIds = collect($validated['size_ids'])
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->values();
                 $variantsData = $validated['variants'] ?? [];
 
                 $color = Color::query()->first();
@@ -311,6 +324,8 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'material' => ['nullable', 'string', 'max:100'],
             'status' => ['required', 'boolean'],
+            'customization_enabled' => ['required', 'boolean'],
+            'customization_price' => ['nullable', 'integer', 'min:0'],
             'image' => ['nullable', 'array', 'max:10'],
             'image.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'existing_images' => ['nullable', 'array', 'max:10'],
@@ -348,6 +363,13 @@ class ProductController extends Controller
             'variants.*.stock.min' => 'Stok ukuran tidak boleh kurang dari 0.',
         ]);
 
+        $customizationEnabled = (bool) $validated['customization_enabled'];
+
+        $validated['customization_enabled'] = $customizationEnabled;
+        $validated['customization_price'] = $customizationEnabled
+            ? (int) ($validated['customization_price'] ?? 0)
+            : 0;
+
         DB::transaction(function () use ($request, $validated, $product) {
             $product->update([
                 'product_code' => $validated['product_code'],
@@ -357,6 +379,8 @@ class ProductController extends Controller
                 'description' => $validated['description'] ?? null,
                 'material' => $validated['material'] ?? null,
                 'status' => $validated['status'],
+                'customization_enabled' => $validated['customization_enabled'],
+                'customization_price' => $validated['customization_price'],
             ]);
 
             $sizeIds = collect($validated['size_ids'])->map(fn ($id) => (int) $id)->unique()->values();

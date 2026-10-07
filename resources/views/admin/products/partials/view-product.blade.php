@@ -10,6 +10,8 @@
         description:'',
         product_code:'',
         material:'',
+        customization_enabled:false,
+        customization_price:0,
         price:0,
         stock:0,
         status:'Aktif',
@@ -40,6 +42,8 @@
             description:data?.description??'',
             product_code:data?.product_code??data?.sku??'',
             material:data?.material??'',
+            customization_enabled:data?.customization_enabled===true||data?.customization_enabled===1||data?.customization_enabled==='1',
+            customization_price:Number(data?.customization_price??0),
             price:Number(data?.price??0),
             stock:Number(data?.stock??0),
             status:data?.status??'Aktif',
@@ -64,6 +68,8 @@
             product_code:this.product.product_code,
             description:this.product.description,
             material:this.product.material,
+            customization_enabled:this.product.customization_enabled,
+            customization_price:Number(this.product.customization_price??0),
             price:Number(this.product.price??0),
             stock:Number(this.product.stock??0),
             status:this.product.status==='Aktif',
@@ -211,6 +217,41 @@ x-on:open-view-product.window="openView($event.detail)"
                     <div class="flex items-center justify-between gap-4 border-t border-slate-200/60 pt-2.5">
                         <span class="text-slate-500">Bahan / Material</span>
                         <span class="font-medium text-slate-700" x-text="product.material || '-'"></span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-4 border-t border-slate-200/60 pt-2.5">
+                        <span class="text-slate-500">Custom Nama & Nomor</span>
+
+                        <span
+                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                            :class="product.customization_enabled
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-slate-100 text-slate-500'"
+                        >
+                            <span
+                                class="h-1.5 w-1.5 rounded-full"
+                                :class="product.customization_enabled
+                                    ? 'bg-emerald-500'
+                                    : 'bg-slate-400'"
+                            ></span>
+
+                            <span
+                                x-text="product.customization_enabled ? 'Diizinkan' : 'Tidak Diizinkan'"
+                            ></span>
+                        </span>
+                    </div>
+
+                    <div
+                        x-show="product.customization_enabled"
+                        x-cloak
+                        class="flex items-center justify-between gap-4 border-t border-slate-200/60 pt-2.5"
+                    >
+                        <span class="text-slate-500">Harga Custom</span>
+
+                        <span
+                            class="font-bold text-[#AE7C18]"
+                            x-text="'Rp ' + Number(product.customization_price || 0).toLocaleString('id-ID')"
+                        ></span>
                     </div>
                 </div>
 

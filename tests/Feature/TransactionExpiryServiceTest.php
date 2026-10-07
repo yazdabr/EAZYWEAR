@@ -38,7 +38,7 @@ class TransactionExpiryServiceTest extends TestCase
     {
         $transaction = Transaction::factory()->create([
             'status' => 'PENDING',
-            'va_expired_at' => now('UTC')->subMinute(),
+            'va_expired_at' => now()->subMinute(),
         ]);
 
         $result = app(TransactionExpiryService::class)->expire($transaction);
@@ -55,7 +55,7 @@ class TransactionExpiryServiceTest extends TestCase
     {
         $transaction = Transaction::factory()->create([
             'status' => 'PENDING',
-            'va_expired_at' => now('UTC')->addMinute(),
+            'va_expired_at' => now()->addMinute(),
         ]);
 
         $result = app(TransactionExpiryService::class)->expire($transaction);
@@ -74,7 +74,7 @@ class TransactionExpiryServiceTest extends TestCase
             'status' => 'PENDING',
             'payment_method' => 'QRIS',
             'va_expired_at' => null,
-            'qris_expired_at' => now('UTC')->subMinute(),
+            'qris_expired_at' => now()->subMinute(),
         ]);
 
         $result = app(TransactionExpiryService::class)->expire($transaction);
@@ -93,7 +93,7 @@ class TransactionExpiryServiceTest extends TestCase
             'status' => 'PENDING',
             'payment_method' => 'QRIS',
             'va_expired_at' => null,
-            'qris_expired_at' => now('UTC')->addMinute(),
+            'qris_expired_at' => now()->addMinute(),
         ]);
 
         $result = app(TransactionExpiryService::class)->expire($transaction);
@@ -110,7 +110,7 @@ class TransactionExpiryServiceTest extends TestCase
     {
         $transaction = Transaction::factory()->create([
             'status' => 'PAID',
-            'va_expired_at' => now('UTC')->subMinute(),
+            'va_expired_at' => now()->subMinute(),
         ]);
 
         $result = app(TransactionExpiryService::class)->expire($transaction);
@@ -127,7 +127,7 @@ class TransactionExpiryServiceTest extends TestCase
     {
         $transaction = Transaction::factory()->create([
             'status' => 'CANCELLED',
-            'va_expired_at' => now('UTC')->subMinute(),
+            'va_expired_at' => now()->subMinute(),
         ]);
 
         $result = app(TransactionExpiryService::class)->expire($transaction);
@@ -144,7 +144,7 @@ class TransactionExpiryServiceTest extends TestCase
     {
         $transaction = Transaction::factory()->create([
             'status' => 'EXPIRED',
-            'va_expired_at' => now('UTC')->subMinute(),
+            'va_expired_at' => now()->subMinute(),
         ]);
 
         $result = app(TransactionExpiryService::class)->expire($transaction);
@@ -166,7 +166,7 @@ class TransactionExpiryServiceTest extends TestCase
 
         $transaction = Transaction::factory()->create([
             'status' => 'PENDING',
-            'va_expired_at' => now('UTC')->subMinute(),
+            'va_expired_at' => now()->subMinute(),
         ]);
 
         $result = app(TransactionExpiryService::class)->expire($transaction);
@@ -192,7 +192,7 @@ class TransactionExpiryServiceTest extends TestCase
             'status' => 'PENDING',
             'payment_method' => 'QRIS',
             'va_expired_at' => null,
-            'qris_expired_at' => now('UTC')->subMinute(),
+            'qris_expired_at' => now()->subMinute(),
         ]);
 
         $result = app(TransactionExpiryService::class)->expire($transaction);
@@ -207,7 +207,7 @@ class TransactionExpiryServiceTest extends TestCase
     {
         $transaction = Transaction::factory()->create([
             'status' => 'PENDING',
-            'va_expired_at' => now('UTC')->subMinute(),
+            'va_expired_at' => now()->subMinute(),
             'fulfillment_date' => '2026-10-30',
         ]);
 

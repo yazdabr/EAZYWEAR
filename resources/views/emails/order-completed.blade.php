@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -35,8 +35,14 @@
                         </div>
 
                         <div style="font-size:14px; line-height:1.7; color:#555555;">
-                            Pesanan Anda telah selesai. Terima kasih telah berbelanja dan mempercayakan kebutuhan
-                            custom jersey dan sportswear Anda kepada Eazywear.
+                            @if ($transaction->shipping_method === 'Ambil di Tempat')
+                                Pesanan Anda telah selesai dan siap untuk diambil.
+                                Silakan ambil pesanan Anda sesuai dengan jadwal pengambilan
+                                yang telah Anda tentukan saat melakukan pemesanan.
+                            @else
+                                Pesanan Anda telah selesai. Terima kasih telah berbelanja dan mempercayakan kebutuhan
+                                custom jersey dan sportswear Anda kepada Eazywear.
+                            @endif
                         </div>
                     </td>
                 </tr>
@@ -53,15 +59,27 @@
                                     </div>
 
                                     <div style="font-size:16px; font-weight:bold; color:#AE7C18;">
-                                        Pesanan Selesai
+                                        @if ($transaction->shipping_method === 'Ambil di Tempat')
+                                            Pesanan Siap Diambil
+                                        @else
+                                            Pesanan Selesai
+                                        @endif
                                     </div>
 
                                     <div style="margin-top:6px; font-size:13px; line-height:1.6; color:#666666;">
-                                        Pesanan dengan nomor invoice
-                                        <strong style="color:#333333;">
-                                            {{ $transaction->invoice_number }}
-                                        </strong>
-                                        telah selesai diproses.
+                                        @if ($transaction->shipping_method === 'Ambil di Tempat')
+                                            Pesanan dengan nomor invoice
+                                            <strong style="color:#333333;">
+                                                {{ $transaction->invoice_number }}
+                                            </strong>
+                                            telah selesai diproses dan siap untuk diambil sesuai dengan jadwal yang telah Anda pilih.
+                                        @else
+                                            Pesanan dengan nomor invoice
+                                            <strong style="color:#333333;">
+                                                {{ $transaction->invoice_number }}
+                                            </strong>
+                                            telah selesai diproses.
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -108,6 +126,23 @@
                                     {{ $transaction->shipping_method }}
                                 </td>
                             </tr>
+
+                            @if ($transaction->shipping_method === 'Ambil di Tempat' &&
+                                $transaction->pickup_date &&
+                                $transaction->pickup_time_start &&
+                                $transaction->pickup_time_end)
+                                <tr>
+                                    <td style="padding:14px 16px; color:#777777; font-size:13px;">
+                                        Jadwal Pengambilan
+                                    </td>
+
+                                    <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#222222;">
+                                        {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }},
+                                        {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }}
+                                        WITA
+                                    </td>
+                                </tr>
+                            @endif
 
                             @if ($transaction->shipping_method === 'Kurir' && $transaction->courier)
                                 <tr>
@@ -168,8 +203,14 @@
                 <tr>
                     <td style="padding:0 30px 10px 30px;">
                         <div style="font-size:14px; line-height:1.7; color:#555555;">
-                            Terima kasih telah berbelanja di Eazywear.
-                            Kami berharap produk Anda sesuai dengan kebutuhan dan harapan.
+                            @if ($transaction->shipping_method === 'Ambil di Tempat')
+                                Terima kasih telah berbelanja di Eazywear.
+                                Jangan lupa untuk mengambil pesanan Anda sesuai dengan jadwal yang telah ditentukan.
+                                Kami menunggu kedatangan Anda.
+                            @else
+                                Terima kasih telah berbelanja di Eazywear.
+                                Kami berharap produk Anda sesuai dengan kebutuhan dan harapan.
+                            @endif
                         </div>
                     </td>
                 </tr>

@@ -47,6 +47,41 @@ class TransactionCompletionServiceTest extends TestCase
         ]);
     }
 
+    public function test_pickup_completion_email_contains_pickup_schedule(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Ambil di Tempat',
+            'shipping_email' => 'customer@example.com',
+            'pickup_date' => '2026-10-30',
+            'pickup_time_start' => '09:00:00',
+            'pickup_time_end' => '11:00:00',
+        ]);
+
+        app(TransactionCompletionService::class)
+            ->completeManually($transaction);
+
+        Mail::assertSent(
+            OrderCompletedMail::class,
+            function (OrderCompletedMail $mail) {
+                $html = $mail->render();
+
+                return str_contains($html, 'Pesanan Siap Diambil')
+                    && str_contains($html, 'Ambil di Tempat')
+                    && str_contains($html, '30 Oktober 2026')
+                    && str_contains($html, '09:00')
+                    && str_contains($html, '11:00')
+                    && str_contains($html, 'WITA')
+                    && str_contains(
+                        $html,
+                        'Silakan ambil pesanan Anda sesuai dengan jadwal pengambilan'
+                    );
+            }
+        );
+    }
+
     public function test_service_can_complete_courier_order(): void
     {
         Mail::fake();

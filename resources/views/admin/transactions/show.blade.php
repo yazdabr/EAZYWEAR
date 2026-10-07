@@ -68,57 +68,55 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Email</p>
                 <p class="mt-1 font-semibold text-slate-900 break-all">{{ $transaction->shipping_email ?? '-' }}</p>
             </div>
-            <div>
-                <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">
-                    Metode Pengiriman
-                </p>
+<div>
+    <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">
+        Metode Pengiriman
+    </p>
 
-                <p class="mt-1 font-semibold text-slate-900">
-                    {{ $transaction->shipping_method ?? '-' }}
-                </p>
+    <p class="mt-1 font-semibold text-slate-900">
+        {{ $transaction->shipping_method ?? '-' }}
+    </p>
 
-                @if(
-                    $transaction->shipping_method === 'Ambil di Tempat' &&
-                    $transaction->pickup_date &&
-                    $transaction->pickup_time_start &&
-                    $transaction->pickup_time_end
-                )
-                    <div class="mt-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5">
-                        <div class="flex items-start gap-2">
-                            <svg
-                                class="mt-0.5 h-4 w-4 shrink-0 text-emerald-600"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke-width="1.8"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M6.75 3v2.25M17.25 3v2.25M3.75 9.75h16.5M5.25 5.25h13.5a2.25 2.25 0 0 1 2.25 2.25v11.25a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25Z"
-                                />
-                            </svg>
+    @if(
+        $transaction->shipping_method === 'Ambil di Tempat' &&
+        $transaction->pickup_date &&
+        $transaction->pickup_time_start &&
+        $transaction->pickup_time_end
+    )
+        <div class="mt-2">
+            <div class="flex items-center gap-1.5 text-slate-400">
+                <svg
+                    class="h-3.5 w-3.5 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.8"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M6.75 3v2.25M17.25 3v2.25M3.75 9.75h16.5M5.25 5.25h13.5a2.25 2.25 0 0 1 2.25 2.25v11.25a2.25 2.25 0 0 1-2.25 2.25v11.25a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25Z"
+                    />
+                </svg>
 
-                            <div class="min-w-0">
-                                <p class="text-[10px] font-medium uppercase tracking-wide text-emerald-600">
-                                    Jadwal Pengambilan
-                                </p>
-
-                                <p class="mt-0.5 text-xs font-bold text-emerald-900 sm:text-sm">
-                                    {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}
-                                </p>
-
-                                <p class="mt-0.5 text-xs font-medium text-emerald-700">
-                                    {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}
-                                    –
-                                    {{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }}
-                                    WITA
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
+                <span class="text-[10px] uppercase font-medium tracking-wide">
+                    Jadwal Pengambilan
+                </span>
             </div>
+
+            <p class="mt-1 text-xs font-semibold text-slate-900 sm:text-sm">
+                {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}
+            </p>
+
+            <p class="mt-0.5 text-xs text-slate-600">
+                {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}
+                –
+                {{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }}
+                WITA
+            </p>
+        </div>
+    @endif
+</div>
             <div class="sm:col-span-2 lg:col-span-4">
                 <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Alamat Pengiriman</p>
                 <p class="mt-1 leading-snug sm:leading-6 font-semibold text-slate-900">{{ $transaction->shipping_address }}</p>

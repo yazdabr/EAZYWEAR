@@ -177,7 +177,7 @@ document.addEventListener('alpine:init', () => {
 
                 confirmText: type === 'ship'
                     ? 'Ya, Proses Pengiriman'
-                    : 'Ya, Pesanan Sudah Diambil'
+                    : 'Ya, Tandai Selesai'
             };
 
             this.loading = false;

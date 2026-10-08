@@ -33,7 +33,7 @@
 
                 {{-- Heading --}}
                 <h1 class="hero-title text-2xl font-extrabold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                    CATALOG
+                    SHOP
                 </h1>
 
                 {{-- Description --}}

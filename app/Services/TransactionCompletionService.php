@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Mail\OrderCompletedMail;
 use App\Models\Transaction;
 use App\Models\TransactionNotification;
+use App\Services\EmailArchiveService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class TransactionCompletionService
@@ -98,8 +98,7 @@ class TransactionCompletionService
         }
 
         try {
-            Mail::to($transaction->shipping_email)
-                ->send(new OrderCompletedMail($transaction->fresh()));
+            app(EmailArchiveService::class)->send($transaction->shipping_email, new OrderCompletedMail($transaction->fresh()));
 
             $notification->update([
                 'sent_at' => now(),

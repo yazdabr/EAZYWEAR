@@ -24,8 +24,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
+use App\Services\EmailArchiveService;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Mail;
 use RuntimeException;
 
 class TransactionController extends Controller
@@ -732,8 +732,7 @@ class TransactionController extends Controller
 
             if (is_null($notification->sent_at)) {
                 try {
-                    Mail::to($shippedTransaction->shipping_email)
-                        ->send(new OrderShippedMail($shippedTransaction));
+                    app(EmailArchiveService::class)->send($shippedTransaction->shipping_email, new OrderShippedMail($shippedTransaction));
 
                     $notification->update([
                         'sent_at' => now(),

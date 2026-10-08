@@ -100,6 +100,8 @@ class CheckoutControllerTest extends TestCase
 
         $this->mockDokuSuccess();
 
+        $pickupDate = now()->addDay()->format('Y-m-d');
+
         $response = $this->post(route('checkout.store'), [
             'name' => 'Pickup Customer',
             'email' => 'pickup-test@test.com',
@@ -112,7 +114,7 @@ class CheckoutControllerTest extends TestCase
 
             'shipping_method' => 'Ambil di Tempat',
 
-            'pickup_date' => '2026-10-08',
+            'pickup_date' => $pickupDate,
             'pickup_time_start' => '09:00',
             'pickup_time_end' => '11:00',
 
@@ -150,7 +152,7 @@ class CheckoutControllerTest extends TestCase
         );
 
         $this->assertSame(
-            '2026-10-08',
+            $pickupDate,
             $transaction->pickup_date->toDateString()
         );
 
@@ -172,8 +174,12 @@ class CheckoutControllerTest extends TestCase
             'price' => $databasePrice,
         ]);
         $this->assertSame(
-            '2026-10-08',
+            $pickupDate,
             $transaction->fulfillment_date->toDateString()
+        );
+        $this->assertSame(
+            $pickupDate,
+            $transaction->pickup_date->toDateString()
         );
     }
 

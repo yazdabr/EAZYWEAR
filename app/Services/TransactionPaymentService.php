@@ -4,10 +4,10 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use App\Mail\PaymentConfirmedMail;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use App\Models\FulfillmentHold;
+use App\Services\EmailArchiveService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class TransactionPaymentService
 {
@@ -136,8 +136,7 @@ class TransactionPaymentService
             "Pembayaran berhasil dikonfirmasi melalui {$source}."
         );
 
-        Mail::to($transaction->shipping_email)
-            ->send(new PaymentConfirmedMail($transaction));
+        app(EmailArchiveService::class)->send($transaction->shipping_email, new PaymentConfirmedMail($transaction));
 
         Log::info('DOKU PAYMENT PROCESSED', [
             'transaction_id' => $transaction->id,

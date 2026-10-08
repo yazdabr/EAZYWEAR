@@ -18,8 +18,8 @@ use App\Services\QrisQrCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\EmailArchiveService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -685,7 +685,7 @@ class CheckoutController extends Controller
                 return $transaction;
             });
 
-            Mail::to($transaction->shipping_email)->send(new OrderCreatedMail($transaction));
+            app(EmailArchiveService::class)->send($transaction->shipping_email, new OrderCreatedMail($transaction));
             $request->session()->put('checkout_success_invoice', $transaction->invoice_number);
             $request->session()->forget('cart');
 

@@ -4,10 +4,10 @@ namespace App\Services;
 
 use App\Models\Transaction;
 use App\Mail\PaymentExpiredMail;
-use App\Services\FulfillmentHoldService;
 use App\Models\FulfillmentHold;
+use App\Services\EmailArchiveService;
+use App\Services\FulfillmentHoldService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 
 class TransactionExpiryService
 {
@@ -71,8 +71,7 @@ class TransactionExpiryService
                 $this->fulfillmentHoldService->releaseHold($expiredTransaction);
             }
 
-            Mail::to($expiredTransaction->shipping_email)
-                ->send(new PaymentExpiredMail($expiredTransaction));
+            app(EmailArchiveService::class)->send($expiredTransaction->shipping_email, new PaymentExpiredMail($expiredTransaction));
         }
 
 

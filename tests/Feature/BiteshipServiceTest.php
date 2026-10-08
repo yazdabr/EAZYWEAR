@@ -141,8 +141,8 @@ class BiteshipServiceTest extends TestCase
                     === 'jne'
                 && $request['courier_type']
                     === 'reg'
-                && $request['origin_latitude'] === -3.3
-                    && $request['origin_longitude'] === 114.6;
+                && $request['origin_coordinate']['latitude'] === -3.3
+                    && $request['origin_coordinate']['longitude'] === 114.6;
                 });
     }
 

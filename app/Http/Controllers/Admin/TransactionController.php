@@ -813,6 +813,20 @@ class TransactionController extends Controller
                     throw ValidationException::withMessages(['transaction' => 'Status transaksi tidak dapat dihapus.']);
                 }
 
+                $fulfillmentHold = $lockedTransaction->fulfillmentHold()
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($fulfillmentHold) {
+                    if ($fulfillmentHold->status !== FulfillmentHold::RELEASED) {
+                        throw ValidationException::withMessages([
+                            'transaction' => 'Fulfillment hold transaksi belum dilepas dan transaksi tidak dapat dihapus.',
+                        ]);
+                    }
+
+                    $fulfillmentHold->delete();
+                }
+
                 $lockedTransaction->items()->delete();
                 $lockedTransaction->delete();
             });

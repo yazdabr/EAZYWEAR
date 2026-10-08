@@ -290,6 +290,87 @@ class TransactionControllerTest extends TestCase
         ]);
     }
 
+    public function test_cancelled_transaction_with_released_fulfillment_hold_can_be_deleted(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = Transaction::factory()->create([
+            'status' => 'CANCELLED',
+            'fulfillment_date' => '2026-10-30',
+        ]);
+
+        $slot = FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->firstOrFail();
+
+        $hold = FulfillmentHold::query()->create([
+            'transaction_id' => $transaction->id,
+            'fulfillment_slot_id' => $slot->id,
+            'status' => FulfillmentHold::RELEASED,
+            'released_at' => now(),
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->deleteJson(route('admin.transactions.destroy', $transaction));
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+            ]);
+
+        $this->assertDatabaseMissing('fulfillment_holds', [
+            'id' => $hold->id,
+        ]);
+
+        $this->assertDatabaseMissing('transactions', [
+            'id' => $transaction->id,
+        ]);
+    }
+
+    public function test_cancelled_transaction_with_active_fulfillment_hold_cannot_be_deleted(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = Transaction::factory()->create([
+            'status' => 'CANCELLED',
+            'fulfillment_date' => '2026-10-30',
+        ]);
+
+        $slot = FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->firstOrFail();
+
+        $hold = FulfillmentHold::query()->create([
+            'transaction_id' => $transaction->id,
+            'fulfillment_slot_id' => $slot->id,
+            'status' => FulfillmentHold::HELD,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->deleteJson(route('admin.transactions.destroy', $transaction));
+
+        $response
+            ->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Fulfillment hold transaksi belum dilepas dan transaksi tidak dapat dihapus.',
+            ]);
+
+        $this->assertDatabaseHas('fulfillment_holds', [
+            'id' => $hold->id,
+            'transaction_id' => $transaction->id,
+            'status' => FulfillmentHold::HELD,
+        ]);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => 'CANCELLED',
+        ]);
+    }
+
     public function test_transaction_with_stock_movement_cannot_be_deleted(): void
     {
         $user = $this->superAdmin();

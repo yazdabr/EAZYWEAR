@@ -22,6 +22,8 @@ class BiteshipServiceTest extends TestCase
             'biteship.origin.contact_phone' => '081234567890',
             'biteship.origin.address' => 'Jl. Test No. 1',
             'biteship.origin.postal_code' => 12345,
+            'biteship.origin.latitude' => -3.300000,
+            'biteship.origin.longitude' => 114.600000,
         ]);
     }
 
@@ -138,8 +140,10 @@ class BiteshipServiceTest extends TestCase
                 && $request['courier_company']
                     === 'jne'
                 && $request['courier_type']
-                    === 'reg';
-        });
+                    === 'reg'
+                && $request['origin_latitude'] === -3.3
+                    && $request['origin_longitude'] === 114.6;
+                });
     }
 
     public function test_create_order_throws_runtime_exception_on_4xx(): void

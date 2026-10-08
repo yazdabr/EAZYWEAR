@@ -281,6 +281,12 @@ class BiteshipService
             'origin_postal_code' =>
                 (int) config('biteship.origin.postal_code'),
 
+            'origin_latitude' =>
+                (float) config('biteship.origin.latitude'),
+
+            'origin_longitude' =>
+                (float) config('biteship.origin.longitude'),
+
             'destination_contact_name' =>
                 (string) $data['destination_contact_name'],
 

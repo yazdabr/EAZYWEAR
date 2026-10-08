@@ -704,7 +704,7 @@ class CheckoutController extends Controller
         QrisQrCodeService $qrisQrCodeService
     ): View|RedirectResponse
     {
-        $invoice = $request->session()->pull('checkout_success_invoice');
+        $invoice = $request->session()->get('checkout_success_invoice');
 
         if (! $invoice) {
             return redirect()->route('home');
@@ -735,6 +735,37 @@ class CheckoutController extends Controller
         return view('checkout.success', [
             'transaction' => $transaction,
             'qrisQrCode' => $qrisQrCode,
+        ]);
+    }
+
+    public function paymentStatus(Request $request): JsonResponse
+    {
+        $invoice = $request->session()->get('checkout_success_invoice');
+
+        if (! $invoice) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sesi pesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        $transaction = Transaction::query()
+            ->where('invoice_number', $invoice)
+            ->first();
+
+        if (! $transaction) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'invoice_number' => $transaction->invoice_number,
+            'email' => $transaction->shipping_email,
+            'status' => $transaction->status,
+            'paid' => filled($transaction->paid_at),
         ]);
     }
 

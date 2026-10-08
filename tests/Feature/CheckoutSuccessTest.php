@@ -127,4 +127,125 @@ class CheckoutSuccessTest extends TestCase
             'payment_method' => 'QRIS',
         ]);
     }
+    public function test_success_page_can_be_refreshed_with_same_session_invoice(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'payment_method' => 'VA',
+            'status' => 'PENDING',
+            'va_bank' => 'MANDIRI',
+            'va_number' => '1234567890123456',
+            'va_expired_at' => now()->addMinutes(10),
+        ]);
+
+        $session = [
+            'checkout_success_invoice' => $transaction->invoice_number,
+        ];
+
+        $firstResponse = $this
+            ->withSession($session)
+            ->get(route('checkout.success'));
+
+        $firstResponse->assertSuccessful();
+        $firstResponse->assertViewIs('checkout.success');
+
+        $secondResponse = $this
+            ->withSession($session)
+            ->get(route('checkout.success'));
+
+        $secondResponse->assertSuccessful();
+        $secondResponse->assertViewIs('checkout.success');
+        $secondResponse->assertViewHas('transaction', function ($viewTransaction) use ($transaction) {
+            return $viewTransaction->is($transaction);
+        });
+    }
+
+    public function test_payment_status_returns_404_without_checkout_session(): void
+    {
+        $response = $this->getJson(route('checkout.payment-status'));
+
+        $response->assertNotFound();
+
+        $response->assertJson([
+            'success' => false,
+            'message' => 'Sesi pesanan tidak ditemukan.',
+        ]);
+    }
+
+    public function test_payment_status_returns_paid_false_for_pending_transaction(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'payment_method' => 'VA',
+            'status' => 'PENDING',
+            'paid_at' => null,
+        ]);
+
+        $response = $this
+            ->withSession([
+                'checkout_success_invoice' => $transaction->invoice_number,
+            ])
+            ->getJson(route('checkout.payment-status'));
+
+        $response->assertSuccessful();
+
+        $response->assertJson([
+            'success' => true,
+            'invoice_number' => $transaction->invoice_number,
+            'email' => $transaction->shipping_email,
+            'status' => 'PENDING',
+            'paid' => false,
+        ]);
+    }
+
+    public function test_payment_status_returns_paid_true_for_paid_transaction(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'payment_method' => 'QRIS',
+            'status' => 'PAID',
+            'paid_at' => now(),
+        ]);
+
+        $response = $this
+            ->withSession([
+                'checkout_success_invoice' => $transaction->invoice_number,
+            ])
+            ->getJson(route('checkout.payment-status'));
+
+        $response->assertSuccessful();
+
+        $response->assertJson([
+            'success' => true,
+            'invoice_number' => $transaction->invoice_number,
+            'email' => $transaction->shipping_email,
+            'status' => 'PAID',
+            'paid' => true,
+        ]);
+    }
+
+    public function test_payment_status_returns_transaction_invoice_and_email(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'payment_method' => 'QRIS',
+            'status' => 'PAID',
+            'paid_at' => now(),
+            'shipping_email' => 'customer@example.com',
+        ]);
+
+        $response = $this
+            ->withSession([
+                'checkout_success_invoice' => $transaction->invoice_number,
+            ])
+            ->getJson(route('checkout.payment-status'));
+
+        $response->assertSuccessful();
+
+        $response->assertJsonPath(
+            'invoice_number',
+            $transaction->invoice_number
+        );
+
+        $response->assertJsonPath(
+            'email',
+            'customer@example.com'
+        );
+    }
 }

@@ -381,6 +381,85 @@
                 <a href="{{ route('catalog') }}" class="inline-flex h-10 items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-xs font-semibold text-gray-700 transition hover:border-[#AE7C18] hover:text-[#AE7C18] sm:h-12 sm:px-6 sm:text-sm">Belanja Lagi</a>
                 <a href="{{ route('home') }}" class="inline-flex h-10 items-center justify-center rounded-full bg-[#AE7C18] px-5 text-xs font-semibold text-white shadow-md shadow-[#AE7C18]/20 transition hover:bg-[#8F6514] sm:h-12 sm:px-6 sm:text-sm">Kembali ke Beranda</a>
             </div>
+
+            {{-- MODAL PEMBAYARAN BERHASIL --}}
+            <div
+                id="payment-success-modal"
+                class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 px-4 backdrop-blur-sm"
+            >
+                <div
+                    class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl sm:rounded-3xl"
+                >
+                    <div class="px-5 py-6 text-center sm:px-8 sm:py-8">
+
+                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 sm:h-20 sm:w-20">
+                            <x-heroicon-o-check class="h-8 w-8 text-emerald-600 sm:h-10 sm:w-10"/>
+                        </div>
+
+                        <p class="mt-5 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 sm:text-xs">
+                            PEMBAYARAN BERHASIL
+                        </p>
+
+                        <h2 class="mt-1.5 text-xl font-extrabold text-slate-900 sm:text-2xl">
+                            Pesanan Anda Telah Dibayar
+                        </h2>
+
+                        <p class="mt-2 text-xs leading-relaxed text-gray-500 sm:text-sm sm:leading-6">
+                            Pembayaran Anda telah berhasil dikonfirmasi. Simpan invoice berikut untuk mengecek pesanan Anda.
+                        </p>
+
+                        <div class="mt-5 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-left sm:mt-6 sm:px-5 sm:py-4">
+                            <div class="flex items-center justify-between gap-3">
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">
+                                    Invoice
+                                </span>
+
+                                <span
+                                    id="payment-success-invoice"
+                                    class="break-all text-right text-xs font-extrabold text-slate-900 sm:text-sm"
+                                >
+                                    {{ $transaction->invoice_number }}
+                                </span>
+                            </div>
+
+                            <div class="mt-2.5 flex items-start justify-between gap-3">
+                                <span class="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">
+                                    Email
+                                </span>
+
+                                <span
+                                    id="payment-success-email"
+                                    class="break-all text-right text-xs font-semibold text-slate-700 sm:text-sm"
+                                >
+                                    {{ $transaction->shipping_email }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 flex flex-col gap-2.5 sm:mt-6">
+                            <a
+                                id="payment-success-tracking-button"
+                                href="{{ route('orders.tracking', [
+                                    'invoice_number' => $transaction->invoice_number,
+                                    'email' => $transaction->shipping_email,
+                                ]) }}"
+                                class="inline-flex h-11 items-center justify-center rounded-full bg-[#AE7C18] px-5 text-xs font-bold text-white shadow-md shadow-[#AE7C18]/20 transition hover:bg-[#8F6514] sm:h-12 sm:text-sm"
+                            >
+                                Cek Pesanan
+                            </a>
+
+                            <button
+                                type="button"
+                                id="payment-success-close"
+                                class="inline-flex h-10 items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-xs font-semibold text-gray-600 transition hover:border-gray-300 hover:bg-gray-50 sm:h-11 sm:text-sm"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
         </div>
     </x-ui.container>
 </section>
@@ -388,6 +467,12 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+
+    /*
+    |--------------------------------------------------------------------------
+    | COUNTDOWN PEMBAYARAN
+    |--------------------------------------------------------------------------
+    */
 
     const startCountdown = ({
         countdownId,
@@ -471,6 +556,13 @@ document.addEventListener('DOMContentLoaded', () => {
         messageId: 'qris-payment-countdown-message',
     });
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | COPY NOMOR VA
+    |--------------------------------------------------------------------------
+    */
+
     const copyButton =
         document.getElementById('copy-va-button');
 
@@ -494,6 +586,170 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 2000);
             }
         );
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | POPUP PEMBAYARAN BERHASIL
+    |--------------------------------------------------------------------------
+    */
+
+    const paymentModal =
+        document.getElementById('payment-success-modal');
+
+    const closePaymentModal =
+        document.getElementById('payment-success-close');
+
+    const trackingButton =
+        document.getElementById('payment-success-tracking-button');
+
+    const invoice =
+        @json($transaction->invoice_number);
+
+    const email =
+        @json($transaction->shipping_email);
+
+    const paymentMethod =
+        @json($transaction->payment_method);
+
+    const paymentStatusUrl =
+        @json(route('checkout.payment-status'));
+
+    if (
+        paymentModal &&
+        paymentStatusUrl &&
+        ['VA', 'QRIS'].includes(paymentMethod)
+    ) {
+
+        const popupStorageKey =
+            `eazywear-payment-success-${invoice}`;
+
+        const showPaymentSuccess = () => {
+            paymentModal.classList.remove('hidden');
+            paymentModal.classList.add('flex');
+
+            document.body.classList.add('overflow-hidden');
+
+            if (trackingButton) {
+                trackingButton.href =
+                    `{{ route('orders.tracking') }}?invoice_number=${encodeURIComponent(invoice)}&email=${encodeURIComponent(email)}`;
+            }
+        };
+
+        const hidePaymentSuccess = () => {
+            paymentModal.classList.add('hidden');
+            paymentModal.classList.remove('flex');
+
+            document.body.classList.remove('overflow-hidden');
+        };
+
+        closePaymentModal?.addEventListener(
+            'click',
+            hidePaymentSuccess
+        );
+
+        paymentModal.addEventListener(
+            'click',
+            (event) => {
+                if (event.target === paymentModal) {
+                    hidePaymentSuccess();
+                }
+            }
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | CEK STATUS PEMBAYARAN
+        |--------------------------------------------------------------------------
+        */
+
+        const checkPaymentStatus = async () => {
+            try {
+                const response = await fetch(
+                    paymentStatusUrl,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                        credentials: 'same-origin',
+                    }
+                );
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (
+                    data.success &&
+                    data.paid === true
+                ) {
+                    clearInterval(paymentStatusInterval);
+
+                    if (
+                        !sessionStorage.getItem(
+                            popupStorageKey
+                        )
+                    ) {
+                        sessionStorage.setItem(
+                            popupStorageKey,
+                            'shown'
+                        );
+
+                        showPaymentSuccess();
+                    }
+                }
+            } catch (error) {
+                console.error(
+                    'Gagal mengecek status pembayaran.',
+                    error
+                );
+            }
+        };
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | JIKA SUDAH PAID SAAT HALAMAN DIBUKA
+        |--------------------------------------------------------------------------
+        */
+
+        const initialPaid =
+            @json(filled($transaction->paid_at));
+
+        if (
+            initialPaid &&
+            !sessionStorage.getItem(popupStorageKey)
+        ) {
+            sessionStorage.setItem(
+                popupStorageKey,
+                'shown'
+            );
+
+            showPaymentSuccess();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | POLLING
+        |--------------------------------------------------------------------------
+        */
+
+        const paymentStatusInterval =
+            setInterval(
+                checkPaymentStatus,
+                10000
+            );
+
+        /*
+        | Cek sekali langsung saat halaman dibuka.
+        */
+        checkPaymentStatus();
     }
 
 });

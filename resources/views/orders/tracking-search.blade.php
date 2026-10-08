@@ -58,7 +58,7 @@
                             <input
                                 type="text"
                                 name="invoice_number"
-                                value="{{ old('invoice_number') }}"
+                                value="{{ old('invoice_number', request('invoice_number')) }}"
                                 placeholder="Contoh: INV-20260925-XXXXXX"
                                 class="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-4 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-[#AE7C18] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 transition-all uppercase"
                                 required
@@ -78,7 +78,7 @@
                             <input
                                 type="email"
                                 name="email"
-                                value="{{ old('email') }}"
+                                value="{{ old('email', request('email')) }}"
                                 placeholder="nama@gmail.com"
                                 class="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-10 pr-4 py-2.5 sm:py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-[#AE7C18] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 transition-all"
                                 required

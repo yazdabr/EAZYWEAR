@@ -22,7 +22,7 @@ class OrderCreatedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Pesanan EazyWear Berhasil Dibuat - '
+            subject: 'Pesanan Eazywear Berhasil Dibuat - '
                 . $this->transaction->invoice_number,
         );
     }

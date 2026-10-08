@@ -110,13 +110,13 @@
                             {{-- View Detail --}}
                             <div class="shrink-0">
 
-                                {{-- <a
+                                <a
                                     x-bind:href="productUrl"
                                     @click.stop
                                     class="inline-flex items-center justify-center rounded-full bg-[#AE7C18] px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/25 transition-all hover:bg-[#8F6514] hover:shadow-xl hover:shadow-[#AE7C18]/35"
                                 >
                                     View Detail
-                                </a> --}}
+                                </a>
 
                             </div>
 
@@ -226,7 +226,7 @@
 
 
                 {{-- View Detail --}}
-                {{-- <div class="flex-1">
+                <div class="flex-1">
 
                     <a
                         x-bind:href="productUrl"
@@ -236,7 +236,7 @@
                         View Detail
                     </a>
 
-                </div> --}}
+                </div>
 
             </div>
 

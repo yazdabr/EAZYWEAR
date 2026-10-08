@@ -3,14 +3,44 @@
     $imageUrls = $images->map(function ($image) {
         return asset('storage/' . $image->image);
     })->values()->all();
+
     if (empty($imageUrls)) {
         $imageUrls = [asset('images/products/placeholder.png')];
     }
+
     $startingPrice = $product->variants
         ->filter(fn ($variant) => (float) $variant->price > 0)
         ->min('price') ?? 0;
+
     $whatsappMessage = 'Halo Eazywear, saya ingin bertanya mengenai jersey dan informasi lebih lanjut.';
     $whatsappUrl = 'https://wa.me/628138377763?text=' . urlencode($whatsappMessage);
+
+    // Urutan size dari terkecil → terbesar
+    $sizeOrder = [
+        'XXXS' => 1,
+        'XXS'  => 2,
+        'XS'   => 3,
+        'S'    => 4,
+        'M'    => 5,
+        'L'    => 6,
+        'XL'   => 7,
+        'XXL'  => 8,
+        '2XL'  => 8,
+        'XXXL' => 9,
+        '3XL'  => 9,
+        'XXXXL' => 10,
+        '4XL'   => 10,
+        '5XL'   => 11,
+    ];
+
+    $availableSizes = collect($product->available_sizes)
+        ->sortBy(function ($size) use ($sizeOrder) {
+            $name = strtoupper(trim($size['name'] ?? ''));
+
+            return $sizeOrder[$name] ?? 999;
+        })
+        ->values()
+        ->all();
 @endphp
 
 <section x-data="galleryProduct()" class="bg-white py-6 sm:py-10 lg:py-14">
@@ -133,13 +163,13 @@
                 </div>
 
                 {{-- SIZE / VARIANT --}}
-                @if(count($product->available_sizes))
+                @if(count($availableSizes))
                     <div
                         class="mt-4 sm:mt-7"
                         x-data="{
-                            selectedVariant: {{ $product->available_sizes[0]['id'] ?? 'null' }},
-                            selectedPrice: {{ $product->available_sizes[0]['price'] ?? 0 }},
-                            selectedStock: {{ $product->available_sizes[0]['stock'] ?? 0 }},
+                            selectedVariant: {{ $availableSizes[0]['id'] ?? 'null' }},
+                            selectedPrice: {{ $availableSizes[0]['price'] ?? 0 }},
+                            selectedStock: {{ $availableSizes[0]['stock'] ?? 0 }},
                             customName: '',
                             customNumber: '',
 
@@ -174,7 +204,7 @@
                         </div>
 
                         <div class="flex flex-wrap gap-2 sm:gap-2.5">
-                            @foreach($product->available_sizes as $size)
+                            @foreach($availableSizes as $size)
                                 <button
                                     type="button"
                                     @click="

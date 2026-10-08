@@ -14,7 +14,7 @@
             {{-- Navigation --}}
             <nav aria-label="Mobile navigation" class="flex flex-col space-y-1.5 py-6">
                 <x-ui.nav-link route="home" mobile @click="open=false">Home</x-ui.nav-link>
-                <x-ui.nav-link route="catalog" mobile @click="open=false">Catalog</x-ui.nav-link>
+                <x-ui.nav-link route="catalog" mobile @click="open=false">Shop</x-ui.nav-link>
                 <x-ui.nav-link route="about" mobile @click="open=false">About</x-ui.nav-link>
                 <x-ui.nav-link route="contact" mobile @click="open=false">Contact</x-ui.nav-link>
             </nav>

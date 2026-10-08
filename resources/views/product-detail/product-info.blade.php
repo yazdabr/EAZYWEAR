@@ -434,7 +434,7 @@
                                 Production Time
                             </h4>
                             <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">
-                                Pre-Order • Ready from 30 October
+                                Pre-Order • Ready from 30 October - 3 November 2026
                             </p>
                         </div>
                     </div>

@@ -168,8 +168,8 @@
                                 Available Sizes
                             </h3>
                             <span class="text-xs text-gray-500 sm:text-sm" x-show="selectedStock > 0">
-                                Stock:
-                                <span x-text="selectedStock" class="font-semibold text-slate-800"></span>
+                                Stock: Pre-Order
+                                <!-- <span x-text="selectedStock" class="font-semibold text-slate-800"></span> -->
                             </span>
                         </div>
 

@@ -77,7 +77,7 @@
                 {{-- Desktop Menu --}}
                 <ul class="hidden items-center gap-10 lg:flex">
                     <li><x-ui.nav-link route="home">Home</x-ui.nav-link></li>
-                    <li><x-ui.nav-link route="catalog">Catalog</x-ui.nav-link></li>
+                    <li><x-ui.nav-link route="catalog">Shop</x-ui.nav-link></li>
                     <li><x-ui.nav-link route="about">About</x-ui.nav-link></li>
                     <li><x-ui.nav-link route="contact">Contact</x-ui.nav-link></li>
                 </ul>

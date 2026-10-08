@@ -29,7 +29,7 @@
                     Choose the products you want to buy and add them to your cart.
                 </p>
                 <a href="{{ route('catalog') }}" class="mt-5 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-xs font-semibold text-white transition hover:bg-slate-800 sm:mt-6 sm:text-sm">
-                    Explore Catalog
+                    Explore Shop
                 </a>
             </div>
         @else

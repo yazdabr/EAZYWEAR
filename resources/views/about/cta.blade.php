@@ -39,7 +39,7 @@
                             :href="route('catalog')"
                             class="w-full sm:w-auto"
                         >
-                            Browse Catalog
+                            Browse Shop
                         </x-ui.button>
 
                         {{-- WhatsApp --}}

@@ -42,7 +42,7 @@
                                 </li>
                                 <li>
                                     <a href="{{ route('catalog') }}" class="transition hover:text-white">
-                                        Catalog
+                                        Shop
                                     </a>
                                 </li>
                                 <li>

@@ -37,7 +37,7 @@ class ReconcileDokuPayments extends Command
                 ->where('status', 'PENDING')
                 ->whereNotNull('va_number')
                 ->whereNotNull('va_expired_at')
-                ->where('va_expired_at', '>', now('UTC'))
+                ->where('va_expired_at', '>', now())
                 ->orderBy('id')
                 ->limit($limit)
                 ->get();

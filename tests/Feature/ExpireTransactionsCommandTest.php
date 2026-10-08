@@ -16,19 +16,19 @@ class ExpireTransactionsCommandTest extends TestCase
         $expiredTransaction = Transaction::factory()->create([
             'status' => 'PENDING',
             'payment_method' => 'VA',
-            'va_expired_at' => now('UTC')->subMinute(),
+            'va_expired_at' => now()->subMinute(),
         ]);
 
         $activeTransaction = Transaction::factory()->create([
             'status' => 'PENDING',
             'payment_method' => 'VA',
-            'va_expired_at' => now('UTC')->addMinute(),
+            'va_expired_at' => now()->addMinute(),
         ]);
 
         $paidTransaction = Transaction::factory()->create([
             'status' => 'PAID',
             'payment_method' => 'VA',
-            'va_expired_at' => now('UTC')->subMinute(),
+            'va_expired_at' => now()->subMinute(),
         ]);
 
         $exitCode = Artisan::call('transactions:expire');
@@ -73,14 +73,14 @@ class ExpireTransactionsCommandTest extends TestCase
             'status' => 'PENDING',
             'payment_method' => 'QRIS',
             'va_expired_at' => null,
-            'qris_expired_at' => now('UTC')->subMinute(),
+            'qris_expired_at' => now()->subMinute(),
         ]);
 
         $activeTransaction = Transaction::factory()->create([
             'status' => 'PENDING',
             'payment_method' => 'QRIS',
             'va_expired_at' => null,
-            'qris_expired_at' => now('UTC')->addMinute(),
+            'qris_expired_at' => now()->addMinute(),
         ]);
 
         $exitCode = Artisan::call('transactions:expire');

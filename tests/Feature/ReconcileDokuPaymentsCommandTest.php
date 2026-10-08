@@ -30,7 +30,7 @@ class ReconcileDokuPaymentsCommandTest extends TestCase
             'subtotal' => 100000,
             'total' => 100000,
             'va_number' => '190089000000123456',
-            'va_expired_at' => now('UTC')->addMinutes(5),
+            'va_expired_at' => now()->addMinutes(5),
             'doku_payment_id' => null,
         ]);
 
@@ -130,7 +130,7 @@ class ReconcileDokuPaymentsCommandTest extends TestCase
         $transaction = $this->createPendingTransaction();
 
         $transaction->update([
-            'va_expired_at' => now('UTC')->subMinute(),
+            'va_expired_at' => now()->subMinute(),
         ]);
 
         $dokuService = $this->mock(DokuService::class);

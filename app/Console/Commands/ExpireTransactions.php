@@ -24,13 +24,13 @@ class ExpireTransactions extends Command
                         $query
                             ->where('payment_method', 'VA')
                             ->whereNotNull('va_expired_at')
-                            ->where('va_expired_at', '<=', now('UTC'));
+                            ->where('va_expired_at', '<=', now());
                     })
                     ->orWhere(function ($query) {
                         $query
                             ->where('payment_method', 'QRIS')
                             ->whereNotNull('qris_expired_at')
-                            ->where('qris_expired_at', '<=', now('UTC'));
+                            ->where('qris_expired_at', '<=', now());
                     });
             })
             ->orderBy('id')

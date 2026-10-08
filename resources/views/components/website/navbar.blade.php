@@ -28,12 +28,33 @@
                     <label for="mobile-search" class="sr-only">Search products</label>
                     <input id="mobile-search" type="text" name="search" value="{{ request('search') }}" placeholder="Search Products..." autocomplete="off" class="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm font-medium text-gray-700 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-2 focus:ring-[#AE7C18]/10">
                 </form>
-                {{-- Mobile Cart --}}
+                {{-- Mobile Actions --}}
                 @php $cartCount=collect(session('cart',[]))->sum('qty'); @endphp
-                <a id="navbar-cart-mobile" href="{{ route('cart.index') }}" @click="open=false" aria-label="View shopping cart{{ $cartCount>0 ? ', '.$cartCount.' items' : '' }}" class="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98]">
-                    <x-heroicon-o-shopping-cart class="h-5 w-5" aria-hidden="true"/>
-                    <span>Cart @if($cartCount>0)({{ $cartCount }})@endif</span>
-                </a>
+
+                <div class="grid grid-cols-2 gap-3">
+                    {{-- Cek Pesanan --}}
+                    <a
+                        href="{{ route('orders.tracking') }}"
+                        @click="open=false"
+                        aria-label="Cek pesanan"
+                        class="flex min-w-0 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[#AE7C18] hover:text-[#AE7C18] active:scale-[0.98]"
+                    >
+                        <x-heroicon-o-clipboard-document-list class="h-5 w-5 shrink-0" aria-hidden="true"/>
+                        <span class="truncate">Check Order</span>
+                    </a>
+
+                    {{-- Cart --}}
+                    <a
+                        id="navbar-cart-mobile"
+                        href="{{ route('cart.index') }}"
+                        @click="open=false"
+                        aria-label="View shopping cart{{ $cartCount>0 ? ', '.$cartCount.' items' : '' }}"
+                        class="flex min-w-0 items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98]"
+                    >
+                        <x-heroicon-o-shopping-cart class="h-5 w-5 shrink-0" aria-hidden="true"/>
+                        <span class="truncate">Cart @if($cartCount>0)({{ $cartCount }})@endif</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -67,44 +88,156 @@
     @endif
 
     {{-- HEADER --}}
-    <header :class="scrolled?'bg-white/95 backdrop-blur-xl shadow-lg border-gray-200/70':'bg-white/70 backdrop-blur-md border-transparent'" class="fixed inset-x-0 top-0 z-[1000] border-b transition-all duration-300">
+    <header
+        :class="scrolled
+            ? 'bg-white/95 backdrop-blur-xl shadow-lg border-gray-200/70'
+            : 'bg-white/70 backdrop-blur-md border-transparent'"
+        class="fixed inset-x-0 top-0 z-[1000] border-b transition-all duration-300"
+    >
         <x-ui.container>
-            <nav aria-label="Main navigation" class="flex h-20 items-center justify-between">
+            <nav aria-label="Main navigation" class="relative flex h-20 items-center">
+
                 {{-- Logo --}}
-                <a href="{{ route('home') }}" aria-label="Eazywear Indonesia - Home" class="shrink-0">
-                    <img src="{{ asset('images/hero/logo-navbar-small.webp') }}" alt="Eazywear" width="450" height="318" class="h-16 w-auto object-contain">
+                <a
+                    href="{{ route('home') }}"
+                    aria-label="Eazywear Indonesia - Home"
+                    class="relative z-10 shrink-0"
+                >
+                    <img
+                        src="{{ asset('images/hero/logo-navbar-small.webp') }}"
+                        alt="Eazywear"
+                        width="450"
+                        height="318"
+                        class="h-16 w-auto object-contain"
+                    >
                 </a>
+
                 {{-- Desktop Menu --}}
-                <ul class="hidden items-center gap-10 lg:flex">
-                    <li><x-ui.nav-link route="home">Home</x-ui.nav-link></li>
-                    <li><x-ui.nav-link route="catalog">Shop</x-ui.nav-link></li>
-                    <li><x-ui.nav-link route="about">About</x-ui.nav-link></li>
-                    <li><x-ui.nav-link route="contact">Contact</x-ui.nav-link></li>
+                <ul class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-9 lg:flex">
+                    <li>
+                        <x-ui.nav-link route="home">Home</x-ui.nav-link>
+                    </li>
+                    <li>
+                        <x-ui.nav-link route="catalog">Shop</x-ui.nav-link>
+                    </li>
+                    <li>
+                        <x-ui.nav-link route="about">About</x-ui.nav-link>
+                    </li>
+                    <li>
+                        <x-ui.nav-link route="contact">Contact</x-ui.nav-link>
+                    </li>
                 </ul>
-                {{-- Desktop Right --}}
-                <div class="hidden items-center gap-4 lg:flex">
+
+                {{-- Desktop Actions --}}
+                <div class="ml-auto hidden items-center gap-3 lg:flex">
+
                     {{-- Search --}}
-                    <form method="GET" action="{{ route('catalog') }}" class="relative" x-data="{search:@js(request('search','')),focused:false}" role="search">
-                        <div x-cloak :class="focused?'w-40':'w-28'" class="{{ request('search')?'w-40':'w-28' }} flex items-center rounded-full border border-gray-300 transition-all duration-300 focus-within:border-[#AE7C18] focus-within:ring-2 focus-within:ring-[#AE7C18]/10">
-                            <x-heroicon-o-magnifying-glass class="ml-4 h-5 w-5 shrink-0 text-gray-500" aria-hidden="true"/>
-                            <label for="desktop-search" class="sr-only">Search products</label>
-                            <input id="desktop-search" type="text" name="search" x-model="search" @focus="focused=true" @input="focused=search.length>0" placeholder="Search" autocomplete="off" class="search-navbar-input w-full min-w-0 border-0 !border-0 bg-transparent px-3 py-2 text-sm outline-none !outline-none ring-0 !ring-0 shadow-none !shadow-none focus:border-0 focus:!border-0 focus:outline-none focus:!outline-none focus:ring-0 focus:!ring-0 focus:shadow-none focus:!shadow-none active:border-0 active:outline-none active:ring-0 active:shadow-none placeholder:text-gray-500">
-                            <button type="button" x-show="search.length>0" x-cloak @click="search='';focused=false" aria-label="Clear search" class="mr-3 shrink-0 border-0 text-xs font-semibold text-slate-400 transition hover:text-[#AE7C18] focus:border-0 focus:outline-none focus:ring-0">Clear</button>
+                    <form
+                        method="GET"
+                        action="{{ route('catalog') }}"
+                        class="relative"
+                        x-data="{search:@js(request('search','')),focused:false}"
+                        role="search"
+                    >
+                        <div
+                            x-cloak
+                            :class="focused ? 'w-40' : 'w-32'"
+                            class="{{ request('search') ? 'w-40' : 'w-32' }} flex items-center rounded-full border border-gray-300 bg-white/50 transition-all duration-300 focus-within:border-[#AE7C18] focus-within:ring-2 focus-within:ring-[#AE7C18]/10"
+                        >
+                            <x-heroicon-o-magnifying-glass
+                                class="ml-3.5 h-5 w-5 shrink-0 text-gray-500"
+                                aria-hidden="true"
+                            />
+
+                            <label for="desktop-search" class="sr-only">
+                                Search products
+                            </label>
+
+                            <input
+                                id="desktop-search"
+                                type="text"
+                                name="search"
+                                x-model="search"
+                                @focus="focused=true"
+                                @input="focused=search.length>0"
+                                placeholder="Search"
+                                autocomplete="off"
+                                class="search-navbar-input w-full min-w-0 border-0 !border-0 bg-transparent px-2.5 py-2 text-sm outline-none !outline-none ring-0 !ring-0 shadow-none !shadow-none focus:border-0 focus:!border-0 focus:outline-none focus:!outline-none focus:ring-0 focus:!ring-0 focus:shadow-none"
+                            >
+
+                            <button
+                                type="button"
+                                x-show="search.length>0"
+                                x-cloak
+                                @click="search='';focused=false"
+                                aria-label="Clear search"
+                                class="mr-3 shrink-0 border-0 text-xs font-semibold text-slate-400 transition hover:text-[#AE7C18] focus:border-0 focus:outline-none focus:ring-0"
+                            >
+                                Clear
+                            </button>
                         </div>
                     </form>
+
+                    {{-- Check Order --}}
+                    <a
+                        href="{{ route('orders.tracking') }}"
+                        aria-label="Check Order"
+                        title="Cek Pesanan"
+                        class="group relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 transition-all duration-200 hover:bg-[#AE7C18]/10 hover:text-[#AE7C18]"
+                    >
+                        <x-heroicon-o-clipboard-document-list
+                            class="h-5 w-5 transition-transform duration-200 group-hover:-translate-y-0.5"
+                            aria-hidden="true"
+                        />
+
+                        {{-- Tooltip --}}
+                        <span
+                            class="pointer-events-none absolute right-0 top-full z-50 mt-2 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1.5 text-[11px] font-medium text-white opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100"
+                        >
+                            Check Order
+                        </span>
+                    </a>
+
                     {{-- Cart --}}
                     @php $cartCount=collect(session('cart',[]))->sum('qty'); @endphp
-                    <a id="navbar-cart" href="{{ route('cart.index') }}" aria-label="Shopping cart{{ $cartCount>0 ? ', '.$cartCount.' items' : '' }}" class="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#AE7C18] text-white transition hover:bg-[#96690F]">
-                        <x-heroicon-o-shopping-cart class="h-5 w-5" aria-hidden="true"/>
+
+                    <a
+                        id="navbar-cart"
+                        href="{{ route('cart.index') }}"
+                        aria-label="Shopping cart{{ $cartCount>0 ? ', '.$cartCount.' items' : '' }}"
+                        class="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#AE7C18] text-white shadow-sm transition-all duration-200 hover:bg-[#96690F] hover:shadow-md hover:-translate-y-0.5"
+                    >
+                        <x-heroicon-o-shopping-cart
+                            class="h-5 w-5"
+                            aria-hidden="true"
+                        />
+
                         @if($cartCount>0)
-                            <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-sm" aria-hidden="true">{{ $cartCount>99?'99+':$cartCount }}</span>
+                            <span
+                                class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-sm"
+                                aria-hidden="true"
+                            >
+                                {{ $cartCount>99 ? '99+' : $cartCount }}
+                            </span>
                         @endif
                     </a>
                 </div>
+
                 {{-- Mobile Menu Button --}}
-                <button @click="open=true" type="button" aria-label="Open navigation menu" aria-controls="mobile-menu" :aria-expanded="open.toString()" class="lg:hidden rounded-full p-2 text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]">
-                    <x-heroicon-o-bars-3 class="h-8 w-8" aria-hidden="true"/>
+                <button
+                    @click="open=true"
+                    type="button"
+                    aria-label="Open navigation menu"
+                    aria-controls="mobile-menu"
+                    :aria-expanded="open.toString()"
+                    class="ml-auto rounded-full p-2 text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18] lg:hidden"
+                >
+                    <x-heroicon-o-bars-3
+                        class="h-8 w-8"
+                        aria-hidden="true"
+                    />
                 </button>
+
             </nav>
         </x-ui.container>
     </header>

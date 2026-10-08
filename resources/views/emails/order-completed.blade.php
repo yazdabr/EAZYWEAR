@@ -36,7 +36,7 @@
 
                         <div style="font-size:14px; line-height:1.7; color:#555555;">
                             @if ($transaction->shipping_method === 'Ambil di Tempat')
-                                Pesanan Anda telah selesai dan siap untuk diambil.
+                                Pesanan Anda telah selesai.
                                 Silakan ambil pesanan Anda sesuai dengan jadwal pengambilan
                                 yang telah Anda tentukan saat melakukan pemesanan.
                             @else
@@ -68,13 +68,13 @@
 
                                     <div style="margin-top:6px; font-size:13px; line-height:1.6; color:#666666;">
                                         @if ($transaction->shipping_method === 'Ambil di Tempat')
-                                            Pesanan dengan nomor invoice
+                                            Pesanan invoice
                                             <strong style="color:#333333;">
                                                 {{ $transaction->invoice_number }}
                                             </strong>
                                             telah selesai diproses dan siap untuk diambil sesuai dengan jadwal yang telah Anda pilih.
                                         @else
-                                            Pesanan dengan nomor invoice
+                                            Pesanan invoice
                                             <strong style="color:#333333;">
                                                 {{ $transaction->invoice_number }}
                                             </strong>

@@ -898,6 +898,14 @@ document.addEventListener('DOMContentLoaded', function () {
             !isPickup
         );
 
+        // Field pickup hanya aktif dan wajib saat metode Ambil di Tempat.
+        [pickupDateInput, pickupTimeStartInput, pickupTimeEndInput].forEach(
+            function (input) {
+                input.disabled = !isPickup;
+                input.required = isPickup;
+            }
+        );
+
         if (isPickup) {
             /*
              * Terapkan aturan pickup setiap

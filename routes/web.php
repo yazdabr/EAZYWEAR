@@ -45,7 +45,7 @@ Route::post('/checkout', [CheckoutController::class, 'store'])
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
 
 Route::get('/checkout/payment-status', [CheckoutController::class, 'paymentStatus'])
-    ->middleware('throttle:30,1')
+    ->middleware('throttle:60,1')
     ->name('checkout.payment-status');
 
 Route::get('/cek-pesanan', [OrderTrackingController::class, 'index'])

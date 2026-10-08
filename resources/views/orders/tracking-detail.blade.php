@@ -160,7 +160,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                                     @endif
 
                                                     @if($item->custom_number)
-                                                        <span class="text-slate-600 font-medium">
+                                                        <span class="text-[#AE7C18] font-medium">
                                                             No: {{ $item->custom_number }}
                                                         </span>
                                                     @endif

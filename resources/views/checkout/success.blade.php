@@ -385,16 +385,45 @@
             {{-- MODAL PEMBAYARAN BERHASIL --}}
             <div
                 id="payment-success-modal"
-                class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 px-4 backdrop-blur-sm"
+                class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-900/70 px-4 backdrop-blur-md"
             >
                 <div
                     class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl sm:rounded-3xl"
                 >
                     <div class="px-5 py-6 text-center sm:px-8 sm:py-8">
 
-                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 sm:h-20 sm:w-20">
-                            <x-heroicon-o-check class="h-8 w-8 text-emerald-600 sm:h-10 sm:w-10"/>
-                        </div>
+                    <div
+                        id="payment-success-icon"
+                        class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 sm:h-20 sm:w-20"
+                    >
+                        <svg
+                            id="payment-success-loading"
+                            class="h-8 w-8 animate-spin text-emerald-600 sm:h-10 sm:w-10"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                class="opacity-20"
+                                cx="12"
+                                cy="12"
+                                r="9"
+                                stroke="currentColor"
+                                stroke-width="3"
+                            ></circle>
+
+                            <path
+                                class="opacity-90"
+                                fill="currentColor"
+                                d="M12 3a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6V3Z"
+                            ></path>
+                        </svg>
+
+                        <x-heroicon-o-check
+                            id="payment-success-check"
+                            class="hidden h-8 w-8 text-emerald-600 sm:h-10 sm:w-10"
+                        />
+                    </div>
 
                         <p class="mt-5 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 sm:text-xs">
                             PEMBAYARAN BERHASIL
@@ -613,6 +642,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const paymentMethod =
         @json($transaction->payment_method);
 
+    const hidePaymentCountdowns = () => {
+        const countdowns = [
+            document.getElementById('payment-countdown'),
+            document.getElementById('qris-payment-countdown'),
+        ];
+
+        countdowns.forEach((countdown) => {
+            countdown?.classList.add('hidden');
+        });
+    };
+
     const paymentStatusUrl =
         @json(route('checkout.payment-status'));
 
@@ -631,10 +671,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.body.classList.add('overflow-hidden');
 
+            hidePaymentCountdowns();
+
+            const loadingIcon =
+                document.getElementById('payment-success-loading');
+
+            const checkIcon =
+                document.getElementById('payment-success-check');
+
+            loadingIcon?.classList.remove('hidden');
+            checkIcon?.classList.add('hidden');
+
             if (trackingButton) {
                 trackingButton.href =
                     `{{ route('orders.tracking') }}?invoice_number=${encodeURIComponent(invoice)}&email=${encodeURIComponent(email)}`;
             }
+
+            setTimeout(() => {
+                loadingIcon?.classList.add('hidden');
+                checkIcon?.classList.remove('hidden');
+            }, 400);
         };
 
         const hidePaymentSuccess = () => {
@@ -690,6 +746,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ) {
                     clearInterval(paymentStatusInterval);
 
+                    hidePaymentCountdowns();
+
                     if (
                         !sessionStorage.getItem(
                             popupStorageKey
@@ -743,13 +801,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const paymentStatusInterval =
             setInterval(
                 checkPaymentStatus,
-                10000
+                3000
             );
 
         /*
         | Cek sekali langsung saat halaman dibuka.
         */
         checkPaymentStatus();
+
+        document.addEventListener(
+            'visibilitychange',
+            () => {
+                if (!document.hidden) {
+                    checkPaymentStatus();
+                }
+            }
+        );
+
+        window.addEventListener(
+            'focus',
+            checkPaymentStatus
+        );
     }
 
 });

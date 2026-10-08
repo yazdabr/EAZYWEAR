@@ -316,3 +316,192 @@
 
     </div>
 </div>
+@push('scripts')
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('transactionView', () => ({
+        open: false,
+        loading: false,
+        dokuLoading: false,
+
+        transaction: {
+            id: null,
+            invoice: '',
+            date: '',
+            customer: '',
+            phone: '',
+            email: '',
+            address: '',
+            location: '',
+            shippingMethod: '',
+            payment: '',
+            status: 'PENDING',
+            subtotal: 0,
+            discount: 0,
+            shipping: 0,
+            total: 0,
+            items: []
+        },
+
+        formatCurrency(value) {
+            return 'Rp. ' + Number(value || 0).toLocaleString('id-ID');
+        },
+
+        openDrawer(data) {
+            console.log('VIEW TRANSACTION DATA:', data);
+
+            this.transaction = {
+                id: data?.id ?? null,
+                invoice: data?.invoice ?? '',
+                date: data?.date ?? '',
+                customer: data?.customer ?? '',
+                phone: data?.phone ?? data?.customer_phone ?? '-',
+                email: data?.email ?? data?.customer_email ?? '-',
+                address: data?.shipping_address ?? '-',
+                location: [
+                    data?.shipping_district,
+                    data?.shipping_city,
+                    data?.shipping_province,
+                    data?.shipping_postal_code
+                ].filter(Boolean).join(', ') || '-',
+                shippingMethod: data?.shipping_method ?? '-',
+                payment: data?.payment ?? '-',
+                status: String(data?.status ?? 'PENDING').toUpperCase(),
+                subtotal: data?.subtotal ?? 0,
+                discount: data?.discount ?? 0,
+                shipping: data?.shipping ?? 0,
+                total: data?.total ?? 0,
+                items: Array.isArray(data?.items) ? data.items : []
+            };
+
+            console.log('TRANSACTION AFTER OPEN:', this.transaction);
+            this.open = true;
+        },
+
+        isDokuPayment() {
+            const payment = String(this.transaction.payment || '').toUpperCase();
+
+            return payment.includes('VA');
+        },
+
+        async checkDokuPayment() {
+            if (this.dokuLoading || !this.transaction.id) {
+                return;
+            }
+
+            if (['PAID', 'CANCELLED'].includes(this.transaction.status)) {
+                return;
+            }
+
+            const confirmed = window.confirm(
+                'Periksa status pembayaran DOKU untuk transaksi ' +
+                (this.transaction.invoice || '') +
+                '?'
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            this.dokuLoading = true;
+
+            const transactionId = this.transaction.id;
+
+            const url =
+                '/admin/transactions/' +
+                transactionId +
+                '/check-doku-payment';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN':
+                            document.querySelector(
+                                'meta[name="csrf-token"]'
+                            )?.getAttribute('content') || '',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const contentType =
+                    response.headers.get('content-type') || '';
+
+                const responseText = await response.text();
+
+                let data = {};
+
+                if (contentType.includes('application/json')) {
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (error) {
+                        throw new Error('Response JSON tidak valid.');
+                    }
+                }
+
+                if (!response.ok) {
+                    if (response.status === 419) {
+                        throw new Error(
+                            'Sesi telah berakhir. Silakan refresh halaman.'
+                        );
+                    }
+
+                    throw new Error(
+                        data.message ||
+                        'Gagal mengecek pembayaran DOKU.'
+                    );
+                }
+
+                if (data.success === false) {
+                    throw new Error(
+                        data.message ||
+                        'Pembayaran belum berhasil diverifikasi.'
+                    );
+                }
+
+                if (data.status === 'PAID') {
+                    this.transaction.status = 'PAID';
+                }
+
+                window.dispatchEvent(
+                    new CustomEvent('toast', {
+                        detail: {
+                            type: data.success ? 'success' : 'error',
+                            title: data.success
+                                ? 'Pengecekan DOKU'
+                                : 'Pembayaran Belum Berhasil',
+                            message:
+                                data.message ||
+                                'Status pembayaran telah diperiksa.'
+                        }
+                    })
+                );
+
+                if (data.success && data.status === 'PAID') {
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('DOKU Payment Check Error:', error);
+
+                window.dispatchEvent(
+                    new CustomEvent('toast', {
+                        detail: {
+                            type: 'error',
+                            title: 'Gagal Mengecek Pembayaran',
+                            message:
+                                error.message ||
+                                'Terjadi kesalahan saat mengecek pembayaran DOKU.'
+                        }
+                    })
+                );
+            } finally {
+                this.dokuLoading = false;
+            }
+        }
+    }));
+});
+</script>
+@endpush

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Transaction;
+use App\Models\TransactionNotification;
 use App\Mail\PaymentConfirmedMail;
 use App\Models\FulfillmentHold;
 use App\Services\EmailArchiveService;
@@ -88,6 +89,8 @@ class TransactionPaymentService
         }
 
         if ($transaction->status === 'PAID') {
+            $this->sendPaymentConfirmationEmailIfNeeded($transaction->fresh());
+
             return;
         }
 
@@ -136,7 +139,7 @@ class TransactionPaymentService
             "Pembayaran berhasil dikonfirmasi melalui {$source}."
         );
 
-        app(EmailArchiveService::class)->send($transaction->shipping_email, new PaymentConfirmedMail($transaction));
+        $this->sendPaymentConfirmationEmailIfNeeded($transaction->fresh());
 
         Log::info('DOKU PAYMENT PROCESSED', [
             'transaction_id' => $transaction->id,
@@ -145,5 +148,31 @@ class TransactionPaymentService
             'payment_request_id' => $paymentRequestId,
             'amount' => $dokuAmount,
         ]);
+    }
+
+    private function sendPaymentConfirmationEmailIfNeeded(
+        Transaction $transaction
+    ): void {
+        $notification = TransactionNotification::firstOrCreate([
+            'transaction_id' => $transaction->id,
+            'type' => 'PAYMENT_CONFIRMED_EMAIL',
+        ]);
+
+        if ($notification->sent_at !== null) {
+            return;
+        }
+
+        try {
+            app(EmailArchiveService::class)->send(
+                $transaction->shipping_email,
+                new PaymentConfirmedMail($transaction->fresh())
+            );
+
+            $notification->update([
+                'sent_at' => now(),
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }

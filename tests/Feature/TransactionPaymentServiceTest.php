@@ -10,6 +10,9 @@ use App\Models\TransactionItem;
 use App\Services\TransactionPaymentService;
 use App\Models\FulfillmentHold;
 use App\Models\FulfillmentSlot;
+use App\Models\TransactionNotification;
+use App\Mail\PaymentConfirmedMail;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -309,6 +312,124 @@ class TransactionPaymentServiceTest extends TestCase
 
             $this->assertSame('PENDING', $transaction->status);
         }
+    }
+
+    public function test_successful_payment_sends_confirmation_email_and_records_notification(): void
+    {
+        Mail::fake();
+
+        $transaction = $this->createPaymentTransaction();
+
+        app(TransactionPaymentService::class)->processSuccessfulPayment(
+            $transaction,
+            $this->successfulDokuResponse(),
+            'Payment email test'
+        );
+
+        Mail::assertSent(PaymentConfirmedMail::class, 1);
+
+        $notification = TransactionNotification::query()
+            ->where('transaction_id', $transaction->id)
+            ->where('type', 'PAYMENT_CONFIRMED_EMAIL')
+            ->first();
+
+        $this->assertNotNull($notification);
+        $this->assertNotNull($notification->sent_at);
+    }
+
+    public function test_repeated_successful_payment_does_not_send_confirmation_email_twice(): void
+    {
+        Mail::fake();
+
+        $transaction = $this->createPaymentTransaction();
+
+        $service = app(TransactionPaymentService::class);
+
+        $response = $this->successfulDokuResponse();
+
+        $service->processSuccessfulPayment(
+            $transaction,
+            $response,
+            'Payment email idempotency - first'
+        );
+
+        $service->processSuccessfulPayment(
+            $transaction->fresh(),
+            $response,
+            'Payment email idempotency - second'
+        );
+
+        Mail::assertSent(PaymentConfirmedMail::class, 1);
+
+        $this->assertSame(
+            1,
+            TransactionNotification::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('type', 'PAYMENT_CONFIRMED_EMAIL')
+                ->count()
+        );
+    }
+
+    public function test_payment_confirmation_email_can_be_retried_after_failure(): void
+    {
+        $transaction = $this->createPaymentTransaction();
+
+        $service = app(TransactionPaymentService::class);
+
+        /*
+        * Percobaan pertama: email gagal.
+        */
+        Mail::shouldReceive('to')
+            ->once()
+            ->with($transaction->shipping_email)
+            ->andThrow(new \RuntimeException('SMTP test failure'));
+
+        $service->processSuccessfulPayment(
+            $transaction,
+            $this->successfulDokuResponse(),
+            'Payment email retry - first'
+        );
+
+        $notification = TransactionNotification::query()
+            ->where('transaction_id', $transaction->id)
+            ->where('type', 'PAYMENT_CONFIRMED_EMAIL')
+            ->first();
+
+        $this->assertNotNull($notification);
+        $this->assertNull($notification->sent_at);
+
+        /*
+        * Percobaan kedua: email berhasil.
+        */
+        $mailer = \Mockery::mock();
+
+        $mailer
+            ->shouldReceive('send')
+            ->once()
+            ->with(\Mockery::type(PaymentConfirmedMail::class));
+
+        Mail::shouldReceive('to')
+            ->once()
+            ->with($transaction->shipping_email)
+            ->andReturn($mailer);
+
+        $service->processSuccessfulPayment(
+            $transaction->fresh(),
+            $this->successfulDokuResponse(),
+            'Payment email retry - second'
+        );
+
+        $notification->refresh();
+
+        $this->assertNotNull($notification->sent_at);
+
+        $this->assertSame(
+            1,
+            TransactionNotification::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('type', 'PAYMENT_CONFIRMED_EMAIL')
+                ->count()
+        );
     }
 
     public function test_unsuccessful_doku_payment_is_rejected(): void

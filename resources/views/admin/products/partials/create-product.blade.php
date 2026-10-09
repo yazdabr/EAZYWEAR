@@ -13,6 +13,8 @@
         availability:'pre_order',
         customization_enabled:false,
         customization_price:0,
+        longsleeve_enabled:false,
+        longsleeve_price:0,
         price:'',
         stock:'',
         status:'Aktif',
@@ -99,6 +101,23 @@
         if(!this.form.customization_enabled){
             this.form.customization_price=0;
         }
+        if (
+            this.form.longsleeve_enabled &&
+            (
+                this.form.longsleeve_price === '' ||
+                this.form.longsleeve_price === null ||
+                this.form.longsleeve_price === undefined ||
+                !Number.isInteger(Number(this.form.longsleeve_price)) ||
+                Number(this.form.longsleeve_price) < 0
+            )
+        ) {
+            this.errors.longsleeve_price =
+                'Harga tambahan Longsleeve harus berupa angka bulat minimal 0.';
+        }
+
+        if (!this.form.longsleeve_enabled) {
+            this.form.longsleeve_price = 0;
+        }
         if(Object.keys(this.errors).length>0){
             window.dispatchEvent(new CustomEvent('toast',{detail:{type:'error',title:'Data Belum Lengkap',message:'Mohon lengkapi data produk terlebih dahulu.'}}));
             return false;
@@ -144,6 +163,8 @@
             availability:'pre_order',
             customization_enabled:false,
             customization_price:0,
+            longsleeve_enabled:false,
+            longsleeve_price:0,
             price:'',
             stock:'',
             status:'Aktif',
@@ -174,6 +195,17 @@
             customization_price:product?.customization_price!==''&&product?.customization_price!==null&&product?.customization_price!==undefined
                 ? parseInt(product.customization_price)
                 : 0,
+            longsleeve_enabled:
+                product?.longsleeve_enabled === true ||
+                product?.longsleeve_enabled === 1 ||
+                product?.longsleeve_enabled === '1',
+
+            longsleeve_price:
+                product?.longsleeve_price !== '' &&
+                product?.longsleeve_price !== null &&
+                product?.longsleeve_price !== undefined
+                    ? parseInt(product.longsleeve_price)
+                    : 0,
             price:product?.price!==''&&product?.price!==null&&product?.price!==undefined?parseInt(product.price):'',
             stock:product?.stock!==''&&product?.stock!==null&&product?.stock!==undefined?parseInt(product.stock):'',
             status:product?.status===true||product?.status===1||product?.status==='1'?'Aktif':'Tidak Aktif',
@@ -278,6 +310,114 @@
                     </template>
                 </div>
             </div>
+
+            {{-- OPSI LONGSLEEVE --}}
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                <div class="mb-4 flex items-start gap-3 sm:mb-6 sm:gap-4">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 sm:h-11 sm:w-11">
+                        <x-heroicon-o-clipboard-document-list class="h-5 w-5 text-blue-600" />
+                    </div>
+
+                    <div>
+                        <h3 class="text-base font-semibold text-slate-900">
+                            Opsi Longsleeve
+                        </h3>
+                        <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">
+                            Tentukan apakah pelanggan dapat memilih jersey lengan panjang.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div class="pr-4">
+                        <p class="text-sm font-semibold text-slate-800">
+                            Izinkan Longsleeve
+                        </p>
+                        <p class="mt-1 text-xs leading-5 text-slate-500">
+                            Pelanggan dapat memilih opsi Longsleeve saat membeli produk ini.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        role="switch"
+                        :aria-checked="form.longsleeve_enabled"
+                        @click="form.longsleeve_enabled = !form.longsleeve_enabled"
+                        :class="form.longsleeve_enabled ? 'bg-[#AE7C18]' : 'bg-slate-300'"
+                        class="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+                    >
+                        <span
+                            :class="form.longsleeve_enabled ? 'translate-x-6' : 'translate-x-1'"
+                            class="inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                        ></span>
+                    </button>
+                </div>
+
+                <input
+                    type="hidden"
+                    name="longsleeve_enabled"
+                    :value="form.longsleeve_enabled ? 1 : 0"
+                >
+
+                <div
+                    x-show="form.longsleeve_enabled"
+                    x-cloak
+                    x-transition
+                    class="mt-4"
+                >
+                    <label
+                        for="longsleeve-price"
+                        class="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                        Harga Tambahan Longsleeve
+                    </label>
+
+                    <div class="relative">
+                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-sm font-semibold text-slate-500">
+                            Rp
+                        </span>
+
+                        <input
+                            id="longsleeve-price"
+                            type="number"
+                            min="0"
+                            step="1"
+                            name="longsleeve_price"
+                            x-model="form.longsleeve_price"
+                            placeholder="150000"
+                            :class="errors.longsleeve_price
+                                ? 'border-red-400 focus:border-red-500 focus:ring-red-500/10'
+                                : 'border-slate-200 focus:border-[#AE7C18] focus:ring-[#AE7C18]/20'"
+                            class="h-[50px] w-full rounded-xl border bg-white pl-12 pr-4 text-sm font-medium text-slate-700 transition-all duration-200 focus:outline-none focus:ring-2"
+                        >
+                    </div>
+
+                    <template x-if="errors.longsleeve_price">
+                        <p
+                            class="mt-1.5 text-xs text-red-500"
+                            x-text="errors.longsleeve_price"
+                        ></p>
+                    </template>
+
+                    <p class="mt-1.5 text-xs text-slate-400">
+                        Biaya tambahan dikenakan untuk setiap item yang dipilih sebagai Longsleeve.
+                    </p>
+                </div>
+
+                <div
+                    x-show="!form.longsleeve_enabled"
+                    x-cloak
+                    class="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                >
+                    <p class="text-xs font-semibold text-slate-600">
+                        Longsleeve tidak tersedia
+                    </p>
+                    <p class="mt-1 text-xs leading-5 text-slate-500">
+                        Pelanggan hanya dapat membeli produk dengan opsi standar.
+                    </p>
+                </div>
+            </div>
+
             {{-- CUSTOM NAMA & NOMOR --}}
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="mb-4 flex items-start gap-3 sm:mb-6 sm:gap-4">

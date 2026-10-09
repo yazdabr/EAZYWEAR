@@ -112,6 +112,8 @@ class TransactionController extends Controller
                         'size' => $variant?->size?->name ?? '-',
                         'custom_name' => $item->custom_name ?? '',
                         'custom_number' => $item->custom_number ?? '',
+                        'is_longsleeve' => (bool) $item->is_longsleeve,
+                        'longsleeve_price' => (int) $item->longsleeve_price,
                         'qty' => (int) $item->qty,
                         'price' => (float) $item->price,
                         'subtotal' => (float) $item->subtotal,

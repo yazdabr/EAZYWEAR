@@ -1182,6 +1182,126 @@ class CheckoutControllerTest extends TestCase
         ]);
     }
 
+    private function longsleeveCheckout(
+        ProductVariant $variant,
+        string $email,
+        bool $isLongsleeve = true,
+        bool $expectCourierRates = true,
+        bool $expectPayment = true
+    ) {
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+                'is_longsleeve' => $isLongsleeve,
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) use ($expectCourierRates) {
+            $expectation = $mock->shouldReceive('getCourierRates');
+
+            if ($expectCourierRates) {
+                $expectation->once();
+            } else {
+                $expectation->never();
+            }
+
+            $expectation->andReturn([
+                    'success' => true,
+                    'rates' => [[
+                        'courier_code' => 'jnt',
+                        'courier_name' => 'J&T',
+                        'service_code' => 'ez',
+                        'service_name' => 'EZ',
+                        'price' => 8000,
+                        'duration' => '2-3 days',
+                        'service_type' => 'standard',
+                        'shipping_type' => 'parcel',
+                    ]],
+                    'raw' => [],
+                ]);
+        });
+
+        if ($expectPayment) {
+            $this->mockDokuSuccess();
+        }
+
+        return $this->post(route('checkout.store'), [
+            'name' => 'Longsleeve Test',
+            'email' => $email,
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+    }
+
+    public function test_checkout_longsleeve_on_uses_database_fee_once(): void
+    {
+        $variant = $this->customizationVariant(false, 0);
+
+        $variant->product->update([
+            'longsleeve_enabled' => true,
+            'longsleeve_price' => 150000,
+        ]);
+
+        $variant = $variant->fresh(['product']);
+
+        $response = $this->longsleeveCheckout(
+            $variant,
+            'longsleeve-on@test.com'
+        );
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'longsleeve-on@test.com')
+            ->latest('id')
+            ->firstOrFail();
+
+        $item = $transaction->items()->firstOrFail();
+        $expectedPrice = (float) $variant->price + 150000;
+
+        $this->assertSame($expectedPrice, (float) $item->price);
+        $this->assertSame($expectedPrice, (float) $item->subtotal);
+        $this->assertSame($expectedPrice, (float) $transaction->subtotal);
+        $this->assertTrue((bool) $item->is_longsleeve);
+        $this->assertSame(150000, (int) $item->longsleeve_price);
+    }
+
+    public function test_checkout_rejects_longsleeve_for_disabled_product(): void
+    {
+        $variant = $this->customizationVariant(false, 0);
+
+        $variant->product->update([
+            'longsleeve_enabled' => false,
+            'longsleeve_price' => 150000,
+        ]);
+
+        $response = $this->longsleeveCheckout(
+            $variant->fresh(['product']),
+            'longsleeve-disabled@test.com',
+            true,
+            false,
+            false
+        );
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseMissing('transactions', [
+            'shipping_email' => 'longsleeve-disabled@test.com',
+        ]);
+    }
     public function test_checkout_custom_off_without_input_has_no_fee(): void
     {
         $variant = $this->customizationVariant(false, 125000);

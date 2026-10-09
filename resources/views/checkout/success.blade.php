@@ -64,6 +64,14 @@
                                         @if(!empty($item->custom_number))
                                             <p class="mt-0.5 text-[11px] font-bold tracking-wide text-slate-700 sm:text-sm">Nomor Punggung: {{ $item->custom_number }}</p>
                                         @endif
+                                        @if($item->is_longsleeve)
+                                            <p class="mt-1 text-[11px] font-bold tracking-wide text-[#AE7C18] sm:text-sm">
+                                                Longsleeve
+                                                <span class="font-medium text-gray-500">
+                                                    (+ Rp {{ number_format((int) $item->longsleeve_price, 0, ',', '.') }})
+                                                </span>
+                                            </p>
+                                        @endif
                                     </div>
                                     <p class="shrink-0 font-bold text-slate-900">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</p>
                                 </div>

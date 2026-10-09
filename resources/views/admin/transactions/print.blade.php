@@ -135,6 +135,25 @@
                 <p class="mt-1 text-xs font-semibold text-slate-700">
                     Pengiriman: {{ $transaction->shipping_method ?? '-' }}
                 </p>
+                @if(
+                    $transaction->shipping_method === 'Ambil di Tempat' &&
+                    $transaction->pickup_date &&
+                    $transaction->pickup_time_start &&
+                    $transaction->pickup_time_end
+                )
+                    <div class="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                            Jadwal Pengambilan
+                        </p>
+                        <p class="mt-1 text-xs font-bold text-slate-900">
+                            {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}
+                        </p>
+                        <p class="mt-0.5 text-xs text-slate-700">
+                            {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}
+                            – {{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
+                        </p>
+                    </div>
+                @endif
             </div>
 
             <div class="bg-slate-50/80 rounded-2xl p-5 border border-slate-100 flex flex-col justify-between">
@@ -201,6 +220,20 @@
                                         @if($item->custom_name)
                                             <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-[#AE7C18]">
                                                 Nama Jersey: {{ $item->custom_name }}
+                                            </p>
+                                        @endif
+                                        @if($item->custom_number)
+                                            <p class="mt-1 text-xs font-semibold text-slate-600">
+                                                Nomor Punggung: {{ $item->custom_number }}
+                                            </p>
+                                        @endif
+
+                                        @if($item->is_longsleeve)
+                                            <p class="mt-1 text-xs font-semibold text-[#AE7C18]">
+                                                Longsleeve
+                                                <span class="font-normal text-slate-500">
+                                                    (+ Rp {{ number_format((int) $item->longsleeve_price, 0, ',', '.') }})
+                                                </span>
                                             </p>
                                         @endif
                                     </div>

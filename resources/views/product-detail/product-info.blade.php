@@ -176,6 +176,16 @@
                             customizationEnabled: @js((bool) $product->customization_enabled),
                             customizationPrice: @js((int) $product->customization_price),
 
+                            longsleeveEnabled: @js((bool) $product->longsleeve_enabled),
+                            longsleevePrice: @js((int) $product->longsleeve_price),
+                            isLongsleeve: false,
+
+                            get longsleeveFee() {
+                                return this.longsleeveEnabled && this.isLongsleeve
+                                    ? Number(this.longsleevePrice) || 0
+                                    : 0;
+                            },
+
                             get hasCustomization() {
                                 return this.customName.trim() !== '' || this.customNumber.trim() !== '';
                             },
@@ -189,7 +199,9 @@
                             },
 
                             get finalPrice() {
-                                return Number(this.selectedPrice) + this.customizationFee;
+                                return Number(this.selectedPrice)
+                                    + this.customizationFee
+                                    + this.longsleeveFee;
                             }
                         }"
                     >
@@ -341,6 +353,37 @@
                             </div>
                         </div>
 
+                        {{-- LONGSLEEVE OPTION --}}
+                        <div
+                            x-show="longsleeveEnabled"
+                            x-cloak
+                            class="mt-5 rounded-2xl border border-slate-200 bg-white p-4 sm:mt-6 sm:p-5"
+                        >
+                            <label class="flex cursor-pointer items-start gap-3">
+                            <input
+                                type="checkbox"
+                                x-model="isLongsleeve"
+                                class="mt-1 h-4 w-4 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]"
+                            >
+                                <span class="min-w-0 flex-1">
+                                    <span class="flex items-center justify-between gap-3">
+                                        <span class="text-sm font-bold text-slate-900">
+                                            Longsleeve
+                                        </span>
+
+                                        <span class="shrink-0 text-sm font-bold text-[#AE7C18]">
+                                            + Rp <span x-text="Number(longsleevePrice).toLocaleString('id-ID')"></span>
+                                        </span>
+                                    </span>
+
+                                    <span class="mt-1 block text-xs leading-relaxed text-slate-500">
+                                        Pilih opsi ini jika ingin jersey dengan lengan panjang.
+                                        Biaya tambahan berlaku untuk setiap item.
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+
                     {{-- SELECTED PRICE --}}
                     <div class="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-3.5 sm:mt-4 sm:p-4">
 
@@ -367,6 +410,21 @@
                             <span
                                 class="font-semibold text-[#AE7C18]"
                                 x-text="'+ Rp ' + Number(customizationFee).toLocaleString('id-ID')"
+                            ></span>
+                        </div>
+
+                        <div
+                            x-show="longsleeveFee > 0"
+                            x-transition
+                            class="mt-2 flex items-center justify-between gap-3 border-t border-slate-200 pt-2 text-xs sm:text-sm"
+                        >
+                            <span class="text-gray-500">
+                                Longsleeve
+                            </span>
+
+                            <span
+                                class="font-semibold text-[#AE7C18]"
+                                x-text="'+ Rp ' + Number(longsleeveFee).toLocaleString('id-ID')"
                             ></span>
                         </div>
 
@@ -414,6 +472,12 @@
                                 type="hidden"
                                 name="custom_number"
                                 :value="customNumber"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="is_longsleeve"
+                                :value="isLongsleeve ? 1 : 0"
                             >
 
                             <button

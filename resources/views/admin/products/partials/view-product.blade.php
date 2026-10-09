@@ -12,6 +12,8 @@
         material:'',
         customization_enabled:false,
         customization_price:0,
+        longsleeve_enabled:false,
+        longsleeve_price:0,
         price:0,
         stock:0,
         status:'Aktif',
@@ -44,6 +46,12 @@
             material:data?.material??'',
             customization_enabled:data?.customization_enabled===true||data?.customization_enabled===1||data?.customization_enabled==='1',
             customization_price:Number(data?.customization_price??0),
+            longsleeve_enabled:
+                data?.longsleeve_enabled === true ||
+                data?.longsleeve_enabled === 1 ||
+                data?.longsleeve_enabled === '1',
+
+            longsleeve_price: Number(data?.longsleeve_price ?? 0),
             price:Number(data?.price??0),
             stock:Number(data?.stock??0),
             status:data?.status??'Aktif',
@@ -70,6 +78,8 @@
             material:this.product.material,
             customization_enabled:this.product.customization_enabled,
             customization_price:Number(this.product.customization_price??0),
+            longsleeve_enabled: this.product.longsleeve_enabled,
+            longsleeve_price: Number(this.product.longsleeve_price ?? 0),
             price:Number(this.product.price??0),
             stock:Number(this.product.stock??0),
             status:this.product.status==='Aktif',
@@ -251,6 +261,41 @@ x-on:open-view-product.window="openView($event.detail)"
                         <span
                             class="font-bold text-[#AE7C18]"
                             x-text="'Rp ' + Number(product.customization_price || 0).toLocaleString('id-ID')"
+                        ></span>
+                    </div>
+                    {{-- LONGSLEEVE --}}
+                    <div class="flex items-center justify-between gap-4 border-t border-slate-200/60 pt-2.5">
+                        <span class="text-slate-500">Longsleeve</span>
+
+                        <span
+                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                            :class="product.longsleeve_enabled
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-slate-100 text-slate-500'"
+                        >
+                            <span
+                                class="h-1.5 w-1.5 rounded-full"
+                                :class="product.longsleeve_enabled
+                                    ? 'bg-emerald-500'
+                                    : 'bg-slate-400'"
+                            ></span>
+
+                            <span
+                                x-text="product.longsleeve_enabled ? 'Tersedia' : 'Tidak Tersedia'"
+                            ></span>
+                        </span>
+                    </div>
+
+                    <div
+                        x-show="product.longsleeve_enabled"
+                        x-cloak
+                        class="flex items-center justify-between gap-4 border-t border-slate-200/60 pt-2.5"
+                    >
+                        <span class="text-slate-500">Biaya Longsleeve</span>
+
+                        <span
+                            class="font-bold text-[#AE7C18]"
+                            x-text="'Rp ' + Number(product.longsleeve_price || 0).toLocaleString('id-ID')"
                         ></span>
                     </div>
                 </div>

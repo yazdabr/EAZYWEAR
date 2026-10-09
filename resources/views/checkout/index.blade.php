@@ -279,6 +279,20 @@
                                             @if(!empty($item['custom_number']))
                                                 <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-700 sm:text-[11px]">Nomor Punggung: {{ $item['custom_number'] }}</p>
                                             @endif
+                                            @if(!empty($item['is_longsleeve']))
+                                                <div class="mt-1">
+                                                    <p class="text-[10px] font-semibold text-[#AE7C18] sm:text-[11px]">
+                                                        Longsleeve
+                                                    </p>
+                                                    <p class="text-[10px] text-gray-500 sm:text-[11px]">
+                                                        Biaya tambahan:
+                                                        Rp {{ number_format((int) ($item['longsleeve_price'] ?? 0), 0, ',', '.') }}
+                                                        @if((int) $item['qty'] > 1)
+                                                            / item
+                                                        @endif
+                                                    </p>
+                                                </div>
+                                            @endif
                                             <p class="mt-0.5 text-xs font-semibold text-[#AE7C18] sm:text-sm">Rp {{ number_format($item['price'] * $item['qty'], 0, ',', '.') }}</p>
                                         </div>
                                     </div>

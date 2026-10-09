@@ -26,6 +26,7 @@ class CartController extends Controller
             'qty' => ['required', 'integer', 'min:1'],
             'custom_name' => ['nullable', 'string', 'max:20', 'regex:/^[\pL\s]+$/u'],
             'custom_number' => ['nullable', 'string', 'max:2', 'regex:/^[0-9]{1,2}$/'],
+            'is_longsleeve' => ['sometimes', 'boolean'],
         ], [
             'custom_name.max' => 'Nama jersey maksimal 20 karakter.',
             'custom_name.regex' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
@@ -46,6 +47,20 @@ class CartController extends Controller
 
         abort_unless($variant->product?->status, 404);
 
+        $isLongsleeve = (bool) ($validated['is_longsleeve'] ?? false);
+        $longsleeveEnabled = (bool) $variant->product->longsleeve_enabled;
+
+        if ($isLongsleeve && !$longsleeveEnabled) {
+            return back()->with(
+                'error',
+                'Produk ini tidak menyediakan pilihan Longsleeve.'
+            );
+        }
+
+        $longsleeveFee = $isLongsleeve
+            ? (int) $variant->product->longsleeve_price
+            : 0;
+
         $stock = (int) ($variant->inventory?->stock ?? 0);
 
         if ($stock <= 0) {
@@ -55,7 +70,9 @@ class CartController extends Controller
         $cart = $request->session()->get('cart', []);
 
         $cartKey = $variant->id . '-' . sha1(
-            mb_strtolower($customName) . '|' . $customNumber
+            mb_strtolower($customName) . '|' .
+            $customNumber . '|' .
+            (int) $isLongsleeve
         );
 
         $currentQty = $cart[$cartKey]['qty'] ?? 0;
@@ -90,7 +107,9 @@ class CartController extends Controller
             ? (int) $variant->product->customization_price
             : 0;
 
-        $price = (float) $variant->price + $customizationFee;
+        $price = (float) $variant->price
+            + $customizationFee
+            + $longsleeveFee;
 
         $thumbnail = $variant->product->images
             ->where('is_thumbnail', true)
@@ -120,6 +139,8 @@ class CartController extends Controller
             'image' => $image,
             'custom_name' => $customName,
             'custom_number' => $customNumber,
+            'is_longsleeve' => $isLongsleeve,
+            'longsleeve_price' => $longsleeveFee,
         ];
 
         $request->session()->put('cart', $cart);

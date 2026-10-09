@@ -45,6 +45,8 @@ class ProductControllerTest extends TestCase
 
             'customization_enabled' => 1,
             'customization_price' => 150000,
+            'longsleeve_enabled' => 0,
+            'longsleeve_price' => 0,
 
             'size_ids' => [
                 $size->id,
@@ -67,6 +69,8 @@ class ProductControllerTest extends TestCase
         $payload = $this->storePayload([
             'customization_enabled' => 1,
             'customization_price' => 150000,
+            'longsleeve_enabled' => 0,
+            'longsleeve_price' => 0,
         ]);
 
         $response = $this
@@ -86,6 +90,8 @@ class ProductControllerTest extends TestCase
             'id' => $productId,
             'customization_enabled' => 1,
             'customization_price' => 150000,
+            'longsleeve_enabled' => 0,
+            'longsleeve_price' => 0,
         ]);
     }
 
@@ -96,6 +102,8 @@ class ProductControllerTest extends TestCase
         $payload = $this->storePayload([
             'customization_enabled' => 0,
             'customization_price' => 150000,
+            'longsleeve_enabled' => 0,
+            'longsleeve_price' => 0,
         ]);
 
         $response = $this
@@ -133,6 +141,8 @@ class ProductControllerTest extends TestCase
             'status' => true,
             'customization_enabled' => true,
             'customization_price' => 150000,
+            'longsleeve_enabled' => 0,
+            'longsleeve_price' => 0,
         ]);
 
         $response = $this

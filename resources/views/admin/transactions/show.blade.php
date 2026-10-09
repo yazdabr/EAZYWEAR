@@ -148,6 +148,14 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 <p class="mt-0.5 text-xs text-slate-500">Ukuran: {{ $item->productVariant?->size?->name ?? '-' }}</p>
                                 @if($item->custom_name)<p class="text-xs text-[#AE7C18]">Nama: {{ $item->custom_name }}</p>@endif
                                 @if($item->custom_number)<p class="text-xs text-slate-600">Nomor: {{ $item->custom_number }}</p>@endif
+                                @if($item->is_longsleeve)
+                                    <p class="mt-1 text-xs font-semibold text-[#AE7C18]">
+                                        Longsleeve
+                                        <span class="font-normal text-slate-500">
+                                            (+ Rp {{ number_format((int) $item->longsleeve_price, 0, ',', '.') }})
+                                        </span>
+                                    </p>
+                                @endif
                             </div>
 
                             <div class="text-right shrink-0">

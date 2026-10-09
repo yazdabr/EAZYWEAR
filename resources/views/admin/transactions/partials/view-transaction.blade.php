@@ -129,6 +129,13 @@
                                             <span class="rounded bg-slate-900/10 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700" x-text="'No: ' + item.custom_number"></span>
                                         </template>
 
+                                        <template x-if="item.is_longsleeve">
+                                            <span class="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                                                Longsleeve
+                                                <span x-text="'(+' + formatCurrency(item.longsleeve_price) + '/pcs)'"></span>
+                                            </span>
+                                        </template>
+
                                         <span class="ml-auto text-[11px] font-semibold text-slate-500" x-text="(item.qty || 0) + ' pcs'"></span>
                                     </div>
                                 </div>
@@ -164,14 +171,20 @@
 
                                             <div class="min-w-0">
                                                 <p class="font-semibold text-slate-900 truncate" x-text="item.name || '-'"></p>
-
                                                 <div class="mt-0.5 flex flex-wrap gap-1">
                                                     <template x-if="item.custom_name">
-                                                        <span class="inline-block text-[10px] font-semibold uppercase text-[#AE7C18]" x-text="'Nama: ' + item.custom_name"></span>
+                                                        <span class="inline-block text-[10px] font-semibold uppercase text-[#AE7C18]"
+                                                            x-text="'Nama: ' + item.custom_name"></span>
                                                     </template>
 
                                                     <template x-if="item.custom_number">
-                                                        <span class="inline-block text-[10px] font-semibold text-slate-500" x-text="'| No: ' + item.custom_number"></span>
+                                                        <span class="inline-block text-[10px] font-semibold text-slate-500"
+                                                            x-text="'| No: ' + item.custom_number"></span>
+                                                    </template>
+
+                                                    <template x-if="item.is_longsleeve">
+                                                        <span class="inline-block text-[10px] font-semibold text-amber-700"
+                                                            x-text="'| Longsleeve (+' + formatCurrency(item.longsleeve_price) + '/pcs)'"></span>
                                                     </template>
                                                 </div>
                                             </div>

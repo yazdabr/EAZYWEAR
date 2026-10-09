@@ -21,6 +21,8 @@ class TransactionItem extends Model
         'weight',
         'stock_deducted_at',
         'stock_restored_at',
+        'is_longsleeve',
+        'longsleeve_price',
     ];
 
     protected $casts = [
@@ -30,6 +32,8 @@ class TransactionItem extends Model
         'weight' => 'integer',
         'stock_deducted_at' => 'datetime',
         'stock_restored_at' => 'datetime',
+        'is_longsleeve' => 'boolean',
+        'longsleeve_price' => 'integer',
     ];
 
     public function transaction(): BelongsTo

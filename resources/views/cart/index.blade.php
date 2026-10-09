@@ -45,6 +45,17 @@
                                     <div>
                                         <h2 class="text-sm font-bold text-slate-900 sm:text-lg">{{ $item['product_name'] }}</h2>
                                         <p class="text-xs text-gray-500 sm:text-sm">Size: {{ $item['size_name'] }}</p>
+                                        @if(!empty($item['is_longsleeve']))
+                                            <div class="mt-2">
+                                                <span class="inline-flex items-center rounded-full border border-[#AE7C18]/30 bg-[#AE7C18]/10 px-2.5 py-1 text-[10px] font-semibold text-[#AE7C18] sm:text-xs">
+                                                    Longsleeve
+                                                </span>
+                                                <p class="mt-1 text-xs text-gray-500">
+                                                    Biaya tambahan:
+                                                    Rp {{ number_format((int) ($item['longsleeve_price'] ?? 0), 0, ',', '.') }}
+                                                </p>
+                                            </div>
+                                        @endif
                                         @if(!empty($item['custom_name']) || !empty($item['custom_number']))
                                             <div class="mt-2 space-y-1.5">
                                                 @if(!empty($item['custom_name']))

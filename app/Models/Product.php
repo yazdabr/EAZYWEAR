@@ -22,12 +22,16 @@ class Product extends Model
         'status',
         'customization_enabled',
         'customization_price',
+        'longsleeve_enabled',
+        'longsleeve_price',
     ];
 
     protected $casts = [
         'status' => 'boolean',
         'customization_enabled' => 'boolean',
         'customization_price' => 'integer',
+        'longsleeve_enabled' => 'boolean',
+        'longsleeve_price' => 'integer',
     ];
     public function category(): BelongsTo
     {

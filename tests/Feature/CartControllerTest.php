@@ -198,4 +198,111 @@ class CartControllerTest extends TestCase
 
         $this->assertEmpty(session('cart', []));
     }
+
+    public function test_longsleeve_on_applies_database_fee(): void
+    {
+        $variant = $this->activeVariant();
+
+        $variant->product->update([
+            'longsleeve_enabled' => true,
+            'longsleeve_price' => 150000,
+        ]);
+
+        $response = $this->post(
+            route('cart.add'),
+            $this->addPayload($variant, [
+                'is_longsleeve' => 1,
+            ])
+        );
+
+        $response->assertRedirect();
+
+        $cart = session('cart');
+        $this->assertCount(1, $cart);
+
+        $item = array_values($cart)[0];
+
+        $this->assertSame(
+            (float) $variant->price + 150000,
+            (float) $item['price']
+        );
+
+        $this->assertTrue((bool) $item['is_longsleeve']);
+        $this->assertSame(150000, (int) $item['longsleeve_price']);
+    }
+
+    public function test_longsleeve_on_for_disabled_product_is_rejected(): void
+    {
+        $variant = $this->activeVariant();
+
+        $variant->product->update([
+            'longsleeve_enabled' => false,
+            'longsleeve_price' => 150000,
+        ]);
+
+        $response = $this->post(
+            route('cart.add'),
+            $this->addPayload($variant, [
+                'is_longsleeve' => 1,
+            ])
+        );
+
+        $response->assertRedirect();
+        $this->assertEmpty(session('cart', []));
+    }
+
+    public function test_regular_and_longsleeve_choices_create_separate_cart_items(): void
+    {
+        $variant = $this->activeVariant();
+
+        $variant->product->update([
+            'longsleeve_enabled' => true,
+            'longsleeve_price' => 150000,
+        ]);
+
+        $regularResponse = $this->post(
+            route('cart.add'),
+            $this->addPayload($variant, [
+                'is_longsleeve' => 0,
+            ])
+        );
+
+        $regularResponse->assertRedirect();
+
+        $longsleeveResponse = $this->post(
+            route('cart.add'),
+            $this->addPayload($variant, [
+                'is_longsleeve' => 1,
+            ])
+        );
+
+        $longsleeveResponse->assertRedirect();
+
+        $cart = session('cart');
+
+        $this->assertCount(2, $cart);
+
+        $items = array_values($cart);
+
+        $regularItem = collect($items)->first(
+            fn ($item) => !(bool) ($item['is_longsleeve'] ?? false)
+        );
+
+        $longsleeveItem = collect($items)->first(
+            fn ($item) => (bool) ($item['is_longsleeve'] ?? false)
+        );
+
+        $this->assertNotNull($regularItem);
+        $this->assertNotNull($longsleeveItem);
+
+        $this->assertSame(
+            (float) $variant->price,
+            (float) $regularItem['price']
+        );
+
+        $this->assertSame(
+            (float) $variant->price + 150000,
+            (float) $longsleeveItem['price']
+        );
+    }
 }

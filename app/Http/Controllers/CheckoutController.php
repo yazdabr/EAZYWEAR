@@ -121,7 +121,23 @@ class CheckoutController extends Controller
                         ? (int) $variant->product->customization_price
                         : 0;
 
-                    $itemValue = (float) $variant->price + $customizationFee;
+                    $isLongsleeve = (bool) ($cartItem['is_longsleeve'] ?? false);
+                    $longsleeveEnabled = (bool) $variant->product->longsleeve_enabled;
+
+                    if ($isLongsleeve && ! $longsleeveEnabled) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Pilihan Longsleeve untuk produk ini sudah tidak tersedia.',
+                        ], 422);
+                    }
+
+                    $longsleeveFee = $isLongsleeve
+                        ? (int) $variant->product->longsleeve_price
+                        : 0;
+
+                    $itemValue = (float) $variant->price
+                        + $customizationFee
+                        + $longsleeveFee;
 
                     $items[] = [
                         'name' => $variant->product->name,
@@ -415,7 +431,22 @@ class CheckoutController extends Controller
                         ? (int) $variant->product->customization_price
                         : 0;
 
-                    $price = (float) $variant->price + $customizationFee;
+                    $isLongsleeve = (bool) ($cartItem['is_longsleeve'] ?? false);
+                    $longsleeveEnabled = (bool) $variant->product->longsleeve_enabled;
+
+                    if ($isLongsleeve && ! $longsleeveEnabled) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Pilihan Longsleeve untuk produk ini sudah tidak tersedia.',
+                        ]);
+                    }
+
+                    $longsleeveFee = $isLongsleeve
+                        ? (int) $variant->product->longsleeve_price
+                        : 0;
+
+                    $price = (float) $variant->price
+                        + $customizationFee
+                        + $longsleeveFee;
 
                     $itemSubtotal = $price * $qty;
                     $subtotal += $itemSubtotal;
@@ -428,6 +459,8 @@ class CheckoutController extends Controller
                         'subtotal' => $itemSubtotal,
                         'custom_name' => $customName,
                         'custom_number' => $customNumber,
+                        'is_longsleeve' => $isLongsleeve,
+                        'longsleeve_price' => $longsleeveFee,
                     ];
                 }
 
@@ -554,6 +587,8 @@ class CheckoutController extends Controller
                         'product_variant_id' => $item['variant']->id,
                         'custom_name' => $item['custom_name'],
                         'custom_number' => $item['custom_number'],
+                        'is_longsleeve' => $item['is_longsleeve'],
+                        'longsleeve_price' => $item['longsleeve_price'],
                         'qty' => $item['qty'],
                         'price' => $item['price'],
                         'subtotal' => $item['subtotal'],

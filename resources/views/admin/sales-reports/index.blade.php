@@ -185,7 +185,7 @@
     </div>
 
     {{-- STATISTIK --}}
-    <div class="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-4">
+    <div class="grid grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-2">
 
         {{-- Total Transaksi --}}
         <div class="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-sm flex flex-col justify-between">
@@ -419,7 +419,7 @@
 
         {{-- Mobile View: Card List untuk Transaksi --}}
         <div class="divide-y divide-slate-100 sm:hidden">
-            @forelse($transactions as $transaction)
+            @forelse($paginatedTransactions as $transaction)
                 <div class="p-3.5 space-y-2.5">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-900 font-mono">{{ $transaction->invoice_number }}</span>
@@ -467,12 +467,13 @@
                         <th class="whitespace-nowrap px-6 py-4 text-right">Total</th>
                     </tr>
                 </thead>
-
                 <tbody class="divide-y divide-slate-200">
-                    @forelse($transactions as $transaction)
+                    @forelse($paginatedTransactions as $transaction)
                         <tr class="transition hover:bg-slate-50">
                             <td class="whitespace-nowrap px-6 py-5">
-                                <span class="text-sm font-semibold text-slate-900">{{ $transaction->invoice_number }}</span>
+                                <span class="text-sm font-semibold text-slate-900">
+                                    {{ $transaction->invoice_number }}
+                                </span>
                             </td>
 
                             <td class="whitespace-nowrap px-6 py-5">
@@ -483,27 +484,11 @@
 
                             <td class="whitespace-nowrap px-6 py-5">
                                 <div>
-                                    <p class="text-sm font-semibold text-slate-900">{{ $transaction->customer?->name ?? '-' }}</p>
+                                    <p class="text-sm font-semibold text-slate-900">
+                                        {{ $transaction->customer?->name ?? '-' }}
+                                    </p>
                                     <p class="mt-0.5 text-xs text-slate-400">Pelanggan</p>
                                 </div>
-                            </td>
-
-                            <td class="whitespace-nowrap px-6 py-5 text-center">
-                                @php
-                                    $payment = strtoupper($transaction->payment_method ?? '');
-                                @endphp
-
-                                @if($payment === 'CASH')
-                                    <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">CASH</span>
-                                @elseif($payment === 'QRIS')
-                                    <span class="inline-flex rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700">QRIS</span>
-                                @elseif(in_array($payment,['TRANSFER','TRANSFER_BANK','BANK_TRANSFER']))
-                                    <span class="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">Transfer Bank</span>
-                                @elseif($payment === 'EDC')
-                                    <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">EDC</span>
-                                @else
-                                    <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{{ $transaction->payment_method ?? '-' }}</span>
-                                @endif
                             </td>
 
                             <td class="whitespace-nowrap px-6 py-5 text-center">
@@ -511,14 +496,16 @@
                             </td>
 
                             <td class="whitespace-nowrap px-6 py-5 text-right">
-                                <span class="text-sm font-semibold text-slate-900">Rp{{ number_format($transaction->total,0,',','.') }}</span>
+                                <span class="text-sm font-semibold text-slate-900">
+                                    Rp{{ number_format($transaction->total, 0, ',', '.') }}
+                                </span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center">
+                            <td colspan="5" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center justify-center">
-                                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 mb-2">
+                                    <div class="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
                                         <x-heroicon-o-receipt-percent class="h-6 w-6 text-slate-400"/>
                                     </div>
                                     <p class="text-sm text-slate-400">Belum ada data transaksi.</p>
@@ -529,6 +516,12 @@
                 </tbody>
             </table>
         </div>
+        {{-- PAGINATION: DESKTOP DAN MOBILE --}}
+        @if($paginatedTransactions->hasPages())
+            <div class="border-t border-slate-200 px-4 py-4 sm:px-6">
+                {{ $paginatedTransactions->links() }}
+            </div>
+        @endif        
     </div>
 
 </div>

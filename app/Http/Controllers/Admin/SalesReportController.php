@@ -100,6 +100,11 @@ class SalesReportController extends Controller
         $salesCategories = $this->getSalesCategories($transactions);
         $monthlyRevenue = $this->getMonthlyRevenue($transactions);
 
+        $paginatedTransactions = $query
+            ->latest('transaction_date')
+            ->paginate(10)
+            ->withQueryString();
+
         $years = Transaction::query()
             ->selectRaw('YEAR(transaction_date) as year')
             ->whereIn('status', Transaction::SALES_REPORT_STATUSES)
@@ -123,6 +128,7 @@ class SalesReportController extends Controller
             'topProducts',
             'salesCategories',
             'monthlyRevenue',
+            'paginatedTransactions',
             'years'
         ));
     }

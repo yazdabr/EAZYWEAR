@@ -124,7 +124,8 @@ class SalesReportExport implements
 
         $query = Transaction::with([
             'customer',
-        ])->whereIn('status', Transaction::SALES_REPORT_STATUSES);
+        ])->whereIn('status', Transaction::SALES_REPORT_STATUSES)
+        ->where('invoice_number', '!=', 'INV-20261008-OHJ6PG');
 
         if ($startDate) {
             $query->where('transaction_date', '>=', $startDate);

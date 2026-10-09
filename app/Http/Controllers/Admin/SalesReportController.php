@@ -38,7 +38,8 @@ class SalesReportController extends Controller
             'items.productVariant.product.category',
             'items.productVariant.size',
             'items.productVariant.color',
-        ])->whereIn('status', Transaction::SALES_REPORT_STATUSES);
+        ])->whereIn('status', Transaction::SALES_REPORT_STATUSES)
+        ->where('invoice_number', '!=', 'INV-20261008-OHJ6PG');
 
         if ($startDate) {
             $query->where('transaction_date', '>=', $startDate);
@@ -370,7 +371,8 @@ class SalesReportController extends Controller
         $query = Transaction::with([
             'customer',
             'items.productVariant.product',
-        ])->whereIn('status', Transaction::SALES_REPORT_STATUSES);
+        ])->whereIn('status', Transaction::SALES_REPORT_STATUSES)
+            ->where('invoice_number', '!=', 'INV-20261008-OHJ6PG');
 
         if ($startDate) {
             $query->where('transaction_date', '>=', $startDate);

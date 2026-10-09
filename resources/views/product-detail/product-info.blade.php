@@ -132,6 +132,11 @@
                             this.customNumber = player.number;
                             this.showPlayerList = false;
                         },
+                        resetCustomization() {
+                            this.customName = '';
+                            this.customNumber = '';
+                            this.showPlayerList = false;
+                        },
                         customizationEnabled: @js((bool) $product->customization_enabled),
                         customizationPrice: @js((int) $product->customization_price),
                         longsleeveEnabled: @js((bool) $product->longsleeve_enabled),
@@ -185,18 +190,25 @@
                                 </div>
                             </div>
                             {{-- *CUSTOMIZATION INPUTS* --}}
-                            {{-- PILIH PEMAIN BARITO PUTERA --}}
+
+                            {{-- PILIH PEMAIN BARITO PUTERA & RESET --}}
                             <div class="relative z-30 mb-4">
-                                <button type="button" @click="showPlayerList = !showPlayerList" class="flex w-full items-center justify-between gap-3 rounded-xl border border-[#AE7C18]/40 bg-[#AE7C18]/5 px-4 py-3 text-left transition hover:bg-[#AE7C18]/10 sm:rounded-2xl sm:px-5">
-                                    <span class="flex items-center gap-2.5">
-                                        <x-heroicon-o-users class="h-5 w-5 text-[#AE7C18]"/>
-                                        <span>
-                                            <span class="block text-xs font-bold text-slate-900 sm:text-sm">Pilih Pemain Barito Putera</span>
-                                            <span class="mt-0.5 block text-[10px] text-slate-500 sm:text-xs">Nama dan nomor terisi otomatis</span>
+                                <div class="flex gap-2">
+                                    <button type="button" @click="showPlayerList = !showPlayerList" class="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-xl border border-[#AE7C18]/40 bg-[#AE7C18]/5 px-3 py-3 text-left transition hover:bg-[#AE7C18]/10 sm:rounded-2xl sm:px-4">
+                                        <span class="flex min-w-0 items-center gap-2">
+                                            <x-heroicon-o-users class="h-5 w-5 shrink-0 text-[#AE7C18]"/>
+                                            <span class="min-w-0">
+                                                <span class="block text-xs font-bold text-slate-900 sm:text-sm">Pilih Pemain Barito Putera</span>
+                                                <span class="mt-0.5 block text-[10px] text-slate-500 sm:text-xs">Nama dan nomor terisi otomatis</span>
+                                            </span>
                                         </span>
-                                    </span>
-                                    <x-heroicon-o-chevron-down class="h-5 w-5 shrink-0 text-[#AE7C18] transition" x-bind:class="showPlayerList ? 'rotate-180' : ''"/>
-                                </button>           
+                                        <x-heroicon-o-chevron-down class="h-4 w-4 shrink-0 text-[#AE7C18] transition" x-bind:class="showPlayerList ? 'rotate-180' : ''"/>
+                                    </button>
+                                    <button type="button" @click="resetCustomization()" :disabled="!customName && !customNumber" class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 sm:rounded-2xl sm:px-4 sm:text-sm">
+                                        <x-heroicon-o-arrow-path class="h-4 w-4"/>
+                                        Reset
+                                    </button>
+                                </div>
                                 <div x-show="showPlayerList" x-cloak x-transition class="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl">
                                     <div class="border-b border-slate-100 bg-slate-50 px-4 py-2.5">
                                         <p class="text-xs font-semibold text-slate-600">Daftar Pemain · 28 Pemain</p>

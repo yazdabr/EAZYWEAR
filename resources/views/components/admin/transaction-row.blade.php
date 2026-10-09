@@ -125,7 +125,7 @@
                 <span>Lihat</span>
             </a>
 
-            @if (in_array($transaction['status'] ?? '', ['PENDING', 'PAID', 'CANCELLED'], true))
+            @if (in_array($transaction['status'] ?? '', ['PENDING', 'CANCELLED'], true))
                 <button
                     type="button"
                     @click="

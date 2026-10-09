@@ -293,6 +293,20 @@
                                                     </p>
                                                 </div>
                                             @endif
+                                            @if(!empty($item['is_patch']))
+                                                <div class="mt-1">
+                                                    <p class="text-[10px] font-semibold text-[#AE7C18] sm:text-[11px]">
+                                                        Patch
+                                                    </p>
+                                                    <p class="text-[10px] text-gray-500 sm:text-[11px]">
+                                                        Biaya tambahan:
+                                                        Rp {{ number_format((int) ($item['patch_price'] ?? 0), 0, ',', '.') }}
+                                                        @if((int) $item['qty'] > 1)
+                                                            / item
+                                                        @endif
+                                                    </p>
+                                                </div>
+                                            @endif
                                             <p class="mt-0.5 text-xs font-semibold text-[#AE7C18] sm:text-sm">Rp {{ number_format($item['price'] * $item['qty'], 0, ',', '.') }}</p>
                                         </div>
                                     </div>

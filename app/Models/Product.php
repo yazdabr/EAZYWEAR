@@ -24,6 +24,8 @@ class Product extends Model
         'customization_price',
         'longsleeve_enabled',
         'longsleeve_price',
+        'patch_enabled',
+        'patch_price',
     ];
 
     protected $casts = [
@@ -32,6 +34,8 @@ class Product extends Model
         'customization_price' => 'integer',
         'longsleeve_enabled' => 'boolean',
         'longsleeve_price' => 'integer',
+        'patch_enabled' => 'boolean',
+        'patch_price' => 'integer',
     ];
     public function category(): BelongsTo
     {

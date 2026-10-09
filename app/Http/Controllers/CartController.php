@@ -27,6 +27,7 @@ class CartController extends Controller
             'custom_name' => ['nullable', 'string', 'max:20', 'regex:/^[\pL\s]+$/u'],
             'custom_number' => ['nullable', 'string', 'max:2', 'regex:/^[0-9]{1,2}$/'],
             'is_longsleeve' => ['sometimes', 'boolean'],
+            'is_patch' => ['sometimes', 'boolean'],
         ], [
             'custom_name.max' => 'Nama jersey maksimal 20 karakter.',
             'custom_name.regex' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
@@ -67,12 +68,27 @@ class CartController extends Controller
             return back()->with('error', 'Produk sedang tidak tersedia.');
         }
 
+        $isPatch = (bool) ($validated['is_patch'] ?? false);
+        $patchEnabled = (bool) $variant->product->patch_enabled;
+
+        if ($isPatch && ! $patchEnabled) {
+            return back()->with(
+                'error',
+                'Produk ini tidak menyediakan pilihan Patch.'
+            );
+        }
+
+        $patchFee = $isPatch
+            ? (int) $variant->product->patch_price
+            : 0;
+
         $cart = $request->session()->get('cart', []);
 
         $cartKey = $variant->id . '-' . sha1(
             mb_strtolower($customName) . '|' .
             $customNumber . '|' .
-            (int) $isLongsleeve
+            (int) $isLongsleeve . '|' .
+            (int) $isPatch
         );
 
         $currentQty = $cart[$cartKey]['qty'] ?? 0;
@@ -109,7 +125,8 @@ class CartController extends Controller
 
         $price = (float) $variant->price
             + $customizationFee
-            + $longsleeveFee;
+            + $longsleeveFee
+            + $patchFee;
 
         $thumbnail = $variant->product->images
             ->where('is_thumbnail', true)
@@ -141,6 +158,8 @@ class CartController extends Controller
             'custom_number' => $customNumber,
             'is_longsleeve' => $isLongsleeve,
             'longsleeve_price' => $longsleeveFee,
+            'is_patch' => $isPatch,
+            'patch_price' => $patchFee,
         ];
 
         $request->session()->put('cart', $cart);

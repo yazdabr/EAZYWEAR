@@ -37,12 +37,12 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 </button>
             @endif
 
-            @if($transaction->payment_method === 'VA' && $transaction->status === 'PENDING')
+            {{-- @if($transaction->payment_method === 'VA' && $transaction->status === 'PENDING')
                 <button type="button" onclick="checkDokuPayment('{{ $transaction->id }}')" id="check-doku-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500/30">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                     Cek Pembayaran
                 </button>
-            @endif
+            @endif --}}
 
             <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Kembali</a>
             <a href="{{ route('admin.transactions.print', $transaction->invoice_number) }}" target="_blank" class="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#AE7C18] px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F]">Cetak Invoice</a>
@@ -153,6 +153,14 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                         Longsleeve
                                         <span class="font-normal text-slate-500">
                                             (+ Rp {{ number_format((int) $item->longsleeve_price, 0, ',', '.') }})
+                                        </span>
+                                    </p>
+                                @endif
+                                @if($item->is_patch)
+                                    <p class="mt-1 text-xs font-semibold text-[#AE7C18]">
+                                        Patch
+                                        <span class="font-normal text-slate-500">
+                                            (+ Rp {{ number_format((int) $item->patch_price, 0, ',', '.') }})
                                         </span>
                                     </p>
                                 @endif

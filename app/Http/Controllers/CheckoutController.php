@@ -135,9 +135,24 @@ class CheckoutController extends Controller
                         ? (int) $variant->product->longsleeve_price
                         : 0;
 
+                    $isPatch = (bool) ($cartItem['is_patch'] ?? false);
+                    $patchEnabled = (bool) $variant->product->patch_enabled;
+
+                    if ($isPatch && ! $patchEnabled) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Pilihan Patch untuk produk ini sudah tidak tersedia.',
+                        ], 422);
+                    }
+
+                    $patchFee = $isPatch
+                        ? (int) $variant->product->patch_price
+                        : 0;
+
                     $itemValue = (float) $variant->price
                         + $customizationFee
-                        + $longsleeveFee;
+                        + $longsleeveFee
+                        + $patchFee;
 
                     $items[] = [
                         'name' => $variant->product->name,
@@ -444,9 +459,23 @@ class CheckoutController extends Controller
                         ? (int) $variant->product->longsleeve_price
                         : 0;
 
+                    $isPatch = (bool) ($cartItem['is_patch'] ?? false);
+                    $patchEnabled = (bool) $variant->product->patch_enabled;
+
+                    if ($isPatch && ! $patchEnabled) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Pilihan Patch untuk produk ini sudah tidak tersedia.',
+                        ]);
+                    }
+
+                    $patchFee = $isPatch
+                        ? (int) $variant->product->patch_price
+                        : 0;
+
                     $price = (float) $variant->price
                         + $customizationFee
-                        + $longsleeveFee;
+                        + $longsleeveFee
+                        + $patchFee;
 
                     $itemSubtotal = $price * $qty;
                     $subtotal += $itemSubtotal;
@@ -461,6 +490,8 @@ class CheckoutController extends Controller
                         'custom_number' => $customNumber,
                         'is_longsleeve' => $isLongsleeve,
                         'longsleeve_price' => $longsleeveFee,
+                        'is_patch' => $isPatch,
+                        'patch_price' => $patchFee,
                     ];
                 }
 
@@ -589,6 +620,8 @@ class CheckoutController extends Controller
                         'custom_number' => $item['custom_number'],
                         'is_longsleeve' => $item['is_longsleeve'],
                         'longsleeve_price' => $item['longsleeve_price'],
+                        'is_patch' => $item['is_patch'],
+                        'patch_price' => $item['patch_price'],
                         'qty' => $item['qty'],
                         'price' => $item['price'],
                         'subtotal' => $item['subtotal'],

@@ -152,6 +152,8 @@ class ProductController extends Controller
                 'customization_price' => ['nullable', 'integer', 'min:0'],
                 'longsleeve_enabled' => ['required', 'boolean'],
                 'longsleeve_price' => ['nullable', 'integer', 'min:0'],
+                'patch_enabled' => ['sometimes', 'boolean'],
+                'patch_price' => ['nullable', 'integer', 'min:0'],
                 'image' => ['nullable', 'array', 'max:10'],
                 'image.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
                 'size_ids' => ['required', 'array', 'min:1'],
@@ -212,6 +214,13 @@ class ProductController extends Controller
             ? (int) ($validated['longsleeve_price'] ?? 0)
             : 0;
 
+        $patchEnabled = (bool) ($validated['patch_enabled'] ?? false);
+
+        $validated['patch_enabled'] = $patchEnabled;
+        $validated['patch_price'] = $patchEnabled
+            ? (int) ($validated['patch_price'] ?? 0)
+            : 0;
+
         try {
             $result = DB::transaction(function () use ($request, $validated) {
                 $product = Product::create([
@@ -227,6 +236,8 @@ class ProductController extends Controller
                     'customization_price' => $validated['customization_price'],
                     'longsleeve_enabled' => $validated['longsleeve_enabled'],
                     'longsleeve_price' => $validated['longsleeve_price'],
+                    'patch_enabled' => $validated['patch_enabled'],
+                    'patch_price' => $validated['patch_price'],
                 ]);
                 $sizeIds = collect($validated['size_ids'])
                     ->map(fn ($id) => (int) $id)
@@ -342,6 +353,8 @@ class ProductController extends Controller
             'customization_price' => ['nullable', 'integer', 'min:0'],
             'longsleeve_enabled' => ['required', 'boolean'],
             'longsleeve_price' => ['nullable', 'integer', 'min:0'],
+            'patch_enabled' => ['sometimes', 'boolean'],
+            'patch_price' => ['nullable', 'integer', 'min:0'],
             'image' => ['nullable', 'array', 'max:10'],
             'image.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'existing_images' => ['nullable', 'array', 'max:10'],
@@ -393,6 +406,13 @@ class ProductController extends Controller
             ? (int) ($validated['longsleeve_price'] ?? 0)
             : 0;
 
+        $patchEnabled = (bool) ($validated['patch_enabled'] ?? false);
+
+        $validated['patch_enabled'] = $patchEnabled;
+        $validated['patch_price'] = $patchEnabled
+            ? (int) ($validated['patch_price'] ?? 0)
+            : 0;
+
         DB::transaction(function () use ($request, $validated, $product) {
             $product->update([
                 'product_code' => $validated['product_code'],
@@ -407,6 +427,8 @@ class ProductController extends Controller
                 'customization_price' => $validated['customization_price'],
                 'longsleeve_enabled' => $validated['longsleeve_enabled'],
                 'longsleeve_price' => $validated['longsleeve_price'],
+                'patch_enabled' => $validated['patch_enabled'],
+                'patch_price' => $validated['patch_price'],
             ]);
 
             $sizeIds = collect($validated['size_ids'])->map(fn ($id) => (int) $id)->unique()->values();

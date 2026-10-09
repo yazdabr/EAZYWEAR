@@ -180,6 +180,16 @@
                             longsleevePrice: @js((int) $product->longsleeve_price),
                             isLongsleeve: false,
 
+                            patchEnabled: @js((bool) $product->patch_enabled),
+                            patchPrice: @js((int) $product->patch_price),
+                            isPatch: false,
+
+                            get patchFee() {
+                                return this.patchEnabled && this.isPatch
+                                    ? Number(this.patchPrice) || 0
+                                    : 0;
+                            },
+
                             get longsleeveFee() {
                                 return this.longsleeveEnabled && this.isLongsleeve
                                     ? Number(this.longsleevePrice) || 0
@@ -201,7 +211,8 @@
                             get finalPrice() {
                                 return Number(this.selectedPrice)
                                     + this.customizationFee
-                                    + this.longsleeveFee;
+                                    + this.longsleeveFee
+                                    + this.patchFee;
                             }
                         }"
                     >
@@ -353,35 +364,69 @@
                             </div>
                         </div>
 
-                        {{-- LONGSLEEVE OPTION --}}
+                        {{-- LONGSLEEVE & PATCH OPTIONS --}}
                         <div
-                            x-show="longsleeveEnabled"
-                            x-cloak
-                            class="mt-5 rounded-2xl border border-slate-200 bg-white p-4 sm:mt-6 sm:p-5"
+                            class="mt-5 grid grid-cols-2 items-stretch gap-3 sm:mt-6 sm:gap-4"
                         >
-                            <label class="flex cursor-pointer items-start gap-3">
-                            <input
-                                type="checkbox"
-                                x-model="isLongsleeve"
-                                class="mt-1 h-4 w-4 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]"
+                            {{-- LONGSLEEVE: KOLOM KIRI --}}
+                            <div
+                                x-show="longsleeveEnabled"
+                                x-cloak
+                                class="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-[#AE7C18]/50 sm:p-4"
+                                :class="isLongsleeve ? 'border-[#AE7C18] bg-[#AE7C18]/5 ring-1 ring-[#AE7C18]/20' : ''"
                             >
-                                <span class="min-w-0 flex-1">
-                                    <span class="flex items-center justify-between gap-3">
-                                        <span class="text-sm font-bold text-slate-900">
+                                <label class="flex h-full cursor-pointer flex-col">
+                                    <span class="flex items-start justify-between gap-2">
+                                        <span class="text-xs font-bold text-slate-900 sm:text-sm">
                                             Longsleeve
                                         </span>
 
-                                        <span class="shrink-0 text-sm font-bold text-[#AE7C18]">
-                                            + Rp <span x-text="Number(longsleevePrice).toLocaleString('id-ID')"></span>
-                                        </span>
+                                        <input
+                                            type="checkbox"
+                                            x-model="isLongsleeve"
+                                            class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]"
+                                        >
                                     </span>
 
-                                    <span class="mt-1 block text-xs leading-relaxed text-slate-500">
-                                        Pilih opsi ini jika ingin jersey dengan lengan panjang.
-                                        Biaya tambahan berlaku untuk setiap item.
+                                    <span class="mt-2 text-xs font-bold leading-relaxed text-[#AE7C18] sm:text-sm">
+                                        + Rp <span x-text="Number(longsleevePrice).toLocaleString('id-ID')"></span>
                                     </span>
-                                </span>
-                            </label>
+
+                                    <span class="mt-2 text-[10px] leading-relaxed text-slate-500 sm:text-xs">
+                                        Jersey dengan lengan panjang.
+                                    </span>
+                                </label>
+                            </div>
+
+                            {{-- PATCH: KOLOM KANAN --}}
+                            <div
+                                x-show="patchEnabled"
+                                x-cloak
+                                class="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-[#AE7C18]/50 sm:p-4"
+                                :class="isPatch ? 'border-[#AE7C18] bg-[#AE7C18]/5 ring-1 ring-[#AE7C18]/20' : ''"
+                            >
+                                <label class="flex h-full cursor-pointer flex-col">
+                                    <span class="flex items-start justify-between gap-2">
+                                        <span class="text-xs font-bold text-slate-900 sm:text-sm">
+                                            Patch
+                                        </span>
+
+                                        <input
+                                            type="checkbox"
+                                            x-model="isPatch"
+                                            class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]"
+                                        >
+                                    </span>
+
+                                    <span class="mt-2 text-xs font-bold leading-relaxed text-[#AE7C18] sm:text-sm">
+                                        + Rp <span x-text="Number(patchPrice).toLocaleString('id-ID')"></span>
+                                    </span>
+
+                                    <span class="mt-2 text-[10px] leading-relaxed text-slate-500 sm:text-xs">
+                                        Tambahkan patch pada jersey.
+                                    </span>
+                                </label>
+                            </div>
                         </div>
 
                     {{-- SELECTED PRICE --}}
@@ -425,6 +470,21 @@
                             <span
                                 class="font-semibold text-[#AE7C18]"
                                 x-text="'+ Rp ' + Number(longsleeveFee).toLocaleString('id-ID')"
+                            ></span>
+                        </div>
+
+                        <div
+                            x-show="patchFee > 0"
+                            x-transition
+                            class="mt-2 flex items-center justify-between gap-3 border-t border-slate-200 pt-2 text-xs sm:text-sm"
+                        >
+                            <span class="text-gray-500">
+                                Patch
+                            </span>
+
+                            <span
+                                class="font-semibold text-[#AE7C18]"
+                                x-text="'+ Rp ' + Number(patchFee).toLocaleString('id-ID')"
                             ></span>
                         </div>
 
@@ -478,6 +538,11 @@
                                 type="hidden"
                                 name="is_longsleeve"
                                 :value="isLongsleeve ? 1 : 0"
+                            >
+                            <input
+                                type="hidden"
+                                name="is_patch"
+                                :value="isPatch ? 1 : 0"
                             >
 
                             <button

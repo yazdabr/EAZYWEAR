@@ -160,6 +160,15 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                                 </p>
                                             @endif
 
+                                            @if($item->is_patch)
+                                                <p class="mt-1 text-xs font-medium text-[#AE7C18]">
+                                                    Patch
+                                                    <span class="text-slate-500">
+                                                        (+ Rp {{ number_format((int) $item->patch_price, 0, ',', '.') }})
+                                                    </span>
+                                                </p>
+                                            @endif
+
                                             @if($item->custom_name || $item->custom_number)
                                                 <div class="mt-1 flex flex-wrap gap-x-3 text-xs">
                                                     @if($item->custom_name)

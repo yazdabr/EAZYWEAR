@@ -14,6 +14,8 @@
         customization_price:0,
         longsleeve_enabled:false,
         longsleeve_price:0,
+        patch_enabled:false,
+        patch_price:0,
         price:0,
         stock:0,
         status:'Aktif',
@@ -50,8 +52,12 @@
                 data?.longsleeve_enabled === true ||
                 data?.longsleeve_enabled === 1 ||
                 data?.longsleeve_enabled === '1',
-
             longsleeve_price: Number(data?.longsleeve_price ?? 0),
+            patch_enabled:
+                data?.patch_enabled === true ||
+                data?.patch_enabled === 1 ||
+                data?.patch_enabled === '1',
+            patch_price: Number(data?.patch_price ?? 0),
             price:Number(data?.price??0),
             stock:Number(data?.stock??0),
             status:data?.status??'Aktif',
@@ -80,6 +86,8 @@
             customization_price:Number(this.product.customization_price??0),
             longsleeve_enabled: this.product.longsleeve_enabled,
             longsleeve_price: Number(this.product.longsleeve_price ?? 0),
+            patch_enabled: this.product.patch_enabled,
+            patch_price: Number(this.product.patch_price ?? 0),
             price:Number(this.product.price??0),
             stock:Number(this.product.stock??0),
             status:this.product.status==='Aktif',
@@ -296,6 +304,41 @@ x-on:open-view-product.window="openView($event.detail)"
                         <span
                             class="font-bold text-[#AE7C18]"
                             x-text="'Rp ' + Number(product.longsleeve_price || 0).toLocaleString('id-ID')"
+                        ></span>
+                    </div>
+                    {{-- PATCH --}}
+                    <div class="flex items-center justify-between gap-4 border-t border-slate-200/60 pt-2.5">
+                        <span class="text-slate-500">Patch</span>
+
+                        <span
+                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                            :class="product.patch_enabled
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-slate-100 text-slate-500'"
+                        >
+                            <span
+                                class="h-1.5 w-1.5 rounded-full"
+                                :class="product.patch_enabled
+                                    ? 'bg-emerald-500'
+                                    : 'bg-slate-400'"
+                            ></span>
+
+                            <span
+                                x-text="product.patch_enabled ? 'Tersedia' : 'Tidak Tersedia'"
+                            ></span>
+                        </span>
+                    </div>
+
+                    <div
+                        x-show="product.patch_enabled"
+                        x-cloak
+                        class="flex items-center justify-between gap-4 border-t border-slate-200/60 pt-2.5"
+                    >
+                        <span class="text-slate-500">Biaya Patch</span>
+
+                        <span
+                            class="font-bold text-[#AE7C18]"
+                            x-text="'Rp ' + Number(product.patch_price || 0).toLocaleString('id-ID')"
                         ></span>
                     </div>
                 </div>

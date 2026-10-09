@@ -72,6 +72,14 @@
                                                 </span>
                                             </p>
                                         @endif
+                                        @if($item->is_patch)
+                                            <p class="mt-1 text-[11px] font-bold tracking-wide text-[#AE7C18] sm:text-sm">
+                                                Patch
+                                                <span class="font-medium text-gray-500">
+                                                    (+ Rp {{ number_format((int) $item->patch_price, 0, ',', '.') }})
+                                                </span>
+                                            </p>
+                                        @endif
                                     </div>
                                     <p class="shrink-0 font-bold text-slate-900">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</p>
                                 </div>

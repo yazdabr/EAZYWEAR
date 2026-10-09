@@ -305,4 +305,131 @@ class CartControllerTest extends TestCase
             (float) $longsleeveItem['price']
         );
     }
+
+    public function test_patch_on_applies_database_fee(): void
+    {
+        $variant = $this->activeVariant();
+
+        $variant->product->update([
+            'patch_enabled' => true,
+            'patch_price' => 25000,
+        ]);
+
+        $response = $this->post(
+            route('cart.add'),
+            $this->addPayload($variant, [
+                'is_patch' => 1,
+            ])
+        );
+
+        $response->assertRedirect();
+
+        $cart = session('cart');
+        $this->assertCount(1, $cart);
+
+        $item = array_values($cart)[0];
+
+        $this->assertSame(
+            (float) $variant->price + 25000,
+            (float) $item['price']
+        );
+
+        $this->assertTrue((bool) $item['is_patch']);
+        $this->assertSame(25000, (int) $item['patch_price']);
+    }
+
+    public function test_patch_on_for_disabled_product_is_rejected(): void
+    {
+        $variant = $this->activeVariant();
+
+        $variant->product->update([
+            'patch_enabled' => false,
+            'patch_price' => 25000,
+        ]);
+
+        $response = $this->post(
+            route('cart.add'),
+            $this->addPayload($variant, [
+                'is_patch' => 1,
+            ])
+        );
+
+        $response->assertRedirect();
+
+        $response->assertSessionHas(
+            'error',
+            'Produk ini tidak menyediakan pilihan Patch.'
+        );
+
+        $this->assertEmpty(session('cart', []));
+    }
+
+    public function test_cart_keeps_patch_choices_separate_and_supports_both_options(): void
+    {
+        $variant = $this->activeVariant();
+
+        $variant->product->update([
+            'longsleeve_enabled' => true,
+            'longsleeve_price' => 150000,
+            'patch_enabled' => true,
+            'patch_price' => 25000,
+        ]);
+
+        // Produk biasa
+        $this->post(
+            route('cart.add'),
+            $this->addPayload($variant)
+        )->assertRedirect();
+
+        // Patch saja
+        $this->post(
+            route('cart.add'),
+            $this->addPayload($variant, [
+                'is_patch' => 1,
+            ])
+        )->assertRedirect();
+
+        // Longsleeve saja
+        $this->post(
+            route('cart.add'),
+            $this->addPayload($variant, [
+                'is_longsleeve' => 1,
+            ])
+        )->assertRedirect();
+
+        // Longsleeve dan Patch
+        $this->post(
+            route('cart.add'),
+            $this->addPayload($variant, [
+                'is_longsleeve' => 1,
+                'is_patch' => 1,
+            ])
+        )->assertRedirect();
+
+        $items = array_values(session('cart', []));
+
+        $this->assertCount(4, $items);
+
+        $expected = [
+            [false, false, (float) $variant->price],
+            [false, true, (float) $variant->price + 25000],
+            [true, false, (float) $variant->price + 150000],
+            [true, true, (float) $variant->price + 150000 + 25000],
+        ];
+
+        foreach ($expected as [$longsleeve, $patch, $price]) {
+            $item = collect($items)->first(
+                fn ($item) =>
+                    (bool) ($item['is_longsleeve'] ?? false) === $longsleeve
+                    && (bool) ($item['is_patch'] ?? false) === $patch
+            );
+
+            $this->assertNotNull(
+                $item,
+                'Kombinasi Longsleeve dan Patch tidak ditemukan.'
+            );
+
+            $this->assertEquals($price, (float) $item['price']);
+        }
+    }
 }

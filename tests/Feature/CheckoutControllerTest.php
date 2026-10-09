@@ -1302,6 +1302,136 @@ class CheckoutControllerTest extends TestCase
             'shipping_email' => 'longsleeve-disabled@test.com',
         ]);
     }
+
+    public function test_checkout_patch_on_uses_database_fee_once(): void
+    {
+        $variant = $this->customizationVariant(false, 0);
+
+        $variant->product->update([
+            'patch_enabled' => true,
+            'patch_price' => 25000,
+        ]);
+
+        $variant = $variant->fresh(['product']);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+                'is_longsleeve' => false,
+                'is_patch' => true,
+                'patch_price' => 25000,
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [[
+                        'courier_code' => 'jnt',
+                        'courier_name' => 'J&T',
+                        'service_code' => 'ez',
+                        'service_name' => 'EZ',
+                        'price' => 8000,
+                        'duration' => '2-3 days',
+                        'service_type' => 'standard',
+                        'shipping_type' => 'parcel',
+                    ]],
+                    'raw' => [],
+                ]);
+        });
+
+        $this->mockDokuSuccess();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Patch Test',
+            'email' => 'patch-checkout@test.com',
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'patch-checkout@test.com')
+            ->latest('id')
+            ->firstOrFail();
+
+        $item = $transaction->items()->firstOrFail();
+        $expectedPrice = (float) $variant->price + 25000;
+
+        $this->assertSame($expectedPrice, (float) $item->price);
+        $this->assertSame($expectedPrice, (float) $item->subtotal);
+        $this->assertSame($expectedPrice, (float) $transaction->subtotal);
+        $this->assertTrue((bool) $item->is_patch);
+        $this->assertSame(25000, (int) $item->patch_price);
+    }
+
+    public function test_checkout_rejects_patch_for_disabled_product(): void
+    {
+        $variant = $this->customizationVariant(false, 0);
+
+        $variant->product->update([
+            'patch_enabled' => false,
+            'patch_price' => 25000,
+        ]);
+
+        $variant = $variant->fresh(['product']);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => 1,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+                'is_longsleeve' => false,
+                'is_patch' => true,
+                'patch_price' => 25000,
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')->never();
+        });
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Patch Disabled Test',
+            'email' => 'patch-disabled@test.com',
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+
+        $response->assertSessionHasErrors('cart');
+
+        $this->assertDatabaseMissing('transactions', [
+            'shipping_email' => 'patch-disabled@test.com',
+        ]);
+    }
+
     public function test_checkout_custom_off_without_input_has_no_fee(): void
     {
         $variant = $this->customizationVariant(false, 125000);

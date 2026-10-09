@@ -236,6 +236,15 @@
                                                 </span>
                                             </p>
                                         @endif
+
+                                        @if($item->is_patch)
+                                            <p class="mt-1 text-xs font-semibold text-[#AE7C18]">
+                                                Patch
+                                                <span class="font-normal text-slate-500">
+                                                    (+ Rp {{ number_format((int) $item->patch_price, 0, ',', '.') }})
+                                                </span>
+                                            </p>
+                                        @endif
                                     </div>
                                 </div>
                             </td>

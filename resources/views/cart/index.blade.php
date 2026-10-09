@@ -56,6 +56,17 @@
                                                 </p>
                                             </div>
                                         @endif
+                                        @if(!empty($item['is_patch']))
+                                            <div class="mt-2">
+                                                <span class="inline-flex items-center rounded-full border border-[#AE7C18]/30 bg-[#AE7C18]/10 px-2.5 py-1 text-[10px] font-semibold text-[#AE7C18] sm:text-xs">
+                                                    Patch
+                                                </span>
+                                                <p class="mt-1 text-xs text-gray-500">
+                                                    Biaya tambahan:
+                                                    Rp {{ number_format((int) ($item['patch_price'] ?? 0), 0, ',', '.') }}
+                                                </p>
+                                            </div>
+                                        @endif
                                         @if(!empty($item['custom_name']) || !empty($item['custom_number']))
                                             <div class="mt-2 space-y-1.5">
                                                 @if(!empty($item['custom_name']))

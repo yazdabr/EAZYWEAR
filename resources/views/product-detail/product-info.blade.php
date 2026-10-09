@@ -96,6 +96,42 @@
                         selectedStock: {{ $availableSizes[0]['stock'] ?? 0 }},
                         customName: '',
                         customNumber: '',
+                        showPlayerList: false,
+                        baritoPlayers: [
+                            { name: 'ANNUR HAS', number: '21' },
+                            { name: 'GERARD', number: '30' },
+                            { name: 'M. HIDAYAT', number: '96' },
+                            { name: 'RIZKY PORA', number: '26' },
+                            { name: 'DAFFA', number: '24' },
+                            { name: 'AIMAR', number: '71' },
+                            { name: 'BIMA REKSA', number: '55' },
+                            { name: 'ADITIA', number: '34' },
+                            { name: 'FERDIYANSYAH', number: '17' },
+                            { name: 'NUGROHO', number: '6' },
+                            { name: 'SYAMSUL RIFA', number: '66' },
+                            { name: 'R.NICKO', number: '18' },
+                            { name: 'AMYR', number: '11' },
+                            { name: 'ARYA', number: '27' },
+                            { name: 'BAGUS KAHFI', number: '19' },
+                            { name: 'BAYU PRADANA', number: '13' },
+                            { name: 'M. IQBAL', number: '29' },
+                            { name: 'KORNELES HOWAY', number: '8' },
+                            { name: 'KODAI', number: '79' },
+                            { name: 'RAFI ANGGA', number: '9' },
+                            { name: 'GUSTUR CP', number: '7' },
+                            { name: 'DENDI A.M', number: '91' },
+                            { name: 'REVI', number: '4' },
+                            { name: 'MURILO', number: '31' },
+                            { name: 'YUSWANTO', number: '3' },
+                            { name: 'HAUDI', number: '35' },
+                            { name: 'M. WILDAN', number: '20' },
+                            { name: 'RENAN ALVES', number: '36' }
+                        ],
+                        selectBaritoPlayer(player) {
+                            this.customName = player.name;
+                            this.customNumber = player.number;
+                            this.showPlayerList = false;
+                        },
                         customizationEnabled: @js((bool) $product->customization_enabled),
                         customizationPrice: @js((int) $product->customization_price),
                         longsleeveEnabled: @js((bool) $product->longsleeve_enabled),
@@ -149,6 +185,32 @@
                                 </div>
                             </div>
                             {{-- *CUSTOMIZATION INPUTS* --}}
+                            {{-- PILIH PEMAIN BARITO PUTERA --}}
+                            <div class="relative z-30 mb-4">
+                                <button type="button" @click="showPlayerList = !showPlayerList" class="flex w-full items-center justify-between gap-3 rounded-xl border border-[#AE7C18]/40 bg-[#AE7C18]/5 px-4 py-3 text-left transition hover:bg-[#AE7C18]/10 sm:rounded-2xl sm:px-5">
+                                    <span class="flex items-center gap-2.5">
+                                        <x-heroicon-o-users class="h-5 w-5 text-[#AE7C18]"/>
+                                        <span>
+                                            <span class="block text-xs font-bold text-slate-900 sm:text-sm">Pilih Pemain Barito Putera</span>
+                                            <span class="mt-0.5 block text-[10px] text-slate-500 sm:text-xs">Nama dan nomor terisi otomatis</span>
+                                        </span>
+                                    </span>
+                                    <x-heroicon-o-chevron-down class="h-5 w-5 shrink-0 text-[#AE7C18] transition" x-bind:class="showPlayerList ? 'rotate-180' : ''"/>
+                                </button>           
+                                <div x-show="showPlayerList" x-cloak x-transition class="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl">
+                                    <div class="border-b border-slate-100 bg-slate-50 px-4 py-2.5">
+                                        <p class="text-xs font-semibold text-slate-600">Daftar Pemain · 28 Pemain</p>
+                                    </div>
+                                    <div class="grid max-h-64 grid-cols-1 gap-1 overflow-y-auto p-2 sm:grid-cols-2">
+                                        <template x-for="player in baritoPlayers" :key="player.number">
+                                            <button type="button" @click="selectBaritoPlayer(player)" class="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[#AE7C18]/10" :class="customName === player.name && customNumber === player.number ? 'bg-[#AE7C18]/10 ring-1 ring-inset ring-[#AE7C18]/40' : ''">
+                                                <span class="truncate text-xs font-semibold text-slate-800 sm:text-sm" x-text="player.name"></span>
+                                                <span class="flex h-8 min-w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 px-2 text-xs font-bold text-white" x-text="player.number"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="grid grid-cols-2 gap-3 sm:gap-4">
                                 {{-- *JERSEY NAME* --}}
                                 <div>

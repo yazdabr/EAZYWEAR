@@ -40,6 +40,7 @@ class ProductControllerTest extends TestCase
             'name' => 'Test Custom Jersey',
             'description' => 'Product customization test.',
             'material' => 'Dry-Fit',
+            'availability' => 'pre_order',
             'status' => 1,
 
             'customization_enabled' => 1,
@@ -128,6 +129,7 @@ class ProductControllerTest extends TestCase
             'slug' => 'test-update-customization-' . uniqid(),
             'description' => 'Update customization test.',
             'material' => 'Dry-Fit',
+            'availability' => 'pre_order',
             'status' => true,
             'customization_enabled' => true,
             'customization_price' => 150000,
@@ -170,6 +172,7 @@ class ProductControllerTest extends TestCase
             'slug' => 'test-customization-fee-' . uniqid(),
             'description' => 'Customization fee test.',
             'material' => 'Dry-Fit',
+            'availability' => 'pre_order',
             'status' => true,
             'customization_enabled' => true,
             'customization_price' => 75000,
@@ -198,6 +201,57 @@ class ProductControllerTest extends TestCase
             'id' => $product->id,
             'customization_enabled' => 1,
             'customization_price' => 125000,
+        ]);
+    }
+
+    public function test_admin_can_create_product_with_ready_stock_availability(): void
+    {
+        $user = $this->superAdmin();
+
+        $response = $this->actingAs($user)->postJson(
+            route('admin.products.store'),
+            $this->storePayload(['availability' => 'ready'])
+        );
+
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('products', [
+            'id' => $response->json('data.id'),
+            'availability' => 'ready',
+        ]);
+    }
+
+    public function test_admin_can_update_product_availability(): void
+    {
+        $user = $this->superAdmin();
+
+        $product = Product::query()->create([
+            'product_code' => 'TEST-AVAIL-' . uniqid(),
+            'category_id' => $this->category()->id,
+            'name' => 'Test Availability',
+            'slug' => 'test-availability-' . uniqid(),
+            'description' => 'Availability test.',
+            'material' => 'Dry-Fit',
+            'availability' => 'pre_order',
+            'status' => true,
+            'customization_enabled' => false,
+            'customization_price' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->putJson(
+            route('admin.products.update', $product),
+            $this->storePayload([
+                'product_code' => $product->product_code,
+                'name' => $product->name,
+                'availability' => 'ready',
+            ])
+        );
+
+        $response->assertOk();
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'availability' => 'ready',
         ]);
     }
 }

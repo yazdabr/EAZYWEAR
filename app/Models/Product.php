@@ -18,6 +18,7 @@ class Product extends Model
         'slug',
         'description',
         'material',
+        'availability',
         'status',
         'customization_enabled',
         'customization_price',

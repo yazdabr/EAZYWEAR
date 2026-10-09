@@ -120,6 +120,7 @@
                 'product_code'=>$product->product_code,
                 'description'=>$product->description,
                 'material'=>$product->material,
+                'availability' => $product->availability ?? 'pre_order',
                 'customization_enabled'=>(bool)$product->customization_enabled,
                 'customization_price'=>(int)$product->customization_price,
                 'price'=>(int)$price,

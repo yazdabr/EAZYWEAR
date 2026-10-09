@@ -10,6 +10,7 @@
         product_code:'{{ $nextProductCode }}',
         description:'',
         material:'',
+        availability:'pre_order',
         customization_enabled:false,
         customization_price:0,
         price:'',
@@ -140,6 +141,7 @@
             product_code:'{{ $nextProductCode }}',
             description:'',
             material:'',
+            availability:'pre_order',
             customization_enabled:false,
             customization_price:0,
             price:'',
@@ -167,6 +169,7 @@
             product_code:product?.product_code||'',
             description:product?.description||'',
             material:product?.material||'',
+            availability:product?.availability||'pre_order',
             customization_enabled:product?.customization_enabled===true||product?.customization_enabled===1||product?.customization_enabled==='1',
             customization_price:product?.customization_price!==''&&product?.customization_price!==null&&product?.customization_price!==undefined
                 ? parseInt(product.customization_price)
@@ -252,6 +255,27 @@
                     <x-admin.input x-model="form.material" name="material" placeholder="mis. Dry-Fit Premium" />
                     <p class="mt-1.5 text-xs text-slate-400 sm:mt-2">Material atau bahan utama produk.</p>
                     @error('material')<p class="mt-1.5 text-xs text-red-500">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="mt-4 sm:mt-6">
+                    <label for="availability" class="mb-2 block text-sm font-medium text-slate-700">
+                        Ketersediaan Produk
+                    </label>
+                    <select
+                        id="availability"
+                        name="availability"
+                        x-model="form.availability"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/10"
+                    >
+                        <option value="ready">Ready Stock</option>
+                        <option value="pre_order">Pre-order</option>
+                    </select>
+                    <p class="mt-1.5 text-xs text-slate-400 sm:mt-2">
+                        Pilihan ini menentukan badge pada kartu produk di katalog.
+                    </p>
+                    <template x-if="errors.availability">
+                        <p class="mt-1.5 text-xs text-red-500" x-text="errors.availability"></p>
+                    </template>
                 </div>
             </div>
             {{-- CUSTOM NAMA & NOMOR --}}

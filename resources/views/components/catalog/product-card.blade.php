@@ -39,12 +39,16 @@
         })"
     >
 
-        {{-- Pre-Order Badge --}}
-        <div
-            class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-[#AE7C18] px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]"
-        >
-            Pre-Order
-        </div>
+        {{-- Product Availability Badge --}}
+        @if (($product->availability ?? 'pre_order') === 'ready')
+            <div class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-emerald-600 px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]">
+                Ready Stock
+            </div>
+        @else
+            <div class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-[#AE7C18] px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]">
+                Pre-Order
+            </div>
+        @endif
         
         <img
             src="{{ $image }}"

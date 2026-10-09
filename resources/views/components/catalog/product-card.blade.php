@@ -82,6 +82,13 @@
             {{ $product->name }}
         </h3>
 
+        {{-- Product Description --}}
+        @if (filled($product->description))
+            <p class="mt-1.5 line-clamp-3 text-[10px] leading-4 text-gray-500 sm:text-[11px] sm:leading-[1.125rem] lg:mt-2 lg:text-xs lg:leading-5">
+                {{ $product->description }}
+            </p>
+        @endif
+
         {{-- Product Price --}}
         <div class="mt-auto pt-2.5 sm:pt-3 lg:pt-2.5">
             <p class="text-[9px] font-medium uppercase tracking-wider text-gray-400 sm:text-[10px] lg:text-[11px]">

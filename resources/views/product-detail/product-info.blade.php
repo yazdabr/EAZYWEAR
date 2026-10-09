@@ -85,7 +85,18 @@
                     <h1 class="mt-3 text-2xl font-bold leading-none tracking-tight text-slate-900 sm:mt-4 sm:text-4xl sm:leading-tight lg:text-5xl">{{ $product->name }}</h1>
                     <h2 class="mt-1 text-xl font-bold leading-none text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}</h2>
                     @if($product->description)
-                        <p class="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600 sm:mt-4 sm:text-base lg:text-lg lg:leading-7">{{ $product->description }}</p>
+                        @php
+                            $description = $product->description;
+                            $notice = 'Pre-order now, ready from Oct 30 - 3 Nov 2026.';
+                            $hasPreOrderNotice = stripos($description, $notice) !== false;
+                            $description = trim(str_ireplace($notice, '', $description));
+                        @endphp
+                        @if($hasPreOrderNotice)
+                            <p class="mt-3 text-sm font-bold leading-relaxed text-red-600 sm:mt-4 sm:text-base">Pre-order now, ready from Oct 30 - 3 Nov 2026.</p>
+                        @endif
+                        @if(filled($description))
+                            <p class="mt-1 max-w-2xl text-sm leading-relaxed text-gray-600 sm:text-base lg:text-lg lg:leading-7">{{ $description }}</p>
+                        @endif
                     @endif
                 </div>
                 {{-- SIZE / VARIANT --}}

@@ -1381,6 +1381,60 @@ class CheckoutControllerTest extends TestCase
         $this->assertSame(25000, (int) $item->patch_price);
     }
 
+    public function test_checkout_saves_barito_player_name_and_number(): void
+    {
+        $variant = $this->customizationVariant(true, 125000);
+
+        $response = $this->customizationCheckout(
+            $variant,
+            'annur-has-test@test.com',
+            'ANNUR HAS',
+            '21'
+        );
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'annur-has-test@test.com')
+            ->firstOrFail();
+
+        $item = $transaction->items()->firstOrFail();
+
+        $this->assertSame('ANNUR HAS', $item->custom_name);
+        $this->assertSame('21', (string) $item->custom_number);
+
+        $expectedPrice = (float) $variant->price + 125000;
+
+        $this->assertSame($expectedPrice, (float) $item->price);
+        $this->assertSame($expectedPrice, (float) $transaction->subtotal);
+    }
+
+    public function test_checkout_after_barito_player_reset_has_no_customization_fee(): void
+    {
+        $variant = $this->customizationVariant(true, 125000);
+
+        // Simulasi data keranjang setelah tombol Reset digunakan.
+        $response = $this->customizationCheckout(
+            $variant,
+            'barito-reset-test@test.com',
+            '',
+            ''
+        );
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'barito-reset-test@test.com')
+            ->firstOrFail();
+
+        $item = $transaction->items()->firstOrFail();
+
+        $this->assertSame('', (string) $item->custom_name);
+        $this->assertSame('', (string) $item->custom_number);
+        $this->assertSame((float) $variant->price, (float) $item->price);
+        $this->assertSame((float) $variant->price, (float) $transaction->subtotal);
+    }
+
     public function test_checkout_rejects_patch_for_disabled_product(): void
     {
         $variant = $this->customizationVariant(false, 0);

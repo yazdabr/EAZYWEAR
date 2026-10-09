@@ -98,7 +98,6 @@ class SalesReportController extends Controller
 
         $topProducts = $this->getTopProducts($transactions);
         $salesCategories = $this->getSalesCategories($transactions);
-        $paymentMethods = $this->getPaymentMethods($transactions);
         $monthlyRevenue = $this->getMonthlyRevenue($transactions);
 
         $years = Transaction::query()
@@ -123,7 +122,6 @@ class SalesReportController extends Controller
             'productGrowth',
             'topProducts',
             'salesCategories',
-            'paymentMethods',
             'monthlyRevenue',
             'years'
         ));
@@ -155,6 +153,7 @@ class SalesReportController extends Controller
                 $id = $product->id;
                 $revenue = (float) $item->subtotal;
                 $qty = (int) $item->qty;
+                $size = $variant?->size?->name ?? 'Tidak diketahui';
 
                 $totalRevenue += $revenue;
 
@@ -163,19 +162,35 @@ class SalesReportController extends Controller
                         'name' => $product->name,
                         'units' => 0,
                         'revenue' => 0,
+                        'sizes' => [],
                     ];
                 }
 
                 $products[$id]['units'] += $qty;
                 $products[$id]['revenue'] += $revenue;
+                $products[$id]['sizes'][$size] =
+                    ($products[$id]['sizes'][$size] ?? 0) + $qty;
             }
         }
+
+        $sizeOrder = [
+            'XXXS' => 1, 'XXS' => 2, 'XS' => 3,
+            'S' => 4, 'M' => 5, 'L' => 6,
+            'XL' => 7, 'XXL' => 8, '2XL' => 8,
+            'XXXL' => 9, '3XL' => 9,
+            'XXXXL' => 10, '4XL' => 10, '5XL' => 11,
+        ];
 
         return collect($products)
             ->sortByDesc('units')
             ->take(5)
             ->values()
-            ->map(function ($product) use ($totalRevenue) {
+            ->map(function ($product) use ($totalRevenue, $sizeOrder) {
+                uksort($product['sizes'], function ($a, $b) use ($sizeOrder) {
+                    return ($sizeOrder[strtoupper($a)] ?? 99)
+                        <=> ($sizeOrder[strtoupper($b)] ?? 99);
+                });
+
                 $product['percentage'] = $totalRevenue > 0
                     ? round(($product['revenue'] / $totalRevenue) * 100)
                     : 0;

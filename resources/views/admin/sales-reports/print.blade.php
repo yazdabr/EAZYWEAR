@@ -117,34 +117,14 @@
     </div>
 
     {{-- RINGKASAN / SUMMARY CARDS --}}
-    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {{-- Total Pendapatan --}}
-        <div class="print-card rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Total Pendapatan
-            </p>
-            <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-                Rp{{ number_format($totalRevenue,0,',','.') }}
-            </p>
-        </div>
-
-        {{-- Jumlah Transaksi --}}
+    <div class="mb-8 grid grid-cols-2 gap-4">
+        {{-- Total Transaksi --}}
         <div class="print-card rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Total Transaksi
-            </p>            
-            <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-                {{ number_format($totalTransactions,0,',','.') }}
             </p>
-        </div>
-
-        {{-- Rata-rata Pesanan --}}
-        <div class="print-card rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Rata-rata Pesanan
-            </p> 
             <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-                Rp{{ number_format($averageOrderValue,0,',','.') }}
+                {{ number_format($totalTransactions, 0, ',', '.') }}
             </p>
         </div>
 
@@ -152,9 +132,9 @@
         <div class="print-card rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
                 Produk Terjual
-            </p> 
+            </p>
             <p class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-                {{ number_format($totalProductsSold,0,',','.') }}
+                {{ number_format($totalProductsSold, 0, ',', '.') }}
             </p>
         </div>
     </div>
@@ -174,12 +154,11 @@
                 {{-- Table Header --}}
                 <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500 print:bg-slate-100 print:text-slate-700">
                     <tr>
-                        <th scope="col" class="px-4 py-3 sm:px-6 sm:py-3.5 print:w-[16%] print:px-2 print:py-2">Faktur</th>
-                        <th scope="col" class="px-4 py-3 sm:px-6 sm:py-3.5 print:w-[14%] print:px-2 print:py-2">Tanggal</th>
-                        <th scope="col" class="px-4 py-3 sm:px-6 sm:py-3.5 print:w-[26%] print:px-2 print:py-2">Pelanggan</th>
-                        <th scope="col" class="px-4 py-3 sm:px-6 sm:py-3.5 print:w-[18%] print:px-2 print:py-2">Metode Pembayaran</th>
-                        <th scope="col" class="px-4 py-3 text-center sm:px-6 sm:py-3.5 print:w-[10%] print:px-2 print:py-2">Status</th>
-                        <th scope="col" class="px-4 py-3 text-right sm:px-6 sm:py-3.5 print:w-[16%] print:px-2 print:py-2">Total</th>
+                        <th scope="col" class="px-4 py-3 sm:px-6 sm:py-3.5 print:w-[18%] print:px-2 print:py-2">Faktur</th>
+                        <th scope="col" class="px-4 py-3 sm:px-6 sm:py-3.5 print:w-[15%] print:px-2 print:py-2">Tanggal</th>
+                        <th scope="col" class="px-4 py-3 sm:px-6 sm:py-3.5 print:w-[30%] print:px-2 print:py-2">Pelanggan</th>
+                        <th scope="col" class="px-4 py-3 text-center sm:px-6 sm:py-3.5 print:w-[15%] print:px-2 print:py-2">Status</th>
+                        <th scope="col" class="px-4 py-3 text-right sm:px-6 sm:py-3.5 print:w-[22%] print:px-2 print:py-2">Total</th>
                     </tr>
                 </thead>
 
@@ -199,10 +178,6 @@
                                 {{ $transaction['customer'] }}
                             </td>
 
-                            <td class="px-4 py-3 text-slate-600 sm:px-6 sm:py-4 print:px-2 print:py-2 print:text-slate-800">
-                                {{ $transaction['payment'] }}
-                            </td>
-
                             <td class="px-4 py-3 text-center sm:px-6 sm:py-4 print:px-2 print:py-2">
                                 <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800 print:bg-transparent print:p-0 print:font-semibold print:text-slate-900">
                                     {{ $transaction['status'] }}
@@ -215,7 +190,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-10 text-center text-sm text-slate-400">
+                            <td colspan="5" class="px-4 py-10 text-center text-sm text-slate-400">
                                 Tidak ada transaksi pada periode yang dipilih.
                             </td>
                         </tr>

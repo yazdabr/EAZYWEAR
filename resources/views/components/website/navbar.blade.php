@@ -1,4 +1,4 @@
-<div x-data="{open:false,scrolled:false,searchOpen:false}" @scroll.window="scrolled=window.scrollY>20" x-effect="document.body.style.overflow=open?'hidden':'';document.documentElement.style.overflowX='hidden';" class="relative w-full overflow-x-clip">
+﻿<div x-data="{open:false,scrolled:false,searchOpen:false}" @scroll.window="scrolled=window.scrollY>20" x-effect="document.body.style.overflow=open?'hidden':'';document.documentElement.style.overflowX='hidden';" class="relative w-full overflow-x-clip">
     {{-- MOBILE MENU --}}
     <div id="mobile-menu" x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed left-0 right-0 top-0 z-[999] h-[100dvh] w-screen overflow-hidden bg-slate-900/40 backdrop-blur-sm" style="display:none;">
         <div x-show="open" x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="-translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition ease-in duration-200 transform" x-transition:leave-start="translate-y-0" x-transition:leave-end="-translate-y-full" @click.away="open=false" class="relative flex h-auto max-h-[85vh] w-full max-w-none flex-col overflow-y-auto overflow-x-hidden rounded-b-3xl bg-white px-6 pb-8 pt-6 shadow-2xl">
@@ -14,14 +14,14 @@
             {{-- Navigation --}}
             <nav aria-label="Mobile navigation" class="flex flex-col space-y-1.5 py-6">
                 <x-ui.nav-link route="home" mobile @click="open=false">Home</x-ui.nav-link>
-                <x-ui.nav-link route="catalog" mobile @click="open=false">Shop</x-ui.nav-link>
+                <x-ui.nav-link route="shop" mobile @click="open=false">Shop</x-ui.nav-link>
                 <x-ui.nav-link route="about" mobile @click="open=false">About</x-ui.nav-link>
                 <x-ui.nav-link route="contact" mobile @click="open=false">Contact</x-ui.nav-link>
             </nav>
             {{-- Bottom Actions --}}
             <div class="space-y-3 border-t border-gray-100 pt-4">
                 {{-- Mobile Search --}}
-                <form method="GET" action="{{ route('catalog') }}" class="relative" role="search">
+                <form method="GET" action="{{ route('shop') }}" class="relative" role="search">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                         <x-heroicon-o-magnifying-glass class="h-5 w-5 text-gray-400"/>
                     </div>
@@ -118,7 +118,7 @@
                         <x-ui.nav-link route="home">Home</x-ui.nav-link>
                     </li>
                     <li>
-                        <x-ui.nav-link route="catalog">Shop</x-ui.nav-link>
+                        <x-ui.nav-link route="shop">Shop</x-ui.nav-link>
                     </li>
                     <li>
                         <x-ui.nav-link route="about">About</x-ui.nav-link>
@@ -134,7 +134,7 @@
                     {{-- Search --}}
                     <form
                         method="GET"
-                        action="{{ route('catalog') }}"
+                        action="{{ route('shop')}}"
                         class="relative"
                         x-data="{search:@js(request('search','')),focused:false}"
                         role="search"

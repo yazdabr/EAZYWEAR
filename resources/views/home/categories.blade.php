@@ -22,7 +22,7 @@
         {{-- Kaos Jersey --}}
         <x-ui.reveal delay="100">
             <a
-                href="{{ route('catalog') }}"
+                href="{{ route('shop') }}"
                 class="group relative block aspect-[4/3] overflow-hidden rounded-2xl bg-slate-300 transition-all duration-300 hover:shadow-lg active:scale-[0.98] sm:aspect-[16/10] lg:aspect-[16/9]"
             >
                 <img

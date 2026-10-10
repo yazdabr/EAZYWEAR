@@ -245,7 +245,7 @@
                 </div>
             </div>
             <div class="mt-5 flex flex-col gap-2 sm:mt-8 sm:flex-row sm:justify-center sm:gap-3">
-                <a href="{{ route('catalog') }}" class="inline-flex h-10 items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-xs font-semibold text-gray-700 transition hover:border-[#AE7C18] hover:text-[#AE7C18] sm:h-12 sm:px-6 sm:text-sm">Belanja Lagi</a>
+                <a href="{{ route('shop')}}" class="inline-flex h-10 items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-xs font-semibold text-gray-700 transition hover:border-[#AE7C18] hover:text-[#AE7C18] sm:h-12 sm:px-6 sm:text-sm">Belanja Lagi</a>
                 <a href="{{ route('home') }}" class="inline-flex h-10 items-center justify-center rounded-full bg-[#AE7C18] px-5 text-xs font-semibold text-white shadow-md shadow-[#AE7C18]/20 transition hover:bg-[#8F6514] sm:h-12 sm:px-6 sm:text-sm">Kembali ke Beranda</a>
             </div>
             <div id="payment-loading-overlay" class="fixed inset-0 z-[10000] hidden items-center justify-center bg-white/85 px-4 backdrop-blur-md">

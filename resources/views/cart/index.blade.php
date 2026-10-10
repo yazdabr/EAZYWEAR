@@ -28,7 +28,7 @@
                 <p class="mx-auto mt-2 max-w-md text-xs leading-relaxed text-gray-500 sm:text-sm sm:leading-6">
                     Choose the products you want to buy and add them to your cart.
                 </p>
-                <a href="{{ route('catalog') }}" class="mt-5 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-xs font-semibold text-white transition hover:bg-slate-800 sm:mt-6 sm:text-sm">
+                <a href="{{ route('shop') }}" class="mt-5 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-xs font-semibold text-white transition hover:bg-slate-800 sm:mt-6 sm:text-sm">
                     Explore Shop
                 </a>
             </div>
@@ -129,7 +129,7 @@
                 </aside>
 
                 <div class="flex items-center justify-between gap-2 pt-2 lg:col-span-2">
-                    <a href="{{ route('catalog') }}" class="inline-flex shrink-0 items-center justify-center rounded-full border border-gray-300 px-3.5 py-2.5 text-xs font-semibold text-gray-700 transition hover:border-[#AE7C18] hover:text-[#AE7C18] sm:px-5 sm:py-3 sm:text-sm">Continue Shopping</a>
+                    <a href="{{ route('shop') }}" class="inline-flex shrink-0 items-center justify-center rounded-full border border-gray-300 px-3.5 py-2.5 text-xs font-semibold text-gray-700 transition hover:border-[#AE7C18] hover:text-[#AE7C18] sm:px-5 sm:py-3 sm:text-sm">Continue Shopping</a>
                     <form method="POST" action="{{ route('cart.clear') }}" class="shrink-0">
                         @csrf
                         @method('DELETE')

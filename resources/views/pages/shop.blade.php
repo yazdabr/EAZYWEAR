@@ -1,13 +1,13 @@
 @extends('layouts.website')
 
-@section('title', 'Catalog | Eazywear Indonesia')
-@section('meta_description', 'Explore the Eazywear Indonesia catalog for custom sportswear, jerseys, teamwear, and apparel designed for teams, communities, schools, and businesses.')
+@section('title', 'Shop | Eazywear Indonesia')
+@section('meta_description', 'Explore the Eazywear Indonesia Shop for custom sportswear, jerseys, teamwear, and apparel designed for teams, communities, schools, and businesses.')
 
-@section('canonical', rtrim(config('app.url'), '/') . '/catalog')
+@section('canonical', rtrim(config('app.url'), '/') . '/shop')
 
-@section('og_title', 'Catalog | Eazywear Indonesia')
+@section('og_title', 'Shop | Eazywear Indonesia')
 @section('og_description', 'Explore Eazywear Indonesia custom sportswear, jerseys, teamwear, and apparel.')
-@section('og_url', rtrim(config('app.url'), '/') . '/catalog')
+@section('og_url', rtrim(config('app.url'), '/') . '/shop')
 
 @push('schema')
 @php
@@ -26,8 +26,8 @@
             [
                 '@type' => 'ListItem',
                 'position' => 2,
-                'name' => 'Catalog',
-                'item' => $siteUrl . '/catalog',
+                'name' => 'Shop',
+                'item' => $siteUrl . '/shop',
             ],
         ],
     ];
@@ -40,15 +40,15 @@
 
 @section('content')
 <div x-data="quickView">
-    @include('catalog.hero')
-    @include('catalog.search-filter')
-    @include('catalog.product-grid')
+    @include('shop.hero')
+    @include('shop.search-filter')
+    @include('shop.product-grid')
 
     @if($products->count() > 0)
-        @include('catalog.pagination')
+        @include('shop.pagination')
     @endif
 
-    @include('catalog.quick-view-modal')
+    @include('shop.quick-view-modal')
 </div>
 @endsection
 

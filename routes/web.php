@@ -19,8 +19,22 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'pages.home')->name('home');
 
-Route::get('/catalog', [ProductController::class, 'catalog'])->name('catalog');
-Route::get('/catalog/product/{product:slug}', [ProductController::class, 'productDetail'])->name('product.detail');
+// URL baru untuk SHOP
+Route::get('/shop', [ProductController::class, 'shop'])->name('shop');
+Route::get('/shop/product/{product:slug}', [ProductController::class, 'productDetail'])
+    ->name('product.detail');
+
+Route::get('/catalog', function () {
+    $query = request()->getQueryString();
+
+    return redirect('/shop' . ($query ? '?' . $query : ''), 301);
+});
+
+Route::get('/catalog/product/{slug}', function (string $slug) {
+    $query = request()->getQueryString();
+
+    return redirect('/shop/product/' . $slug . ($query ? '?' . $query : ''), 301);
+});
 
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');

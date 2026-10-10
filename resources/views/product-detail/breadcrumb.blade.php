@@ -11,10 +11,10 @@
             <span>/</span>
 
             <a
-                href="{{ route('catalog') }}"
+                href="{{ route('shop') }}"
                 class="transition hover:text-[#AE7C18]"
             >
-                Catalog
+                Shop
             </a>
 
             <span>/</span>

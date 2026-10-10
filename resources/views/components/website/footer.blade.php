@@ -1,4 +1,4 @@
-<footer class="border-t border-slate-200 bg-[#111827] text-slate-300">
+﻿<footer class="border-t border-slate-200 bg-[#111827] text-slate-300">
     <x-ui.container>
         <div class="py-4 sm:py-12">
             {{-- Top Row --}}
@@ -41,7 +41,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="{{ route('catalog') }}" class="transition hover:text-white">
+                                    <a href="{{ route('shop') }}" class="transition hover:text-white">
                                         Shop
                                     </a>
                                 </li>
@@ -85,7 +85,7 @@
                                 @foreach(\App\Models\Category::where('status', 1)->orderBy('name')->get() as $category)
                                     <li>
                                         <a
-                                            href="{{ route('catalog', ['category' => $category->slug]) }}"
+                                            href="{{ route('shop', ['category' => $category->slug]) }}"
                                             class="transition hover:text-white"
                                         >
                                             {{ $category->name }}
@@ -162,8 +162,8 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('catalog') }}" class="transition hover:text-white">
-                                Catalog
+                            <a href="{{ route('shop')}}" class="transition hover:text-white">
+                                Shop
                             </a>
                         </li>
                         <li>
@@ -188,7 +188,7 @@
                         @foreach(\App\Models\Category::where('status', 1)->orderBy('name')->get() as $category)
                             <li>
                                 <a
-                                    href="{{ route('catalog', ['category' => $category->slug]) }}"
+                                    href="{{ route('shop', ['category' => $category->slug]) }}"
                                     class="transition hover:text-white"
                                 >
                                     {{ $category->name }}
@@ -217,7 +217,7 @@
             {{-- Bottom Legal Bar --}}
             <div class="mt-0 flex flex-col items-center justify-between gap-0 border-t border-slate-800/80 pt-1 text-center text-[10px] text-slate-500 sm:mt-8 sm:flex-row sm:gap-2 sm:pt-6 sm:text-left sm:text-[11px]">
                 <p>
-                    © {{ date('Y') }} Eazywear Indonesia. All rights reserved.
+                    Â© {{ date('Y') }} Eazywear Indonesia. All rights reserved.
                 </p>
                 <p class="text-slate-600">
                     Built for performance.

@@ -7,14 +7,14 @@
 
                 @forelse($products as $product)
                     <x-ui.reveal :index="floor($loop->index / 2)" class="h-full">
-                        <x-catalog.product-card :product="$product" />
+                        <x-shop.product-card :product="$product" />
                     </x-ui.reveal>
                 @empty
                     <div class="col-span-2 py-20 text-center">
                         <div class="mx-auto max-w-xl">
 
                             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[#AE7C18]">
-                                Eazywear Catalog
+                                Eazywear Shop
                             </p>
 
                             <h2 class="mt-3 text-2xl font-bold text-slate-900">
@@ -55,14 +55,14 @@
 
                 @forelse($products as $product)
                     <x-ui.reveal :index="$loop->index">
-                        <x-catalog.product-card :product="$product" />
+                        <x-shop.product-card :product="$product" />
                     </x-ui.reveal>
                 @empty
                     <div class="col-span-full py-20 text-center">
                         <div class="mx-auto max-w-xl">
 
                             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-[#AE7C18]">
-                                Eazywear Catalog
+                                Eazywear Shop
                             </p>
 
                             <h2 class="mt-3 text-2xl font-bold text-slate-900">

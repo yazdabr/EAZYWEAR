@@ -7,10 +7,18 @@
     </url>
 
     <url>
-        <loc>{{ route('catalog') }}</loc>
+        <loc>{{ route('shop') }}</loc>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
+
+    @foreach (\App\Models\Product::where('status', true)->whereNotNull('slug')->get(['slug']) as $product)
+        <url>
+            <loc>{{ route('product.detail', ['product' => $product->slug]) }}</loc>
+            <changefreq>weekly</changefreq>
+            <priority>0.8</priority>
+        </url>
+    @endforeach
 
     <url>
         <loc>{{ route('about') }}</loc>

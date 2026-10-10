@@ -34,9 +34,9 @@
                     {{-- Buttons Wrapper --}}
                     <div class="mt-6 flex flex-col items-center justify-center gap-2.5 sm:mt-12 sm:flex-row sm:gap-5">
 
-                        {{-- Catalog --}}
+                        {{-- Shop --}}
                         <x-ui.button
-                            :href="route('catalog')"
+                            :href="route('shop')"
                             class="w-full sm:w-auto"
                         >
                             Browse Shop

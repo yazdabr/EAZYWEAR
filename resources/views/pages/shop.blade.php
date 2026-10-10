@@ -39,7 +39,7 @@
 @endpush
 
 @section('content')
-<div x-data="quickView">
+<div x-data="quickView" class="bg-white">
     @include('shop.hero')
     @include('shop.search-filter')
     @include('shop.product-grid')

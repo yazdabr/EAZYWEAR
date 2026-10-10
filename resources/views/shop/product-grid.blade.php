@@ -1,4 +1,4 @@
-<section class="bg-white py-14">
+<section class="bg-white py-6 sm:py-8 lg:py-10">
     <x-ui.container>
 
         {{-- MOBILE --}}

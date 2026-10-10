@@ -51,7 +51,7 @@
 
                     {{-- Internal Links --}}
                     <div class="hero-buttons mt-5 flex items-center gap-2.5 sm:mt-10 sm:gap-4 lg:mt-12">
-                        <x-ui.button :href="route('catalog')" class="!px-4 !py-2.5 !text-xs sm:!px-6 sm:!py-3.5 sm:!text-sm">Explore Shop</x-ui.button>
+                        <x-ui.button :href="route('shop')" class="!px-4 !py-2.5 !text-xs sm:!px-6 sm:!py-3.5 sm:!text-sm">Explore Shop</x-ui.button>
                         <x-ui.button :href="route('contact')" variant="outline" class="!px-4 !py-2.5 !text-xs sm:!px-6 sm:!py-3.5 sm:!text-sm">Contact Us</x-ui.button>
                     </div>
                 </div>

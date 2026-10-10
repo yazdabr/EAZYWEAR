@@ -6,7 +6,7 @@
     <x-ui.container>
         <div class="relative z-10 flex flex-nowrap items-center gap-3 overflow-x-auto pb-2 lg:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <!-- Form Search -->
-            <form method="GET" action="{{ route('catalog') }}" class="relative min-w-[280px] shrink-0 lg:w-[380px]">
+            <form method="GET" action="{{ route('shop') }}" class="relative min-w-[280px] shrink-0 lg:w-[380px]">
                 @if(request('category'))
                     <input type="hidden" name="category" value="{{ request('category') }}">
                 @endif
@@ -26,7 +26,7 @@
 
                 @if(request('search'))
                     <a
-                        href="{{ route('catalog', request('category') ? ['category' => request('category')] : []) }}"
+                        href="{{ route('shop', request('category') ? ['category' => request('category')] : []) }}"
                         class="absolute inset-y-0 right-4 z-10 flex items-center text-xs font-semibold text-slate-400 transition hover:text-[#AE7C18]"
                     >
                         Clear
@@ -35,7 +35,7 @@
             </form>
 
             <!-- Category Filter Included -->
-            @include('catalog.category-filter')
+            @include('shop.category-filter')
         </div>
     </x-ui.container>
 </section>

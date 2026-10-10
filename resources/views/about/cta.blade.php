@@ -36,7 +36,7 @@
 
                         {{-- Catalog --}}
                         <x-ui.button
-                            :href="route('catalog')"
+                            :href="route('shop')"
                             class="w-full sm:w-auto"
                         >
                             Browse Shop

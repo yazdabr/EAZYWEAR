@@ -7,7 +7,7 @@
     </url>
 
     <url>
-        <loc>{{ route('catalog') }}</loc>
+        <loc>{{ route('shop') }}</loc>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>

@@ -12,8 +12,23 @@ require __DIR__.'/../../vendor/autoload.php';
 putenv('APP_ENV=testing');
 putenv('DB_CONNECTION=mysql');
 putenv('DB_DATABASE=eazywear_testing');
+putenv('CACHE_STORE=database');
 putenv('MAIL_MAILER=array');
 putenv('QUEUE_CONNECTION=sync');
+
+$_ENV['APP_ENV'] = 'testing';
+$_ENV['DB_CONNECTION'] = 'mysql';
+$_ENV['DB_DATABASE'] = 'eazywear_testing';
+$_ENV['CACHE_STORE'] = 'database';
+$_ENV['MAIL_MAILER'] = 'array';
+$_ENV['QUEUE_CONNECTION'] = 'sync';
+
+$_SERVER['APP_ENV'] = 'testing';
+$_SERVER['DB_CONNECTION'] = 'mysql';
+$_SERVER['DB_DATABASE'] = 'eazywear_testing';
+$_SERVER['CACHE_STORE'] = 'database';
+$_SERVER['MAIL_MAILER'] = 'array';
+$_SERVER['QUEUE_CONNECTION'] = 'sync';
 
 $app = require __DIR__.'/../../bootstrap/app.php';
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
@@ -149,6 +164,10 @@ try {
         'worker' => $workerId,
         'pid' => getmypid(),
         'success' => true,
+        'cache_default' => config('cache.default'),
+        'cache_store_class' => get_class(
+            \Illuminate\Support\Facades\Cache::store()->getStore()
+        ),
         'response_class' => get_class($response),
         'response_status' => $response->getStatusCode(),
         'response_body' => $response->getContent(),

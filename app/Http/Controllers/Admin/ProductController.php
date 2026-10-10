@@ -640,7 +640,7 @@ class ProductController extends Controller
         return $slug;
     }
 
-    public function catalog(Request $request)
+    public function shop(Request $request)
     {
         $products = Product::with(['category', 'images', 'variants'])
             ->where('status', true)
@@ -661,7 +661,7 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('pages.catalog', compact('products', 'categories'));
+        return view('pages.shop', compact('products', 'categories'));
     }
 
     public function productDetail(Product $product): View

@@ -17,6 +17,7 @@ class BiteshipCreateOrderConcurrencyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['cache.default' => 'database']);
 
         $this->barrierDir = storage_path(
             'framework/testing/biteship-create-concurrency-'.Str::uuid()

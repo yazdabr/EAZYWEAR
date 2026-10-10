@@ -14,14 +14,14 @@
             {{-- Navigation --}}
             <nav aria-label="Mobile navigation" class="flex flex-col space-y-1.5 py-6">
                 <x-ui.nav-link route="home" mobile @click="open=false">Home</x-ui.nav-link>
-                <x-ui.nav-link route="catalog" mobile @click="open=false">Shop</x-ui.nav-link>
+                <x-ui.nav-link route="shop" mobile @click="open=false">Shop</x-ui.nav-link>
                 <x-ui.nav-link route="about" mobile @click="open=false">About</x-ui.nav-link>
                 <x-ui.nav-link route="contact" mobile @click="open=false">Contact</x-ui.nav-link>
             </nav>
             {{-- Bottom Actions --}}
             <div class="space-y-3 border-t border-gray-100 pt-4">
                 {{-- Mobile Search --}}
-                <form method="GET" action="{{ route('catalog') }}" class="relative" role="search">
+                <form method="GET" action="{{ route('shop') }}" class="relative" role="search">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                         <x-heroicon-o-magnifying-glass class="h-5 w-5 text-gray-400"/>
                     </div>
@@ -118,7 +118,7 @@
                         <x-ui.nav-link route="home">Home</x-ui.nav-link>
                     </li>
                     <li>
-                        <x-ui.nav-link route="catalog">Shop</x-ui.nav-link>
+                        <x-ui.nav-link route="shop">Shop</x-ui.nav-link>
                     </li>
                     <li>
                         <x-ui.nav-link route="about">About</x-ui.nav-link>
@@ -134,7 +134,7 @@
                     {{-- Search --}}
                     <form
                         method="GET"
-                        action="{{ route('catalog') }}"
+                        action="{{ route('shop') }}"
                         class="relative"
                         x-data="{search:@js(request('search','')),focused:false}"
                         role="search"

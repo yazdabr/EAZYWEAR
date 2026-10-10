@@ -25,7 +25,7 @@
             {{-- Product 1 --}}
             <x-ui.reveal delay="100">
                 <a
-                    href="{{ route('catalog') }}"
+                    href="{{ route('shop') }}"
                     class="group relative block h-72 w-full overflow-hidden rounded-2xl bg-slate-200 transition-all duration-300 hover:shadow-xl active:scale-[0.98] sm:h-auto sm:aspect-[4/5]"
                 >
                     <picture>
@@ -67,7 +67,7 @@
             {{-- Product 2 --}}
             <x-ui.reveal delay="200">
                 <a
-                    href="{{ route('catalog') }}"
+                    href="{{ route('shop') }}"
                     class="group relative block h-72 w-full overflow-hidden rounded-2xl bg-slate-200 transition-all duration-300 hover:shadow-xl active:scale-[0.98] sm:h-auto sm:aspect-[4/5]"
                 >
                     <picture>
@@ -107,7 +107,7 @@
             {{-- Product 3 --}}
             <x-ui.reveal delay="300">
                 <a
-                    href="{{ route('catalog') }}"
+                    href="{{ route('shop') }}"
                     class="group relative block h-72 w-full overflow-hidden rounded-2xl bg-slate-200 transition-all duration-300 hover:shadow-xl active:scale-[0.98] sm:h-auto sm:aspect-[4/5]"
                 >
                     <picture>

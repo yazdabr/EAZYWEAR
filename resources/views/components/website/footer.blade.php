@@ -41,7 +41,7 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="{{ route('catalog') }}" class="transition hover:text-white">
+                                    <a href="{{ route('shop') }}" class="transition hover:text-white">
                                         Shop
                                     </a>
                                 </li>
@@ -85,7 +85,7 @@
                                 @foreach(\App\Models\Category::where('status', 1)->orderBy('name')->get() as $category)
                                     <li>
                                         <a
-                                            href="{{ route('catalog', ['category' => $category->slug]) }}"
+                                            href="{{ route('shop', ['category' => $category->slug]) }}"
                                             class="transition hover:text-white"
                                         >
                                             {{ $category->name }}
@@ -162,8 +162,8 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ route('catalog') }}" class="transition hover:text-white">
-                                Catalog
+                            <a href="{{ route('shop') }}" class="transition hover:text-white">
+                                Shop
                             </a>
                         </li>
                         <li>
@@ -188,7 +188,7 @@
                         @foreach(\App\Models\Category::where('status', 1)->orderBy('name')->get() as $category)
                             <li>
                                 <a
-                                    href="{{ route('catalog', ['category' => $category->slug]) }}"
+                                    href="{{ route('shop', ['category' => $category->slug]) }}"
                                     class="transition hover:text-white"
                                 >
                                     {{ $category->name }}

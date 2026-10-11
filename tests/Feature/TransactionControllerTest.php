@@ -561,30 +561,317 @@ class TransactionControllerTest extends TestCase
             ]);
     }
 
-    public function test_expired_transaction_cannot_be_checked_against_doku(): void
+    public function test_expired_transaction_remains_expired_when_doku_payment_is_not_successful(): void
     {
         $user = $this->superAdmin();
 
         $transaction = Transaction::factory()->create([
             'status' => 'EXPIRED',
+            'payment_method' => 'VA BCA',
             'va_number' => '190089123456789012',
             'invoice_number' => 'INV-TEST-EXPIRED',
         ]);
 
         $this->mock(DokuService::class, function ($mock) {
-            $mock->shouldNotReceive('checkVirtualAccountStatus');
+            $mock->shouldReceive('checkVirtualAccountStatus')
+                ->once()
+                ->andReturn([
+                    'response' => [
+                        'responseCode' => '4002600',
+                        'responseMessage' => 'Failed',
+                    ],
+                ]);
         });
 
         $response = $this
             ->actingAs($user)
-            ->postJson(route('admin.transactions.check-payment', $transaction));
+            ->postJson(
+                route('admin.transactions.check-payment', $transaction)
+            );
 
         $response
-            ->assertStatus(422)
+            ->assertOk()
             ->assertJson([
                 'success' => false,
-                'message' => 'Hanya transaksi PENDING yang dapat diperiksa melalui Virtual Account.',
+                'message' => 'Pembayaran belum diterima DOKU.',
             ]);
+
+        $transaction->refresh();
+
+        $this->assertSame('EXPIRED', $transaction->status);
+
+        $this->assertDatabaseMissing('stock_movements', [
+            'transaction_id' => $transaction->id,
+            'type' => 'OUT',
+        ]);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => 'EXPIRED',
+        ]);
+    }
+
+    public function test_expired_va_transaction_with_successful_payment_becomes_paid_and_deducts_stock(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = $this->createTestTransaction();
+
+        $transaction->update([
+            'status' => 'EXPIRED',
+            'payment_method' => 'VA BCA',
+            'va_number' => '190089123456789012',
+            'invoice_number' => 'INV-TEST-VA-RECOVERY',
+        ]);
+
+        $inventory = Inventory::query()
+            ->where(
+                'product_variant_id',
+                $transaction->items->first()->product_variant_id
+            )
+            ->firstOrFail();
+
+        $stockBefore = (int) $inventory->stock;
+        $quantity = (int) $transaction->items->first()->qty;
+        $paidAmount = number_format(
+            (float) $transaction->total,
+            2,
+            '.',
+            ''
+        );
+
+        $this->mock(DokuService::class, function ($mock) use ($paidAmount) {
+            $mock->shouldReceive('checkVirtualAccountStatus')
+                ->once()
+                ->andReturn([
+                    'response' => [
+                        'responseCode' => '2002600',
+                        'responseMessage' => 'Successful',
+                        'virtualAccountData' => [
+                            'paymentFlagReason' => [
+                                'english' => 'Success',
+                            ],
+                            'paidAmount' => [
+                                'value' => $paidAmount,
+                                'currency' => 'IDR',
+                            ],
+                        ],
+                    ],
+                ]);
+        });
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route('admin.transactions.check-payment', $transaction)
+            );
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'status' => 'PAID',
+            ]);
+
+        $this->assertSame(
+            'PAID',
+            $transaction->refresh()->status
+        );
+
+        $this->assertSame(
+            $stockBefore - $quantity,
+            (int) $inventory->refresh()->stock
+        );
+
+        $this->assertSame(
+            1,
+            StockMovement::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('type', 'OUT')
+                ->count()
+        );
+    }
+
+    public function test_expired_va_transaction_with_wrong_paid_amount_remains_expired(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = $this->createTestTransaction();
+
+        $transaction->update([
+            'status' => 'EXPIRED',
+            'payment_method' => 'VA BCA',
+            'va_number' => '190089123456789012',
+            'invoice_number' => 'INV-TEST-VA-WRONG-AMOUNT',
+        ]);
+
+        $inventory = Inventory::query()
+            ->where(
+                'product_variant_id',
+                $transaction->items->first()->product_variant_id
+            )
+            ->firstOrFail();
+
+        $stockBefore = (int) $inventory->stock;
+
+        $wrongAmount = number_format(
+            (float) $transaction->total + 1,
+            2,
+            '.',
+            ''
+        );
+
+        $this->mock(DokuService::class, function ($mock) use ($wrongAmount) {
+            $mock->shouldReceive('checkVirtualAccountStatus')
+                ->once()
+                ->andReturn([
+                    'response' => [
+                        'responseCode' => '2002600',
+                        'responseMessage' => 'Successful',
+                        'virtualAccountData' => [
+                            'paymentFlagReason' => [
+                                'english' => 'Success',
+                            ],
+                            'paidAmount' => [
+                                'value' => $wrongAmount,
+                                'currency' => 'IDR',
+                            ],
+                        ],
+                    ],
+                ]);
+        });
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson(
+                route('admin.transactions.check-payment', $transaction)
+            );
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => false,
+                'message' => 'Pembayaran belum diterima DOKU.',
+            ]);
+
+        $this->assertSame(
+            'EXPIRED',
+            $transaction->refresh()->status
+        );
+
+        $this->assertSame(
+            $stockBefore,
+            (int) $inventory->refresh()->stock
+        );
+
+        $this->assertDatabaseMissing('stock_movements', [
+            'transaction_id' => $transaction->id,
+            'type' => 'OUT',
+        ]);
+    }
+
+    public function test_rechecking_recovered_va_transaction_does_not_deduct_stock_twice(): void
+    {
+        $user = $this->superAdmin();
+
+        $transaction = $this->createTestTransaction();
+
+        $transaction->update([
+            'status' => 'EXPIRED',
+            'payment_method' => 'VA BCA',
+            'va_number' => '190089123456789012',
+            'invoice_number' => 'INV-TEST-VA-IDEMPOTENT',
+        ]);
+
+        $inventory = Inventory::query()
+            ->where(
+                'product_variant_id',
+                $transaction->items->first()->product_variant_id
+            )
+            ->firstOrFail();
+
+        $stockBefore = (int) $inventory->stock;
+        $quantity = (int) $transaction->items->first()->qty;
+
+        $paidAmount = number_format(
+            (float) $transaction->total,
+            2,
+            '.',
+            ''
+        );
+
+        $this->mock(DokuService::class, function ($mock) use ($paidAmount) {
+            $mock->shouldReceive('checkVirtualAccountStatus')
+                ->once()
+                ->andReturn([
+                    'response' => [
+                        'responseCode' => '2002600',
+                        'responseMessage' => 'Successful',
+                        'virtualAccountData' => [
+                            'paymentFlagReason' => [
+                                'english' => 'Success',
+                            ],
+                            'paidAmount' => [
+                                'value' => $paidAmount,
+                                'currency' => 'IDR',
+                            ],
+                        ],
+                    ],
+                ]);
+        });
+
+        $firstResponse = $this
+            ->actingAs($user)
+            ->postJson(
+                route('admin.transactions.check-payment', $transaction)
+            );
+
+        $firstResponse
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'status' => 'PAID',
+            ]);
+
+        $stockAfterFirstCheck = (int) $inventory->refresh()->stock;
+
+        $this->assertSame(
+            $stockBefore - $quantity,
+            $stockAfterFirstCheck
+        );
+
+        // Pemeriksaan kedua ditolak karena transaksi sudah PAID.
+        $secondResponse = $this
+            ->actingAs($user)
+            ->postJson(
+                route('admin.transactions.check-payment', $transaction)
+            );
+
+        $secondResponse
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'message' => 'Transaksi sudah tercatat lunas.',
+                'status' => 'PAID',
+            ]);
+
+        $this->assertSame(
+            'PAID',
+            $transaction->refresh()->status
+        );
+
+        $this->assertSame(
+            $stockAfterFirstCheck,
+            (int) $inventory->refresh()->stock
+        );
+
+        $this->assertSame(
+            1,
+            StockMovement::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('type', 'OUT')
+                ->count()
+        );
     }
 
     public function test_completed_transaction_cannot_be_checked_against_doku(): void

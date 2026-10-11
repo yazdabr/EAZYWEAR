@@ -861,6 +861,10 @@ class TransactionController extends Controller
     ) {
         $paymentMethod = strtoupper((string) $transaction->payment_method);
         $isQris = str_contains($paymentMethod, 'QRIS');
+        $isDokuVa = preg_match(
+            '/(?:^|[^A-Z])VA(?:$|[^A-Z])|VIRTUAL[\s_-]*ACCOUNT/',
+            $paymentMethod
+        ) === 1;
 
         if ($transaction->status === 'PAID') {
             return response()->json([
@@ -954,27 +958,74 @@ class TransactionController extends Controller
             ]);
         }
 
-        if ($transaction->status !== 'PENDING') {
+        if (! in_array($transaction->status, ['PENDING', 'EXPIRED'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Hanya transaksi PENDING yang dapat diperiksa melalui Virtual Account.',
             ], 422);
         }
 
-        $result = $dokuService->checkVirtualAccountStatus([
-            'partnerServiceId' => trim((string) data_get($transaction->doku_response, 'virtualAccountData.partnerServiceId')),
-            'customerNo' => data_get($transaction->doku_response, 'virtualAccountData.customerNo'),
-            'virtualAccountNo' => data_get($transaction->doku_response, 'virtualAccountData.virtualAccountNo'),
-            'trxId' => $transaction->invoice_number,
-        ]);
+        if (! $isDokuVa) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Metode pembayaran tidak didukung untuk pemeriksaan DOKU VA.',
+            ], 422);
+        }
 
-        $response = $result['response'] ?? [];
+        try {
+            $result = $dokuService->checkVirtualAccountStatus([
+                'partnerServiceId' => trim((string) data_get(
+                    $transaction->doku_response,
+                    'virtualAccountData.partnerServiceId'
+                )),
+                'customerNo' => data_get(
+                    $transaction->doku_response,
+                    'virtualAccountData.customerNo'
+                ),
+                'virtualAccountNo' => data_get(
+                    $transaction->doku_response,
+                    'virtualAccountData.virtualAccountNo'
+                ),
+                'trxId' => $transaction->invoice_number,
+            ]);
 
-        if (($response['responseCode'] ?? null) === '2002600') {
+            $response = $result['response'] ?? [];
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memeriksa status Virtual Account ke DOKU.',
+            ], 502);
+        }
+
+        $paidAmount = data_get(
+            $response,
+            'virtualAccountData.paidAmount.value'
+        ) ?? data_get($response, 'paidAmount.value');
+
+        $paidCurrency = data_get(
+            $response,
+            'virtualAccountData.paidAmount.currency'
+        ) ?? data_get($response, 'paidAmount.currency');
+
+        if (
+            ($response['responseCode'] ?? null) === '2002600'
+            && strtolower((string) (
+                data_get($response, 'virtualAccountData.paymentFlagReason.english')
+                ?? data_get($response, 'paymentFlagReason.english')
+            )) === 'success'
+            && $paidAmount !== null
+            && $paidAmount !== ''
+            && $paidCurrency === 'IDR'
+            && number_format((float) $paidAmount, 2, '.', '') ===
+                number_format((float) $transaction->total, 2, '.', '')
+        ) {
             $paymentService->processSuccessfulPayment(
                 $transaction,
                 $response,
-                'Manual DOKU payment check'
+                'Manual DOKU payment check',
+                $transaction->status === 'EXPIRED'
             );
 
             return response()->json([

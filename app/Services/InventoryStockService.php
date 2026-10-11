@@ -220,8 +220,19 @@ class InventoryStockService
                 ]);
             }
 
+            $paymentMethod = strtoupper(trim(
+                (string) $lockedTransaction->payment_method
+            ));
+
+            $isSupportedRecoveryMethod =
+                str_contains($paymentMethod, 'QRIS')
+                || preg_match(
+                    '/(?:^|[^A-Z])VA(?:$|[^A-Z])|VIRTUAL[\s_-]*ACCOUNT/',
+                    $paymentMethod
+                ) === 1;
+
             $canRecoverExpired = $allowExpiredRecovery
-                && strtoupper((string) $lockedTransaction->payment_method) === 'QRIS'
+                && $isSupportedRecoveryMethod
                 && $lockedTransaction->status === 'EXPIRED';
 
             if (!in_array($lockedTransaction->status, ['PENDING', 'PAID'], true) && !$canRecoverExpired) {

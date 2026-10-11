@@ -49,10 +49,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
             {{-- Tombol untuk memeriksa pembayaran DOKU --}}
             @if(
                 ($isDokuVa || $isDokuQris)
-                && (
-                    $transaction->status === 'PENDING'
-                    || ($isDokuQris && $transaction->status === 'EXPIRED')
-                )
+                && in_array($transaction->status, ['PENDING', 'EXPIRED'], true)
             )
                 <button type="button"
                     onclick="checkDokuPayment('{{ $transaction->id }}')"

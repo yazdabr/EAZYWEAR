@@ -388,7 +388,8 @@ class DokuQrisNotificationController extends Controller
                     $transactionPaymentService->processSuccessfulPayment(
                         $lockedTransaction,
                         $normalizedPaymentPayload,
-                        'DOKU QRIS notification'
+                        'DOKU QRIS notification',
+                        true
                     );
 
                     $lockedTransaction->update([

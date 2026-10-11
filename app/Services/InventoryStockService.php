@@ -185,9 +185,10 @@ class InventoryStockService
 
     public function decreaseForTransaction(
         Transaction $transaction,
-        ?string $description = null
+        ?string $description = null,
+        bool $allowExpiredRecovery = false
     ): Collection {
-        return DB::transaction(function () use ($transaction, $description) {
+        return DB::transaction(function () use ($transaction, $description, $allowExpiredRecovery) {
             $lockedTransaction = Transaction::query()
                 ->with([
                     'items' => function ($query) {
@@ -219,7 +220,11 @@ class InventoryStockService
                 ]);
             }
 
-            if (!in_array($lockedTransaction->status, ['PENDING', 'PAID'], true)) {
+            $canRecoverExpired = $allowExpiredRecovery
+                && strtoupper((string) $lockedTransaction->payment_method) === 'QRIS'
+                && $lockedTransaction->status === 'EXPIRED';
+
+            if (!in_array($lockedTransaction->status, ['PENDING', 'PAID'], true) && !$canRecoverExpired) {
                 throw ValidationException::withMessages([
                     'transaction' => sprintf(
                         'Transaksi dengan status %s tidak dapat diproses.',

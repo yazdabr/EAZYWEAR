@@ -11,6 +11,7 @@ use App\Models\TransactionItem;
 use App\Models\StockMovement;
 use App\Models\TransactionNotification;
 use App\Services\DokuService;
+use App\Services\DokuQrisService;
 use App\Services\InventoryStockService;
 use App\Services\TransactionPaymentService;
 use App\Services\TransactionCompletionService;
@@ -852,14 +853,116 @@ class TransactionController extends Controller
         }
     }
 
-    public function checkPayment(Transaction $transaction, DokuService $dokuService, TransactionPaymentService $paymentService)
-    {
+    public function checkPayment(
+        Transaction $transaction,
+        DokuService $dokuService,
+        TransactionPaymentService $paymentService,
+        DokuQrisService $dokuQrisService
+    ) {
+        $paymentMethod = strtoupper((string) $transaction->payment_method);
+        $isQris = str_contains($paymentMethod, 'QRIS');
+
+        if ($transaction->status === 'PAID') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi sudah tercatat lunas.',
+                'status' => 'PAID',
+            ]);
+        }
+
+        if ($isQris) {
+            if (!in_array($transaction->status, ['PENDING', 'EXPIRED'], true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status transaksi tidak dapat diperiksa untuk pemulihan QRIS.',
+                ], 422);
+            }
+
+            try {
+                $originalReferenceNo = data_get(
+                    $transaction->qris_response,
+                    'referenceNo'
+                );
+
+                $originalPartnerReferenceNo = data_get(
+                    $transaction->qris_response,
+                    'partnerReferenceNo'
+                );
+
+                if (
+                    ! is_string($originalReferenceNo)
+                    || trim($originalReferenceNo) === ''
+                    || ! is_string($originalPartnerReferenceNo)
+                    || trim($originalPartnerReferenceNo) === ''
+                ) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Referensi QRIS tersimpan tidak lengkap. Pemeriksaan pembayaran dibatalkan.',
+                    ], 422);
+                }
+
+                $response = $dokuQrisService->queryQr(
+                    $originalReferenceNo,
+                    $originalPartnerReferenceNo
+                );
+            } catch (\Throwable $e) {
+                report($e);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memeriksa status QRIS ke DOKU.',
+                ], 502);
+            }
+
+            $paidAmount = data_get($response, 'amount.value');
+
+            if (
+                ($response['responseCode'] ?? null) !== '2005100'
+                || (string) ($response['latestTransactionStatus'] ?? '') !== '00'
+                || strcasecmp((string) ($response['transactionStatusDesc'] ?? ''), 'Success') !== 0
+                || data_get($response, 'amount.currency') !== 'IDR'
+                || $paidAmount === null
+                || number_format((float) $paidAmount, 2, '.', '') !==
+                    number_format((float) $transaction->total, 2, '.', '')
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'DOKU belum mengonfirmasi pembayaran QRIS sukses dengan nominal yang sesuai.',
+                ], 422);
+            }
+
+            $normalizedResponse = [
+                'responseCode' => '2002600',
+                'responseMessage' => 'Success',
+                'paymentFlagReason' => ['english' => 'Success'],
+                'paidAmount' => ['value' => $paidAmount, 'currency' => 'IDR'],
+                'paymentRequestId' => $response['originalReferenceNo'] ?? $transaction->invoice_number,
+                'qrisQueryResponse' => $response,
+            ];
+
+            $paymentService->processSuccessfulPayment(
+                $transaction,
+                $normalizedResponse,
+                'Manual DOKU QRIS query',
+                true
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembayaran QRIS berhasil diverifikasi.',
+                'status' => 'PAID',
+            ]);
+        }
+
         if ($transaction->status !== 'PENDING') {
-            return response()->json(['message' => 'Transaksi sudah diproses.'], 422);
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya transaksi PENDING yang dapat diperiksa melalui Virtual Account.',
+            ], 422);
         }
 
         $result = $dokuService->checkVirtualAccountStatus([
-            'partnerServiceId' => trim(data_get($transaction->doku_response, 'virtualAccountData.partnerServiceId')),
+            'partnerServiceId' => trim((string) data_get($transaction->doku_response, 'virtualAccountData.partnerServiceId')),
             'customerNo' => data_get($transaction->doku_response, 'virtualAccountData.customerNo'),
             'virtualAccountNo' => data_get($transaction->doku_response, 'virtualAccountData.virtualAccountNo'),
             'trxId' => $transaction->invoice_number,
@@ -868,17 +971,16 @@ class TransactionController extends Controller
         $response = $result['response'] ?? [];
 
         if (($response['responseCode'] ?? null) === '2002600') {
-            \Log::info('Manual DOKU payment confirmed', [
-                'transaction_id' => $transaction->id,
-                'invoice' => $transaction->invoice_number,
-                'amount' => data_get($response, 'virtualAccountData.paidAmount.value'),
-            ]);
-
-            $paymentService->processSuccessfulPayment($transaction, $response, 'Manual DOKU payment check');
+            $paymentService->processSuccessfulPayment(
+                $transaction,
+                $response,
+                'Manual DOKU payment check'
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Pembayaran berhasil dikonfirmasi.',
+                'status' => 'PAID',
             ]);
         }
 

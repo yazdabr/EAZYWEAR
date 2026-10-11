@@ -526,7 +526,7 @@ class DokuQrisNotificationControllerTest extends TestCase
         );
     }
 
-    public function test_expired_qris_transaction_rejects_success_notification(): void
+    public function test_expired_qris_transaction_can_be_recovered_by_success_notification(): void
     {
         $transaction = $this->createPayableTransaction();
 
@@ -534,67 +534,55 @@ class DokuQrisNotificationControllerTest extends TestCase
             'qris_expired_at' => now()->subMinute(),
         ]);
 
-        $transaction->refresh();
-
         $this->assertTrue(
             app(\App\Services\TransactionExpiryService::class)
-                ->expire($transaction)
+                ->expire($transaction->refresh())
         );
 
         $transaction->refresh();
 
-        $this->assertSame(
-            'EXPIRED',
-            $transaction->status
-        );
+        $this->assertSame('EXPIRED', $transaction->status);
 
-        $variantId = $transaction
-            ->items()
-            ->first()
-            ->product_variant_id;
+        $variantId = $transaction->items()->first()->product_variant_id;
 
-        $stockBefore = Inventory::where(
+        $stockBefore = (int) Inventory::where(
             'product_variant_id',
             $variantId
         )->value('stock');
 
         $response = $this->postNotification(
-            $this->payload(
-                $transaction->invoice_number,
-                150000
-            )
+            $this->payload($transaction->invoice_number, 150000)
         );
 
-        $response->assertStatus(409)
-            ->assertJson([
-                'responseCode' => '4092500',
-                'responseMessage' => 'Payment processing rejected.',
-            ]);
+        $response->assertOk();
 
         $transaction->refresh();
 
-        $this->assertSame(
-            'EXPIRED',
-            $transaction->status
-        );
+        $this->assertSame('PAID', $transaction->status);
+        $this->assertNotNull($transaction->paid_at);
 
-        $this->assertNull(
-            $transaction->paid_at
-        );
-
-        $this->assertSame(
-            'DOKU-REFERENCE-001',
-            $transaction->qris_reference_no
-        );
-
-        $stockAfter = Inventory::where(
+        $stockAfter = (int) Inventory::where(
             'product_variant_id',
             $variantId
         )->value('stock');
 
-        $this->assertSame(
-            $stockBefore,
-            $stockAfter
-        );
+        $this->assertSame($stockBefore - 1, $stockAfter);
+
+        // Kirim notifikasi yang sama sekali lagi.
+        $this->postNotification(
+            $this->payload($transaction->invoice_number, 150000)
+        )->assertOk();
+
+        $transaction->refresh();
+
+        $this->assertSame('PAID', $transaction->status);
+
+        $stockAfterDuplicate = (int) Inventory::where(
+            'product_variant_id',
+            $variantId
+        )->value('stock');
+
+        $this->assertSame($stockAfter, $stockAfterDuplicate);
     }
+
 }

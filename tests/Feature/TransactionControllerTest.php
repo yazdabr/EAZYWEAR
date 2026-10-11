@@ -261,9 +261,10 @@ class TransactionControllerTest extends TestCase
             ->postJson(route('admin.transactions.check-payment', $transaction));
 
         $response
-            ->assertStatus(422)
+            ->assertOk()
             ->assertJson([
-                'message' => 'Transaksi sudah diproses.',
+                'success' => true,
+                'status' => 'PAID',
             ]);
     }
 
@@ -555,7 +556,8 @@ class TransactionControllerTest extends TestCase
         $response
             ->assertStatus(422)
             ->assertJson([
-                'message' => 'Transaksi sudah diproses.',
+                'success' => false,
+                'message' => 'Hanya transaksi PENDING yang dapat diperiksa melalui Virtual Account.',
             ]);
     }
 
@@ -580,7 +582,8 @@ class TransactionControllerTest extends TestCase
         $response
             ->assertStatus(422)
             ->assertJson([
-                'message' => 'Transaksi sudah diproses.',
+                'success' => false,
+                'message' => 'Hanya transaksi PENDING yang dapat diperiksa melalui Virtual Account.',
             ]);
     }
 
@@ -605,7 +608,8 @@ class TransactionControllerTest extends TestCase
         $response
             ->assertStatus(422)
             ->assertJson([
-                'message' => 'Transaksi sudah diproses.',
+                'success' => false,
+                'message' => 'Hanya transaksi PENDING yang dapat diperiksa melalui Virtual Account.',
             ]);
     }
 

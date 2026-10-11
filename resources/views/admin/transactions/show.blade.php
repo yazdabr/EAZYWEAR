@@ -30,20 +30,27 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
         </div>
 
         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-            @if($transaction->status === 'PAID')
-                <button type="button" onclick="processOrder('{{ $transaction->id }}')" id="process-order-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30">
-                    <x-heroicon-o-cog-6-tooth class="h-4 w-4" />
-                    Proses Pesanan
-                </button>
-            @endif
+            @php
+                $paymentMethod = strtoupper((string) $transaction->payment_method);
+                $isDokuVa = str_contains($paymentMethod, 'VA');
+                $isDokuQris = str_contains($paymentMethod, 'QRIS');
+            @endphp
 
-            {{-- @if($transaction->payment_method === 'VA' && $transaction->status === 'PENDING')
-                <button type="button" onclick="checkDokuPayment('{{ $transaction->id }}')" id="check-doku-btn" class="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500/30">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+            @if(
+                ($isDokuVa || $isDokuQris)
+                && (
+                    $transaction->status === 'PENDING'
+                    || ($isDokuQris && $transaction->status === 'EXPIRED')
+                )
+            )
+                <button type="button"
+                    onclick="checkDokuPayment('{{ $transaction->id }}')"
+                    id="check-doku-btn"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500/30">
+                    <x-heroicon-o-arrow-path class="h-4 w-4" />
                     Cek Pembayaran
                 </button>
-            @endif --}}
-
+            @endif
             <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Kembali</a>
             <a href="{{ route('admin.transactions.print', $transaction->invoice_number) }}" target="_blank" class="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#AE7C18] px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F]">Cetak Invoice</a>
         </div>

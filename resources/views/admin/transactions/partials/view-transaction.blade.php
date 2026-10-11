@@ -313,7 +313,7 @@
 
                 {{-- Tombol Cek Pembayaran DOKU --}}
                 <button type="button"
-                        x-show="isDokuPayment() && transaction.status === 'PENDING'"
+                        x-show="isDokuPayment() && (transaction.status === 'PENDING' || (isQrisPayment() && transaction.status === 'EXPIRED'))"
                         @click="checkDokuPayment()"
                         :disabled="loading || dokuLoading || !transaction.id"
                         class="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-bold text-white shadow-sm transition hover:bg-violet-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
@@ -406,7 +406,7 @@ document.addEventListener('alpine:init', () => {
         isDokuPayment() {
             const payment = String(this.transaction.payment || '').toUpperCase();
 
-            return payment.includes('VA');
+            return payment.includes('VA') || payment.includes('QRIS');
         },
 
         async checkDokuPayment() {
@@ -435,7 +435,7 @@ document.addEventListener('alpine:init', () => {
             const url =
                 '/admin/transactions/' +
                 transactionId +
-                '/check-doku-payment';
+                '/check-payment';
 
             try {
                 const response = await fetch(url, {

@@ -202,6 +202,61 @@ class FulfillmentHoldService
         });
     }
 
+    public function restoreReleasedHoldForPaidTransaction(
+        Transaction $transaction
+    ): FulfillmentHold {
+        return DB::transaction(function () use ($transaction) {
+            $lockedTransaction = Transaction::query()
+                ->whereKey($transaction->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedTransaction->status !== 'PAID') {
+                throw ValidationException::withMessages([
+                    'fulfillment' => 'Pemulihan alokasi hanya diperbolehkan untuk transaksi PAID.',
+                ]);
+            }
+
+            $hold = FulfillmentHold::query()
+                ->where('transaction_id', $lockedTransaction->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($hold->status === FulfillmentHold::CONVERTED) {
+                return $hold;
+            }
+
+            if ($hold->status !== FulfillmentHold::RELEASED) {
+                throw ValidationException::withMessages([
+                    'fulfillment' => 'Fulfillment hold tidak berstatus RELEASED.',
+                ]);
+            }
+
+            $slot = FulfillmentSlot::query()
+                ->whereKey($hold->fulfillment_slot_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $activeHolds = FulfillmentHold::query()
+                ->where('fulfillment_slot_id', $slot->id)
+                ->where('status', FulfillmentHold::HELD)
+                ->count();
+
+            if ($slot->used_count + $activeHolds >= $slot->capacity) {
+                throw ValidationException::withMessages([
+                    'fulfillment' => 'Kuota penuh. Pembayaran tetap tercatat lunas, tetapi alokasi perlu ditangani admin.',
+                ]);
+            }
+
+            $hold->update([
+                'status' => FulfillmentHold::HELD,
+                'released_at' => null,
+            ]);
+
+            return $this->convertHoldToAllocation($lockedTransaction);
+        });
+    }
+
     public function releaseHold(
         Transaction $transaction
     ): FulfillmentHold {

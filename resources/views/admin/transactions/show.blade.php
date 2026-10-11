@@ -28,7 +28,6 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
             </div>
             <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-slate-500">{{ $transaction->transaction_date?->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y H:i') }} WITA</p>
         </div>
-
         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
             @php
                 $paymentMethod = strtoupper((string) $transaction->payment_method);
@@ -36,6 +35,18 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 $isDokuQris = str_contains($paymentMethod, 'QRIS');
             @endphp
 
+            {{-- Tombol untuk memproses pesanan yang sudah dibayar --}}
+            @if($transaction->status === 'PAID')
+                <button type="button"
+                    onclick="processOrder('{{ $transaction->id }}')"
+                    id="process-order-btn"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30">
+                    <x-heroicon-o-cog-6-tooth class="h-4 w-4" />
+                    Proses Pesanan
+                </button>
+            @endif
+
+            {{-- Tombol untuk memeriksa pembayaran DOKU --}}
             @if(
                 ($isDokuVa || $isDokuQris)
                 && (
@@ -51,8 +62,17 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                     Cek Pembayaran
                 </button>
             @endif
-            <a href="{{ route('admin.transactions') }}" class="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Kembali</a>
-            <a href="{{ route('admin.transactions.print', $transaction->invoice_number) }}" target="_blank" class="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#AE7C18] px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F]">Cetak Invoice</a>
+
+            <a href="{{ route('admin.transactions') }}"
+                class="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+                Kembali
+            </a>
+
+            <a href="{{ route('admin.transactions.print', $transaction->invoice_number) }}"
+                target="_blank"
+                class="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#AE7C18] px-3 py-2 sm:px-4 text-xs sm:text-sm font-semibold text-white shadow-sm transition hover:bg-[#96690F]">
+                Cetak Invoice
+            </a>
         </div>
     </div>
 

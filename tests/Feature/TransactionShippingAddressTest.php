@@ -154,4 +154,144 @@ class TransactionShippingAddressTest extends TestCase
             $lock->release();
         }
     }
+
+    public function test_admin_can_update_customer_contact_for_courier_order(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']));
+        $transaction = $this->createCourierTransaction();
+
+        $response = $this->patchJson(
+            route('admin.transactions.customer-contact.update', $transaction),
+            [
+                'shipping_name' => 'Nama Kontak Baru',
+                'shipping_phone' => '081299998888',
+                'shipping_email' => 'kontak-baru@example.com',
+            ]
+        );
+
+        $response->assertOk()->assertJson([
+            'success' => true,
+            'data' => [
+                'id' => $transaction->id,
+                'shipping_name' => 'Nama Kontak Baru',
+                'shipping_phone' => '081299998888',
+                'shipping_email' => 'kontak-baru@example.com',
+            ],
+        ]);
+
+        $updated = $transaction->fresh();
+
+        $this->assertSame('Nama Kontak Baru', $updated->shipping_name);
+        $this->assertSame('081299998888', $updated->shipping_phone);
+        $this->assertSame('kontak-baru@example.com', $updated->shipping_email);
+        $this->assertSame('Alamat Lama', $updated->shipping_address);
+        $this->assertSame(108000, (int) $updated->total);
+    }
+
+    public function test_admin_can_update_customer_contact_for_pickup_order(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']));
+        $transaction = $this->createCourierTransaction([
+            'shipping_method' => 'Ambil di Tempat',
+        ]);
+
+        $response = $this->patchJson(
+            route('admin.transactions.customer-contact.update', $transaction),
+            [
+                'shipping_name' => 'Kontak Pickup',
+                'shipping_phone' => '081277776666',
+                'shipping_email' => 'pickup@example.com',
+            ]
+        );
+
+        $response->assertOk()->assertJson([
+            'success' => true,
+            'data' => [
+                'shipping_name' => 'Kontak Pickup',
+                'shipping_phone' => '081277776666',
+                'shipping_email' => 'pickup@example.com',
+            ],
+        ]);
+    }
+
+    public function test_admin_cannot_update_customer_contact_after_tracking_number_exists(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']));
+        $transaction = $this->createCourierTransaction([
+            'tracking_number' => 'RESI-CONTACT-001',
+        ]);
+
+        $response = $this->patchJson(
+            route('admin.transactions.customer-contact.update', $transaction),
+            [
+                'shipping_name' => 'Tidak Boleh Berubah',
+                'shipping_phone' => '081200000000',
+                'shipping_email' => 'ditolak@example.com',
+            ]
+        );
+
+        $response->assertUnprocessable();
+
+        $updated = $transaction->fresh();
+        $this->assertSame('Customer Address Test', $updated->shipping_name);
+        $this->assertSame('08123456789', $updated->shipping_phone);
+        $this->assertSame('address-test@example.com', $updated->shipping_email);
+    }
+
+    public function test_admin_cannot_update_customer_contact_for_completed_order(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']));
+        $transaction = $this->createCourierTransaction([
+            'status' => 'COMPLETED',
+        ]);
+
+        $response = $this->patchJson(
+            route('admin.transactions.customer-contact.update', $transaction),
+            [
+                'shipping_name' => 'Tidak Boleh Berubah',
+                'shipping_phone' => '081200000000',
+                'shipping_email' => 'ditolak@example.com',
+            ]
+        );
+
+        $response->assertUnprocessable();
+        $this->assertSame(
+            'Customer Address Test',
+            $transaction->fresh()->shipping_name
+        );
+    }
+
+    public function test_admin_cannot_update_customer_contact_while_shipment_lock_is_held(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']));
+        $transaction = $this->createCourierTransaction();
+
+        $lock = \Illuminate\Support\Facades\Cache::lock(
+            'biteship:ship:' . $transaction->id,
+            120
+        );
+
+        $this->assertTrue($lock->get());
+
+        try {
+            $response = $this->patchJson(
+                route('admin.transactions.customer-contact.update', $transaction),
+                [
+                    'shipping_name' => 'Tidak Boleh Tersimpan',
+                    'shipping_phone' => '081200000000',
+                    'shipping_email' => 'ditolak@example.com',
+                ]
+            );
+
+            $response->assertStatus(409);
+
+            $this->assertSame(
+                'Customer Address Test',
+                $transaction->fresh()->shipping_name
+            );
+        } finally {
+            $lock->release();
+        }
+    }
+
 }

@@ -88,10 +88,29 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
         <!-- Grid Content (2 Kolom Seimbang) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm">
             
-            <!-- Seksi 1: Kontak Pelanggan -->
+            {{-- Seksi 1: Kontak Pelanggan --}}
             <div class="space-y-4 rounded-xl bg-slate-50/70 p-4 border border-slate-100">
-                <span class="text-[12px] font-bold uppercase tracking-wider text-[#AE7C18]">Kontak Pelanggan</span>
-                
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-[12px] font-bold uppercase tracking-wider text-[#AE7C18]">Kontak Pelanggan</span>
+
+                    @if(
+                        in_array($transaction->status, ['PAID', 'ORDER_PROCESSING'], true) &&
+                        !$transaction->biteship_order_id &&
+                        !$transaction->biteship_tracking_id &&
+                        !$transaction->biteship_waybill_id &&
+                        !$transaction->tracking_number
+                    )
+                        <button
+                            type="button"
+                            onclick="toggleCustomerContactEditor(true)"
+                            class="inline-flex items-center gap-1 rounded-lg border border-[#AE7C18]/30 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#AE7C18] transition hover:bg-[#AE7C18]/5"
+                        >
+                            <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
+                            Edit Kontak
+                        </button>
+                    @endif
+                </div>
+
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                     <div class="sm:col-span-2">
                         <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Nama</p>
@@ -106,12 +125,60 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                         <p class="mt-0.5 font-semibold text-slate-900 break-all">{{ $transaction->shipping_email ?? '-' }}</p>
                     </div>
                 </div>
+
+                @if(
+                    in_array($transaction->status, ['PAID', 'ORDER_PROCESSING'], true) &&
+                    !$transaction->biteship_order_id &&
+                    !$transaction->biteship_tracking_id &&
+                    !$transaction->biteship_waybill_id &&
+                    !$transaction->tracking_number
+                )
+                    <form
+                        id="customer-contact-form"
+                        action="{{ route('admin.transactions.customer-contact.update', $transaction) }}"
+                        class="hidden space-y-3 border-t border-slate-200 pt-3"
+                    >
+                        @csrf
+                        <div>
+                            <label for="shipping_name" class="mb-1 block text-xs font-semibold text-slate-600">Nama pelanggan</label>
+                            <input id="shipping_name" name="shipping_name" type="text" maxlength="255" required
+                                value="{{ $transaction->shipping_name ?? $transaction->customer?->name }}"
+                                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20">
+                        </div>
+                        <div>
+                            <label for="shipping_phone" class="mb-1 block text-xs font-semibold text-slate-600">Nomor telepon</label>
+                            <input id="shipping_phone" name="shipping_phone" type="tel" maxlength="30" required
+                                value="{{ $transaction->shipping_phone }}"
+                                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20">
+                        </div>
+                        <div>
+                            <label for="shipping_email" class="mb-1 block text-xs font-semibold text-slate-600">Email (opsional)</label>
+                            <input id="shipping_email" name="shipping_email" type="email" maxlength="255"
+                                value="{{ $transaction->shipping_email }}"
+                                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20">
+                        </div>
+                        <p id="customer-contact-error" class="hidden text-xs text-red-600"></p>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="customer-contact-save" type="submit"
+                                class="rounded-lg bg-[#AE7C18] px-3 py-2 text-xs font-semibold text-white hover:bg-[#96690F]">
+                                Simpan Kontak
+                            </button>
+                            <button type="button" onclick="toggleCustomerContactEditor(false)"
+                                class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                                Batal
+                            </button>
+                        </div>
+                    </form>
+                @endif
             </div>
 
             <!-- Seksi 2: Metode & Alamat Pengiriman -->
             <div class="space-y-4 rounded-xl bg-slate-50/70 p-4 border border-slate-100 flex flex-col justify-between">
                 <div class="space-y-3.5">
                     <span class="text-[12px] font-bold uppercase tracking-wider text-[#AE7C18]">Detail Logistik</span>
+                    <p class=" text-xs leading-relaxed text-amber-800">
+                        <strong>Informasi:</strong> Edit alamat hanya untuk Kurir sebelum resi dibuat.
+                    </p>
                     
                     <!-- Grid Berdampingan untuk Metode & Jadwal -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
@@ -667,6 +734,69 @@ document.getElementById('shipping-address-form')?.addEventListener('submit', asy
         window.location.reload();
     } catch (e) {
         error.textContent = 'Terjadi kesalahan saat menyimpan alamat. Silakan coba lagi.';
+        error.classList.remove('hidden');
+    } finally {
+        button.disabled = false;
+        button.textContent = originalLabel;
+    }
+});
+function toggleCustomerContactEditor(show) {
+    const form = document.getElementById('customer-contact-form');
+    const error = document.getElementById('customer-contact-error');
+    if (!form) return;
+
+    form.classList.toggle('hidden', !show);
+    if (error) {
+        error.textContent = '';
+        error.classList.add('hidden');
+    }
+}
+
+document.getElementById('customer-contact-form')?.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const form = this;
+    const button = document.getElementById('customer-contact-save');
+    const error = document.getElementById('customer-contact-error');
+    const originalLabel = button.textContent;
+    const body = new URLSearchParams(new FormData(form));
+
+    button.disabled = true;
+    button.textContent = 'Menyimpan...';
+    error.textContent = '';
+    error.classList.add('hidden');
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'PATCH',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: body.toString()
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            const message =
+                data.errors?.shipping_name?.[0] ||
+                data.errors?.shipping_phone?.[0] ||
+                data.errors?.shipping_email?.[0] ||
+                data.errors?.contact?.[0] ||
+                data.message ||
+                'Kontak pelanggan gagal diperbarui.';
+
+            error.textContent = message;
+            error.classList.remove('hidden');
+            return;
+        }
+
+        alert(data.message);
+        window.location.reload();
+    } catch (e) {
+        error.textContent = 'Terjadi kesalahan saat menyimpan kontak. Silakan coba lagi.';
         error.classList.remove('hidden');
     } finally {
         button.disabled = false;

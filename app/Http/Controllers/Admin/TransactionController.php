@@ -1041,6 +1041,84 @@ class TransactionController extends Controller
         ]);
     }
 
+    public function updateCustomerContact(Request $request, Transaction $transaction)
+    {
+        $validated = $request->validate([
+            'shipping_name' => ['required', 'string', 'max:255'],
+            'shipping_phone' => ['required', 'string', 'max:30'],
+            'shipping_email' => ['nullable', 'email', 'max:255'],
+        ], [
+            'shipping_name.required' => 'Nama pelanggan wajib diisi.',
+            'shipping_phone.required' => 'Nomor telepon pelanggan wajib diisi.',
+            'shipping_email.email' => 'Format email tidak valid.',
+        ]);
+
+        $lock = Cache::lock('biteship:ship:' . $transaction->id, 120);
+
+        if (! $lock->get()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan sedang diproses untuk pengiriman. Coba lagi sebentar.',
+            ], 409);
+        }
+
+        try {
+            $updatedTransaction = DB::transaction(function () use ($transaction, $validated) {
+                $lockedTransaction = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if (! in_array($lockedTransaction->status, ['PAID', 'ORDER_PROCESSING'], true)) {
+                    throw ValidationException::withMessages([
+                        'contact' => 'Kontak hanya dapat diedit sebelum pesanan dikirim.',
+                    ]);
+                }
+
+                if (
+                    $lockedTransaction->biteship_order_id ||
+                    $lockedTransaction->biteship_tracking_id ||
+                    $lockedTransaction->biteship_waybill_id ||
+                    $lockedTransaction->tracking_number
+                ) {
+                    throw ValidationException::withMessages([
+                        'contact' => 'Kontak tidak dapat diedit karena proses atau resi pengiriman sudah dimulai.',
+                    ]);
+                }
+
+                // Hanya kolom kontak pada transaksi yang diubah.
+                $lockedTransaction->update([
+                    'shipping_name' => trim($validated['shipping_name']),
+                    'shipping_phone' => trim($validated['shipping_phone']),
+                    'shipping_email' => isset($validated['shipping_email'])
+                        ? trim($validated['shipping_email'])
+                        : null,
+                ]);
+
+                return $lockedTransaction->fresh();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kontak pelanggan berhasil diperbarui.',
+                'data' => [
+                    'id' => $updatedTransaction->id,
+                    'shipping_name' => $updatedTransaction->shipping_name,
+                    'shipping_phone' => $updatedTransaction->shipping_phone,
+                    'shipping_email' => $updatedTransaction->shipping_email,
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        } finally {
+            $lock->release();
+        }
+    }
+
     public function updateShippingAddress(Request $request, Transaction $transaction)
     {
         $validated = $request->validate([

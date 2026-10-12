@@ -264,7 +264,7 @@
                             <div x-show="longsleeveEnabled" x-cloak class="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-[#AE7C18]/50 sm:p-4" :class="isLongsleeve ? 'border-[#AE7C18] bg-[#AE7C18]/5 ring-1 ring-[#AE7C18]/20' : ''">
                                 <label class="flex h-full cursor-pointer flex-col">
                                     <span class="flex items-start justify-between gap-2">
-                                        <span class="text-xs font-bold text-slate-900 sm:text-sm">Longsleeve</span>
+                                        <span class="text-xs font-bold text-slate-900 sm:text-sm">Longsleeve (Lengan Panjang)</span>
                                         <input type="checkbox" x-model="isLongsleeve" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]">
                                     </span>
                                     <span class="mt-2 text-xs font-bold leading-relaxed text-[#AE7C18] sm:text-sm">+ Rp <span x-text="Number(longsleevePrice).toLocaleString('id-ID')"></span></span>
@@ -275,7 +275,7 @@
                             <div x-show="patchEnabled" x-cloak class="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-[#AE7C18]/50 sm:p-4" :class="isPatch ? 'border-[#AE7C18] bg-[#AE7C18]/5 ring-1 ring-[#AE7C18]/20' : ''">
                                 <label class="flex h-full cursor-pointer flex-col">
                                     <span class="flex items-start justify-between gap-2">
-                                        <span class="text-xs font-bold text-slate-900 sm:text-sm">Patch</span>
+                                        <span class="text-xs font-bold text-slate-900 sm:text-sm">Patch Pegadaian Liga 2</span>
                                         <input type="checkbox" x-model="isPatch" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]">
                                     </span>
                                     <span class="mt-2 text-xs font-bold leading-relaxed text-[#AE7C18] sm:text-sm">+ Rp <span x-text="Number(patchPrice).toLocaleString('id-ID')"></span></span>

@@ -1069,7 +1069,7 @@ class TransactionController extends Controller
                     ->firstOrFail();
 
                 if (
-                    $lockedTransaction->status !== 'ORDER_PROCESSING' ||
+                    ! in_array($lockedTransaction->status, ['PAID', 'ORDER_PROCESSING'], true) ||
                     $lockedTransaction->shipping_method !== 'Kurir'
                 ) {
                     throw ValidationException::withMessages([

@@ -68,6 +68,32 @@ class TransactionShippingAddressTest extends TestCase
         $this->assertNull($transaction->biteship_order_id);
     }
 
+    public function test_admin_can_update_shipping_address_before_processing_order(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']));
+        $transaction = $this->createCourierTransaction([
+            'status' => 'PAID',
+        ]);
+
+        $response = $this->patchJson(
+            route('admin.transactions.shipping-address.update', $transaction),
+            ['shipping_address' => 'Alamat Baru Sebelum Diproses']
+        );
+
+        $response->assertOk()->assertJson([
+            'success' => true,
+            'data' => [
+                'id' => $transaction->id,
+                'shipping_address' => 'Alamat Baru Sebelum Diproses',
+            ],
+        ]);
+
+        $this->assertSame(
+            'Alamat Baru Sebelum Diproses',
+            $transaction->fresh()->shipping_address
+        );
+    }
+
     public function test_admin_cannot_update_shipping_address_after_tracking_number_exists(): void
     {
         $this->actingAs(User::factory()->create(['role' => 'super_admin']));

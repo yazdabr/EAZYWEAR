@@ -140,7 +140,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Alamat Pengiriman</p>
                             @if(
-                                $transaction->status === 'ORDER_PROCESSING' &&
+                                in_array($transaction->status, ['PAID', 'ORDER_PROCESSING'], true) &&
                                 $transaction->shipping_method === 'Kurir' &&
                                 !$transaction->biteship_order_id &&
                                 !$transaction->biteship_tracking_id &&
@@ -162,7 +162,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                         <p class="mt-0.5 text-xs text-slate-500">{{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}</p>
 
                         @if(
-                            $transaction->status === 'ORDER_PROCESSING' &&
+                            in_array($transaction->status, ['PAID', 'ORDER_PROCESSING'], true) &&
                             $transaction->shipping_method === 'Kurir' &&
                             !$transaction->biteship_order_id &&
                             !$transaction->biteship_tracking_id &&

@@ -86,7 +86,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
         </div>
 
         <!-- Grid Content (2 Kolom Seimbang) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm">
+        <div class="grid grid-cols-1 {{ $transaction->fulfillments->isEmpty() ? 'md:grid-cols-2' : 'md:grid-cols-1' }} gap-6 text-xs sm:text-sm">
             
             {{-- Seksi 1: Kontak Pelanggan --}}
             <div class="space-y-4 rounded-xl bg-slate-50/70 p-4 border border-slate-100">
@@ -172,6 +172,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 @endif
             </div>
 
+            @if($transaction->fulfillments->isEmpty())
             <!-- Seksi 2: Metode & Alamat Pengiriman -->
             <div class="space-y-4 rounded-xl bg-slate-50/70 p-4 border border-slate-100 flex flex-col justify-between">
                 <div class="space-y-3.5">
@@ -269,10 +270,268 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                     </div>
                 </div>
             </div>
+            @endif
 
         </div>
     </div>
+    @if($transaction->fulfillments->isNotEmpty())
+        <section class="space-y-4 rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+            <div class="flex items-start gap-3 border-b border-slate-100 pb-4">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 text-[#AE7C18]">
+                    <x-heroicon-o-truck class="h-5 w-5" />
+                </div>
+                <div>
+                    <h2 class="font-bold text-slate-900 text-sm sm:text-base">Pemenuhan Pesanan</h2>
+                    <p class="mt-1 text-xs leading-relaxed text-slate-500">
+                        Setiap kelompok memiliki metode, ongkir, jadwal, dan status pemenuhan sendiri.
+                    </p>
+                </div>
+            </div>
 
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                @foreach($transaction->fulfillments as $fulfillment)
+                    @php
+                        $isReadyGroup = $fulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY;
+                        $groupLabel = $isReadyGroup ? 'Ready Stock' : 'Pre-Order';
+                        $groupStatusLabels = [
+                            'PENDING' => 'Menunggu diproses',
+                            'PROCESSING' => 'Sedang diproses',
+                            'SHIPPED' => 'Dalam pengiriman',
+                            'COMPLETED' => 'Selesai',
+                            'CANCELLED' => 'Dibatalkan',
+                        ];
+                        $canEditGroupAddress = in_array($transaction->status, ['PAID', 'ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
+                            && $fulfillment->shipping_method === 'Kurir'
+                            && !$fulfillment->biteship_order_id
+                            && !$fulfillment->biteship_tracking_id
+                            && !$fulfillment->biteship_waybill_id
+                            && !$fulfillment->tracking_number;
+                        $canProcessGroup = in_array($transaction->status, ['PAID', 'ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
+                            && !in_array($fulfillment->status, ['SHIPPED', 'COMPLETED', 'CANCELLED'], true);
+                    @endphp
+
+                    <article class="min-w-0 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide {{ $isReadyGroup ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800' }}">
+                                    {{ $groupLabel }}
+                                </span>
+                                <h3 class="mt-2 text-sm font-bold text-slate-900">
+                                    {{ $fulfillment->shipping_method ?? 'Metode belum ditentukan' }}
+                                </h3>
+                            </div>
+                            <span class="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-200">
+                                {{ $groupStatusLabels[$fulfillment->status] ?? $fulfillment->status ?? '-' }}
+                            </span>
+                        </div>
+
+                        <div class="mt-4 space-y-3">
+                            <div>
+                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Produk</p>
+                                <div class="mt-2 space-y-2">
+                                    @forelse($fulfillment->items as $fulfillmentItem)
+                                        <div class="flex items-start justify-between gap-3 rounded-xl border border-slate-100 bg-white p-3">
+                                            <div class="min-w-0">
+                                                <p class="text-xs font-semibold text-slate-800">
+                                                    {{ $fulfillmentItem->productVariant?->product?->name ?? $fulfillmentItem->custom_name ?? 'Produk' }}
+                                                </p>
+                                                <p class="mt-1 text-[11px] text-slate-500">
+                                                    Ukuran {{ $fulfillmentItem->productVariant?->size?->name ?? '-' }}
+                                                    · {{ $fulfillmentItem->qty }} pcs
+                                                </p>
+                                                @if($fulfillmentItem->custom_name)
+                                                    <p class="mt-1 text-[11px] text-slate-500">Nama: {{ $fulfillmentItem->custom_name }}</p>
+                                                @endif
+                                                @if($fulfillmentItem->custom_number)
+                                                    <p class="text-[11px] text-slate-500">Nomor: {{ $fulfillmentItem->custom_number }}</p>
+                                                @endif
+                                            </div>
+                                            <p class="shrink-0 text-right text-xs font-bold text-slate-800">
+                                                Rp{{ number_format((float) $fulfillmentItem->subtotal, 0, ',', '.') }}
+                                            </p>
+                                        </div>
+                                    @empty
+                                        <p class="rounded-xl bg-white p-3 text-xs text-slate-500">
+                                            Belum ada item yang terhubung ke kelompok ini.
+                                        </p>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="rounded-xl border border-slate-100 bg-white p-3">
+                                    <p class="text-[10px] uppercase tracking-wide text-slate-400">Ongkos kirim</p>
+                                    <p class="mt-1 text-sm font-bold text-slate-900">
+                                        Rp{{ number_format((float) $fulfillment->shipping_cost, 0, ',', '.') }}
+                                    </p>
+                                </div>
+                                <div class="rounded-xl border border-slate-100 bg-white p-3">
+                                    <p class="text-[10px] uppercase tracking-wide text-slate-400">Jadwal</p>
+                                    <p class="mt-1 text-xs font-semibold text-slate-800">
+                                        @if($fulfillment->shipping_method === 'Ambil di Tempat' && $fulfillment->pickup_date)
+                                            {{ \Carbon\Carbon::parse($fulfillment->pickup_date)->locale('id')->translatedFormat('d M Y') }}
+                                            @if($fulfillment->pickup_time_start && $fulfillment->pickup_time_end)
+                                                <span class="block mt-1 font-normal text-slate-500">
+                                                    {{ \Carbon\Carbon::parse($fulfillment->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($fulfillment->pickup_time_end)->format('H:i') }} WITA
+                                                </span>
+                                            @endif
+                                        @elseif($fulfillment->fulfillment_date)
+                                            {{ \Carbon\Carbon::parse($fulfillment->fulfillment_date)->locale('id')->translatedFormat('d M Y') }}
+                                        @else
+                                            Mengikuti jadwal pemrosesan
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if($fulfillment->shipping_method === 'Kurir')
+                                <div class="rounded-xl border border-slate-100 bg-white p-3">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Alamat pengiriman</p>
+                                        @if($canEditGroupAddress)
+                                            <button type="button"
+                                                onclick="toggleFulfillmentAddressEditor({{ $fulfillment->id }}, true)"
+                                                class="text-xs font-semibold text-[#AE7C18] hover:underline">
+                                                Edit alamat
+                                            </button>
+                                        @endif
+                                    </div>
+
+                                    <p class="mt-1 text-xs leading-relaxed text-slate-800">
+                                        {{ $fulfillment->shipping_address ?: $transaction->shipping_address ?: '-' }}
+                                    </p>
+                                    <p class="mt-1 text-[11px] text-slate-500">
+                                        {{ $fulfillment->shipping_district ?: $transaction->shipping_district }},
+                                        {{ $fulfillment->shipping_city ?: $transaction->shipping_city }},
+                                        {{ $fulfillment->shipping_province ?: $transaction->shipping_province }}
+                                        {{ $fulfillment->shipping_postal_code ?: $transaction->shipping_postal_code }}
+                                    </p>
+
+                                    @if($canEditGroupAddress)
+                                        <form id="fulfillment-address-form-{{ $fulfillment->id }}"
+                                            action="{{ route('admin.transactions.fulfillments.shipping-address.update', ['transaction' => $transaction, 'fulfillment' => $fulfillment]) }}"
+                                            method="POST" class="mt-3 hidden space-y-2">
+                                            @csrf
+                                            @method('PATCH')
+                                            <label for="fulfillment-address-{{ $fulfillment->id }}" class="block text-xs font-semibold text-slate-600">
+                                                Alamat baru untuk {{ $groupLabel }}
+                                            </label>
+                                            <textarea id="fulfillment-address-{{ $fulfillment->id }}"
+                                                name="shipping_address" rows="3" maxlength="2000" required
+                                                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800">{{ $fulfillment->shipping_address ?: $transaction->shipping_address }}</textarea>
+                                            <p id="fulfillment-address-error-{{ $fulfillment->id }}" class="hidden text-xs text-red-600"></p>
+                                            <div class="flex flex-wrap gap-2">
+                                                <button type="submit" class="rounded-lg bg-[#AE7C18] px-3 py-2 text-xs font-semibold text-white">Simpan alamat</button>
+                                                <button type="button" onclick="toggleFulfillmentAddressEditor({{ $fulfillment->id }}, false)"
+                                                    class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600">Batal</button>
+                                            </div>
+                                        </form>
+                                    @endif
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="rounded-xl border border-slate-100 bg-white p-3">
+                                        <p class="text-[10px] uppercase tracking-wide text-slate-400">Kurir</p>
+                                        <p class="mt-1 break-words text-xs font-semibold text-slate-800">{{ $fulfillment->courier ?: '-' }}</p>
+                                    </div>
+                                    <div class="rounded-xl border border-slate-100 bg-white p-3">
+                                        <p class="text-[10px] uppercase tracking-wide text-slate-400">Nomor resi</p>
+                                        <p class="mt-1 break-all text-xs font-semibold text-slate-800">{{ $fulfillment->tracking_number ?: $fulfillment->biteship_waybill_id ?: '-' }}</p>
+                                    </div>
+                                </div>
+
+                                @if($fulfillment->biteship_status)
+                                    <p class="text-[11px] text-slate-500">
+                                        Status Biteship:
+                                        <span class="font-semibold">{{ str_replace('_', ' ', ucfirst($fulfillment->biteship_status)) }}</span>
+                                    </p>
+                                @endif
+
+                                @if(
+                                    $fulfillment->status === \App\Models\TransactionFulfillment::STATUS_SHIPPED
+                                    && !$fulfillment->biteship_order_id
+                                    && in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
+                                )
+                                    <form class="fulfillment-complete-form"
+                                        action="{{ route('admin.transactions.fulfillments.complete', ['transaction' => $transaction, 'fulfillment' => $fulfillment]) }}"
+                                        method="POST">
+                                        @csrf
+                                        @method('PATCH')
+                                        <p class="fulfillment-action-error hidden mb-2 text-xs text-red-600"></p>
+                                        <button type="submit"
+                                            class="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-emerald-700">
+                                            <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
+                                            Konfirmasi pengiriman {{ $groupLabel }} selesai
+                                        </button>
+                                    </form>
+                                @endif
+
+                                @if($canProcessGroup)
+                                    <form class="fulfillment-ship-form space-y-2"
+                                        action="{{ route('admin.transactions.fulfillments.ship', ['transaction' => $transaction, 'fulfillment' => $fulfillment]) }}"
+                                        method="POST">
+                                        @csrf
+                                        @method('PATCH')
+
+                                        @if(!$fulfillment->courier_code || !$fulfillment->courier_service_code)
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                <div>
+                                                    <label class="mb-1 block text-xs font-semibold text-slate-600">Nama kurir</label>
+                                                    <input name="courier" value="{{ $fulfillment->courier }}" maxlength="100"
+                                                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs"
+                                                        placeholder="Contoh: JNE">
+                                                </div>
+                                                <div>
+                                                    <label class="mb-1 block text-xs font-semibold text-slate-600">Nomor resi</label>
+                                                    <input name="tracking_number" value="{{ $fulfillment->tracking_number }}" maxlength="255"
+                                                        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs"
+                                                        placeholder="Masukkan nomor resi">
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        <p class="fulfillment-action-error hidden text-xs text-red-600"></p>
+                                        <button type="submit" class="w-full rounded-xl bg-[#AE7C18] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#96690F]">
+                                            <x-heroicon-o-truck class="mr-1 inline h-4 w-4" />
+                                            Proses pengiriman {{ $groupLabel }}
+                                        </button>
+                                    </form>
+                                @endif
+
+                            @elseif($fulfillment->shipping_method === 'Ambil di Tempat')
+                                <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+                                    <p class="text-xs font-semibold text-emerald-800">Pengambilan langsung</p>
+                                    <p class="mt-1 text-xs leading-relaxed text-emerald-700">
+                                        Selesaikan kelompok ini setelah pelanggan benar-benar mengambil pesanan.
+                                    </p>
+                                </div>
+
+                                @if($canProcessGroup)
+                                    <form class="fulfillment-complete-form"
+                                        action="{{ route('admin.transactions.fulfillments.complete', ['transaction' => $transaction, 'fulfillment' => $fulfillment]) }}"
+                                        method="POST">
+                                        @csrf
+                                        @method('PATCH')
+                                        <p class="fulfillment-action-error hidden mb-2 text-xs text-red-600"></p>
+                                        <button type="submit" class="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-emerald-700">
+                                            <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
+                                            Konfirmasi {{ $groupLabel }} sudah diambil
+                                        </button>
+                                    </form>
+                                @endif
+                            @endif
+
+                            @if($fulfillment->status === \App\Models\TransactionFulfillment::STATUS_COMPLETED)
+                                <p class="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-xs font-semibold text-emerald-700">
+                                    Kelompok ini sudah selesai.
+                                </p>
+                            @endif
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        </section>
+    @endif
     <div class="grid gap-4 sm:gap-6 lg:grid-cols-3">
         <div class="lg:col-span-2">
             <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
@@ -356,6 +615,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
     @if(in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED', 'ORDER_COMPLETED'], true))
         <div class="grid gap-4 sm:gap-6 lg:grid-cols-3">
+            @if($transaction->fulfillments->isEmpty())
             <div class="lg:col-span-2">
                 <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                     <div class="mb-4 sm:mb-5 flex items-center justify-between gap-3">
@@ -589,6 +849,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                     @endif
                 </div>
             </div>
+            @endif
             <div>
                 <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                     <h2 class="mb-4 sm:mb-5 font-bold text-slate-900 text-sm sm:text-base">Timeline Status</h2>
@@ -804,5 +1065,134 @@ document.getElementById('customer-contact-form')?.addEventListener('submit', asy
     }
 });
 
+function toggleFulfillmentAddressEditor(id, show) {
+    const form = document.getElementById(`fulfillment-address-form-${id}`);
+    const error = document.getElementById(`fulfillment-address-error-${id}`);
+    if (!form) return;
+
+    form.classList.toggle('hidden', !show);
+    if (error) {
+        error.textContent = '';
+        error.classList.add('hidden');
+    }
+}
+
+document.querySelectorAll('[id^="fulfillment-address-form-"]').forEach(form => {
+    form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const button = form.querySelector('button[type="submit"]');
+        const error = form.querySelector('[id^="fulfillment-address-error-"]');
+        const originalLabel = button.textContent;
+
+        button.disabled = true;
+        button.textContent = 'Menyimpan...';
+        error?.classList.add('hidden');
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                },
+                body: new URLSearchParams(new FormData(form)).toString()
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                const message = data.errors?.shipping_address?.[0] || data.message || 'Alamat gagal diperbarui.';
+                if (error) {
+                    error.textContent = message;
+                    error.classList.remove('hidden');
+                } else {
+                    alert(message);
+                }
+                return;
+            }
+
+            alert(data.message || 'Alamat berhasil diperbarui.');
+            window.location.reload();
+        } catch (e) {
+            if (error) {
+                error.textContent = 'Terjadi kesalahan saat menyimpan alamat.';
+                error.classList.remove('hidden');
+            } else {
+                alert('Terjadi kesalahan saat menyimpan alamat.');
+            }
+        } finally {
+            button.disabled = false;
+            button.textContent = originalLabel;
+        }
+    });
+});
+
+async function submitFulfillmentAction(form, defaultMessage) {
+    const button = form.querySelector('button[type="submit"]');
+    const error = form.querySelector('.fulfillment-action-error');
+    const originalLabel = button.textContent;
+
+    button.disabled = true;
+    button.textContent = 'Memproses...';
+    if (error) {
+        error.textContent = '';
+        error.classList.add('hidden');
+    }
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'PATCH',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: new URLSearchParams(new FormData(form)).toString()
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            const message = data.message || data.errors?.fulfillment?.[0] || defaultMessage;
+            if (error) {
+                error.textContent = message;
+                error.classList.remove('hidden');
+            } else {
+                alert(message);
+            }
+            return;
+        }
+
+        alert(data.message || 'Status fulfillment berhasil diperbarui.');
+        window.location.reload();
+    } catch (e) {
+        if (error) {
+            error.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
+            error.classList.remove('hidden');
+        } else {
+            alert('Terjadi kesalahan. Silakan coba lagi.');
+        }
+    } finally {
+        button.disabled = false;
+        button.textContent = originalLabel;
+    }
+}
+
+document.querySelectorAll('.fulfillment-ship-form').forEach(form => {
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        submitFulfillmentAction(this, 'Pengiriman fulfillment gagal diproses.');
+    });
+});
+
+document.querySelectorAll('.fulfillment-complete-form').forEach(form => {
+    form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        if (!confirm('Pastikan pelanggan benar-benar telah mengambil pesanan ini. Lanjutkan?')) return;
+        submitFulfillmentAction(this, 'Fulfillment gagal diselesaikan.');
+    });
+});
 </script>
 @endsection

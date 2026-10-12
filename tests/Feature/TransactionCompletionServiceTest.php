@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Services\TransactionCompletionService;
 use App\Models\TransactionNotification;
 use Illuminate\Support\Facades\DB;
+use App\Models\TransactionFulfillment;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
@@ -299,5 +300,147 @@ class TransactionCompletionServiceTest extends TestCase
 
         $this->assertNotNull($notification);
         $this->assertNull($notification->sent_at);
+    }
+
+    public function test_manual_completion_of_ready_fulfillment_does_not_complete_transaction_while_pre_order_is_pending(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Ambil di Tempat',
+            'shipping_cost' => 0,
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Ambil di Tempat',
+            'shipping_cost' => 0,
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $completed = app(TransactionCompletionService::class)
+            ->completeFulfillmentManually($ready);
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_COMPLETED,
+            $ready->fresh()->status
+        );
+
+        $this->assertSame(
+            Transaction::ORDER_PROCESSING,
+            $completed->status
+        );
+
+        Mail::assertNothingSent();
+
+        $this->assertDatabaseMissing('order_status_histories', [
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::ORDER_COMPLETED,
+        ]);
+    }
+
+    public function test_transaction_is_completed_only_after_last_fulfillment_is_completed(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Ambil di Tempat',
+            'shipping_cost' => 0,
+            'status' => TransactionFulfillment::STATUS_COMPLETED,
+        ]);
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Ambil di Tempat',
+            'shipping_cost' => 0,
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $completed = app(TransactionCompletionService::class)
+            ->completeFulfillmentManually($preOrder);
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_COMPLETED,
+            $ready->fresh()->status
+        );
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_COMPLETED,
+            $preOrder->fresh()->status
+        );
+
+        $this->assertSame(
+            Transaction::ORDER_COMPLETED,
+            $completed->status
+        );
+
+        $this->assertDatabaseHas('order_status_histories', [
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::ORDER_COMPLETED,
+        ]);
+
+        Mail::assertSent(OrderCompletedMail::class, 1);
+    }
+
+    public function test_fulfillment_courier_cannot_be_completed_manually_before_shipped(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+        ]);
+
+        $fulfillment = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'status' => TransactionFulfillment::STATUS_PROCESSING,
+        ]);
+
+        try {
+            app(TransactionCompletionService::class)
+                ->completeFulfillmentManually($fulfillment);
+
+            $this->fail('Fulfillment kurir yang belum dikirim seharusnya ditolak.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey(
+                'fulfillment',
+                $exception->errors()
+            );
+        }
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_PROCESSING,
+            $fulfillment->fresh()->status
+        );
+
+        $this->assertSame(
+            Transaction::ORDER_PROCESSING,
+            $transaction->fresh()->status
+        );
+
+        Mail::assertNothingSent();
     }
 }

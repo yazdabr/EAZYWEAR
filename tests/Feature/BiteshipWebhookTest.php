@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Mail\OrderCompletedMail;
 use App\Models\Transaction;
+use App\Models\TransactionFulfillment;
+use App\Models\User;
+use App\Models\Customer;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -34,6 +37,35 @@ class BiteshipWebhookTest extends TestCase
     private function biteshipOrderId(string $suffix): string
     {
         return 'BITESHIP-' . $suffix . '-' . Str::uuid();
+    }
+
+    private function createCourierTransaction(array $overrides = []): Transaction
+    {
+        $customer = Customer::query()->firstOrFail();
+
+        return Transaction::create(array_merge([
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-ADDRESS-' . uniqid(),
+            'transaction_date' => now(),
+            'payment_method' => 'VA',
+            'subtotal' => 100000,
+            'discount' => 0,
+            'shipping' => 8000,
+            'total' => 108000,
+            'status' => Transaction::ORDER_PROCESSING,
+            'source' => 'Website',
+            'shipping_name' => 'Customer Address Test',
+            'shipping_email' => 'address-test@example.com',
+            'shipping_phone' => '08123456789',
+            'shipping_address' => 'Alamat Lama',
+            'shipping_district' => 'Banjarmasin Selatan',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+        ], $overrides));
     }
 
     public function test_on_hold_can_be_entered_from_in_transit(): void
@@ -1152,4 +1184,245 @@ class BiteshipWebhookTest extends TestCase
             $transaction->biteship_status
         );
     }
+
+    public function test_delivered_ready_fulfillment_does_not_complete_transaction_while_pre_order_is_pending(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+        ]);
+
+        $readyOrderId = $this->biteshipOrderId('READY');
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'biteship_order_id' => $readyOrderId,
+            'biteship_status' => 'in_transit',
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+        ]);
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 12000,
+            'biteship_order_id' => $this->biteshipOrderId('PREORDER'),
+            'biteship_status' => 'picking_up',
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $readyOrderId,
+                'status' => 'delivered',
+            ]);
+
+        $response->assertOk();
+
+        $this->assertSame(
+            'delivered',
+            $ready->fresh()->biteship_status
+        );
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_COMPLETED,
+            $ready->fresh()->status
+        );
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_SHIPPED,
+            $preOrder->fresh()->status
+        );
+
+        $this->assertSame(
+            Transaction::ORDER_PROCESSING,
+            $transaction->fresh()->status
+        );
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_delivered_pre_order_fulfillment_completes_transaction_when_ready_is_already_completed(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'biteship_order_id' => $this->biteshipOrderId('READY-DONE'),
+            'biteship_status' => 'delivered',
+            'status' => TransactionFulfillment::STATUS_COMPLETED,
+        ]);
+
+        $preOrderOrderId = $this->biteshipOrderId('PREORDER-DONE');
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 12000,
+            'biteship_order_id' => $preOrderOrderId,
+            'biteship_status' => 'in_transit',
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $preOrderOrderId,
+                'status' => 'delivered',
+            ]);
+
+        $response->assertOk();
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_COMPLETED,
+            $ready->fresh()->status
+        );
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_COMPLETED,
+            $preOrder->fresh()->status
+        );
+
+        $this->assertSame(
+            Transaction::ORDER_COMPLETED,
+            $transaction->fresh()->status
+        );
+
+        Mail::assertSent(OrderCompletedMail::class, 1);
+    }
+
+    public function test_delivered_webhook_for_unknown_fulfillment_does_not_change_existing_transaction(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+            'biteship_order_id' => $this->biteshipOrderId('LEGACY-UNRELATED'),
+            'biteship_status' => 'in_transit',
+        ]);
+
+        $response = $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $this->biteshipOrderId('UNKNOWN'),
+                'status' => 'delivered',
+            ]);
+
+        $response->assertNotFound();
+
+        $this->assertSame(
+            Transaction::ORDER_PROCESSING,
+            $transaction->fresh()->status
+        );
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_admin_can_update_address_of_one_fulfillment_without_changing_other_group(): void
+    {
+        $this->actingAs(User::factory()->create([
+            'role' => 'super_admin',
+        ]));
+
+        $transaction = $this->createCourierTransaction();
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'shipping_address' => 'Alamat Ready Lama',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 12000,
+            'shipping_address' => 'Alamat PO Lama',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $response = $this->patchJson(
+            route('admin.transactions.fulfillments.shipping-address.update', [
+                'transaction' => $transaction->id,
+                'fulfillment' => $ready->id,
+            ]),
+            ['shipping_address' => 'Alamat Ready Baru Nomor 123']
+        );
+
+        $response->assertOk()->assertJson([
+            'success' => true,
+        ]);
+
+        $this->assertSame(
+            'Alamat Ready Baru Nomor 123',
+            $ready->fresh()->shipping_address
+        );
+
+        $this->assertSame(
+            'Alamat PO Lama',
+            $preOrder->fresh()->shipping_address
+        );
+
+        $this->assertSame(
+            'Alamat Lama',
+            $transaction->fresh()->shipping_address
+        );
+    }
+
+    public function test_admin_cannot_change_fulfillment_address_after_biteship_order_exists(): void
+    {
+        $this->actingAs(User::factory()->create([
+            'role' => 'super_admin',
+        ]));
+
+        $transaction = $this->createCourierTransaction();
+
+        $fulfillment = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'shipping_address' => 'Alamat Sebelum Pengiriman',
+            'biteship_order_id' => 'TEST-FULFILLMENT-ADDRESS-001',
+            'status' => TransactionFulfillment::STATUS_PROCESSING,
+        ]);
+
+        $response = $this->patchJson(
+            route('admin.transactions.fulfillments.shipping-address.update', [
+                'transaction' => $transaction->id,
+                'fulfillment' => $fulfillment->id,
+            ]),
+            ['shipping_address' => 'Alamat yang Tidak Boleh Disimpan']
+        );
+
+        $response->assertUnprocessable();
+
+        $this->assertSame(
+            'Alamat Sebelum Pengiriman',
+            $fulfillment->fresh()->shipping_address
+        );
+    }
+
 }

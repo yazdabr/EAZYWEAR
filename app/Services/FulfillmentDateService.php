@@ -67,7 +67,7 @@ class FulfillmentDateService
                 config('fulfillment.pickup.same_day_cutoff')
             );
 
-        if ($checkoutAt->lte($cutoff)) {
+        if ($checkoutAt->lt($cutoff)) {
             return $checkoutAt->copy()->startOfDay();
         }
 

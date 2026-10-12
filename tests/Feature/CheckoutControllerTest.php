@@ -112,14 +112,19 @@ class CheckoutControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
 
-            'shipping_method' => 'Ambil di Tempat',
-
-            'pickup_date' => $pickupDate,
-            'pickup_time_start' => '09:00',
-            'pickup_time_end' => '11:00',
-
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            ...($variant->product->availability === 'ready'
+                ? [
+                    'ready_shipping_method' => 'Ambil di Tempat',
+                    'ready_pickup_date' => $pickupDate,
+                    'ready_pickup_time_start' => '09:00',
+                    'ready_pickup_time_end' => '11:00',
+                ]
+                : [
+                    'pre_order_shipping_method' => 'Ambil di Tempat',
+                    'pre_order_pickup_date' => $pickupDate,
+                    'pre_order_pickup_time_start' => '09:00',
+                    'pre_order_pickup_time_end' => '11:00',
+                ]),
 
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
@@ -244,9 +249,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -335,9 +340,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -423,9 +428,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -537,9 +542,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -625,9 +630,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -661,6 +666,25 @@ class CheckoutControllerTest extends TestCase
             ],
         ]);
 
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [[
+                        'courier_code' => 'jnt',
+                        'courier_name' => 'J&T',
+                        'service_code' => 'ez',
+                        'service_name' => 'EZ',
+                        'price' => 8000,
+                        'duration' => '2-3 days',
+                        'service_type' => 'standard',
+                        'shipping_type' => 'parcel',
+                    ]],
+                    'raw' => [],
+                ]);
+        });
+
         $this->mock(DokuService::class, function ($mock) {
             $mock->shouldReceive('isConfigured')
                 ->andReturn(true);
@@ -681,9 +705,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -759,9 +783,9 @@ class CheckoutControllerTest extends TestCase
                 'shipping_city' => 'Banjarmasin',
                 'shipping_province' => 'Kalimantan Selatan',
                 'shipping_postal_code' => '70111',
-                'shipping_method' => 'Kurir',
-                'courier_code' => 'jnt',
-                'courier_service_code' => 'ez',
+                'pre_order_shipping_method' => 'Kurir',
+                'pre_order_courier_code' => 'jnt',
+                'pre_order_courier_service_code' => 'ez',
                 'payment_method' => 'VA',
                 'va_bank' => $bank,
             ]);
@@ -818,9 +842,9 @@ class CheckoutControllerTest extends TestCase
                 'shipping_city' => 'Banjarmasin',
                 'shipping_province' => 'Kalimantan Selatan',
                 'shipping_postal_code' => '70111',
-                'shipping_method' => 'Kurir',
-                'courier_code' => 'jnt',
-                'courier_service_code' => 'ez',
+                'pre_order_shipping_method' => 'Kurir',
+                'pre_order_courier_code' => 'jnt',
+                'pre_order_courier_service_code' => 'ez',
                 'payment_method' => 'VA',
                 'va_bank' => $bank,
             ]);
@@ -897,9 +921,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
 
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
 
             'payment_method' => 'QRIS',
         ]);
@@ -1006,9 +1030,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
 
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
 
             'payment_method' => 'QRIS',
         ]);
@@ -1087,9 +1111,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
 
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
 
             'payment_method' => 'QRIS',
         ]);
@@ -1174,9 +1198,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -1238,9 +1262,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -1357,9 +1381,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -1472,9 +1496,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -1628,9 +1652,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -1827,9 +1851,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_city' => 'Banjarmasin',
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
@@ -1881,14 +1905,14 @@ class CheckoutControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
 
-            'shipping_method' => 'Ambil di Tempat',
+            'pre_order_shipping_method' => 'Ambil di Tempat',
 
-            'pickup_date' => '2026-10-31',
-            'pickup_time_start' => '09:00',
-            'pickup_time_end' => '11:00',
+            'pre_order_pickup_date' => '2026-10-31',
+            'pre_order_pickup_time_start' => '09:00',
+            'pre_order_pickup_time_end' => '11:00',
 
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
 
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
@@ -1976,14 +2000,14 @@ class CheckoutControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
 
-            'shipping_method' => 'Ambil di Tempat',
+            'pre_order_shipping_method' => 'Ambil di Tempat',
 
-            'pickup_date' => '2026-10-30',
-            'pickup_time_start' => '09:00',
-            'pickup_time_end' => '11:00',
+            'pre_order_pickup_date' => '2026-10-30',
+            'pre_order_pickup_time_start' => '09:00',
+            'pre_order_pickup_time_end' => '11:00',
 
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
 
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
@@ -2077,9 +2101,9 @@ class CheckoutControllerTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
 
-            'shipping_method' => 'Kurir',
-            'courier_code' => 'jnt',
-            'courier_service_code' => 'ez',
+            'pre_order_shipping_method' => 'Kurir',
+            'pre_order_courier_code' => 'jnt',
+            'pre_order_courier_service_code' => 'ez',
 
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
@@ -2167,5 +2191,276 @@ class CheckoutControllerTest extends TestCase
                 'message',
                 'Tanggal pickup tersebut sudah penuh. Silakan pilih tanggal lain.'
             );
+    }
+
+    public function test_checkout_ready_stock_creates_fulfillment_without_event_hold(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true)
+                    ->where('availability', 'pre_order');
+            })
+            ->with('product')
+            ->firstOrFail();
+
+        $variant->product->update(['availability' => 'ready']);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update(['stock' => 10]);
+
+        Session::put('cart', [[
+            'variant_id' => $variant->id,
+            'price' => (float) $variant->price,
+            'qty' => 1,
+            'custom_name' => '',
+            'custom_number' => '',
+        ]]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')->never();
+        });
+
+        $this->mockDokuSuccess();
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Ready Stock Test',
+            'email' => 'ready-stock-test@test.com',
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat Ready Stock',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'ready_shipping_method' => 'Ambil di Tempat',
+            'ready_pickup_date' => now()->addDay()->toDateString(),
+            'ready_pickup_time_start' => '09:00',
+            'ready_pickup_time_end' => '11:00',
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'ready-stock-test@test.com')
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('transaction_fulfillments', [
+            'transaction_id' => $transaction->id,
+            'group_type' => 'ready',
+            'shipping_method' => 'Ambil di Tempat',
+            'shipping_cost' => 0,
+        ]);
+
+        $fulfillmentId = \App\Models\TransactionFulfillment::query()
+            ->where('transaction_id', $transaction->id)
+            ->where('group_type', 'ready')
+            ->value('id');
+
+        $this->assertNotNull($fulfillmentId);
+
+        $this->assertDatabaseHas('transaction_items', [
+            'transaction_id' => $transaction->id,
+            'transaction_fulfillment_id' => $fulfillmentId,
+            'product_variant_id' => $variant->id,
+        ]);
+
+        $this->assertDatabaseMissing('fulfillment_holds', [
+            'transaction_id' => $transaction->id,
+        ]);
+    }
+
+    public function test_checkout_mixed_ready_and_pre_order_uses_one_transaction_and_separate_fulfillments(): void
+    {
+        $preOrderVariant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true)
+                    ->where('availability', 'pre_order');
+            })
+            ->with('product')
+            ->firstOrFail();
+
+        $readyProduct = \App\Models\Product::create([
+            'product_code' => 'TEST-READY-MIXED',
+            'category_id' => 6,
+            'name' => 'Test Ready Mixed',
+            'slug' => 'test-ready-mixed-' . uniqid(),
+            'description' => 'Temporary product for automated test',
+            'material' => 'Mesh',
+            'availability' => 'ready',
+            'status' => true,
+            'customization_enabled' => false,
+            'customization_price' => 0,
+            'longsleeve_enabled' => false,
+            'longsleeve_price' => 0,
+            'patch_enabled' => false,
+            'patch_price' => 0,
+        ]);
+
+        $readyVariant = ProductVariant::create([
+            'product_id' => $readyProduct->id,
+            'size_id' => 1,
+            'color_id' => 1,
+            'sku' => 'TEST-READY-MIXED-' . uniqid(),
+            'price' => 200000,
+            'weight' => 250,
+        ]);
+
+        Inventory::create([
+            'product_variant_id' => $readyVariant->id,
+            'stock' => 10,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $preOrderVariant->id)
+            ->update(['stock' => 10]);
+
+        FulfillmentHold::query()->delete();
+
+        FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->update([
+                'capacity' => 100,
+                'used_count' => 0,
+            ]);
+
+        Carbon::setTestNow(Carbon::parse('2026-10-20 10:00:00'));
+
+        Session::put('cart', [
+            [
+                'variant_id' => $readyVariant->id,
+                'price' => 200000,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+            [
+                'variant_id' => $preOrderVariant->id,
+                'price' => (float) $preOrderVariant->price,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->twice()
+                ->andReturn(
+                    [
+                        'success' => true,
+                        'rates' => [[
+                            'courier_code' => 'jnt',
+                            'courier_name' => 'J&T',
+                            'service_code' => 'ez',
+                            'service_name' => 'EZ',
+                            'price' => 8000,
+                            'duration' => '2-3 days',
+                            'service_type' => 'standard',
+                            'shipping_type' => 'parcel',
+                        ]],
+                        'raw' => [],
+                    ],
+                    [
+                        'success' => true,
+                        'rates' => [[
+                            'courier_code' => 'jnt',
+                            'courier_name' => 'J&T',
+                            'service_code' => 'ez',
+                            'service_name' => 'EZ',
+                            'price' => 12000,
+                            'duration' => '2-3 days',
+                            'service_type' => 'standard',
+                            'shipping_type' => 'parcel',
+                        ]],
+                        'raw' => [],
+                    ]
+                );
+        });
+
+        $this->mockDokuSuccess();
+
+        try {
+            $response = $this->post(route('checkout.store'), [
+                'name' => 'Mixed Checkout Test',
+                'email' => 'mixed-checkout-test@test.com',
+                'phone' => '08123456789',
+                'shipping_address' => 'Alamat Mixed',
+                'shipping_district' => 'District',
+                'shipping_city' => 'Banjarmasin',
+                'shipping_province' => 'Kalimantan Selatan',
+                'shipping_postal_code' => '70111',
+
+                'ready_shipping_method' => 'Kurir',
+                'ready_courier_code' => 'jnt',
+                'ready_courier_service_code' => 'ez',
+
+                'pre_order_shipping_method' => 'Kurir',
+                'pre_order_courier_code' => 'jnt',
+                'pre_order_courier_service_code' => 'ez',
+
+                'payment_method' => 'VA',
+                'va_bank' => 'MANDIRI',
+            ]);
+
+            $response->assertRedirect(route('checkout.success'));
+
+            $transaction = Transaction::query()
+                ->where('shipping_email', 'mixed-checkout-test@test.com')
+                ->firstOrFail();
+
+            $this->assertSame(20000, (int) $transaction->shipping);
+            $this->assertSame(
+                (float) $transaction->subtotal + 20000 - (float) $transaction->discount,
+                (float) $transaction->total
+            );
+
+            $this->assertSame(
+                2,
+                \App\Models\TransactionFulfillment::query()
+                    ->where('transaction_id', $transaction->id)
+                    ->count()
+            );
+
+            $readyFulfillment = \App\Models\TransactionFulfillment::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('group_type', 'ready')
+                ->firstOrFail();
+
+            $preOrderFulfillment = \App\Models\TransactionFulfillment::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('group_type', 'pre_order')
+                ->firstOrFail();
+
+            $this->assertSame(8000, (int) $readyFulfillment->shipping_cost);
+            $this->assertSame(12000, (int) $preOrderFulfillment->shipping_cost);
+
+            $this->assertDatabaseHas('transaction_items', [
+                'transaction_id' => $transaction->id,
+                'transaction_fulfillment_id' => $readyFulfillment->id,
+                'product_variant_id' => $readyVariant->id,
+            ]);
+
+            $this->assertDatabaseHas('transaction_items', [
+                'transaction_id' => $transaction->id,
+                'transaction_fulfillment_id' => $preOrderFulfillment->id,
+                'product_variant_id' => $preOrderVariant->id,
+            ]);
+
+            $this->assertDatabaseHas('fulfillment_holds', [
+                'transaction_id' => $transaction->id,
+                'status' => FulfillmentHold::HELD,
+            ]);
+
+            $this->assertSame(
+                1,
+                Transaction::query()
+                    ->where('shipping_email', 'mixed-checkout-test@test.com')
+                    ->count()
+            );
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 }

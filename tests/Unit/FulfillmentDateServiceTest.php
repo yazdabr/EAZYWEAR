@@ -107,14 +107,14 @@ class FulfillmentDateServiceTest extends TestCase
         );
     }
 
-    public function test_normal_pickup_allows_same_day_at_cutoff(): void
+    public function test_normal_pickup_moves_to_next_day_at_cutoff(): void
     {
         $date = $this->service->determineForNormalPickup(
             \Carbon\Carbon::parse('2026-11-04 14:00')
         );
 
         $this->assertSame(
-            '2026-11-04',
+            '2026-11-05',
             $date->toDateString()
         );
     }

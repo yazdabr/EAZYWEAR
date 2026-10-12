@@ -118,135 +118,102 @@
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
                         <div class="mb-4">
                             <h2 class="text-base font-bold text-slate-900 sm:text-lg">Pengiriman</h2>
-                        </div>
-                        <div class="space-y-2.5">
-                            @foreach($shippingMethods as $method)
-                                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-3 transition sm:gap-4 sm:px-4 has-[:checked]:border-[#AE7C18] has-[:checked]:bg-[#AE7C18]/5">
-                                    <input
-                                        type="radio"
-                                        name="shipping_method"
-                                        value="{{ $method['value'] }}"
-                                        class="h-4 w-4 accent-[#AE7C18]"
-                                        @checked(old('shipping_method') === $method['value'])
-                                    >
-                                    <div class="min-w-0 flex-1">
-                                        <p class="text-xs font-semibold text-slate-900 sm:text-sm">{{ $method['name'] }}</p>
-                                        <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">{{ $method['description'] }}</p>
-                                    </div>
-                                </label>
-                            @endforeach
+                            <p class="mt-1 text-[11px] leading-4 text-gray-500 sm:text-xs">Setiap kelompok pesanan dapat dikirim atau diambil secara terpisah. Ongkir dihitung untuk masing-masing pengiriman.</p>
                         </div>
 
-                        <div id="pickup-section" class="mt-4 hidden">
-                            <div class="rounded-xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-3.5 sm:p-4">
-
-                                {{-- Header --}}
-                                <div class="mb-3">
-                                    <div class="flex items-start justify-between gap-3">
+                        <div class="space-y-5">
+                            @foreach($fulfillmentGroups as $group)
+                                @php
+                                    $groupType = $group['type'];
+                                    $groupLabel = $group['label'];
+                                    $groupPrefix = $groupType . '_';
+                                    $oldMethod = old($groupPrefix . 'shipping_method');
+                                @endphp
+                                <section
+                                    class="rounded-xl border border-gray-200 p-3.5 sm:p-4"
+                                    data-fulfillment-group
+                                    data-group-type="{{ $groupType }}"
+                                    data-group-label="{{ $groupLabel }}"
+                                    data-group-subtotal="{{ $group['subtotal'] }}"
+                                >
+                                    <div class="mb-3 flex items-start justify-between gap-3">
                                         <div>
-                                            <p class="text-xs font-semibold text-slate-900 sm:text-sm">
-                                                Jadwal Pengambilan
-                                            </p>
+                                            <h3 class="text-sm font-bold text-slate-900">{{ $groupLabel }}</h3>
+                                            <p class="mt-0.5 text-[10px] text-gray-500 sm:text-xs">{{ $group['item_count'] }} item · Subtotal Rp {{ number_format($group['subtotal'], 0, ',', '.') }}</p>
+                                        </div>
+                                        <span class="rounded-full bg-[#AE7C18]/10 px-2.5 py-1 text-[10px] font-semibold text-[#AE7C18]">Pengiriman terpisah</span>
+                                    </div>
 
-                                            <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">
-                                                Tentukan tanggal dan waktu untuk mengambil pesanan Anda. Tersedia 30 Okt 2026–03 Nov 2026
-                                            </p>
+                                    <div class="space-y-2">
+                                        @foreach($shippingMethods as $method)
+                                            <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-3 transition has-[:checked]:border-[#AE7C18] has-[:checked]:bg-[#AE7C18]/5">
+                                                <input
+                                                    type="radio"
+                                                    name="{{ $groupPrefix }}shipping_method"
+                                                    value="{{ $method['value'] }}"
+                                                    class="h-4 w-4 accent-[#AE7C18]"
+                                                    @checked($oldMethod === $method['value'])
+                                                    required
+                                                >
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="text-xs font-semibold text-slate-900 sm:text-sm">{{ $method['name'] }}</p>
+                                                    <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">{{ $method['description'] }}</p>
+                                                </div>
+                                            </label>
+                                        @endforeach
+                                    </div>
+
+                                    <div data-pickup-section class="mt-4 hidden">
+                                        <div class="rounded-xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-3.5 sm:p-4">
+                                            <div class="mb-3">
+                                                <p class="text-xs font-semibold text-slate-900 sm:text-sm">Jadwal Pengambilan {{ $groupLabel }}</p>
+                                                <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">
+                                                    @if($groupType === 'pre_order')
+                                                        Pilih jadwal pengambilan sesuai jadwal Pre-order yang tersedia.
+                                                    @else
+                                                        Pickup Ready Stock sebelum pukul 14.00 dapat dijadwalkan hari ini; pukul 14.00 atau setelahnya mulai besok.
+                                                    @endif
+                                                </p>
+                                            </div>
+                                            <div class="grid gap-3 sm:grid-cols-3 sm:gap-4">
+                                                <div>
+                                                    <label for="{{ $groupType }}-pickup-date" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Tanggal <span class="text-red-500">*</span></label>
+                                                    <input id="{{ $groupType }}-pickup-date" name="{{ $groupPrefix }}pickup_date" type="date" value="{{ old($groupPrefix . 'pickup_date') }}" data-pickup-date required disabled class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none focus:border-[#AE7C18] sm:rounded-xl sm:px-4 sm:text-sm">
+                                                    <p data-pickup-availability-status class="mt-1.5 hidden text-[10px] leading-4 sm:text-xs"></p>
+                                                </div>
+                                                <div>
+                                                    <label for="{{ $groupType }}-pickup-time-start" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Mulai <span class="text-red-500">*</span></label>
+                                                    <input id="{{ $groupType }}-pickup-time-start" name="{{ $groupPrefix }}pickup_time_start" type="time" value="{{ old($groupPrefix . 'pickup_time_start') }}" data-pickup-time-start required disabled class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none focus:border-[#AE7C18] sm:rounded-xl sm:px-4 sm:text-sm">
+                                                </div>
+                                                <div>
+                                                    <label for="{{ $groupType }}-pickup-time-end" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Selesai <span class="text-red-500">*</span></label>
+                                                    <input id="{{ $groupType }}-pickup-time-end" name="{{ $groupPrefix }}pickup_time_end" type="time" value="{{ old($groupPrefix . 'pickup_time_end') }}" data-pickup-time-end required disabled class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none focus:border-[#AE7C18] sm:rounded-xl sm:px-4 sm:text-sm">
+                                                </div>
+                                            </div>
+                                            <p data-pickup-validation-error class="mt-2 hidden rounded-lg bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600 sm:text-xs"></p>
                                         </div>
                                     </div>
-                                </div>
 
-                                {{-- Pickup Fields --}}
-                                <div class="grid gap-3 sm:grid-cols-3 sm:gap-4">
-
-                                    {{-- Date --}}
-                                    <div>
-                                        <label
-                                            for="pickup_date"
-                                            class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm"
-                                        >
-                                            Tanggal <span class="text-red-500">*</span>
-                                        </label>
-
-                                        <input
-                                            id="pickup_date"
-                                            name="pickup_date"
-                                            type="date"
-                                            value="{{ old('pickup_date') }}"
-                                            required
-                                            class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm"
-                                        >
-
-                                        <p
-                                            id="pickup-availability-status"
-                                            class="mt-1.5 hidden text-[10px] leading-4 sm:text-xs"
-                                        ></p>
+                                    <div data-shipping-rates-section class="mt-4 hidden">
+                                        <div class="mb-2.5 flex items-center justify-between gap-3">
+                                            <div>
+                                                <p class="text-xs font-semibold text-slate-900 sm:text-sm">Pilih Layanan Kurir — {{ $groupLabel }}</p>
+                                                <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">Biaya dihitung berdasarkan kelompok barang ini.</p>
+                                            </div>
+                                            <span data-shipping-rates-status class="text-[10px] text-gray-400 sm:text-xs"></span>
+                                        </div>
+                                        <div data-shipping-rates-list class="space-y-2.5"></div>
+                                        <p data-shipping-rates-error class="mt-2 hidden rounded-lg bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600 sm:text-xs"></p>
                                     </div>
 
-                                    {{-- Start Time --}}
-                                    <div>
-                                        <label
-                                            for="pickup_time_start"
-                                            class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm"
-                                        >
-                                            Mulai <span class="text-red-500">*</span>
-                                        </label>
+                                    <input type="hidden" name="{{ $groupPrefix }}courier_code" data-courier-code value="{{ old($groupPrefix . 'courier_code') }}" disabled>
+                                    <input type="hidden" name="{{ $groupPrefix }}courier_service_code" data-courier-service-code value="{{ old($groupPrefix . 'courier_service_code') }}" disabled>
 
-                                        <input
-                                            id="pickup_time_start"
-                                            name="pickup_time_start"
-                                            type="time"
-                                            value="{{ old('pickup_time_start') }}"
-                                            required
-                                            class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm"
-                                        >
+                                    <div class="mt-3 rounded-lg bg-gray-50 px-3 py-2.5">
+                                        <p data-shipping-rates-hint class="text-[10px] leading-4 text-gray-500 sm:text-xs sm:leading-5">Pilih metode pengiriman untuk {{ strtolower($groupLabel) }}.</p>
                                     </div>
-
-                                    {{-- End Time --}}
-                                    <div>
-                                        <label
-                                            for="pickup_time_end"
-                                            class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm"
-                                        >
-                                            Selesai <span class="text-red-500">*</span>
-                                        </label>
-
-                                        <input
-                                            id="pickup_time_end"
-                                            name="pickup_time_end"
-                                            type="time"
-                                            value="{{ old('pickup_time_end') }}"
-                                            required
-                                            class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm"
-                                        >
-                                    </div>
-                                </div>
-
-                                {{-- Validation Error --}}
-                                <p
-                                    id="pickup-validation-error"
-                                    class="mt-2 hidden rounded-lg bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600 sm:text-xs"
-                                ></p>
-
-                            </div>
-                        </div>
-
-                        <div id="shipping-rates-section" class="mt-4 hidden">
-                            <div class="mb-2.5 flex items-center justify-between gap-3">
-                                <div>
-                                    <p class="text-xs font-semibold text-slate-900 sm:text-sm">Pilih Layanan Pengiriman</p>
-                                    <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">Biaya dan estimasi berdasarkan alamat tujuan.</p>
-                                </div>
-                                <span id="shipping-rates-status" class="text-[10px] text-gray-400 sm:text-xs"></span>
-                            </div>
-                            <div id="shipping-rates-list" class="space-y-2.5"></div>
-                            <p id="shipping-rates-error" class="mt-2 hidden rounded-lg bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600 sm:text-xs"></p>
-                        </div>
-
-                        <input type="hidden" name="courier_code" id="courier_code" value="{{ old('courier_code') }}">
-                        <input type="hidden" name="courier_service_code" id="courier_service_code" value="{{ old('courier_service_code') }}">
-
-                        <div class="mt-3 rounded-lg bg-gray-50 px-3 py-2.5">
-                            <p id="shipping-rates-hint" class="text-[10px] leading-4 text-gray-500 sm:text-xs sm:leading-5">Masukkan kode pos tujuan untuk melihat pilihan layanan pengiriman.</p>
+                                </section>
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -319,17 +286,19 @@
                                     <span>Subtotal</span>
                                     <span>Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
                                 </div>
-                                <div class="flex items-center justify-between text-xs text-gray-600 sm:text-sm">
-                                    <span>Pengiriman</span>
-                                    <span id="shipping-cost" class="text-[10px] text-gray-400 sm:text-xs">Akan dihitung</span>
-                                </div>
+                                @foreach($fulfillmentGroups as $group)
+                                    <div class="flex items-center justify-between gap-3 text-xs text-gray-600 sm:text-sm">
+                                        <span>{{ $group['label'] }} <span class="text-[10px] text-gray-400">(ongkir)</span></span>
+                                        <span id="shipping-cost-{{ $group['type'] }}" data-shipping-cost="{{ $group['type'] }}" class="text-[10px] text-gray-400 sm:text-xs">Pilih metode</span>
+                                    </div>
+                                @endforeach
                             </div>
 
                             <div class="my-4 border-t border-gray-100"></div>
                             <div class="flex items-end justify-between gap-3">
                                 <div>
                                     <p class="text-xs font-semibold text-slate-900 sm:text-sm">Total</p>
-                                    <p id="total-note" class="mt-0.5 text-[10px] text-gray-400 sm:text-xs">Belum termasuk ongkir</p>
+                                    <p id="total-note" class="mt-0.5 text-[10px] text-gray-400 sm:text-xs">Belum termasuk seluruh ongkir</p>
                                 </div>
                                 <p id="total-amount" class="text-xl font-bold text-[#AE7C18] sm:text-2xl">Rp {{ number_format($subtotal, 0, ',', '.') }}</p>
                             </div>

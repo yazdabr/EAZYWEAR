@@ -188,4 +188,9 @@ class Transaction extends Model
     {
         return $this->hasOne(FulfillmentHold::class);
     }
+
+    public function fulfillments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TransactionFulfillment::class);
+    }
 }

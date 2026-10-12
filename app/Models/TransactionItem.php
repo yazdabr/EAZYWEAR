@@ -12,6 +12,7 @@ class TransactionItem extends Model
 
     protected $fillable = [
         'transaction_id',
+        'transaction_fulfillment_id',
         'product_variant_id',
         'custom_name',
         'custom_number',
@@ -48,5 +49,10 @@ class TransactionItem extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function fulfillment(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(TransactionFulfillment::class, 'transaction_fulfillment_id');
     }
 }

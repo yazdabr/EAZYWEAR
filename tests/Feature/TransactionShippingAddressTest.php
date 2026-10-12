@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\TransactionFulfillment;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
@@ -292,6 +293,92 @@ class TransactionShippingAddressTest extends TestCase
         } finally {
             $lock->release();
         }
+    }
+
+    public function test_admin_can_update_address_of_one_fulfillment_without_changing_other_group(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']));
+        $transaction = $this->createCourierTransaction();
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'shipping_address' => 'Alamat Ready Lama',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 12000,
+            'shipping_address' => 'Alamat PO Lama',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $response = $this->patchJson(
+            route('admin.transactions.fulfillments.shipping-address.update', [
+                'transaction' => $transaction->id,
+                'fulfillment' => $ready->id,
+            ]),
+            ['shipping_address' => 'Alamat Ready Baru Nomor 123']
+        );
+
+        $response->assertOk()->assertJson(['success' => true]);
+
+        $this->assertSame(
+            'Alamat Ready Baru Nomor 123',
+            $ready->fresh()->shipping_address
+        );
+
+        $this->assertSame('Alamat PO Lama', $preOrder->fresh()->shipping_address);
+        $this->assertSame('Alamat Lama', $transaction->fresh()->shipping_address);
+    }
+
+    public function test_admin_cannot_change_fulfillment_address_after_biteship_order_exists(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']));
+
+        $this->assertAuthenticated();
+        $this->assertSame('super_admin', auth()->user()->role);
+
+        $transaction = $this->createCourierTransaction();
+
+        $fulfillment = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'shipping_address' => 'Alamat Sebelum Pengiriman',
+            'biteship_order_id' => 'TEST-FULFILLMENT-ADDRESS-001',
+            'status' => TransactionFulfillment::STATUS_PROCESSING,
+        ]);
+
+        $this->assertAuthenticated();
+        $this->assertSame('super_admin', auth()->user()->role);
+
+        $response = $this->withHeaders([
+            'Accept' => 'application/json',
+        ])->patch(
+            route('admin.transactions.fulfillments.shipping-address.update', [
+                'transaction' => $transaction->id,
+                'fulfillment' => $fulfillment->id,
+            ]),
+            ['shipping_address' => 'Alamat yang Tidak Boleh Disimpan']
+        );
+
+        $this->assertSame(
+            422,
+            $response->getStatusCode(),
+            $response->getContent()
+        );
+
+        $this->assertSame(
+            'Alamat Sebelum Pengiriman',
+            $fulfillment->fresh()->shipping_address
+        );
     }
 
 }

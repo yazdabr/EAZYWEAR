@@ -1041,6 +1041,87 @@ class TransactionController extends Controller
         ]);
     }
 
+    public function updateShippingAddress(Request $request, Transaction $transaction)
+    {
+        $validated = $request->validate([
+            'shipping_address' => ['required', 'string', 'max:2000'],
+        ], [
+            'shipping_address.required' => 'Alamat pengiriman wajib diisi.',
+            'shipping_address.max' => 'Alamat pengiriman maksimal 2000 karakter.',
+        ]);
+
+        // Gunakan lock yang sama dengan proses pembuatan resi agar alamat
+        // tidak dapat berubah ketika order Biteship sedang dibuat.
+        $lock = Cache::lock('biteship:ship:' . $transaction->id, 120);
+
+        if (! $lock->get()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan sedang diproses untuk pengiriman. Coba lagi sebentar.',
+            ], 409);
+        }
+
+        try {
+            $updatedTransaction = DB::transaction(function () use ($transaction, $validated) {
+                $lockedTransaction = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if (
+                    $lockedTransaction->status !== 'ORDER_PROCESSING' ||
+                    $lockedTransaction->shipping_method !== 'Kurir'
+                ) {
+                    throw ValidationException::withMessages([
+                        'shipping_address' => 'Alamat hanya dapat diedit untuk pesanan kurir yang belum dikirim.',
+                    ]);
+                }
+
+                if (
+                    $lockedTransaction->biteship_order_id ||
+                    $lockedTransaction->biteship_tracking_id ||
+                    $lockedTransaction->biteship_waybill_id ||
+                    $lockedTransaction->tracking_number
+                ) {
+                    throw ValidationException::withMessages([
+                        'shipping_address' => 'Alamat tidak dapat diedit karena proses/resi pengiriman sudah dimulai.',
+                    ]);
+                }
+
+                // Hanya kolom shipping_address yang diubah.
+                $lockedTransaction->update([
+                    'shipping_address' => trim($validated['shipping_address']),
+                ]);
+
+                return $lockedTransaction->fresh();
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Alamat pengiriman berhasil diperbarui.',
+                'data' => [
+                    'id' => $updatedTransaction->id,
+                    'shipping_address' => $updatedTransaction->shipping_address,
+                ],
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => collect($e->errors())->flatten()->first() ?? 'Alamat pengiriman tidak dapat diperbarui.',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui alamat pengiriman.',
+            ], 500);
+        } finally {
+            $lock->release();
+        }
+    }
+
     public function updateShipping(Request $request, Transaction $transaction)
     {
         $validated = $request->validate([

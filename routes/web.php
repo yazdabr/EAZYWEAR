@@ -157,6 +157,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/transactions/{transaction}/ship', [TransactionController::class, 'ship'])
             ->name('transactions.ship');
         Route::patch(
+            '/transactions/{transaction}/shipping-address',
+            [TransactionController::class, 'updateShippingAddress']
+        )->name('transactions.shipping-address.update');
+        Route::patch(
                 '/transactions/{transaction}/complete',
                 [TransactionController::class, 'complete']
             )->name('transactions.complete');

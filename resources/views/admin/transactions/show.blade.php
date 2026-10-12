@@ -137,9 +137,68 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                     <!-- Alamat Pengiriman -->
                     <div class="pt-1">
-                        <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Alamat Pengiriman</p>
-                        <p class="mt-0.5 leading-snug font-semibold text-slate-900">{{ $transaction->shipping_address }}</p>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Alamat Pengiriman</p>
+                            @if(
+                                $transaction->status === 'ORDER_PROCESSING' &&
+                                $transaction->shipping_method === 'Kurir' &&
+                                !$transaction->biteship_order_id &&
+                                !$transaction->biteship_tracking_id &&
+                                !$transaction->biteship_waybill_id &&
+                                !$transaction->tracking_number
+                            )
+                                <button
+                                    type="button"
+                                    onclick="toggleShippingAddressEditor(true)"
+                                    class="inline-flex items-center gap-1 rounded-lg border border-[#AE7C18]/30 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#AE7C18] transition hover:bg-[#AE7C18]/5"
+                                >
+                                    <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
+                                    Edit Alamat
+                                </button>
+                            @endif
+                        </div>
+
+                        <p id="shipping-address-display" class="mt-0.5 leading-snug font-semibold text-slate-900">{{ $transaction->shipping_address }}</p>
                         <p class="mt-0.5 text-xs text-slate-500">{{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}</p>
+
+                        @if(
+                            $transaction->status === 'ORDER_PROCESSING' &&
+                            $transaction->shipping_method === 'Kurir' &&
+                            !$transaction->biteship_order_id &&
+                            !$transaction->biteship_tracking_id &&
+                            !$transaction->biteship_waybill_id &&
+                            !$transaction->tracking_number
+                        )
+                            <form
+                                id="shipping-address-form"
+                                action="{{ route('admin.transactions.shipping-address.update', $transaction) }}"
+                                class="mt-3 hidden space-y-2"
+                            >
+                                @csrf
+                                <label for="shipping_address" class="block text-xs font-semibold text-slate-600">Alamat pengiriman baru</label>
+                                <textarea
+                                    id="shipping_address"
+                                    name="shipping_address"
+                                    rows="3"
+                                    maxlength="2000"
+                                    required
+                                    class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+                                >{{ $transaction->shipping_address }}</textarea>
+                                <p id="shipping-address-error" class="hidden text-xs text-red-600"></p>
+                                <div class="flex flex-wrap gap-2">
+                                    <button
+                                        type="submit"
+                                        id="shipping-address-save"
+                                        class="rounded-lg bg-[#AE7C18] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#96690F]"
+                                    >Simpan Alamat</button>
+                                    <button
+                                        type="button"
+                                        onclick="toggleShippingAddressEditor(false)"
+                                        class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                                    >Batal</button>
+                                </div>
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -559,5 +618,61 @@ function openTransactionActionModal(type, id) {
         })
     );
 }
+function toggleShippingAddressEditor(show) {
+    const form = document.getElementById('shipping-address-form');
+    const error = document.getElementById('shipping-address-error');
+    if (!form) return;
+
+    form.classList.toggle('hidden', !show);
+    if (error) {
+        error.textContent = '';
+        error.classList.add('hidden');
+    }
+}
+
+document.getElementById('shipping-address-form')?.addEventListener('submit', async function (event) {
+    event.preventDefault();
+
+    const form = this;
+    const button = document.getElementById('shipping-address-save');
+    const error = document.getElementById('shipping-address-error');
+    const originalLabel = button.textContent;
+    const body = new URLSearchParams(new FormData(form));
+
+    button.disabled = true;
+    button.textContent = 'Menyimpan...';
+    error.textContent = '';
+    error.classList.add('hidden');
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'PATCH',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: body.toString()
+        });
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            const message = data.errors?.shipping_address?.[0] || data.message || 'Alamat gagal diperbarui.';
+            error.textContent = message;
+            error.classList.remove('hidden');
+            return;
+        }
+
+        alert(data.message);
+        window.location.reload();
+    } catch (e) {
+        error.textContent = 'Terjadi kesalahan saat menyimpan alamat. Silakan coba lagi.';
+        error.classList.remove('hidden');
+    } finally {
+        button.disabled = false;
+        button.textContent = originalLabel;
+    }
+});
+
 </script>
 @endsection

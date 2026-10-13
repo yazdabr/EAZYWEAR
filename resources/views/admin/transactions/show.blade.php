@@ -579,7 +579,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                             @if($fulfillment->status === \App\Models\TransactionFulfillment::STATUS_COMPLETED)
                                 <p class="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-xs font-semibold text-emerald-700">
-                                    Kelompok ini sudah selesai.
+                                    Pesanan ini sudah selesai.
                                 </p>
                             @endif
                         </div>

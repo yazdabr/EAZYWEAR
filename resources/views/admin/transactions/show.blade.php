@@ -103,7 +103,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                         <button
                             type="button"
                             onclick="toggleCustomerContactEditor(true)"
-                            class="inline-flex items-center gap-1.5 rounded-lg border border-[#AE7C18]/40 bg-[#AE7C18]/10 px-3 py-1.5 text-xs font-bold text-[#8A6110] shadow-sm transition hover:bg-[#AE7C18]/20 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/40"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-[#AE7C18]/40 bg-[#AE7C18]/10 px-3 py-1.5 text-xs font-semibold text-[#8A6110] shadow-sm transition hover:bg-[#AE7C18]/20 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/40"
                         >
                             <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
                             Edit Kontak
@@ -294,7 +294,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 {{ $transaction->fulfillments->count() > 1 ? 'xl:grid-cols-2' : '' }} gap-4">
+            <div class="mx-auto grid w-full grid-cols-1 gap-4 {{ $transaction->fulfillments->count() > 1 ? 'xl:grid-cols-2' : 'xl:max-w-[calc(50%-0.5rem)]' }}">
                 @foreach($transaction->fulfillments as $fulfillment)
                     @php
                         $isReadyGroup = $fulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY;
@@ -588,8 +588,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
             </div>
         </section>
     @endif
-    <div class="grid gap-4 sm:gap-6 lg:grid-cols-3">
-        <div class="lg:col-span-2">
+    <div class="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-3">
             <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                 <div class="mb-4 sm:mb-5 flex items-center gap-2.5 sm:gap-3">
                     <div class="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#AE7C18]/10 text-[#AE7C18]"><x-heroicon-o-shopping-bag class="h-4 w-4 sm:h-5 sm:w-5" /></div>
@@ -659,8 +658,6 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                     @endforeach
                 </div>
             </div>
-        </div>
-
         <div class="space-y-4 sm:space-y-6">
             <div class="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                 <h2 class="mb-3 sm:mb-4 font-bold text-slate-900 text-sm sm:text-base">Pembayaran</h2>
@@ -687,6 +684,38 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 </div>
             </div>
         </div>
+
+            <div>
+                <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+                    <h2 class="mb-4 sm:mb-5 font-bold text-slate-900 text-sm sm:text-base">Timeline Status</h2>
+
+                    <div class="space-y-4 sm:space-y-5">
+                        @foreach($transaction->orderStatusHistories->sortBy('created_at') as $history)
+                            @php $status = $statusMap[$history->status] ?? null; @endphp
+
+                            <div class="flex gap-3">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#AE7C18]/10 text-[#AE7C18]">
+                                    @switch($status['icon'] ?? null)
+                                        @case('shopping-cart') <x-heroicon-o-shopping-cart class="h-4 w-4"/> @break
+                                        @case('credit-card') <x-heroicon-o-credit-card class="h-4 w-4"/> @break
+                                        @case('cog') <x-heroicon-o-cog-6-tooth class="h-4 w-4"/> @break
+                                        @case('truck') <x-heroicon-o-truck class="h-4 w-4"/> @break
+                                        @case('check-circle') <x-heroicon-o-check-circle class="h-4 w-4"/> @break
+                                        @case('x-circle') <x-heroicon-o-x-circle class="h-4 w-4"/> @break
+                                        @default <x-heroicon-o-clock class="h-4 w-4"/>
+                                    @endswitch
+                                </div>
+
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-bold text-slate-900 text-xs sm:text-sm">{{ $status['label'] ?? $history->status }}</p>
+                                    @if($history->note)<p class="mt-0.5 text-xs leading-relaxed text-slate-500">{{ $history->note }}</p>@endif
+                                    <p class="mt-0.5 text-[10px] sm:text-xs text-slate-400">{{ $history->created_at->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y H:i') }} WITA</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
     </div>
 
     @if(in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED', 'ORDER_COMPLETED'], true))
@@ -926,37 +955,6 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 </div>
             </div>
             @endif
-            <div>
-                <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
-                    <h2 class="mb-4 sm:mb-5 font-bold text-slate-900 text-sm sm:text-base">Timeline Status</h2>
-
-                    <div class="space-y-4 sm:space-y-5">
-                        @foreach($transaction->orderStatusHistories->sortBy('created_at') as $history)
-                            @php $status = $statusMap[$history->status] ?? null; @endphp
-
-                            <div class="flex gap-3">
-                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#AE7C18]/10 text-[#AE7C18]">
-                                    @switch($status['icon'] ?? null)
-                                        @case('shopping-cart') <x-heroicon-o-shopping-cart class="h-4 w-4"/> @break
-                                        @case('credit-card') <x-heroicon-o-credit-card class="h-4 w-4"/> @break
-                                        @case('cog') <x-heroicon-o-cog-6-tooth class="h-4 w-4"/> @break
-                                        @case('truck') <x-heroicon-o-truck class="h-4 w-4"/> @break
-                                        @case('check-circle') <x-heroicon-o-check-circle class="h-4 w-4"/> @break
-                                        @case('x-circle') <x-heroicon-o-x-circle class="h-4 w-4"/> @break
-                                        @default <x-heroicon-o-clock class="h-4 w-4"/>
-                                    @endswitch
-                                </div>
-
-                                <div class="min-w-0 flex-1">
-                                    <p class="font-bold text-slate-900 text-xs sm:text-sm">{{ $status['label'] ?? $history->status }}</p>
-                                    @if($history->note)<p class="mt-0.5 text-xs leading-relaxed text-slate-500">{{ $history->note }}</p>@endif
-                                    <p class="mt-0.5 text-[10px] sm:text-xs text-slate-400">{{ $history->created_at->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y H:i') }} WITA</p>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
         </div>
     @endif
 </div>

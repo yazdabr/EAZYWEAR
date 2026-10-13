@@ -274,12 +274,13 @@ document.addEventListener('alpine:init', () => {
 
                 const data = await response.json();
 
-                if (!response.ok) {
+                if (!response.ok || data.success === false) {
                     throw new Error(
                         data.message || 'Gagal memproses transaksi.'
                     );
                 }
 
+                this.loading = false;
                 this.close();
 
                 window.dispatchEvent(new CustomEvent('toast', {

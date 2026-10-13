@@ -166,18 +166,27 @@ document.addEventListener('alpine:init', () => {
             this.action = {
                 type: type,
                 id: data?.id ?? null,
+                url: data?.url ?? null,
+                payload: data?.payload ?? null,
+                fulfillment: data?.fulfillment === true,
 
-                title: type === 'ship'
-                    ? 'Konfirmasi Proses Pengiriman'
-                    : 'Konfirmasi Pesanan Diambil',
+                title: data?.title ?? (
+                    type === 'ship'
+                        ? 'Konfirmasi Proses Pengiriman'
+                        : 'Konfirmasi Pesanan Diambil'
+                ),
 
-                message: type === 'ship'
-                    ? 'Pesanan akan diproses dan dikirim melalui Biteship.'
-                    : 'Pastikan pesanan sudah benar-benar diambil oleh pelanggan.',
+                message: data?.message ?? (
+                    type === 'ship'
+                        ? 'Pesanan akan diproses dan dikirim melalui Biteship.'
+                        : 'Pastikan pesanan sudah benar-benar diambil oleh pelanggan.'
+                ),
 
-                confirmText: type === 'ship'
-                    ? 'Ya, Proses Pengiriman'
-                    : 'Ya, Tandai Selesai'
+                confirmText: data?.confirmText ?? (
+                    type === 'ship'
+                        ? 'Ya, Proses Pengiriman'
+                        : 'Ya, Tandai Selesai'
+                )
             };
 
             this.loading = false;
@@ -223,22 +232,36 @@ document.addEventListener('alpine:init', () => {
             const id = this.action.id;
             const type = this.action.type;
 
-            const url = type === 'ship'
-                ? '{{ url('/admin/transactions') }}/' + id + '/ship'
-                : '{{ url('/admin/transactions') }}/' + id + '/complete';
+            const url = this.action.fulfillment
+                ? this.action.url
+                : (
+                    type === 'ship'
+                        ? '{{ url('/admin/transactions') }}/' + id + '/ship'
+                        : '{{ url('/admin/transactions') }}/' + id + '/complete'
+                );
 
             try {
-                const response = await fetch(url, {
+                const headers = {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document
+                        .querySelector('meta[name="csrf-token"]')
+                        ?.getAttribute('content') || '',
+                    'X-Requested-With': 'XMLHttpRequest'
+                };
+
+                const options = {
                     method: 'PATCH',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document
-                            .querySelector('meta[name="csrf-token"]')
-                            ?.getAttribute('content') || '',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
+                    headers: headers
+                };
+
+                if (this.action.fulfillment) {
+                    headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+                    options.body = new URLSearchParams(this.action.payload || {}).toString();
+                } else {
+                    headers['Content-Type'] = 'application/json';
+                }
+
+                const response = await fetch(url, options);
 
                 const contentType =
                     response.headers.get('content-type') || '';

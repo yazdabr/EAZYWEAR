@@ -312,7 +312,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             && !$fulfillment->biteship_tracking_id
                             && !$fulfillment->biteship_waybill_id
                             && !$fulfillment->tracking_number;
-                        $canProcessGroup = in_array($transaction->status, ['PAID', 'ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
+                        $canProcessGroup = in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
                             && !in_array($fulfillment->status, ['SHIPPED', 'COMPLETED', 'CANCELLED'], true);
                     @endphp
 
@@ -500,6 +500,9 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     && in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
                                 )
                                     <form class="fulfillment-complete-form"
+                                        data-action-title="Konfirmasi {{ $groupLabel }} selesai"
+                                        data-action-message="Pastikan {{ $groupLabel }} benar-benar sudah selesai sebelum melanjutkan."
+                                        data-action-confirm-text="Ya, Konfirmasi Selesai"
                                         action="{{ route('admin.transactions.fulfillments.complete', ['transaction' => $transaction, 'fulfillment' => $fulfillment]) }}"
                                         method="POST">
                                         @csrf
@@ -515,6 +518,9 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                                 @if($canProcessGroup)
                                     <form class="fulfillment-ship-form space-y-2"
+                                        data-action-title="Proses pengiriman {{ $groupLabel }}"
+                                        data-action-message="Pengiriman {{ $groupLabel }} akan diproses sekarang. Lanjutkan?"
+                                        data-action-confirm-text="Ya, Proses Pengiriman"
                                         action="{{ route('admin.transactions.fulfillments.ship', ['transaction' => $transaction, 'fulfillment' => $fulfillment]) }}"
                                         method="POST">
                                         @csrf
@@ -555,6 +561,9 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                                 @if($canProcessGroup)
                                     <form class="fulfillment-complete-form"
+                                        data-action-title="Konfirmasi {{ $groupLabel }} selesai"
+                                        data-action-message="Pastikan {{ $groupLabel }} benar-benar sudah selesai sebelum melanjutkan."
+                                        data-action-confirm-text="Ya, Konfirmasi Selesai"
                                         action="{{ route('admin.transactions.fulfillments.complete', ['transaction' => $transaction, 'fulfillment' => $fulfillment]) }}"
                                         method="POST">
                                         @csrf
@@ -570,7 +579,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                             @if($fulfillment->status === \App\Models\TransactionFulfillment::STATUS_COMPLETED)
                                 <p class="rounded-xl border border-emerald-100 bg-emerald-50 p-3 text-xs font-semibold text-emerald-700">
-                                    Kelompok ini sudah selesai.
+                                    Pesanan ini sudah selesai.
                                 </p>
                             @endif
                         </div>
@@ -1196,69 +1205,32 @@ document.querySelectorAll('[id^="fulfillment-address-form-"]').forEach(form => {
     });
 });
 
-async function submitFulfillmentAction(form, defaultMessage) {
-    const button = form.querySelector('button[type="submit"]');
-    const error = form.querySelector('.fulfillment-action-error');
-    const originalLabel = button.textContent;
-
-    button.disabled = true;
-    button.textContent = 'Memproses...';
-    if (error) {
-        error.textContent = '';
-        error.classList.add('hidden');
-    }
-
-    try {
-        const response = await fetch(form.action, {
-            method: 'PATCH',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-            },
-            body: new URLSearchParams(new FormData(form)).toString()
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            const message = data.message || data.errors?.fulfillment?.[0] || defaultMessage;
-            if (error) {
-                error.textContent = message;
-                error.classList.remove('hidden');
-            } else {
-                alert(message);
-            }
-            return;
+function openFulfillmentActionConfirmation(form, type) {
+    window.dispatchEvent(new CustomEvent('open-transaction-action', {
+        detail: {
+            type: type,
+            id: '{{ $transaction->id }}',
+            url: form.action,
+            payload: Object.fromEntries(new FormData(form).entries()),
+            title: form.dataset.actionTitle || (type === 'ship' ? 'Konfirmasi Proses Pengiriman' : 'Konfirmasi Pesanan Selesai'),
+            message: form.dataset.actionMessage || 'Pastikan tindakan ini sudah benar sebelum melanjutkan.',
+            confirmText: form.dataset.actionConfirmText || (type === 'ship' ? 'Ya, Proses Pengiriman' : 'Ya, Konfirmasi'),
+            fulfillment: true
         }
-
-        alert(data.message || 'Status fulfillment berhasil diperbarui.');
-        window.location.reload();
-    } catch (e) {
-        if (error) {
-            error.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
-            error.classList.remove('hidden');
-        } else {
-            alert('Terjadi kesalahan. Silakan coba lagi.');
-        }
-    } finally {
-        button.disabled = false;
-        button.textContent = originalLabel;
-    }
+    }));
 }
 
 document.querySelectorAll('.fulfillment-ship-form').forEach(form => {
     form.addEventListener('submit', function (event) {
         event.preventDefault();
-        submitFulfillmentAction(this, 'Pengiriman fulfillment gagal diproses.');
+        openFulfillmentActionConfirmation(this, 'ship');
     });
 });
 
 document.querySelectorAll('.fulfillment-complete-form').forEach(form => {
     form.addEventListener('submit', function (event) {
         event.preventDefault();
-        if (!confirm('Pastikan pelanggan benar-benar telah mengambil pesanan ini. Lanjutkan?')) return;
-        submitFulfillmentAction(this, 'Fulfillment gagal diselesaikan.');
+        openFulfillmentActionConfirmation(this, 'complete');
     });
 });
 </script>

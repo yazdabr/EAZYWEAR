@@ -642,7 +642,7 @@ class CheckoutController extends Controller
 
                         if (! $selectedRate) {
                             throw ValidationException::withMessages([
-                                $prefix . '_courier_code' => 'Pilihan kurir atau layanan pengiriman untuk kelompok ini sudah tidak tersedia. Silakan pilih kembali.',
+                                $prefix . '_courier_code' => 'Pilihan kurir atau layanan pengiriman untuk pesanan ini sudah tidak tersedia. Silakan pilih kembali.',
                             ]);
                         }
 

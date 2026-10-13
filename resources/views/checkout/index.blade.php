@@ -24,7 +24,7 @@
                 <p class="font-semibold">Periksa kembali data checkout Anda.</p>
                 <ul class="mt-1.5 space-y-0.5">
                     @foreach($errors->all() as $error)
-                        <li>• {{ $error }}</li>
+                        <li>&bull; {{ $error }}</li>
                     @endforeach
                 </ul>
             </div>
@@ -118,7 +118,9 @@
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
                         <div class="mb-4">
                             <h2 class="text-base font-bold text-slate-900 sm:text-lg">Pengiriman</h2>
+                            @if(collect($fulfillmentGroups)->pluck('type')->unique()->count() > 1)
                             <p class="mt-1 text-[11px] leading-4 text-gray-500 sm:text-xs">Setiap kelompok pesanan dapat dikirim atau diambil secara terpisah. Ongkir dihitung untuk masing-masing pengiriman.</p>
+                            @endif
                         </div>
 
                         <div class="space-y-5">
@@ -139,9 +141,11 @@
                                     <div class="mb-3 flex items-start justify-between gap-3">
                                         <div>
                                             <h3 class="text-sm font-bold text-slate-900">{{ $groupLabel }}</h3>
-                                            <p class="mt-0.5 text-[10px] text-gray-500 sm:text-xs">{{ $group['item_count'] }} item · Subtotal Rp {{ number_format($group['subtotal'], 0, ',', '.') }}</p>
+                                            <p class="mt-0.5 text-[10px] text-gray-500 sm:text-xs">{{ $group['item_count'] }} item &middot; Subtotal Rp {{ number_format($group['subtotal'], 0, ',', '.') }}</p>
                                         </div>
+                                        @if(collect($fulfillmentGroups)->pluck('type')->unique()->count() > 1)
                                         <span class="rounded-full bg-[#AE7C18]/10 px-2.5 py-1 text-[10px] font-semibold text-[#AE7C18]">Pengiriman terpisah</span>
+                                        @endif
                                     </div>
 
                                     <div class="space-y-2">
@@ -197,7 +201,7 @@
                                     <div data-shipping-rates-section class="mt-4 hidden">
                                         <div class="mb-2.5 flex items-center justify-between gap-3">
                                             <div>
-                                                <p class="text-xs font-semibold text-slate-900 sm:text-sm">Pilih Layanan Kurir — {{ $groupLabel }}</p>
+                                                <p class="text-xs font-semibold text-slate-900 sm:text-sm">Pilih Layanan Kurir &mdash; {{ $groupLabel }}</p>
                                                 <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">Biaya dihitung berdasarkan kelompok barang ini.</p>
                                             </div>
                                             <span data-shipping-rates-status class="text-[10px] text-gray-400 sm:text-xs"></span>
@@ -300,7 +304,7 @@
                                     <p class="text-xs font-semibold text-slate-900 sm:text-sm">Total</p>
                                     <p id="total-note" class="mt-0.5 text-[10px] text-gray-400 sm:text-xs">Belum termasuk seluruh ongkir</p>
                                 </div>
-                                <p id="total-amount" class="text-xl font-bold text-[#AE7C18] sm:text-2xl">Rp {{ number_format($subtotal, 0, ',', '.') }}</p>
+                                <p id="total-amount" class="min-w-0 max-w-[65%] break-words text-right text-lg font-bold leading-tight text-[#AE7C18] sm:max-w-[70%] sm:text-2xl">Rp {{ number_format($subtotal, 0, ',', '.') }}</p>
                             </div>
 
                             <a href="{{ route('cart.index') }}" class="mt-4 inline-flex w-full items-center justify-center rounded-full border border-gray-200 px-4 py-2.5 text-xs font-semibold text-gray-600 transition hover:border-[#AE7C18] hover:text-[#AE7C18]">Ubah Keranjang</a>

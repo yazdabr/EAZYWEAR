@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (totalNote) {
             if (incompleteCourier) {
-                totalNote.textContent = 'Pilih layanan kurir untuk semua kelompok pesanan';
+                totalNote.textContent = 'Pilih kurir untuk melihat total';
             } else if (groups.every((group) => group.cost !== null)) {
                 totalNote.textContent = 'Termasuk seluruh ongkir';
             } else {

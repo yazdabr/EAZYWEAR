@@ -174,17 +174,17 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
             @if($transaction->fulfillments->isEmpty())
             <!-- Seksi 2: Metode & Alamat Pengiriman -->
-            <div class="space-y-4 rounded-xl bg-slate-50/70 p-4 border border-slate-100 flex flex-col justify-between">
+            <div class="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5 flex flex-col justify-between">
                 <div class="space-y-3.5">
-                    <span class="text-[12px] font-bold uppercase tracking-wider text-[#AE7C18]">Detail Logistik</span>
-                    <p class=" text-xs leading-relaxed text-amber-800">
-                        <strong>Informasi:</strong> Edit alamat hanya untuk Kurir sebelum resi dibuat.
+                    <span class="text-[12px] font-bold uppercase tracking-wide text-[#AE7C18]">Detail Logistik</span>
+                    <p class="rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+                        <strong>Informasi:</strong> Alamat hanya dapat diedit untuk pengiriman kurir sebelum resi dibuat.
                     </p>
                     
                     <!-- Grid Berdampingan untuk Metode & Jadwal -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                         <div>
-                            <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Metode Pengiriman</p>
+                            <p class="text-[10px] uppercase tracking-wide text-slate-400">Metode Pengiriman</p>
                             <p class="mt-0.5 font-semibold text-slate-900">{{ $transaction->shipping_method ?? '-' }}</p>
                         </div>
 
@@ -195,7 +195,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             $transaction->pickup_time_end
                         )
                             <div>
-                                <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Jadwal Pengambilan</p>
+                                <p class="text-[10px] uppercase tracking-wide text-slate-400">Jadwal Pengambilan</p>
                                 <p class="mt-0.5 font-semibold text-slate-900">
                                     {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}<span class="font-normal text-[#AE7C18]">, {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}-{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA</span>
                                 </p>
@@ -206,7 +206,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                     <!-- Alamat Pengiriman -->
                     <div class="pt-1">
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="text-xs sm:text-sm uppercase text-slate-500 font-semibold">Alamat Pengiriman</p>
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Alamat Pengiriman</p>
                             @if(
                                 in_array($transaction->status, ['PAID', 'ORDER_PROCESSING'], true) &&
                                 $transaction->shipping_method === 'Kurir' &&
@@ -218,7 +218,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 <button
                                     type="button"
                                     onclick="toggleShippingAddressEditor(true)"
-                                    class="inline-flex items-center gap-1 rounded-lg border border-[#AE7C18]/30 bg-white px-3 py-2 text-sm font-semibold text-[#AE7C18] transition hover:bg-[#AE7C18]/5"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-[#AE7C18]/40 bg-[#AE7C18]/10 px-3 py-1.5 text-xs font-bold text-[#8A6110] shadow-sm transition hover:bg-[#AE7C18]/20 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/40"
                                 >
                                     <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
                                     Edit Alamat
@@ -226,8 +226,8 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             @endif
                         </div>
 
-                        <p id="shipping-address-display" class="mt-1 text-sm leading-relaxed font-semibold text-slate-900 sm:text-base">{{ $transaction->shipping_address }}</p>
-                        <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}</p>
+                        <p id="shipping-address-display" class="mt-1 text-sm font-semibold leading-relaxed text-slate-800">{{ $transaction->shipping_address }}</p>
+                        <p class="mt-1 text-[11px] font-semibold leading-relaxed text-slate-500">{{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}</p>
 
                         @if(
                             in_array($transaction->status, ['PAID', 'ORDER_PROCESSING'], true) &&
@@ -599,7 +599,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 <div class="space-y-3 sm:space-y-4">
                     @foreach($transaction->items as $item)
                         @php $product = $item->productVariant?->product; @endphp
-                        <div class="flex items-start sm:items-center gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-slate-50 p-3 sm:p-4">
+                        <div class="flex items-start sm:items-center gap-3 sm:gap-4 rounded-xl border border-slate-200 bg-white p-4">
                             <div class="h-12 w-12 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-lg sm:rounded-xl bg-slate-200">
                                 @if($product?->images?->first())
                                     <img src="{{ asset('storage/'.$product->images->first()->image) }}" class="h-full w-full object-cover">
@@ -693,11 +693,11 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
         <div class="grid gap-4 sm:gap-6 lg:grid-cols-3">
             @if($transaction->fulfillments->isEmpty())
             <div class="lg:col-span-2">
-                <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
-                    <div class="mb-4 sm:mb-5 flex items-center justify-between gap-3">
+                <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+                    <div class="mb-4 flex items-start gap-3 border-b border-slate-100 pb-4">
                         <div class="flex items-center gap-2.5 sm:gap-3">
-                            <div class="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-[#AE7C18]/10 text-[#AE7C18]">
-                                <x-heroicon-o-truck class="h-4 w-4 sm:h-5 sm:w-5" />
+                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#AE7C18]/10 text-[#AE7C18]">
+                                <x-heroicon-o-truck class="h-5 w-5" />
                             </div>
 
                             <div>
@@ -705,8 +705,8 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     Pengiriman
                                 </h2>
 
-                                <p class="mt-0.5 text-[10px] sm:text-xs text-slate-400">
-                                    Pengiriman otomatis melalui Biteship
+                                <p class="mt-1 text-xs leading-relaxed text-slate-500">
+                                    Informasi pengiriman dan status pesanan
                                 </p>
                             </div>
                         </div>
@@ -800,7 +800,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                             <div class="grid gap-3 sm:grid-cols-2">
 
-                                <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                                <div class="rounded-xl border border-slate-100 bg-white p-3">
                                     <p class="text-[10px] uppercase font-medium tracking-wide text-slate-400">
                                         Kurir
                                     </p>
@@ -810,7 +810,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     </p>
                                 </div>
 
-                                <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                                <div class="rounded-xl border border-slate-100 bg-white p-3">
                                     <p class="text-[10px] uppercase font-medium tracking-wide text-slate-400">
                                         Nomor Resi
                                     </p>
@@ -825,7 +825,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             @if($transaction->biteship_order_id)
                                 <div class="mt-3 grid gap-3 sm:grid-cols-2">
 
-                                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                                    <div class="rounded-xl border border-slate-100 bg-white p-3">
                                         <p class="text-[10px] uppercase font-medium tracking-wide text-slate-400">
                                             Status Biteship
                                         </p>
@@ -837,7 +837,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                         </p>
                                     </div>
 
-                                    <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                                    <div class="rounded-xl border border-slate-100 bg-white p-3">
                                         <p class="text-[10px] uppercase font-medium tracking-wide text-slate-400">
                                             Biteship Order ID
                                         </p>

@@ -175,7 +175,7 @@
                                                     @if($groupType === 'pre_order')
                                                         Pilih jadwal pengambilan sesuai jadwal Pre-order yang tersedia.
                                                     @else
-                                                        Pickup Ready Stock sebelum pukul 14.00 dapat dijadwalkan hari ini; pukul 14.00 atau setelahnya mulai besok.
+                                                        Pickup Ready Stock sebelum pukul 14.00 dapat dijadwalkan hari ini. pukul 14.00 atau setelahnya mulai besok.
                                                     @endif
                                                 </p>
                                             </div>
@@ -201,8 +201,8 @@
                                     <div data-shipping-rates-section class="mt-4 hidden">
                                         <div class="mb-2.5 flex items-center justify-between gap-3">
                                             <div>
-                                                <p class="text-xs font-semibold text-slate-900 sm:text-sm">Pilih Layanan Kurir &mdash; {{ $groupLabel }}</p>
-                                                <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">Biaya dihitung berdasarkan kelompok barang ini.</p>
+                                                <p class="text-xs font-semibold text-slate-900 sm:text-sm">Pilih Layanan Kurir</p>
+                                                <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">Biaya dihitung berdasarkan barang.</p>
                                             </div>
                                             <span data-shipping-rates-status class="text-[10px] text-gray-400 sm:text-xs"></span>
                                         </div>

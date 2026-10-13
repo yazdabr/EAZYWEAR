@@ -103,7 +103,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                         <button
                             type="button"
                             onclick="toggleCustomerContactEditor(true)"
-                            class="inline-flex items-center gap-1 rounded-lg border border-[#AE7C18]/30 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#AE7C18] transition hover:bg-[#AE7C18]/5"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-[#AE7C18]/40 bg-[#AE7C18]/10 px-3 py-1.5 text-xs font-bold text-[#8A6110] shadow-sm transition hover:bg-[#AE7C18]/20 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/40"
                         >
                             <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
                             Edit Kontak
@@ -197,7 +197,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             <div>
                                 <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Jadwal Pengambilan</p>
                                 <p class="mt-0.5 font-semibold text-slate-900">
-                                    {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}<span class="font-normal text-[#AE7C18]">, {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA</span>
+                                    {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}<span class="font-normal text-[#AE7C18]">, {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}-{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA</span>
                                 </p>
                             </div>
                         @endif
@@ -206,7 +206,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                     <!-- Alamat Pengiriman -->
                     <div class="pt-1">
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Alamat Pengiriman</p>
+                            <p class="text-xs sm:text-sm uppercase text-slate-500 font-semibold">Alamat Pengiriman</p>
                             @if(
                                 in_array($transaction->status, ['PAID', 'ORDER_PROCESSING'], true) &&
                                 $transaction->shipping_method === 'Kurir' &&
@@ -218,7 +218,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 <button
                                     type="button"
                                     onclick="toggleShippingAddressEditor(true)"
-                                    class="inline-flex items-center gap-1 rounded-lg border border-[#AE7C18]/30 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#AE7C18] transition hover:bg-[#AE7C18]/5"
+                                    class="inline-flex items-center gap-1 rounded-lg border border-[#AE7C18]/30 bg-white px-3 py-2 text-sm font-semibold text-[#AE7C18] transition hover:bg-[#AE7C18]/5"
                                 >
                                     <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
                                     Edit Alamat
@@ -226,8 +226,8 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             @endif
                         </div>
 
-                        <p id="shipping-address-display" class="mt-0.5 leading-snug font-semibold text-slate-900">{{ $transaction->shipping_address }}</p>
-                        <p class="mt-0.5 text-xs text-slate-500">{{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}</p>
+                        <p id="shipping-address-display" class="mt-1 text-sm leading-relaxed font-semibold text-slate-900 sm:text-base">{{ $transaction->shipping_address }}</p>
+                        <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}</p>
 
                         @if(
                             in_array($transaction->status, ['PAID', 'ORDER_PROCESSING'], true) &&
@@ -283,12 +283,18 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 <div>
                     <h2 class="font-bold text-slate-900 text-sm sm:text-base">Pemenuhan Pesanan</h2>
                     <p class="mt-1 text-xs leading-relaxed text-slate-500">
-                        Setiap kelompok memiliki metode, ongkir, jadwal, dan status pemenuhan sendiri.
+                        @if($transaction->fulfillments->count() > 1)
+                            Pesanan memiliki beberapa status pemenuhan. Setiap pesanan dapat memiliki metode pengiriman, ongkir, jadwal, dan status pemenuhan yang berbeda.
+                        @elseif($transaction->fulfillments->count() === 1)
+                            Atur metode pengiriman, ongkir, jadwal, dan status pemenuhan untuk pesanan ini.
+                        @else
+                            Belum ada status pemenuhan untuk transaksi ini.
+                        @endif
                     </p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 {{ $transaction->fulfillments->count() > 1 ? 'xl:grid-cols-2' : '' }} gap-4">
                 @foreach($transaction->fulfillments as $fulfillment)
                     @php
                         $isReadyGroup = $fulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY;
@@ -313,46 +319,77 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                     <article class="min-w-0 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
                         <div class="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                                <span class="inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide {{ $isReadyGroup ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800' }}">
+                                <span class="inline-flex text-[12px] font-bold uppercase tracking-wide {{ $isReadyGroup ? 'text-emerald-700' : 'text-[#AE7C18]' }}">
                                     {{ $groupLabel }}
                                 </span>
                                 <h3 class="mt-2 text-sm font-bold text-slate-900">
                                     {{ $fulfillment->shipping_method ?? 'Metode belum ditentukan' }}
                                 </h3>
                             </div>
-                            <span class="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-200">
+                            <span class="rounded-full bg-white px-2.5 py-1 text-[12px] font-semibold text-slate-600 ring-1 ring-slate-200">
                                 {{ $groupStatusLabels[$fulfillment->status] ?? $fulfillment->status ?? '-' }}
                             </span>
                         </div>
 
                         <div class="mt-4 space-y-3">
                             <div>
-                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Produk</p>
-                                <div class="mt-2 space-y-2">
+                                <p class="text-[12px] font-semibold uppercase tracking-wide text-slate-600">Produk</p>
+                                <div class="mt-3 space-y-3">
                                     @forelse($fulfillment->items as $fulfillmentItem)
-                                        <div class="flex items-start justify-between gap-3 rounded-xl border border-slate-100 bg-white p-3">
-                                            <div class="min-w-0">
-                                                <p class="text-xs font-semibold text-slate-800">
+                                        <div class="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-sm font-bold leading-relaxed text-slate-900 sm:text-base">
                                                     {{ $fulfillmentItem->productVariant?->product?->name ?? $fulfillmentItem->custom_name ?? 'Produk' }}
                                                 </p>
-                                                <p class="mt-1 text-[11px] text-slate-500">
-                                                    Ukuran {{ $fulfillmentItem->productVariant?->size?->name ?? '-' }}
-                                                    · {{ $fulfillmentItem->qty }} pcs
+
+                                                <p class="mt-2 text-sm font-semibold">
+                                                    <span class="text-slate-700">Ukuran:</span>
+                                                    <span class="font-bold text-[#AE7C18]">{{ $fulfillmentItem->productVariant?->size?->name ?? '-' }}</span>
+                                                    <span class="font-semibold text-[#AE7C18]">
+                                                        · Rp{{ number_format((float) ($fulfillmentItem->productVariant?->price ?? 0), 0, ',', '.') }}
+                                                    </span>
+                                                    <span class="font-medium text-slate-500">· {{ $fulfillmentItem->qty }} pcs</span>
                                                 </p>
+
                                                 @if($fulfillmentItem->custom_name)
-                                                    <p class="mt-1 text-[11px] text-slate-500">Nama: {{ $fulfillmentItem->custom_name }}</p>
+                                                    <p class="mt-1.5 text-sm">
+                                                        <span class="font-semibold text-slate-700">Nama:</span>
+                                                        <span class="font-bold uppercase text-[#AE7C18]">{{ $fulfillmentItem->custom_name }}</span>
+                                                    </p>
                                                 @endif
+
                                                 @if($fulfillmentItem->custom_number)
-                                                    <p class="text-[11px] text-slate-500">Nomor: {{ $fulfillmentItem->custom_number }}</p>
+                                                    <p class="mt-1.5 text-sm">
+                                                        <span class="font-semibold text-slate-700">Nomor:</span>
+                                                        <span class="font-bold text-[#AE7C18]">{{ $fulfillmentItem->custom_number }}</span>
+                                                    </p>
+                                                @endif
+                                                @if($fulfillmentItem->is_longsleeve)
+                                                    <p class="mt-1 text-sm">
+                                                        <span class="font-semibold text-slate-700">Longsleeve</span>
+                                                        <span class="font-semibold text-[#AE7C18]">
+                                                            (+ Rp {{ number_format((int) $fulfillmentItem->longsleeve_price, 0, ',', '.') }})
+                                                        </span>
+                                                    </p>
+                                                @endif
+
+                                                @if($fulfillmentItem->is_patch)
+                                                    <p class="mt-1 text-sm">
+                                                        <span class="font-semibold text-slate-700">Patch</span>
+                                                        <span class="font-semibold text-[#AE7C18]">
+                                                            (+ Rp {{ number_format((int) $fulfillmentItem->patch_price, 0, ',', '.') }})
+                                                        </span>
+                                                    </p>
                                                 @endif
                                             </div>
-                                            <p class="shrink-0 text-right text-xs font-bold text-slate-800">
+
+                                            <p class="shrink-0 text-right text-sm font-bold leading-relaxed text-slate-900 sm:text-base">
                                                 Rp{{ number_format((float) $fulfillmentItem->subtotal, 0, ',', '.') }}
                                             </p>
                                         </div>
                                     @empty
-                                        <p class="rounded-xl bg-white p-3 text-xs text-slate-500">
-                                            Belum ada item yang terhubung ke kelompok ini.
+                                        <p class="rounded-xl bg-white p-4 text-sm text-slate-600">
+                                            Belum ada item yang terhubung ke pesanan ini.
                                         </p>
                                     @endforelse
                                 </div>
@@ -366,21 +403,27 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     </p>
                                 </div>
                                 <div class="rounded-xl border border-slate-100 bg-white p-3">
-                                    <p class="text-[10px] uppercase tracking-wide text-slate-400">Jadwal</p>
-                                    <p class="mt-1 text-xs font-semibold text-slate-800">
-                                        @if($fulfillment->shipping_method === 'Ambil di Tempat' && $fulfillment->pickup_date)
-                                            {{ \Carbon\Carbon::parse($fulfillment->pickup_date)->locale('id')->translatedFormat('d M Y') }}
-                                            @if($fulfillment->pickup_time_start && $fulfillment->pickup_time_end)
-                                                <span class="block mt-1 font-normal text-slate-500">
-                                                    {{ \Carbon\Carbon::parse($fulfillment->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($fulfillment->pickup_time_end)->format('H:i') }} WITA
-                                                </span>
+                                    @if($fulfillment->shipping_method === 'Kurir')
+                                        <p class="text-[10px] uppercase tracking-wide text-slate-400">Pengiriman</p>
+                                        <p class="mt-1 text-sm font-bold text-slate-900">Menunggu proses pengiriman</p>
+                                        <p class="mt-1 text-xs leading-relaxed text-slate-500">
+                                            Pesanan akan diproses untuk pengiriman melalui kurir.
+                                        </p>
+                                    @else
+                                        <p class="text-[10px] uppercase tracking-wide text-slate-400">Jadwal Pengambilan</p>
+                                        <p class="mt-1 text-sm font-bold text-slate-900">
+                                            @if($fulfillment->pickup_date)
+                                                {{ \Carbon\Carbon::parse($fulfillment->pickup_date)->locale('id')->translatedFormat('d M Y') }}
+                                                @if($fulfillment->pickup_time_start && $fulfillment->pickup_time_end)
+                                                    <span class="block mt-1 font-bold text-slate-500">
+                                                        {{ \Carbon\Carbon::parse($fulfillment->pickup_time_start)->format('H:i') }}-{{ \Carbon\Carbon::parse($fulfillment->pickup_time_end)->format('H:i') }} WITA
+                                                    </span>
+                                                @endif
+                                            @else
+                                                Mengikuti jadwal pemrosesan
                                             @endif
-                                        @elseif($fulfillment->fulfillment_date)
-                                            {{ \Carbon\Carbon::parse($fulfillment->fulfillment_date)->locale('id')->translatedFormat('d M Y') }}
-                                        @else
-                                            Mengikuti jadwal pemrosesan
-                                        @endif
-                                    </p>
+                                        </p>
+                                    @endif
                                 </div>
                             </div>
 
@@ -391,16 +434,20 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                         @if($canEditGroupAddress)
                                             <button type="button"
                                                 onclick="toggleFulfillmentAddressEditor({{ $fulfillment->id }}, true)"
-                                                class="text-xs font-semibold text-[#AE7C18] hover:underline">
+                                                class="inline-flex items-center gap-1.5 rounded-lg border border-[#AE7C18]/40 bg-[#AE7C18]/10 px-3 py-1.5 text-xs font-bold text-[#8A6110] shadow-sm transition hover:bg-[#AE7C18]/20 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/40">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M12 20h9"/>
+                                                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/>
+                                                </svg>
                                                 Edit alamat
                                             </button>
                                         @endif
                                     </div>
 
-                                    <p class="mt-1 text-xs leading-relaxed text-slate-800">
+                                    <p class="mt-1 font-semibold text-sm leading-relaxed text-slate-800">
                                         {{ $fulfillment->shipping_address ?: $transaction->shipping_address ?: '-' }}
                                     </p>
-                                    <p class="mt-1 text-[11px] text-slate-500">
+                                    <p class="mt-1 font-semibold text-[11px] text-slate-500">
                                         {{ $fulfillment->shipping_district ?: $transaction->shipping_district }},
                                         {{ $fulfillment->shipping_city ?: $transaction->shipping_city }},
                                         {{ $fulfillment->shipping_province ?: $transaction->shipping_province }}
@@ -502,7 +549,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
                                     <p class="text-xs font-semibold text-emerald-800">Pengambilan langsung</p>
                                     <p class="mt-1 text-xs leading-relaxed text-emerald-700">
-                                        Selesaikan kelompok ini setelah pelanggan benar-benar mengambil pesanan.
+                                        Selesaikan Pesanan ini setelah pelanggan benar-benar mengambil pesanan.
                                     </p>
                                 </div>
 
@@ -515,7 +562,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                         <p class="fulfillment-action-error hidden mb-2 text-xs text-red-600"></p>
                                         <button type="submit" class="w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-emerald-700">
                                             <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
-                                            Konfirmasi {{ $groupLabel }} sudah diambil
+                                            Konfirmasi Barang sudah diambil
                                         </button>
                                     </form>
                                 @endif
@@ -553,22 +600,42 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             </div>
 
                             <div class="min-w-0 flex-1">
-                                <p class="font-bold text-slate-900 text-xs sm:text-base">{{ $product?->name ?? '-' }}</p>
-                                <p class="mt-0.5 text-xs text-slate-500">Ukuran: {{ $item->productVariant?->size?->name ?? '-' }}</p>
-                                @if($item->custom_name)<p class="text-xs text-[#AE7C18]">Nama: {{ $item->custom_name }}</p>@endif
-                                @if($item->custom_number)<p class="text-xs text-slate-600">Nomor: {{ $item->custom_number }}</p>@endif
+                                <p class="text-xs font-semibold text-slate-900 sm:text-base">
+                                    {{ $product?->name ?? '-' }}
+                                </p>
+
+                                <p class="mt-1 text-xs sm:text-sm">
+                                    <span class="font-semibold text-slate-900">Ukuran:</span>
+                                    <span class="font-bold text-[#AE7C18]">{{ $item->productVariant?->size?->name ?? '-' }}</span>
+                                </p>
+
+                                @if($item->custom_name)
+                                    <p class="mt-0.5 text-xs sm:text-sm">
+                                        <span class="font-semibold text-slate-900">Nama:</span>
+                                        <span class="font-bold uppercase text-[#AE7C18]">{{ $item->custom_name }}</span>
+                                    </p>
+                                @endif
+
+                                @if($item->custom_number)
+                                    <p class="mt-0.5 text-xs sm:text-sm">
+                                        <span class="font-semibold text-slate-900">Nomor:</span>
+                                        <span class="font-bold text-[#AE7C18]">{{ $item->custom_number }}</span>
+                                    </p>
+                                @endif
+
                                 @if($item->is_longsleeve)
-                                    <p class="mt-1 text-xs font-semibold text-[#AE7C18]">
-                                        Longsleeve
-                                        <span class="font-normal text-slate-500">
+                                    <p class="mt-1 text-xs sm:text-sm">
+                                        <span class="font-semibold text-slate-900">Longsleeve</span>
+                                        <span class="font-semibold text-[#AE7C18]">
                                             (+ Rp {{ number_format((int) $item->longsleeve_price, 0, ',', '.') }})
                                         </span>
                                     </p>
                                 @endif
+
                                 @if($item->is_patch)
-                                    <p class="mt-1 text-xs font-semibold text-[#AE7C18]">
-                                        Patch
-                                        <span class="font-normal text-slate-500">
+                                    <p class="mt-1 text-xs sm:text-sm">
+                                        <span class="font-semibold text-slate-900">Patch</span>
+                                        <span class="font-semibold text-[#AE7C18]">
                                             (+ Rp {{ number_format((int) $item->patch_price, 0, ',', '.') }})
                                         </span>
                                     </p>

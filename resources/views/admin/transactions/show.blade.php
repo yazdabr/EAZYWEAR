@@ -314,19 +314,18 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 : 'Pengiriman ' . ($shipment->fulfillments->pluck('group_type')->contains('ready') ? 'Ready Stock' : 'Pre-Order');
                         @endphp
 
-                        <article class="rounded-2xl border p-4 shadow-sm {{ $shipment->shipment_type === 'combined' ? 'border-emerald-200 bg-emerald-50/50' : 'border-amber-200 bg-amber-50/40' }}">
+                        <article class="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-sm">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <h3 class="text-sm font-bold text-slate-900">{{ $shipmentLabel }}</h3>
                                     <p class="mt-1 text-xs text-slate-500">{{ $shipment->shipping_method }}</p>
                                 </div>
-                                <span class="rounded-full px-2.5 py-1 text-xs font-bold {{ $shipment->shipment_type === 'combined' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
                                     {{ $shipment->status ?: 'PENDING' }}
                                 </span>
                             </div>
 
-                            @if($shipment->shipment_type === 'combined')
-                                <div class="mt-4 space-y-3">
+                            <div class="mt-4 space-y-3">
                                     @foreach($shipment->fulfillments as $shipmentFulfillment)
                                         <div class="rounded-xl border border-emerald-100 bg-white p-3">
                                             <p class="mb-3 text-xs font-bold uppercase tracking-wide {{ $shipmentFulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY ? 'text-emerald-700' : 'text-[#AE7C18]' }}">
@@ -363,8 +362,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                             </div>
                                         </div>
                                     @endforeach
-                                </div>
-                            @endif
+                            </div>
 
                             <div class="mt-4 rounded-xl border border-slate-100 bg-white p-3">
                                 <p class="text-xs font-semibold text-slate-500">Alamat pengiriman</p>
@@ -433,14 +431,13 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 </div>
             @endif
             @php
-                $combinedFulfillmentIds = $transaction->shipments
-                    ->where('shipment_type', 'combined')
+                $shippedFulfillmentIds = $transaction->shipments
                     ->flatMap(fn ($shipment) => $shipment->fulfillments->pluck('id'))
                     ->all();
             @endphp
             <div class="mx-auto grid w-full grid-cols-1 gap-4 {{ $transaction->fulfillments->count() > 1 ? 'xl:grid-cols-2' : 'xl:max-w-2xl' }}">
                 @foreach($transaction->fulfillments as $fulfillment)
-                    @if(in_array($fulfillment->id, $combinedFulfillmentIds, true))
+                    @if(in_array($fulfillment->id, $shippedFulfillmentIds, true))
                         @continue
                     @endif
                     @php

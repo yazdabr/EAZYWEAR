@@ -13,6 +13,7 @@ use App\Models\FulfillmentHold;
 use App\Models\FulfillmentSlot;
 use App\Http\Controllers\Admin\TransactionController;
 use App\Mail\OrderShippedMail;
+use App\Mail\OrderProcessingMail;
 use App\Models\TransactionNotification;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -1268,5 +1269,56 @@ class TransactionControllerTest extends TestCase
         $this->assertNotNull($hold->released_at);
         $this->assertSame(0, (int) $slot->used_count);
         $this->assertSame($stockBeforeCancellation, (int) $inventory->stock);
+    }
+
+    public function test_processing_paid_order_sends_order_processing_email_once(): void
+    {
+        Mail::fake();
+
+        $admin = $this->superAdmin();
+        $transaction = $this->createTestTransaction();
+
+        $transaction->update([
+            'status' => 'PAID',
+            'shipping_email' => 'pelanggan@example.com',
+        ]);
+
+        $this->actingAs($admin)
+            ->patchJson(route('admin.transactions.process', $transaction))
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'id' => $transaction->id,
+                    'status' => 'ORDER_PROCESSING',
+                ],
+            ]);
+
+        Mail::assertSent(
+            OrderProcessingMail::class,
+            function (OrderProcessingMail $mail) use ($transaction) {
+                return $mail->hasTo('pelanggan@example.com')
+                    && $mail->transaction->id === $transaction->id;
+            }
+        );
+
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_PROCESSING_EMAIL',
+        ]);
+
+        $notification = TransactionNotification::query()
+            ->where('transaction_id', $transaction->id)
+            ->where('type', 'ORDER_PROCESSING_EMAIL')
+            ->firstOrFail();
+
+        $this->assertNotNull($notification->sent_at);
+
+        // Permintaan kedua tidak boleh mengirim email lagi.
+        $this->actingAs($admin)
+            ->patchJson(route('admin.transactions.process', $transaction))
+            ->assertStatus(422);
+
+        Mail::assertSent(OrderProcessingMail::class, 1);
     }
 }

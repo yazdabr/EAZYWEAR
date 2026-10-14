@@ -18,6 +18,7 @@ use App\Services\InventoryStockService;
 use App\Services\TransactionPaymentService;
 use App\Services\TransactionCompletionService;
 use App\Mail\OrderShippedMail;
+use App\Mail\OrderProcessingMail;
 use App\Services\FulfillmentHoldService;
 use App\Models\FulfillmentHold;
 use App\Services\BiteshipService;
@@ -498,16 +499,58 @@ class TransactionController extends Controller
     {
         try {
             $processedTransaction = DB::transaction(function () use ($transaction) {
-                $lockedTransaction = Transaction::query()->whereKey($transaction->id)->lockForUpdate()->firstOrFail();
+                $lockedTransaction = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
                 if ($lockedTransaction->status !== 'PAID') {
-                    throw ValidationException::withMessages(['transaction' => 'Hanya pesanan dengan status PAID yang dapat diproses.']);
+                    throw ValidationException::withMessages([
+                        'transaction' => 'Hanya pesanan dengan status PAID yang dapat diproses.',
+                    ]);
                 }
 
-                $lockedTransaction->updateStatus('ORDER_PROCESSING', 'Pesanan mulai diproses oleh admin.');
+                $lockedTransaction->updateStatus(
+                    'ORDER_PROCESSING',
+                    'Pesanan mulai diproses oleh admin.'
+                );
 
                 return $lockedTransaction->fresh();
             });
+
+            // Kirim email setelah perubahan status berhasil di-commit.
+            $notification = TransactionNotification::firstOrCreate(
+                [
+                    'transaction_id' => $processedTransaction->id,
+                    'type' => 'ORDER_PROCESSING_EMAIL',
+                ],
+                [
+                    'sent_at' => null,
+                ]
+            );
+
+            if (
+                is_null($notification->sent_at)
+                && filled($processedTransaction->shipping_email)
+            ) {
+                try {
+                    $transactionForEmail = Transaction::query()
+                        ->with('items.productVariant.product')
+                        ->findOrFail($processedTransaction->id);
+
+                    app(EmailArchiveService::class)->send(
+                        $transactionForEmail->shipping_email,
+                        new OrderProcessingMail($transactionForEmail)
+                    );
+
+                    $notification->update([
+                        'sent_at' => now(),
+                    ]);
+                } catch (\Throwable $e) {
+                    // Kegagalan email tidak membatalkan pemrosesan pesanan.
+                    report($e);
+                }
+            }
 
             return response()->json([
                 'success' => true,

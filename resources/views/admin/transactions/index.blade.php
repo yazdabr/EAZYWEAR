@@ -210,7 +210,7 @@
                     <div class="col-span-2 grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end">
                         <button
                             type="button"
-                            onclick="document.getElementById('hide-transaction-status-dialog').showModal()"
+                            @click="$dispatch('open-hide-status-modal')"
                             class="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 active:scale-[0.98] sm:h-[50px] sm:w-[50px] sm:px-0"
                             title="Sembunyikan status transaksi"
                         >
@@ -231,49 +231,6 @@
             </div>
         </div>
     </form>
-
-    {{-- PREFERENSI HIDE STATUS PER AKUN ADMIN --}}
-    <dialog id="hide-transaction-status-dialog" class="hide-status-dialog fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl p-0 shadow-2xl backdrop:bg-slate-900/40">
-        <form method="POST" action="{{ route('admin.transactions.hidden-statuses.update') }}" class="p-5 sm:p-6">
-            @csrf
-            @method('PUT')
-            <div class="flex items-start justify-between gap-3">
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900">Hide Status Transaksi</h3>
-                    <p class="mt-1 text-sm text-slate-500">Pilihan ini tersimpan untuk akun admin kamu, termasuk setelah logout.</p>
-                </div>
-                <button type="button" onclick="document.getElementById('hide-transaction-status-dialog').close()" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Tutup">
-                    <x-heroicon-o-x-mark class="h-5 w-5"/>
-                </button>
-            </div>
-            @php
-                $hideableStatuses = [
-                    'PENDING' => 'Pending',
-                    'PAID' => 'Paid',
-                    'EXPIRED' => 'Expired',
-                    'ORDER_PROCESSING' => 'Order Processing',
-                    'ORDER_SHIPPED' => 'Order Shipped',
-                    'ORDER_COMPLETED' => 'Order Completed',
-                    'CANCELLED' => 'Cancelled',
-                    'ORDER_CANCELLED' => 'Order Cancelled',
-                ];
-                $hiddenStatuses = auth()->user()->hidden_transaction_statuses ?? [];
-            @endphp
-            <div class="mt-5 space-y-2">
-                @foreach($hideableStatuses as $statusValue => $statusLabel)
-                    <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
-                        <input type="checkbox" name="hidden_statuses[]" value="{{ $statusValue }}" @checked(in_array($statusValue, $hiddenStatuses, true)) class="rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]">
-                        <span>{{ $statusLabel }}</span>
-                    </label>
-                @endforeach
-            </div>
-            <div class="mt-5 grid grid-cols-2 gap-2">
-                <button type="button" onclick="document.getElementById('hide-transaction-status-dialog').close()" class="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50">Batal</button>
-                <button type="submit" class="rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white hover:bg-[#96690F]">Simpan</button>
-            </div>
-            <p class="mt-3 text-xs text-slate-400">Jika semua centang dihapus lalu disimpan, seluruh status akan ditampilkan kembali.</p>
-        </form>
-    </dialog>
 
     {{-- ================= STATISTICS ================= --}}
     <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -448,6 +405,7 @@
 
 @include('admin.transactions.partials.view-transaction')
 @include('admin.transactions.partials.delete-transaction')
+@include('admin.transactions.partials.hide-status-dialog')
 
 @push('styles')
 <style>

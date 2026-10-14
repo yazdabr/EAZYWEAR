@@ -99,6 +99,22 @@
             <div class="md:col-span-2 lg:col-span-8">
                 <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-end sm:justify-end sm:gap-4">
 
+                    {{-- METODE PENGIRIMAN --}}
+                    <div class="col-span-1 w-full sm:w-52">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
+                            Pengiriman
+                        </label>
+                        <select
+                            name="shipping_type"
+                            onchange="this.form.submit()"
+                            class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
+                        >
+                            <option value="">Semua Pengiriman</option>
+                            <option value="pickup" @selected(request('shipping_type') === 'pickup')>Ambil di Tempat</option>
+                            <option value="courier" @selected(request('shipping_type') === 'courier')>Dikirim (Kurir)</option>
+                        </select>
+                    </div>
+
                     {{-- STATUS --}}
                     <div class="col-span-1 w-full sm:w-52">
                         <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">

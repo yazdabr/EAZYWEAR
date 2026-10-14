@@ -294,9 +294,9 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 </div>
             </div>
 
-            @if($transaction->shipments->isNotEmpty())
-                <div class="mb-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
-                    @foreach($transaction->shipments as $shipment)
+            @if($transaction->shipments->where('shipment_type', 'combined')->isNotEmpty())
+                <div class="mb-5 mx-auto grid w-full grid-cols-1 gap-4 xl:max-w-2xl">
+                    @foreach($transaction->shipments->where('shipment_type', 'combined') as $shipment)
                         @php
                             $shipmentCanEditAddress = in_array($transaction->status, ['PAID', 'ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
                                 && $shipment->shipping_method === 'Kurir'
@@ -314,15 +314,56 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 : 'Pengiriman ' . ($shipment->fulfillments->pluck('group_type')->contains('ready') ? 'Ready Stock' : 'Pre-Order');
                         @endphp
 
-                        <article class="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 shadow-sm">
+                        <article class="min-w-0 rounded-2xl border p-4 sm:p-5 shadow-sm {{ $shipment->shipment_type === 'combined' ? 'border-slate-200 bg-slate-50/60' : 'border-amber-200 bg-amber-50/40' }}">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <h3 class="text-sm font-bold text-slate-900">{{ $shipmentLabel }}</h3>
                                     <p class="mt-1 text-xs text-slate-500">{{ $shipment->shipping_method }}</p>
                                 </div>
-                                <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
-                                    {{ $shipment->status ?: 'PENDING' }}
+                                <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $shipment->shipment_type === 'combined' ? 'bg-white text-slate-600 ring-1 ring-slate-200' : 'bg-amber-100 text-amber-800' }}">
+                                    {{ !$shipment->status || $shipment->status === 'PENDING' ? 'Menunggu diproses' : $shipment->status }}
                                 </span>
+                            </div>
+
+                            <div class="mt-4 space-y-3">
+                                    @foreach($shipment->fulfillments as $shipmentFulfillment)
+                                        <div class="rounded-xl border border-slate-200 bg-white p-4">
+                                            <p class="mb-3 text-xs font-bold uppercase tracking-wide {{ $shipmentFulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY ? 'text-emerald-700' : 'text-[#AE7C18]' }}">
+                                                {{ $shipmentFulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY ? 'Ready Stock' : 'Pre-Order' }}
+                                            </p>
+                                            <div class="space-y-3">
+                                                @forelse($shipmentFulfillment->items as $shipmentItem)
+                                                    <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
+                                                        <div class="min-w-0 flex-1">
+                                                            <p class="text-sm font-bold leading-relaxed text-slate-900 sm:text-base">{{ $shipmentItem->productVariant?->product?->name ?? $shipmentItem->custom_name ?? 'Produk' }}</p>
+                                                            <p class="mt-2 text-sm font-semibold">
+                                                                <span class="text-slate-700">Ukuran:</span>
+                                                                <span class="font-bold text-[#AE7C18]">{{ $shipmentItem->productVariant?->size?->name ?? '-' }}</span>
+                                                                <span class="font-semibold text-[#AE7C18]">· Rp{{ number_format((float) ($shipmentItem->productVariant?->price ?? 0), 0, ',', '.') }}</span>
+                                                                <span class="font-medium text-slate-500">· {{ $shipmentItem->qty }} pcs</span>
+                                                            </p>
+                                                            @if($shipmentItem->custom_name)
+                                                                <p class="mt-1 text-xs text-slate-600">Nama: <span class="font-semibold">{{ $shipmentItem->custom_name }}</span></p>
+                                                            @endif
+                                                            @if($shipmentItem->custom_number)
+                                                                <p class="mt-1 text-xs text-slate-600">Nomor: <span class="font-semibold">{{ $shipmentItem->custom_number }}</span></p>
+                                                            @endif
+                                                            @if($shipmentItem->is_longsleeve || $shipmentItem->is_patch)
+                                                                <p class="mt-1 text-xs text-slate-500">
+                                                                    @if($shipmentItem->is_longsleeve) Longsleeve @endif
+                                                                    @if($shipmentItem->is_longsleeve && $shipmentItem->is_patch) · @endif
+                                                                    @if($shipmentItem->is_patch) Patch @endif
+                                                                </p>
+                                                            @endif
+                                                        </div>
+                                                        <p class="shrink-0 text-right text-sm font-bold text-slate-900">Rp{{ number_format((float) $shipmentItem->subtotal, 0, ',', '.') }}</p>
+                                                    </div>
+                                                @empty
+                                                    <p class="text-xs text-slate-500">Belum ada item untuk kelompok ini.</p>
+                                                @endforelse
+                                            </div>
+                                        </div>
+                                    @endforeach
                             </div>
 
                             <div class="mt-4 rounded-xl border border-slate-100 bg-white p-3">
@@ -391,8 +432,17 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                     @endforeach
                 </div>
             @endif
+            @php
+                $shippedFulfillmentIds = $transaction->shipments
+                    ->where('shipment_type', 'combined')
+                    ->flatMap(fn ($shipment) => $shipment->fulfillments->pluck('id'))
+                    ->all();
+            @endphp
             <div class="mx-auto grid w-full grid-cols-1 gap-4 {{ $transaction->fulfillments->count() > 1 ? 'xl:grid-cols-2' : 'xl:max-w-2xl' }}">
                 @foreach($transaction->fulfillments as $fulfillment)
+                    @if(in_array($fulfillment->id, $shippedFulfillmentIds, true))
+                        @continue
+                    @endif
                     @php
                         $isReadyGroup = $fulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY;
                         $groupLabel = $isReadyGroup ? 'Ready Stock' : 'Pre-Order';

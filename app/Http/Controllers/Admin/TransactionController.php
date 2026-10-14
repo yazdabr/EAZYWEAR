@@ -195,7 +195,7 @@ class TransactionController extends Controller
     public function updateHiddenStatuses(Request $request)
     {
         $validated = $request->validate([
-            'hidden_statuses' => ['present', 'array'],
+            'hidden_statuses' => ['sometimes', 'array'],
             'hidden_statuses.*' => [
                 'string',
                 Rule::in([
@@ -212,7 +212,7 @@ class TransactionController extends Controller
         ]);
 
         $request->user()->forceFill([
-            'hidden_transaction_statuses' => array_values(array_unique($validated['hidden_statuses'])),
+            'hidden_transaction_statuses' => array_values(array_unique($validated['hidden_statuses'] ?? [])),
         ])->save();
 
         return redirect()

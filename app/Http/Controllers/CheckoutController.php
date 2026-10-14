@@ -34,7 +34,7 @@ class CheckoutController extends Controller
             'shipping_postal_code' => ['required', 'string', 'max:10'],
             'shipping_latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'shipping_longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'group_type' => ['nullable', Rule::in(['ready', 'pre_order'])],
+            'group_type' => ['nullable', Rule::in(['ready', 'pre_order', 'combined'])],
         ]);
 
         $cart = collect($request->session()->get('cart', []));
@@ -99,6 +99,7 @@ class CheckoutController extends Controller
                     // Filter kelompok dilakukan berdasarkan data produk di database.
                     if (
                         isset($validated['group_type'])
+                        && in_array($validated['group_type'], ['ready', 'pre_order'], true)
                         && $variant->product->availability !== $validated['group_type']
                     ) {
                         continue;
@@ -337,6 +338,8 @@ class CheckoutController extends Controller
             'shipping_latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'shipping_longitude' => ['nullable', 'numeric', 'between:-180,180'],
 
+            'fulfillment_mode' => ['nullable', 'string', Rule::in(['separate', 'combined'])],
+
             'ready_shipping_method' => ['nullable', 'string', Rule::in(['Kurir', 'Ambil di Tempat'])],
             'ready_courier_code' => [
                 Rule::requiredIf(fn () => $request->input('ready_shipping_method') === 'Kurir'),
@@ -347,15 +350,15 @@ class CheckoutController extends Controller
                 'nullable', 'string', 'max:100',
             ],
             'ready_pickup_date' => [
-                Rule::requiredIf(fn () => $request->input('ready_shipping_method') === 'Ambil di Tempat'),
+                Rule::requiredIf(fn () => $request->input('ready_shipping_method') === 'Ambil di Tempat' && $request->input('fulfillment_mode', 'separate') !== 'combined'),
                 'nullable', 'date_format:Y-m-d',
             ],
             'ready_pickup_time_start' => [
-                Rule::requiredIf(fn () => $request->input('ready_shipping_method') === 'Ambil di Tempat'),
+                Rule::requiredIf(fn () => $request->input('ready_shipping_method') === 'Ambil di Tempat' && $request->input('fulfillment_mode', 'separate') !== 'combined'),
                 'nullable', 'date_format:H:i',
             ],
             'ready_pickup_time_end' => [
-                Rule::requiredIf(fn () => $request->input('ready_shipping_method') === 'Ambil di Tempat'),
+                Rule::requiredIf(fn () => $request->input('ready_shipping_method') === 'Ambil di Tempat' && $request->input('fulfillment_mode', 'separate') !== 'combined'),
                 'nullable', 'date_format:H:i',
             ],
 
@@ -584,7 +587,37 @@ class CheckoutController extends Controller
 
                 $checkoutAt = now();
                 $itemsByGroup = collect($items)->groupBy('group_type');
+                $fulfillmentMode = count($itemsByGroup->filter(
+                    fn ($groupItems) => $groupItems->isNotEmpty()
+                )) > 1
+                    ? ($validated['fulfillment_mode'] ?? 'separate')
+                    : 'separate';
+
+                if (
+                    $fulfillmentMode === 'combined'
+                    && (! $itemsByGroup->has('ready') || ! $itemsByGroup->has('pre_order'))
+                ) {
+                    throw ValidationException::withMessages([
+                        'fulfillment_mode' => 'Pengiriman gabungan hanya tersedia untuk keranjang yang berisi Ready Stock dan Pre-order.',
+                    ]);
+                }
+
                 $groupDetails = [];
+
+                if ($fulfillmentMode === 'combined') {
+                    $readyMethod = $validated['ready_shipping_method'] ?? null;
+                    $preOrderMethod = $validated['pre_order_shipping_method'] ?? null;
+
+                    if (
+                        ! $readyMethod
+                        || ! $preOrderMethod
+                        || $readyMethod !== $preOrderMethod
+                    ) {
+                        throw ValidationException::withMessages([
+                            'fulfillment_mode' => 'Pengiriman gabungan harus menggunakan metode yang sama untuk Ready Stock dan Pre-order.',
+                        ]);
+                    }
+                }
 
                 foreach (['ready', 'pre_order'] as $groupType) {
                     if (! $itemsByGroup->has($groupType) || $itemsByGroup[$groupType]->isEmpty()) {
@@ -592,7 +625,8 @@ class CheckoutController extends Controller
                     }
 
                     $prefix = $groupType === 'ready' ? 'ready' : 'pre_order';
-                    $shippingMethod = $validated[$prefix . '_shipping_method'] ?? null;
+                    $inputPrefix = $fulfillmentMode === 'combined' ? 'pre_order' : $prefix;
+                    $shippingMethod = $validated[$inputPrefix . '_shipping_method'] ?? null;
 
                     if (! in_array($shippingMethod, ['Kurir', 'Ambil di Tempat'], true)) {
                         throw ValidationException::withMessages([
@@ -610,7 +644,11 @@ class CheckoutController extends Controller
                     if ($shippingMethod === 'Kurir') {
                         $shippingItems = [];
 
-                        foreach ($itemsByGroup[$groupType] as $item) {
+                        $rateItems = $fulfillmentMode === 'combined'
+                            ? collect($items)
+                            : $itemsByGroup[$groupType];
+
+                        foreach ($rateItems as $item) {
                             $weight = $item['variant']->weight;
 
                             if ($weight === null || (float) $weight <= 0) {
@@ -634,8 +672,8 @@ class CheckoutController extends Controller
                             'items' => $shippingItems,
                         ]);
 
-                        $courierCode = $validated[$prefix . '_courier_code'] ?? null;
-                        $courierServiceCode = $validated[$prefix . '_courier_service_code'] ?? null;
+                        $courierCode = $validated[$inputPrefix . '_courier_code'] ?? null;
+                        $courierServiceCode = $validated[$inputPrefix . '_courier_service_code'] ?? null;
                         $selectedRate = collect($ratesResponse['rates'] ?? [])
                             ->first(fn (array $rate) => ($rate['courier_code'] ?? null) === $courierCode
                                 && ($rate['service_code'] ?? null) === $courierServiceCode);
@@ -646,11 +684,13 @@ class CheckoutController extends Controller
                             ]);
                         }
 
-                        $shippingCost = (int) ($selectedRate['price'] ?? 0);
+                        $shippingCost = (
+                            $fulfillmentMode === 'combined' && $groupType === 'ready'
+                        ) ? 0 : (int) ($selectedRate['price'] ?? 0);
                     } else {
-                        $pickupDate = $validated[$prefix . '_pickup_date'] ?? null;
-                        $pickupTimeStart = $validated[$prefix . '_pickup_time_start'] ?? null;
-                        $pickupTimeEnd = $validated[$prefix . '_pickup_time_end'] ?? null;
+                        $pickupDate = $validated[$inputPrefix . '_pickup_date'] ?? null;
+                        $pickupTimeStart = $validated[$inputPrefix . '_pickup_time_start'] ?? null;
+                        $pickupTimeEnd = $validated[$inputPrefix . '_pickup_time_end'] ?? null;
 
                         if ($pickupTimeStart >= $pickupTimeEnd) {
                             throw ValidationException::withMessages([
@@ -658,8 +698,8 @@ class CheckoutController extends Controller
                             ]);
                         }
 
-                        if ($groupType === 'ready') {
-                            // Ready Stock selalu mengikuti jadwal normal dan tidak memakai Event Hold.
+                        if ($groupType === 'ready' && $fulfillmentMode !== 'combined') {
+                            // Ready Stock pada mode separate mengikuti jadwal normal dan tidak memakai Event Hold.
                             $cutoff = (string) config('fulfillment.pickup.same_day_cutoff', '14:00');
                             $minimumPickupDate = $checkoutAt->copy()->startOfDay();
                             if ($checkoutAt->format('H:i') >= $cutoff) {
@@ -696,7 +736,9 @@ class CheckoutController extends Controller
 
                     if ($shippingMethod === 'Kurir') {
                         // Ready Stock dapat diproses segera setelah pembayaran; PO memakai jadwal lama.
-                        $fulfillmentDate = $groupType === 'ready'
+                        $fulfillmentDate = (
+                            $groupType === 'ready' && $fulfillmentMode !== 'combined'
+                        )
                             ? $checkoutAt->copy()->startOfDay()
                             : $fulfillmentDateService->determine($shippingMethod, $checkoutAt, null);
                     }
@@ -730,6 +772,7 @@ class CheckoutController extends Controller
                     'subtotal' => $subtotal,
                     'discount' => $discount,
                     'shipping' => $shipping,
+                    'fulfillment_mode' => $fulfillmentMode,
                     'total' => $total,
                     'status' => 'PENDING',
                     'source' => 'Website',
@@ -761,7 +804,7 @@ class CheckoutController extends Controller
                         'transaction_id' => $transaction->id,
                         'group_type' => $groupType,
                         'shipping_method' => $details['shipping_method'],
-                        'shipping_cost' => $details['shipping_cost'],
+                        'shipping_cost' => $fulfillmentMode === 'combined' ? 0 : $details['shipping_cost'],
                         'fulfillment_date' => $details['fulfillment_date']->toDateString(),
                         'pickup_date' => $details['pickup_date'],
                         'pickup_time_start' => $details['pickup_time_start'],
@@ -799,8 +842,17 @@ class CheckoutController extends Controller
                             'fulfillment_date' => $poFulfillmentDate->toDateString(),
                         ]);
 
+                        $fulfillmentIdsToUpdate = [$fulfillmentIds['pre_order']];
+
+                        if (
+                            $fulfillmentMode === 'combined'
+                            && isset($fulfillmentIds['ready'])
+                        ) {
+                            $fulfillmentIdsToUpdate[] = $fulfillmentIds['ready'];
+                        }
+
                         \App\Models\TransactionFulfillment::query()
-                            ->whereKey($fulfillmentIds['pre_order'])
+                            ->whereIn('id', $fulfillmentIdsToUpdate)
                             ->update([
                                 'fulfillment_date' => $poFulfillmentDate->toDateString(),
                             ]);
@@ -809,6 +861,75 @@ class CheckoutController extends Controller
                             $transaction,
                             $preOrderDetails['fulfillment_date']->toDateString()
                         );
+
+                        if (
+                            $fulfillmentMode === 'combined'
+                            && isset($fulfillmentIds['ready'])
+                        ) {
+                            \App\Models\TransactionFulfillment::query()
+                                ->whereKey($fulfillmentIds['ready'])
+                                ->update([
+                                    'fulfillment_date' => $preOrderDetails['fulfillment_date']->toDateString(),
+                                ]);
+                        }
+                    }
+                }
+
+                // Shipment menjadi sumber data pengiriman fisik.
+                // Combined menggunakan satu shipment untuk Ready Stock dan Pre-order.
+                if ($fulfillmentMode === 'combined') {
+                    $shipmentDetails = $groupDetails['pre_order'];
+
+                    $shipment = \App\Models\TransactionShipment::create([
+                        'transaction_id' => $transaction->id,
+                        'shipment_type' => 'combined',
+                        'shipping_method' => $shipmentDetails['shipping_method'],
+                        'shipping_cost' => $shipping,
+                        'pickup_date' => $shipmentDetails['pickup_date'],
+                        'pickup_time_start' => $shipmentDetails['pickup_time_start'],
+                        'pickup_time_end' => $shipmentDetails['pickup_time_end'],
+                        'shipping_name' => $validated['name'],
+                        'shipping_email' => $validated['email'],
+                        'shipping_phone' => $validated['phone'],
+                        'shipping_address' => $validated['shipping_address'],
+                        'shipping_district' => $validated['shipping_district'],
+                        'shipping_city' => $validated['shipping_city'],
+                        'shipping_province' => $validated['shipping_province'],
+                        'shipping_postal_code' => $validated['shipping_postal_code'],
+                        'shipping_latitude' => $validated['shipping_latitude'] ?? null,
+                        'shipping_longitude' => $validated['shipping_longitude'] ?? null,
+                        'courier_code' => $shipmentDetails['courier_code'],
+                        'courier_service_code' => $shipmentDetails['courier_service_code'],
+                        'status' => 'PENDING',
+                    ]);
+
+                    $shipment->fulfillments()->attach(array_values($fulfillmentIds));
+                } else {
+                    foreach ($groupDetails as $groupType => $details) {
+                        $shipment = \App\Models\TransactionShipment::create([
+                            'transaction_id' => $transaction->id,
+                            'shipment_type' => 'separate',
+                            'shipping_method' => $details['shipping_method'],
+                            'shipping_cost' => $details['shipping_cost'],
+                            'pickup_date' => $details['pickup_date'],
+                            'pickup_time_start' => $details['pickup_time_start'],
+                            'pickup_time_end' => $details['pickup_time_end'],
+                            'shipping_name' => $validated['name'],
+                            'shipping_email' => $validated['email'],
+                            'shipping_phone' => $validated['phone'],
+                            'shipping_address' => $validated['shipping_address'],
+                            'shipping_district' => $validated['shipping_district'],
+                            'shipping_city' => $validated['shipping_city'],
+                            'shipping_province' => $validated['shipping_province'],
+                            'shipping_postal_code' => $validated['shipping_postal_code'],
+                            'shipping_latitude' => $validated['shipping_latitude'] ?? null,
+                            'shipping_longitude' => $validated['shipping_longitude'] ?? null,
+                            'courier_code' => $details['courier_code'],
+                            'courier_service_code' => $details['courier_service_code'],
+                            'status' => 'PENDING',
+                        ]);
+
+                        $shipment->fulfillments()->attach($fulfillmentIds[$groupType]);
                     }
                 }
 

@@ -118,8 +118,41 @@
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
                         <div class="mb-4">
                             <h2 class="text-base font-bold text-slate-900 sm:text-lg">Pengiriman</h2>
+
                             @if(collect($fulfillmentGroups)->pluck('type')->unique()->count() > 1)
-                            <p class="mt-1 text-[11px] leading-4 text-gray-500 sm:text-xs">Setiap kelompok pesanan dapat dikirim atau diambil secara terpisah. Ongkir dihitung untuk masing-masing pengiriman.</p>
+                                <p class="mt-1 text-[11px] leading-4 text-gray-500 sm:text-xs">Tentukan apakah Ready Stock dan Pre-order akan dikirim secara terpisah atau digabungkan.</p>
+
+                                <div data-fulfillment-mode-control class="mt-3 grid gap-2 sm:grid-cols-2">
+                                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white p-3 transition has-[:checked]:border-[#AE7C18] has-[:checked]:bg-[#AE7C18]/5">
+                                        <input
+                                            type="radio"
+                                            name="fulfillment_mode"
+                                            value="separate"
+                                            class="mt-0.5 h-4 w-4 accent-[#AE7C18]"
+                                            @checked(old('fulfillment_mode', 'separate') === 'separate')
+                                            required
+                                        >
+                                        <span>
+                                            <span class="block text-xs font-semibold text-slate-900 sm:text-sm">Pengiriman Terpisah</span>
+                                            <span class="mt-1 block text-[10px] leading-4 text-gray-500 sm:text-xs">Ready Stock bisa dikirim atau diambil lebih dahulu. Ongkir dihitung untuk setiap pengiriman.</span>
+                                        </span>
+                                    </label>
+
+                                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white p-3 transition has-[:checked]:border-[#AE7C18] has-[:checked]:bg-[#AE7C18]/5">
+                                        <input
+                                            type="radio"
+                                            name="fulfillment_mode"
+                                            value="combined"
+                                            class="mt-0.5 h-4 w-4 accent-[#AE7C18]"
+                                            @checked(old('fulfillment_mode') === 'combined')
+                                            required
+                                        >
+                                        <span>
+                                            <span class="block text-xs font-semibold text-slate-900 sm:text-sm">Gabungkan Pengiriman</span>
+                                            <span class="mt-1 block text-[10px] leading-4 text-gray-500 sm:text-xs">Ready Stock menunggu Pre-order siap. Satu pengiriman dan satu ongkir untuk seluruh barang.</span>
+                                        </span>
+                                    </label>
+                                </div>
                             @endif
                         </div>
 
@@ -137,14 +170,20 @@
                                     data-group-type="{{ $groupType }}"
                                     data-group-label="{{ $groupLabel }}"
                                     data-group-subtotal="{{ $group['subtotal'] }}"
+                                    data-combined-item-count="{{ collect($fulfillmentGroups)->sum('item_count') }}"
+                                    data-combined-subtotal="{{ collect($fulfillmentGroups)->sum('subtotal') }}"
                                 >
                                     <div class="mb-3 flex items-start justify-between gap-3">
                                         <div>
-                                            <h3 class="text-sm font-bold text-slate-900">{{ $groupLabel }}</h3>
-                                            <p class="mt-0.5 text-[10px] text-gray-500 sm:text-xs">{{ $group['item_count'] }} item &middot; Subtotal Rp {{ number_format($group['subtotal'], 0, ',', '.') }}</p>
+                                            <h3 data-group-title class="text-sm font-bold text-slate-900">{{ $groupLabel }}</h3>
+                                            <p
+                                                data-group-summary
+                                                class="mt-0.5 text-[10px] text-gray-500 sm:text-xs"
+                                                data-separate-summary="{{ $group['item_count'] }} item &middot; Subtotal Rp {{ number_format($group['subtotal'], 0, ',', '.') }}"
+                                            >{{ $group['item_count'] }} item &middot; Subtotal Rp {{ number_format($group['subtotal'], 0, ',', '.') }}</p>
                                         </div>
                                         @if(collect($fulfillmentGroups)->pluck('type')->unique()->count() > 1)
-                                        <span class="rounded-full bg-[#AE7C18]/10 px-2.5 py-1 text-[10px] font-semibold text-[#AE7C18]">Pengiriman terpisah</span>
+                                        <span data-group-mode-badge class="rounded-full bg-[#AE7C18]/10 px-2.5 py-1 text-[10px] font-semibold text-[#AE7C18]">Pengiriman terpisah</span>
                                         @endif
                                     </div>
 
@@ -291,8 +330,8 @@
                                     <span>Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
                                 </div>
                                 @foreach($fulfillmentGroups as $group)
-                                    <div class="flex items-center justify-between gap-3 text-xs text-gray-600 sm:text-sm">
-                                        <span>{{ $group['label'] }} <span class="text-[10px] text-gray-400">(ongkir)</span></span>
+                                    <div data-shipping-cost-row="{{ $group['type'] }}" class="flex items-center justify-between gap-3 text-xs text-gray-600 sm:text-sm">
+                                        <span data-shipping-cost-label>{{ $group['label'] }} <span class="text-[10px] text-gray-400">(ongkir)</span></span>
                                         <span id="shipping-cost-{{ $group['type'] }}" data-shipping-cost="{{ $group['type'] }}" class="text-[10px] text-gray-400 sm:text-xs">Pilih metode</span>
                                     </div>
                                 @endforeach

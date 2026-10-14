@@ -9,6 +9,7 @@ use App\Models\ProductVariant;
 use App\Models\Transaction;
 use App\Models\TransactionItem;
 use App\Models\TransactionFulfillment;
+use App\Models\TransactionShipment;
 use App\Models\StockMovement;
 use App\Models\TransactionNotification;
 use App\Services\DokuService;
@@ -379,7 +380,19 @@ class TransactionController extends Controller
 
     public function show(Transaction $transaction)
     {
-        $transaction->load(['customer', 'items.productVariant.product.images', 'items.productVariant.size', 'items.productVariant.color', 'orderStatusHistories', 'fulfillments.items.productVariant.product.images', 'fulfillments.items.productVariant.size', 'fulfillments.items.productVariant.color']);
+        $transaction->load([
+            'customer',
+            'items.productVariant.product.images',
+            'items.productVariant.size',
+            'items.productVariant.color',
+            'orderStatusHistories',
+            'fulfillments.items.productVariant.product.images',
+            'fulfillments.items.productVariant.size',
+            'fulfillments.items.productVariant.color',
+            'shipments.fulfillments.items.productVariant.product.images',
+            'shipments.fulfillments.items.productVariant.size',
+            'shipments.fulfillments.items.productVariant.color',
+        ]);
 
         return view('admin.transactions.show', compact('transaction'));
     }
@@ -971,6 +984,367 @@ class TransactionController extends Controller
             $lock->release();
         }
     }
+    public function shipShipment(
+        Request $request,
+        Transaction $transaction,
+        TransactionShipment $shipment,
+        BiteshipService $biteshipService
+    ) {
+        $validated = $request->validate([
+            'courier' => ['nullable', 'string', 'max:100'],
+            'tracking_number' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        if ((int) $shipment->transaction_id !== (int) $transaction->id) {
+            abort(404);
+        }
+
+        $lock = Cache::lock('biteship:shipment:' . $shipment->id, 120);
+
+        if (! $lock->get()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengiriman sedang diproses. Silakan coba kembali.',
+            ], 409);
+        }
+
+        try {
+            $snapshot = DB::transaction(function () use (
+                $transaction,
+                $shipment,
+                $validated
+            ) {
+                $lockedTransaction = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $lockedShipment = TransactionShipment::query()
+                    ->with([
+                        'fulfillments.items.productVariant.product',
+                    ])
+                    ->whereKey($shipment->id)
+                    ->where('transaction_id', $lockedTransaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if (! in_array($lockedTransaction->status, [
+                    'PAID',
+                    Transaction::ORDER_PROCESSING,
+                    Transaction::ORDER_SHIPPED,
+                ], true)) {
+                    throw ValidationException::withMessages([
+                        'shipment' => 'Status transaksi belum mengizinkan pengiriman.',
+                    ]);
+                }
+
+                if ($lockedShipment->shipping_method !== 'Kurir') {
+                    throw ValidationException::withMessages([
+                        'shipment' => 'Shipment ini tidak menggunakan kurir.',
+                    ]);
+                }
+
+                if (
+                    $lockedShipment->status === TransactionShipment::STATUS_COMPLETED
+                    || $lockedShipment->status === TransactionShipment::STATUS_CANCELLED
+                ) {
+                    throw ValidationException::withMessages([
+                        'shipment' => 'Shipment ini sudah selesai atau dibatalkan.',
+                    ]);
+                }
+
+                if ($lockedShipment->biteship_order_id) {
+                    return [
+                        'mode' => 'existing',
+                        'shipment_id' => $lockedShipment->id,
+                        'order_id' => $lockedShipment->biteship_order_id,
+                    ];
+                }
+
+                if (
+                    $lockedShipment->biteship_tracking_id
+                    || $lockedShipment->biteship_waybill_id
+                    || $lockedShipment->tracking_number
+                ) {
+                    throw ValidationException::withMessages([
+                        'shipment' => 'Data resi sudah tersedia. Muat ulang halaman sebelum melanjutkan.',
+                    ]);
+                }
+
+                if (
+                    ! $lockedShipment->courier_code
+                    || ! $lockedShipment->courier_service_code
+                ) {
+                    $trackingNumber = trim($validated['tracking_number'] ?? '');
+
+                    if ($trackingNumber === '') {
+                        throw ValidationException::withMessages([
+                            'tracking_number' => 'Pilih layanan Biteship atau masukkan nomor resi manual.',
+                        ]);
+                    }
+
+                    return [
+                        'mode' => 'manual',
+                        'shipment_id' => $lockedShipment->id,
+                        'courier' => trim($validated['courier'] ?? ''),
+                        'tracking_number' => $trackingNumber,
+                    ];
+                }
+
+                $items = $lockedShipment->fulfillments
+                    ->flatMap(fn ($group) => $group->items)
+                    ->map(function ($item) {
+                        $productName = $item->productVariant?->product?->name
+                            ?? 'Produk EazyWear';
+
+                        return [
+                            'name' => $productName,
+                            'description' => $productName,
+                            'value' => (int) round((float) $item->price),
+                            'quantity' => (int) $item->qty,
+                            'weight' => (int) $item->weight,
+                        ];
+                    })
+                    ->values()
+                    ->all();
+
+                if (count($items) === 0) {
+                    throw ValidationException::withMessages([
+                        'shipment' => 'Shipment tidak memiliki item untuk dikirim.',
+                    ]);
+                }
+
+                return [
+                    'mode' => 'biteship',
+                    'shipment_id' => $lockedShipment->id,
+                    'reference_id' => $lockedTransaction->invoice_number
+                        . '-SHIPMENT-' . $lockedShipment->id,
+                    'destination_contact_name' => $lockedShipment->shipping_name,
+                    'destination_contact_phone' => $lockedShipment->shipping_phone,
+                    'destination_address' => $lockedShipment->shipping_address,
+                    'destination_postal_code' => $lockedShipment->shipping_postal_code,
+                    'destination_latitude' => $lockedShipment->shipping_latitude,
+                    'destination_longitude' => $lockedShipment->shipping_longitude,
+                    'courier_company' => $lockedShipment->courier_code,
+                    'courier_type' => $lockedShipment->courier_service_code,
+                    'items' => $items,
+                ];
+            });
+
+            $order = null;
+
+            if ($snapshot['mode'] === 'existing') {
+                $order = $biteshipService->getOrder($snapshot['order_id']);
+            } elseif ($snapshot['mode'] === 'biteship') {
+                $order = $biteshipService->createOrder([
+                    'reference_id' => $snapshot['reference_id'],
+                    'destination_contact_name' => $snapshot['destination_contact_name'],
+                    'destination_contact_phone' => $snapshot['destination_contact_phone'],
+                    'destination_address' => $snapshot['destination_address'],
+                    'destination_postal_code' => $snapshot['destination_postal_code'],
+                    'destination_latitude' => $snapshot['destination_latitude'],
+                    'destination_longitude' => $snapshot['destination_longitude'],
+                    'courier_company' => $snapshot['courier_company'],
+                    'courier_type' => $snapshot['courier_type'],
+                    'items' => $snapshot['items'],
+                ]);
+            }
+
+            if (
+                in_array($snapshot['mode'], ['existing', 'biteship'], true)
+                && (empty($order['success']) || empty($order['order_id']))
+            ) {
+                throw new RuntimeException(
+                    'Gagal memperoleh data pengiriman Biteship.'
+                );
+            }
+
+            DB::transaction(function () use ($snapshot, $order) {
+                $shipment = TransactionShipment::query()
+                    ->whereKey($snapshot['shipment_id'])
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $groups = TransactionFulfillment::query()
+                    ->whereHas('shipments', function ($query) use ($shipment) {
+                        $query->where('transaction_shipments.id', $shipment->id);
+                    })
+                    ->lockForUpdate()
+                    ->get();
+
+                if ($groups->isEmpty()) {
+                    throw ValidationException::withMessages([
+                        'shipment' => 'Shipment belum terhubung ke fulfillment mana pun.',
+                    ]);
+                }
+
+                if ($snapshot['mode'] === 'manual') {
+                    if (
+                        $shipment->biteship_order_id
+                        || $shipment->tracking_number
+                        || $shipment->biteship_tracking_id
+                        || $shipment->biteship_waybill_id
+                    ) {
+                        throw ValidationException::withMessages([
+                            'shipment' => 'Data shipment sudah berubah. Muat ulang halaman.',
+                        ]);
+                    }
+
+                    $shipment->update([
+                        'courier' => $snapshot['courier'] ?: null,
+                        'tracking_number' => $snapshot['tracking_number'],
+                        'status' => TransactionShipment::STATUS_SHIPPED,
+                    ]);
+
+                    foreach ($groups as $group) {
+                        $group->update([
+                            'courier' => $snapshot['courier'] ?: $group->courier,
+                            'tracking_number' => $snapshot['tracking_number'],
+                            'status' => TransactionFulfillment::STATUS_SHIPPED,
+                        ]);
+                    }
+
+                    return;
+                }
+
+                if (
+                    $shipment->biteship_order_id
+                    && $shipment->biteship_order_id !== $order['order_id']
+                ) {
+                    throw ValidationException::withMessages([
+                        'shipment' => 'ID pesanan Biteship tidak sesuai dengan shipment ini.',
+                    ]);
+                }
+
+                $waybill = $order['waybill_id'] ?? $shipment->biteship_waybill_id;
+                $trackingId = $order['tracking_id'] ?? $shipment->biteship_tracking_id;
+                $courier = $order['courier_code'] ?? $shipment->courier;
+
+                $shipment->update([
+                    'biteship_order_id' => $order['order_id'],
+                    'biteship_tracking_id' => $trackingId,
+                    'biteship_waybill_id' => $waybill,
+                    'biteship_status' => $order['status'] ?? $shipment->biteship_status,
+                    'tracking_number' => $waybill ?? $trackingId ?? $shipment->tracking_number,
+                    'courier' => $courier,
+                    'status' => TransactionShipment::STATUS_SHIPPED,
+                ]);
+
+                foreach ($groups as $group) {
+                    $group->update([
+                        'biteship_tracking_id' => $trackingId ?? $group->biteship_tracking_id,
+                        'biteship_waybill_id' => $waybill ?? $group->biteship_waybill_id,
+                        'biteship_status' => $order['status'] ?? $group->biteship_status,
+                        'tracking_number' => $waybill ?? $trackingId ?? $group->tracking_number,
+                        'courier' => $courier ?? $group->courier,
+                        'status' => TransactionFulfillment::STATUS_SHIPPED,
+                    ]);
+                }
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Shipment berhasil diperbarui.',
+            ]);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    public function updateShipmentShippingAddress(
+        Request $request,
+        Transaction $transaction,
+        TransactionShipment $shipment
+    ) {
+        $validated = $request->validate([
+            'shipping_address' => ['required', 'string', 'max:2000'],
+        ], [
+            'shipping_address.required' => 'Alamat pengiriman wajib diisi.',
+            'shipping_address.max' => 'Alamat pengiriman maksimal 2000 karakter.',
+        ]);
+
+        if ((int) $shipment->transaction_id !== (int) $transaction->id) {
+            abort(404);
+        }
+
+        DB::transaction(function () use ($transaction, $shipment, $validated) {
+            $lockedTransaction = Transaction::query()
+                ->whereKey($transaction->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $lockedShipment = TransactionShipment::query()
+                ->whereKey($shipment->id)
+                ->where('transaction_id', $lockedTransaction->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! in_array($lockedTransaction->status, [
+                'PAID',
+                Transaction::ORDER_PROCESSING,
+                Transaction::ORDER_SHIPPED,
+            ], true)) {
+                throw ValidationException::withMessages([
+                    'shipping_address' => 'Status transaksi tidak mengizinkan perubahan alamat.',
+                ]);
+            }
+
+            if ($lockedShipment->shipping_method !== 'Kurir') {
+                throw ValidationException::withMessages([
+                    'shipping_address' => 'Alamat hanya dapat diedit untuk shipment kurir.',
+                ]);
+            }
+
+            if (
+                $lockedShipment->biteship_order_id
+                || $lockedShipment->biteship_tracking_id
+                || $lockedShipment->biteship_waybill_id
+                || $lockedShipment->tracking_number
+            ) {
+                throw ValidationException::withMessages([
+                    'shipping_address' => 'Alamat tidak dapat diubah setelah proses pengiriman atau pengisian resi dimulai.',
+                ]);
+            }
+
+            $groups = TransactionFulfillment::query()
+                ->whereHas('shipments', function ($query) use ($lockedShipment) {
+                    $query->where('transaction_shipments.id', $lockedShipment->id);
+                })
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($groups as $group) {
+                if (
+                    $group->biteship_order_id
+                    || $group->biteship_tracking_id
+                    || $group->biteship_waybill_id
+                    || $group->tracking_number
+                ) {
+                    throw ValidationException::withMessages([
+                        'shipping_address' => 'Alamat tidak dapat diubah karena data pengiriman fulfillment sudah tersedia.',
+                    ]);
+                }
+            }
+
+            $address = trim($validated['shipping_address']);
+
+            $lockedShipment->update([
+                'shipping_address' => $address,
+            ]);
+
+            foreach ($groups as $group) {
+                $group->update([
+                    'shipping_address' => $address,
+                ]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Alamat shipment berhasil diperbarui.',
+        ]);
+    }
+
     public function updateFulfillmentShippingAddress(
         Request $request,
         Transaction $transaction,

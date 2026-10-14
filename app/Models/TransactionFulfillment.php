@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TransactionFulfillment extends Model
@@ -72,5 +73,14 @@ class TransactionFulfillment extends Model
             TransactionItem::class,
             'transaction_fulfillment_id'
         );
+    }
+    public function shipments(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            TransactionShipment::class,
+            'transaction_shipment_fulfillment',
+            'transaction_fulfillment_id',
+            'transaction_shipment_id'
+        )->withTimestamps();
     }
 }

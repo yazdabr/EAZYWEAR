@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\TransactionFulfillment;
+use App\Models\TransactionShipment;
 use App\Services\BiteshipWebhookSignatureVerifier;
 use App\Services\TransactionCompletionService;
 use Illuminate\Http\JsonResponse;
@@ -58,6 +59,153 @@ class BiteshipWebhookController extends Controller
             $status = strtolower(trim($status));
             if (! $this->isSupportedStatus($status)) {
                 return response()->json(['success' => false, 'message' => 'Status Biteship tidak didukung.'], 422);
+            }
+
+            // Shipment-level order IDs take precedence for newly created shipments.
+            $shipmentResult = DB::transaction(function () use ($orderId, $status, $payload) {
+                $shipment = TransactionShipment::query()
+                    ->where('biteship_order_id', $orderId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $shipment) {
+                    return null;
+                }
+
+                if ($this->shouldIgnoreStatus($shipment->biteship_status, $status)) {
+                    return [
+                        'ignored' => true,
+                        'shipment_id' => $shipment->id,
+                        'status' => $shipment->biteship_status,
+                        'fulfillment_ids' => [],
+                    ];
+                }
+
+                $updates = ['biteship_status' => $status];
+
+                foreach ([
+                    'courier_tracking_id' => 'biteship_tracking_id',
+                    'courier_waybill_id' => 'biteship_waybill_id',
+                    'courier_company' => 'courier',
+                ] as $source => $target) {
+                    if (
+                        isset($payload[$source])
+                        && is_string($payload[$source])
+                        && trim($payload[$source]) !== ''
+                    ) {
+                        $updates[$target] = trim($payload[$source]);
+                    }
+                }
+
+                if (
+                    empty($shipment->tracking_number)
+                    && ! empty($updates['biteship_waybill_id'])
+                ) {
+                    $updates['tracking_number'] = $updates['biteship_waybill_id'];
+                }
+
+                if ($status === 'delivered') {
+                    $updates['status'] = TransactionShipment::STATUS_COMPLETED;
+                } elseif (! in_array($status, self::TERMINAL_STATUSES, true)) {
+                    $updates['status'] = in_array(
+                        $status,
+                        ['picked', 'in_transit', 'dropping_off'],
+                        true
+                    )
+                        ? TransactionShipment::STATUS_SHIPPED
+                        : TransactionShipment::STATUS_PROCESSING;
+                }
+
+                $shipment->update($updates);
+
+                $groups = TransactionFulfillment::query()
+                    ->whereHas('shipments', function ($query) use ($shipment) {
+                        $query->where('transaction_shipments.id', $shipment->id);
+                    })
+                    ->lockForUpdate()
+                    ->get();
+
+                foreach ($groups as $group) {
+                    $groupUpdates = ['biteship_status' => $status];
+
+                    foreach ([
+                        'biteship_tracking_id',
+                        'biteship_waybill_id',
+                        'courier',
+                        'tracking_number',
+                    ] as $field) {
+                        if (isset($updates[$field])) {
+                            $groupUpdates[$field] = $updates[$field];
+                        }
+                    }
+
+                    if (empty($group->tracking_number) && ! empty($groupUpdates['biteship_waybill_id'])) {
+                        $groupUpdates['tracking_number'] = $groupUpdates['biteship_waybill_id'];
+                    }
+
+                    if ($status !== 'delivered') {
+                        if (
+                            ! in_array($status, self::TERMINAL_STATUSES, true)
+                            && $group->status !== TransactionFulfillment::STATUS_COMPLETED
+                        ) {
+                            $groupUpdates['status'] = in_array(
+                                $status,
+                                ['picked', 'in_transit', 'dropping_off'],
+                                true
+                            )
+                                ? TransactionFulfillment::STATUS_SHIPPED
+                                : TransactionFulfillment::STATUS_PROCESSING;
+                        }
+                    }
+
+                    $group->update($groupUpdates);
+                }
+
+                return [
+                    'ignored' => false,
+                    'shipment_id' => $shipment->id,
+                    'status' => $status,
+                    'fulfillment_ids' => $groups->pluck('id')->all(),
+                ];
+            });
+
+            if ($shipmentResult !== null) {
+                if ($shipmentResult['ignored']) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Webhook diterima; status lama diabaikan.',
+                        'order_id' => $orderId,
+                        'status' => $shipmentResult['status'],
+                    ]);
+                }
+
+                $transaction = null;
+
+                if ($status === 'delivered') {
+                    foreach ($shipmentResult['fulfillment_ids'] as $fulfillmentId) {
+                        $fulfillment = TransactionFulfillment::query()
+                            ->findOrFail($fulfillmentId);
+
+                        $transaction = $this->completionService
+                            ->completeFulfillmentFromBiteship($fulfillment);
+                    }
+                } else {
+                    $transaction = TransactionShipment::query()
+                        ->with('transaction')
+                        ->findOrFail($shipmentResult['shipment_id'])
+                        ->transaction;
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Webhook shipment diterima.',
+                    'order_id' => $orderId,
+                    'status' => $shipmentResult['status'],
+                    'shipment_status' => TransactionShipment::query()
+                        ->whereKey($shipmentResult['shipment_id'])
+                        ->value('status'),
+                    'transaction_status' => $transaction?->fresh()->status,
+                ]);
             }
 
             // Fulfillment-specific order IDs take precedence; legacy transactions remain supported.

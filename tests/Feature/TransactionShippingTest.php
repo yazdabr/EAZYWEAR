@@ -5,6 +5,10 @@ namespace Tests\Feature;
 use App\Mail\OrderShippedMail;
 use App\Models\Customer;
 use App\Models\Transaction;
+use App\Models\TransactionShipment;
+use App\Models\TransactionItem;
+use App\Models\TransactionFulfillment;
+use App\Models\ProductVariant;
 use App\Services\BiteshipService;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -481,5 +485,167 @@ class TransactionShippingTest extends TestCase
         } finally {
             optional($lock)->release();
         }
+    }
+
+    public function test_admin_ship_creates_one_biteship_order_for_combined_fulfillments(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create([
+            'role' => 'super_admin',
+        ]);
+
+        $this->actingAs($user);
+
+        $customer = Customer::query()->firstOrFail();
+        $variant = ProductVariant::query()->with('product')->firstOrFail();
+
+        $transaction = Transaction::create([
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-COMBINED-SHIPMENT-001',
+            'transaction_date' => now(),
+            'payment_method' => 'VA',
+            'subtotal' => 200000,
+            'discount' => 0,
+            'shipping' => 15000,
+            'total' => 215000,
+            'status' => Transaction::ORDER_PROCESSING,
+            'source' => 'Website',
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+            'shipping_name' => 'Customer Combined Test',
+            'shipping_email' => 'combined-shipment@test.com',
+            'shipping_phone' => '08123456789',
+            'shipping_address' => 'Alamat Combined Test',
+            'shipping_district' => 'Banjarmasin Selatan',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 0,
+            'shipping_name' => $transaction->shipping_name,
+            'shipping_email' => $transaction->shipping_email,
+            'shipping_phone' => $transaction->shipping_phone,
+            'shipping_address' => $transaction->shipping_address,
+            'shipping_city' => $transaction->shipping_city,
+            'shipping_province' => $transaction->shipping_province,
+            'shipping_postal_code' => $transaction->shipping_postal_code,
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 0,
+            'shipping_name' => $transaction->shipping_name,
+            'shipping_email' => $transaction->shipping_email,
+            'shipping_phone' => $transaction->shipping_phone,
+            'shipping_address' => $transaction->shipping_address,
+            'shipping_city' => $transaction->shipping_city,
+            'shipping_province' => $transaction->shipping_province,
+            'shipping_postal_code' => $transaction->shipping_postal_code,
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        foreach ([$ready, $preOrder] as $fulfillment) {
+            TransactionItem::create([
+                'transaction_id' => $transaction->id,
+                'transaction_fulfillment_id' => $fulfillment->id,
+                'product_variant_id' => $variant->id,
+                'qty' => 1,
+                'price' => 100000,
+                'subtotal' => 100000,
+                'weight' => 500,
+            ]);
+        }
+
+        $shipment = TransactionShipment::create([
+            'transaction_id' => $transaction->id,
+            'shipment_type' => TransactionShipment::TYPE_COMBINED,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 15000,
+            'shipping_name' => $transaction->shipping_name,
+            'shipping_email' => $transaction->shipping_email,
+            'shipping_phone' => $transaction->shipping_phone,
+            'shipping_address' => $transaction->shipping_address,
+            'shipping_district' => $transaction->shipping_district,
+            'shipping_city' => $transaction->shipping_city,
+            'shipping_province' => $transaction->shipping_province,
+            'shipping_postal_code' => $transaction->shipping_postal_code,
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'status' => TransactionShipment::STATUS_PENDING,
+        ]);
+
+        $shipment->fulfillments()->attach([$ready->id, $preOrder->id]);
+
+        $biteship = $this->mock(BiteshipService::class);
+
+        $biteship
+            ->shouldReceive('createOrder')
+            ->once()
+            ->withArgs(function (array $payload) use ($transaction, $variant) {
+                $items = $payload['items'] ?? [];
+
+                return $payload['reference_id']
+                        === $transaction->invoice_number . '-SHIPMENT-' . $transaction->shipments()->first()->id
+                    && count($items) === 2
+                    && collect($items)->sum('quantity') === 2
+                    && collect($items)->every(
+                        fn (array $item) => ($item['value'] ?? null) === 100000
+                    )
+                    && $payload['destination_address'] === $transaction->shipping_address
+                    && $payload['courier_company'] === 'jnt'
+                    && $payload['courier_type'] === 'ez';
+            })
+            ->andReturn([
+                'success' => true,
+                'order_id' => 'BTS-COMBINED-TEST-001',
+                'tracking_id' => 'BTS-COMBINED-TRACK-001',
+                'waybill_id' => 'BTS-COMBINED-WAYBILL-001',
+                'status' => 'confirmed',
+                'reference_id' => $transaction->invoice_number . '-SHIPMENT-' . $shipment->id,
+                'courier_code' => 'jnt',
+                'courier_type' => 'ez',
+            ]);
+
+        $response = $this->patch(
+            route('admin.transactions.shipments.ship', [
+                'transaction' => $transaction->id,
+                'shipment' => $shipment->id,
+            ])
+        );
+
+        $response->assertOk()->assertJson([
+            'success' => true,
+        ]);
+
+        $shipment->refresh();
+        $ready->refresh();
+        $preOrder->refresh();
+
+        $this->assertSame('BTS-COMBINED-TEST-001', $shipment->biteship_order_id);
+        $this->assertSame('BTS-COMBINED-TRACK-001', $shipment->biteship_tracking_id);
+        $this->assertSame('BTS-COMBINED-WAYBILL-001', $shipment->biteship_waybill_id);
+        $this->assertSame(TransactionFulfillment::STATUS_SHIPPED, $ready->status);
+        $this->assertSame(TransactionFulfillment::STATUS_SHIPPED, $preOrder->status);
+
+        $this->assertNull($ready->biteship_order_id);
+        $this->assertNull($preOrder->biteship_order_id);
+
+        $this->assertDatabaseCount('transaction_shipments', 1);
+        $this->assertDatabaseCount('transaction_shipment_fulfillment', 2);
     }
 }

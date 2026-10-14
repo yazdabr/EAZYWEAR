@@ -381,4 +381,125 @@ class TransactionShippingAddressTest extends TestCase
         );
     }
 
+    public function test_admin_can_update_combined_shipment_address_and_sync_both_fulfillments(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']));
+
+        $transaction = $this->createCourierTransaction([
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 0,
+            'shipping_address' => 'Alamat Ready Lama',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 0,
+            'shipping_address' => 'Alamat PO Lama',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $shipment = \App\Models\TransactionShipment::create([
+            'transaction_id' => $transaction->id,
+            'shipment_type' => 'combined',
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 15000,
+            'shipping_address' => 'Alamat Gabungan Lama',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'status' => \App\Models\TransactionShipment::STATUS_PENDING,
+        ]);
+
+        $shipment->fulfillments()->attach([$ready->id, $preOrder->id]);
+
+        $response = $this->patchJson(
+            route('admin.transactions.shipments.shipping-address.update', [
+                'transaction' => $transaction->id,
+                'shipment' => $shipment->id,
+            ]),
+            ['shipping_address' => 'Alamat Gabungan Baru Nomor 123']
+        );
+
+        $response->assertOk()->assertJson(['success' => true]);
+
+        $this->assertSame(
+            'Alamat Gabungan Baru Nomor 123',
+            $shipment->fresh()->shipping_address
+        );
+        $this->assertSame(
+            'Alamat Gabungan Baru Nomor 123',
+            $ready->fresh()->shipping_address
+        );
+        $this->assertSame(
+            'Alamat Gabungan Baru Nomor 123',
+            $preOrder->fresh()->shipping_address
+        );
+        $this->assertSame('Alamat Lama', $transaction->fresh()->shipping_address);
+    }
+
+    public function test_admin_cannot_update_combined_shipment_address_after_biteship_order_exists(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => 'super_admin']));
+
+        $transaction = $this->createCourierTransaction([
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 0,
+            'shipping_address' => 'Alamat Ready Lama',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 0,
+            'shipping_address' => 'Alamat PO Lama',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        $shipment = \App\Models\TransactionShipment::create([
+            'transaction_id' => $transaction->id,
+            'shipment_type' => 'combined',
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 15000,
+            'shipping_address' => 'Alamat Gabungan Lama',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'biteship_order_id' => 'TEST-COMBINED-ADDRESS-001',
+            'status' => \App\Models\TransactionShipment::STATUS_PROCESSING,
+        ]);
+
+        $shipment->fulfillments()->attach([$ready->id, $preOrder->id]);
+
+        $response = $this->patchJson(
+            route('admin.transactions.shipments.shipping-address.update', [
+                'transaction' => $transaction->id,
+                'shipment' => $shipment->id,
+            ]),
+            ['shipping_address' => 'Alamat yang Tidak Boleh Disimpan']
+        );
+
+        $response->assertUnprocessable();
+
+        $this->assertSame(
+            'Alamat Gabungan Lama',
+            $shipment->fresh()->shipping_address
+        );
+        $this->assertSame('Alamat Ready Lama', $ready->fresh()->shipping_address);
+        $this->assertSame('Alamat PO Lama', $preOrder->fresh()->shipping_address);
+    }
 }

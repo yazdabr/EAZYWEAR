@@ -2463,4 +2463,175 @@ class CheckoutControllerTest extends TestCase
             Carbon::setTestNow();
         }
     }
+
+    public function test_checkout_mixed_ready_and_pre_order_combined_uses_one_shipment_and_one_shipping_cost(): void
+    {
+        $preOrderVariant = ProductVariant::query()
+            ->whereHas('product', fn ($query) => $query
+                ->where('status', true)
+                ->where('availability', 'pre_order'))
+            ->with('product')
+            ->firstOrFail();
+
+        $readyProduct = \App\Models\Product::create([
+            'product_code' => 'TEST-READY-COMBINED',
+            'category_id' => 6,
+            'name' => 'Test Ready Combined',
+            'slug' => 'test-ready-combined-' . uniqid(),
+            'description' => 'Temporary product for automated test',
+            'material' => 'Mesh',
+            'availability' => 'ready',
+            'status' => true,
+            'customization_enabled' => false,
+            'customization_price' => 0,
+            'longsleeve_enabled' => false,
+            'longsleeve_price' => 0,
+            'patch_enabled' => false,
+            'patch_price' => 0,
+        ]);
+
+        $readyVariant = ProductVariant::create([
+            'product_id' => $readyProduct->id,
+            'size_id' => 1,
+            'color_id' => 1,
+            'sku' => 'TEST-READY-COMBINED-' . uniqid(),
+            'price' => 200000,
+            'weight' => 250,
+        ]);
+
+        Inventory::create([
+            'product_variant_id' => $readyVariant->id,
+            'stock' => 10,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $preOrderVariant->id)
+            ->update(['stock' => 10]);
+
+        FulfillmentHold::query()->delete();
+
+        FulfillmentSlot::query()
+            ->whereDate('date', '2026-10-30')
+            ->update(['capacity' => 100, 'used_count' => 0]);
+
+        Carbon::setTestNow(Carbon::parse('2026-10-20 10:00:00'));
+
+        Session::put('cart', [
+            [
+                'variant_id' => $readyVariant->id,
+                'price' => 200000,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+            [
+                'variant_id' => $preOrderVariant->id,
+                'price' => (float) $preOrderVariant->price,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $biteship = $this->mock(BiteshipService::class);
+        $biteship->shouldReceive('getCourierRates')
+            ->twice()
+            ->with(\Mockery::on(fn (array $payload): bool =>
+                count($payload['items'] ?? []) === 2
+                && ($payload['destination_postal_code'] ?? null) === '70111'
+            ))
+            ->andReturn([
+                'success' => true,
+                'rates' => [[
+                    'courier_code' => 'jnt',
+                    'courier_name' => 'J&T',
+                    'service_code' => 'ez',
+                    'service_name' => 'EZ',
+                    'price' => 15000,
+                    'duration' => '2-3 days',
+                    'service_type' => 'standard',
+                    'shipping_type' => 'parcel',
+                ]],
+                'raw' => [],
+            ]);
+
+        $this->mockDokuSuccess();
+
+        try {
+            $this->post(route('checkout.store'), [
+                'name' => 'Combined Checkout Test',
+                'email' => 'combined-checkout-test@test.com',
+                'phone' => '08123456789',
+                'shipping_address' => 'Alamat Combined',
+                'shipping_district' => 'District',
+                'shipping_city' => 'Banjarmasin',
+                'shipping_province' => 'Kalimantan Selatan',
+                'shipping_postal_code' => '70111',
+                'fulfillment_mode' => 'combined',
+                'ready_shipping_method' => 'Kurir',
+                'ready_courier_code' => 'jnt',
+                'ready_courier_service_code' => 'ez',
+                'pre_order_shipping_method' => 'Kurir',
+                'pre_order_courier_code' => 'jnt',
+                'pre_order_courier_service_code' => 'ez',
+                'payment_method' => 'VA',
+                'va_bank' => 'MANDIRI',
+            ])->assertRedirect(route('checkout.success'));
+
+            $transaction = Transaction::query()
+                ->where('shipping_email', 'combined-checkout-test@test.com')
+                ->firstOrFail();
+
+            $this->assertSame('combined', $transaction->fulfillment_mode);
+            $this->assertSame(15000, (int) $transaction->shipping);
+            $this->assertSame(
+                (float) $transaction->subtotal + 15000 - (float) $transaction->discount,
+                (float) $transaction->total
+            );
+
+            $this->assertSame(
+                1,
+                \App\Models\TransactionShipment::query()
+                    ->where('transaction_id', $transaction->id)
+                    ->count()
+            );
+
+            $shipment = \App\Models\TransactionShipment::query()
+                ->where('transaction_id', $transaction->id)
+                ->firstOrFail();
+
+            $this->assertSame('combined', $shipment->shipment_type);
+            $this->assertSame(15000, (int) $shipment->shipping_cost);
+            $this->assertCount(2, $shipment->fulfillments);
+
+            $ready = \App\Models\TransactionFulfillment::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('group_type', 'ready')
+                ->firstOrFail();
+
+            $preOrder = \App\Models\TransactionFulfillment::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('group_type', 'pre_order')
+                ->firstOrFail();
+
+            $this->assertSame(0, (int) $ready->shipping_cost);
+            $this->assertSame(0, (int) $preOrder->shipping_cost);
+
+            $this->assertDatabaseHas('fulfillment_holds', [
+                'transaction_id' => $transaction->id,
+                'status' => FulfillmentHold::HELD,
+            ]);
+
+            $this->assertSame(
+                1,
+                FulfillmentHold::query()
+                    ->where('transaction_id', $transaction->id)
+                    ->where('status', FulfillmentHold::HELD)
+                    ->count(),
+                'Event Hold hanya boleh dibuat untuk jadwal pre-order dalam transaksi gabungan.'
+            );
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
 }

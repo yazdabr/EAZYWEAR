@@ -154,6 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const vaBankSection = document.getElementById('va-bank-section');
     const paymentMethodInputs = form.querySelectorAll('input[name="payment_method"]');
     const vaBankInputs = form.querySelectorAll('input[name="va_bank"]');
+    const fulfillmentModeInputs = form.querySelectorAll('input[name="fulfillment_mode"]');
 
     if (!postalInput || !vaBankSection || paymentMethodInputs.length === 0 || vaBankInputs.length === 0) {
         return;
@@ -181,6 +182,11 @@ document.addEventListener('DOMContentLoaded', function () {
         type: element.dataset.groupType,
         label: element.dataset.groupLabel,
         subtotal: Number(element.dataset.groupSubtotal || 0),
+        combinedItemCount: Number(element.dataset.combinedItemCount || 0),
+        combinedSubtotal: Number(element.dataset.combinedSubtotal || 0),
+        titleElement: element.querySelector('[data-group-title]'),
+        summaryElement: element.querySelector('[data-group-summary]'),
+        modeBadge: element.querySelector('[data-group-mode-badge]'),
         methodInputs: element.querySelectorAll('input[type="radio"][name$="_shipping_method"]'),
         pickupSection: element.querySelector('[data-pickup-section]'),
         pickupDate: element.querySelector('[data-pickup-date]'),
@@ -201,6 +207,33 @@ document.addEventListener('DOMContentLoaded', function () {
         availabilityRequest: 0,
         cost: null
     }));
+
+    const getFulfillmentMode = () =>
+        form.querySelector('input[name="fulfillment_mode"]:checked')?.value || 'separate';
+
+    const getGroupByType = (type) =>
+        groups.find((group) => group.type === type);
+
+    function syncCombinedMethods(preferredMethod = null) {
+        if (getFulfillmentMode() !== 'combined') return;
+
+        const ready = getGroupByType('ready');
+        const preOrder = getGroupByType('pre_order');
+        if (!ready || !preOrder) return;
+
+        const method = preferredMethod ||
+            getShippingMethod(preOrder) ||
+            getShippingMethod(ready);
+
+        if (!method) return;
+
+        [ready, preOrder].forEach((group) => {
+            const matchingInput = Array.from(group.methodInputs)
+                .find((input) => input.value === method);
+
+            if (matchingInput) matchingInput.checked = true;
+        });
+    }
 
     let debounceTimer = null;
 
@@ -420,25 +453,59 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function resetGroupRateSelection(group, keepHiddenValues = false) {
-        group.selectedRate = null;
-        group.cost = null;
-        if (!keepHiddenValues) {
-            group.courierCode.value = '';
-            group.courierServiceCode.value = '';
-        }
-        group.costElement.textContent = 'Akan dihitung';
-        group.costElement.className = 'text-[10px] text-gray-400 sm:text-xs';
+        const combined = getFulfillmentMode() === 'combined';
+        const affectedGroups = combined
+            ? groups
+            : [group];
+
+        affectedGroups.forEach((item) => {
+            item.selectedRate = null;
+            item.cost = null;
+
+            if (!keepHiddenValues) {
+                item.courierCode.value = '';
+                item.courierServiceCode.value = '';
+            }
+
+            item.costElement.textContent = 'Akan dihitung';
+            item.costElement.className = 'text-[10px] text-gray-400 sm:text-xs';
+        });
+
         updateTotals();
     }
 
     function selectRate(group, rate, labelElement) {
         clearRatesError(group);
-        group.selectedRate = rate;
-        group.cost = Number(rate.price || 0);
-        group.courierCode.value = rate.courier_code || '';
-        group.courierServiceCode.value = rate.service_code || '';
-        group.costElement.textContent = formatRupiah(group.cost);
-        group.costElement.className = 'text-[10px] font-semibold text-[#AE7C18] sm:text-xs';
+
+        const combined = getFulfillmentMode() === 'combined';
+        const ready = getGroupByType('ready');
+        const preOrder = getGroupByType('pre_order');
+        const price = Number(rate.price || 0);
+
+        if (combined && ready && preOrder) {
+            [ready, preOrder].forEach((item) => {
+                item.selectedRate = rate;
+                item.courierCode.value = rate.courier_code || '';
+                item.courierServiceCode.value = rate.service_code || '';
+                clearRatesError(item);
+            });
+
+            ready.cost = 0;
+            preOrder.cost = price;
+
+            ready.costElement.textContent = 'Termasuk ongkir gabungan';
+            ready.costElement.className = 'text-[10px] text-gray-400 sm:text-xs';
+
+            preOrder.costElement.textContent = formatRupiah(price);
+            preOrder.costElement.className = 'text-[10px] font-semibold text-[#AE7C18] sm:text-xs';
+        } else {
+            group.selectedRate = rate;
+            group.cost = price;
+            group.courierCode.value = rate.courier_code || '';
+            group.courierServiceCode.value = rate.service_code || '';
+            group.costElement.textContent = formatRupiah(price);
+            group.costElement.className = 'text-[10px] font-semibold text-[#AE7C18] sm:text-xs';
+        }
 
         group.ratesList.querySelectorAll('[data-shipping-rate]').forEach((element) => {
             element.classList.remove('border-[#AE7C18]', 'bg-[#AE7C18]/5');
@@ -446,6 +513,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         labelElement.classList.remove('border-gray-200');
         labelElement.classList.add('border-[#AE7C18]', 'bg-[#AE7C18]/5');
+
         updateTotals();
     }
 
@@ -565,7 +633,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function loadRates(group) {
+        const combined = getFulfillmentMode() === 'combined';
+
         if (getShippingMethod(group) !== 'Kurir') return;
+        if (combined && group.type !== 'pre_order') return;
 
         const postalCode = postalInput.value.trim();
         if (!/^\d{5,10}$/.test(postalCode)) {
@@ -583,7 +654,10 @@ document.addEventListener('DOMContentLoaded', function () {
         group.ratesList.innerHTML = '';
         clearRatesError(group);
         group.ratesStatus.textContent = 'Menghitung...';
-        group.ratesHint.textContent = `Sedang menghitung ongkir ${group.label}.`;
+        group.ratesHint.textContent = combined
+            ? 'Menghitung ongkir untuk seluruh pesanan Ready Stock dan Pre-order.'
+            : `Sedang menghitung ongkir ${group.label}.`;
+
         resetGroupRateSelection(group);
 
         try {
@@ -598,17 +672,26 @@ document.addEventListener('DOMContentLoaded', function () {
                     shipping_postal_code: postalCode,
                     shipping_latitude: latitudeInput?.value || null,
                     shipping_longitude: longitudeInput?.value || null,
-                    group_type: group.type
+                    group_type: combined ? 'combined' : group.type
                 })
             });
+
             const data = await response.json();
             if (currentRequest !== group.requestSequence) return;
+
             if (!response.ok || !data.success) {
                 throw new Error(data.message || 'Gagal mengambil pilihan pengiriman.');
             }
+
             renderRates(group, data.data || []);
+
+            if (combined) {
+                group.ratesHint.textContent =
+                    'Tarif berlaku untuk seluruh pesanan Ready Stock dan Pre-order dalam satu pengiriman.';
+            }
         } catch (error) {
             if (currentRequest !== group.requestSequence) return;
+
             group.ratesSection.classList.remove('hidden');
             group.ratesList.innerHTML = '';
             resetGroupRateSelection(group);
@@ -619,27 +702,36 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateShippingMethodUI(group) {
+        const combined = getFulfillmentMode() === 'combined';
         const method = getShippingMethod(group);
         const isPickup = method === 'Ambil di Tempat';
         const isCourier = method === 'Kurir';
+        const isCombinedReady = combined && group.type === 'ready';
+        const showPickup = isPickup && !isCombinedReady;
+        const showRates = isCourier && (!combined || group.type === 'pre_order');
 
-        group.pickupSection.classList.toggle('hidden', !isPickup);
+        group.pickupSection.classList.toggle('hidden', !showPickup);
+
         [group.pickupDate, group.pickupTimeStart, group.pickupTimeEnd].forEach((input) => {
-            input.disabled = !isPickup;
-            input.required = isPickup;
+            input.disabled = !showPickup;
+            input.required = showPickup;
         });
+
         group.courierCode.disabled = !isCourier;
         group.courierServiceCode.disabled = !isCourier;
 
         group.requestSequence++;
         group.ratesList.innerHTML = '';
-        group.ratesSection.classList.add('hidden');
+        group.ratesSection.classList.toggle('hidden', !showRates);
         clearRatesError(group);
         group.ratesStatus.textContent = '';
         clearPickupError(group);
 
         if (isPickup) {
-            applyPickupDateRules(group);
+            if (showPickup) {
+                applyPickupDateRules(group);
+            }
+
             group.courierCode.value = '';
             group.courierServiceCode.value = '';
             group.selectedRate = null;
@@ -648,7 +740,10 @@ document.addEventListener('DOMContentLoaded', function () {
             group.costElement.className = 'text-[10px] font-semibold text-[#AE7C18] sm:text-xs';
             group.ratesHint.textContent = 'Tidak ada biaya kurir untuk pengambilan di tempat.';
             updateTotals();
-            checkPickupDateAvailability(group);
+
+            if (showPickup) {
+                checkPickupDateAvailability(group);
+            }
             return;
         }
 
@@ -656,12 +751,15 @@ document.addEventListener('DOMContentLoaded', function () {
         group.selectedRate = null;
         group.costElement.textContent = 'Akan dihitung';
         group.costElement.className = 'text-[10px] text-gray-400 sm:text-xs';
-        group.ratesHint.textContent = 'Masukkan kode pos tujuan untuk melihat pilihan layanan pengiriman.';
+        group.ratesHint.textContent = combined
+            ? 'Pilih satu layanan kurir untuk seluruh pesanan.'
+            : 'Masukkan kode pos tujuan untuk melihat pilihan layanan pengiriman.';
+
         updateTotals();
 
-        if (isCourier && /^\d{5,10}$/.test(postalInput.value.trim())) {
+        if (isCourier && showRates && /^\d{5,10}$/.test(postalInput.value.trim())) {
             loadRates(group);
-        } else {
+        } else if (!isCourier) {
             group.courierCode.value = '';
             group.courierServiceCode.value = '';
         }
@@ -676,7 +774,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     groups.forEach((group) => {
         group.methodInputs.forEach((input) => {
-            input.addEventListener('change', () => updateShippingMethodUI(group));
+            input.addEventListener('change', () => {
+                if (getFulfillmentMode() === 'combined') {
+                    syncCombinedMethods(input.value);
+                    groups.forEach(updateShippingMethodUI);
+                } else {
+                    updateShippingMethodUI(group);
+                }
+            });
         });
 
         group.pickupDate.addEventListener('change', async () => {
@@ -695,17 +800,94 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    function updateFulfillmentModeDisplay() {
+        const combined = getFulfillmentMode() === 'combined';
+        const ready = getGroupByType('ready');
+        const preOrder = getGroupByType('pre_order');
+
+        groups.forEach((group) => {
+            group.element.classList.toggle(
+                'hidden',
+                combined && group.type === 'ready'
+            );
+
+            if (group.modeBadge) {
+                group.modeBadge.classList.toggle('hidden', combined);
+            }
+
+            if (group.titleElement) {
+                group.titleElement.textContent =
+                    combined && group.type === 'pre_order'
+                        ? 'Pesanan Gabungan'
+                        : group.label;
+            }
+
+            if (group.summaryElement) {
+                if (combined && group.type === 'pre_order') {
+                    group.summaryElement.textContent =
+                        `${group.combinedItemCount} item · Subtotal ${formatRupiah(group.combinedSubtotal)}`;
+                } else {
+                    group.summaryElement.textContent =
+                        group.summaryElement.dataset.separateSummary;
+                }
+            }
+
+            const hint = group.ratesHint;
+            if (hint && combined) {
+                hint.textContent = group.type === 'pre_order'
+                    ? 'Satu layanan kurir dan satu ongkir untuk seluruh pesanan.'
+                    : 'Biaya pengiriman dihitung bersama dengan Pre-order.';
+            }
+        });
+
+        if (combined && ready && preOrder) {
+            const method = getShippingMethod(preOrder) || getShippingMethod(ready);
+            if (method) syncCombinedMethods(method);
+        }
+
+        const readyRow = form.querySelector('[data-shipping-cost-row="ready"]');
+        const preOrderRow = form.querySelector('[data-shipping-cost-row="pre_order"]');
+        const preOrderLabel = preOrderRow?.querySelector('[data-shipping-cost-label]');
+
+        if (readyRow) readyRow.classList.toggle('hidden', combined);
+
+        if (preOrderLabel) {
+            preOrderLabel.textContent = combined
+                ? 'Pesanan Gabungan (ongkir)'
+                : 'Pre-order (ongkir)';
+        }
+
+        if (ready && ready.costElement) {
+            ready.costElement.textContent = combined
+                ? 'Termasuk ongkir gabungan'
+                : (ready.cost === null ? 'Pilih metode' : formatRupiah(ready.cost));
+            ready.costElement.className = combined
+                ? 'text-[10px] text-gray-400 sm:text-xs'
+                : (ready.cost === null
+                    ? 'text-[10px] text-gray-400 sm:text-xs'
+                    : 'text-[10px] font-semibold text-[#AE7C18] sm:text-xs');
+        }
+    }
+
+    fulfillmentModeInputs.forEach((input) => {
+        input.addEventListener('change', () => {
+            updateFulfillmentModeDisplay();
+
+            groups.forEach(updateShippingMethodUI);
+        });
+    });
+
     paymentMethodInputs.forEach((input) => input.addEventListener('change', updatePaymentMethodUI));
 
     postalInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            groups.filter((group) => getShippingMethod(group) === 'Kurir').forEach(loadRates);
+            groups.filter((group) => getShippingMethod(group) === 'Kurir' && (getFulfillmentMode() !== 'combined' || group.type === 'pre_order')).forEach(loadRates);
         }, 700);
     });
     postalInput.addEventListener('change', () => {
         clearTimeout(debounceTimer);
-        groups.filter((group) => getShippingMethod(group) === 'Kurir').forEach(loadRates);
+        groups.filter((group) => getShippingMethod(group) === 'Kurir' && (getFulfillmentMode() !== 'combined' || group.type === 'pre_order')).forEach(loadRates);
     });
 
     form.addEventListener('submit', async (event) => {
@@ -718,44 +900,60 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        const combined = getFulfillmentMode() === 'combined';
+
+        if (combined) {
+            const readyMethod = getShippingMethod(getGroupByType('ready'));
+            const preOrderMethod = getShippingMethod(getGroupByType('pre_order'));
+
+            if (!readyMethod || readyMethod !== preOrderMethod) {
+                alert('Pengiriman gabungan harus menggunakan metode yang sama untuk Ready Stock dan Pre-order.');
+                return;
+            }
+        }
+
         for (const group of groups) {
             const method = getShippingMethod(group);
+
             if (!method) {
-                event.preventDefault();
                 group.methodInputs[0]?.reportValidity();
                 return;
             }
 
             if (method === 'Kurir' && (!group.courierCode.value || !group.courierServiceCode.value)) {
-                event.preventDefault();
-                group.ratesSection.classList.remove('hidden');
-                showRatesError(group, `Silakan pilih layanan kurir untuk ${group.label} terlebih dahulu.`);
-                group.ratesHint.textContent = 'Pilih salah satu layanan pengiriman sebelum membuat pesanan.';
-                group.ratesSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const rateGroup = combined ? getGroupByType('pre_order') : group;
+                rateGroup.ratesSection.classList.remove('hidden');
+                showRatesError(rateGroup, combined
+                    ? 'Silakan pilih layanan kurir untuk seluruh pesanan.'
+                    : `Silakan pilih layanan kurir untuk ${group.label} terlebih dahulu.`);
+                rateGroup.ratesHint.textContent = 'Pilih salah satu layanan pengiriman sebelum membuat pesanan.';
+                rateGroup.ratesSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
 
             if (method === 'Ambil di Tempat') {
+                if (combined && group.type === 'ready') {
+                    continue;
+                }
+
                 const pickupError = validatePickupSchedule(group);
                 if (pickupError) {
-                    event.preventDefault();
                     showPickupError(group, pickupError);
                     return;
                 }
 
                 const availability = await checkPickupDateAvailability(group);
                 if (!availability) {
-                    event.preventDefault();
                     group.pickupSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
                 }
             }
         }
-
         form.submit();
     });
 
     updatePaymentMethodUI();
+    updateFulfillmentModeDisplay();
     groups.forEach((group) => {
         const method = getShippingMethod(group);
         if (method) {

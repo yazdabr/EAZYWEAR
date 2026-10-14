@@ -294,6 +294,103 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 </div>
             </div>
 
+            @if($transaction->shipments->isNotEmpty())
+                <div class="mb-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    @foreach($transaction->shipments as $shipment)
+                        @php
+                            $shipmentCanEditAddress = in_array($transaction->status, ['PAID', 'ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
+                                && $shipment->shipping_method === 'Kurir'
+                                && !$shipment->biteship_order_id
+                                && !$shipment->biteship_tracking_id
+                                && !$shipment->biteship_waybill_id
+                                && !$shipment->tracking_number;
+
+                            $shipmentCanProcess = in_array($transaction->status, ['PAID', 'ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
+                                && $shipment->shipping_method === 'Kurir'
+                                && !in_array($shipment->status, ['SHIPPED', 'COMPLETED', 'CANCELLED'], true);
+
+                            $shipmentLabel = $shipment->shipment_type === 'combined'
+                                ? 'Pengiriman Gabungan'
+                                : 'Pengiriman ' . ($shipment->fulfillments->pluck('group_type')->contains('ready') ? 'Ready Stock' : 'Pre-Order');
+                        @endphp
+
+                        <article class="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 shadow-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900">{{ $shipmentLabel }}</h3>
+                                    <p class="mt-1 text-xs text-slate-500">{{ $shipment->shipping_method }}</p>
+                                </div>
+                                <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
+                                    {{ $shipment->status ?: 'PENDING' }}
+                                </span>
+                            </div>
+
+                            <div class="mt-4 rounded-xl border border-slate-100 bg-white p-3">
+                                <p class="text-xs font-semibold text-slate-500">Alamat pengiriman</p>
+                                <p class="mt-2 text-sm font-semibold text-slate-800">{{ $shipment->shipping_name ?: $transaction->shipping_name }}</p>
+                                <p class="mt-1 text-xs text-slate-600">{{ $shipment->shipping_phone ?: $transaction->shipping_phone }}</p>
+                                <p class="mt-1 whitespace-pre-line text-xs leading-relaxed text-slate-600">{{ $shipment->shipping_address ?: $transaction->shipping_address }}</p>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{ collect([$shipment->shipping_district ?: $transaction->shipping_district, $shipment->shipping_city ?: $transaction->shipping_city, $shipment->shipping_province ?: $transaction->shipping_province, $shipment->shipping_postal_code ?: $transaction->shipping_postal_code])->filter()->implode(', ') }}
+                                </p>
+
+                                @if($shipmentCanEditAddress)
+                                    <form id="fulfillment-address-form-shipment-{{ $shipment->id }}"
+                                        action="{{ route('admin.transactions.shipments.shipping-address.update', ['transaction' => $transaction, 'shipment' => $shipment]) }}"
+                                        method="POST" class="mt-3 space-y-2">
+                                        @csrf
+                                        @method('PATCH')
+                                        <label for="shipment-address-{{ $shipment->id }}" class="block text-xs font-semibold text-slate-600">Ubah alamat sebelum membuat resi</label>
+                                        <textarea id="shipment-address-{{ $shipment->id }}" name="shipping_address" rows="3" required maxlength="2000"
+                                            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">{{ $shipment->shipping_address ?: $transaction->shipping_address }}</textarea>
+                                        <p id="fulfillment-address-error-shipment-{{ $shipment->id }}" class="hidden text-xs text-red-600"></p>
+                                        <button type="submit" class="rounded-lg bg-amber-700 px-3 py-2 text-xs font-bold text-white">Simpan Alamat</button>
+                                    </form>
+                                @endif
+                            </div>
+
+                            <div class="mt-3 grid grid-cols-2 gap-3">
+                                <div class="rounded-xl bg-white p-3">
+                                    <p class="text-[10px] font-semibold uppercase text-slate-400">Ongkos kirim</p>
+                                    <p class="mt-1 text-sm font-bold text-slate-900">Rp{{ number_format((float) $shipment->shipping_cost, 0, ',', '.') }}</p>
+                                </div>
+                                <div class="rounded-xl bg-white p-3">
+                                    <p class="text-[10px] font-semibold uppercase text-slate-400">Kurir / layanan</p>
+                                    <p class="mt-1 text-sm font-bold text-slate-900">{{ $shipment->courier ?: $shipment->courier_code ?: '-' }}</p>
+                                    <p class="mt-1 text-xs text-slate-500">{{ $shipment->courier_service_code ?: '-' }}</p>
+                                </div>
+                            </div>
+
+                            @if($shipment->tracking_number || $shipment->biteship_tracking_id || $shipment->biteship_waybill_id)
+                                <div class="mt-3 rounded-xl bg-white p-3">
+                                    <p class="text-xs font-semibold text-slate-500">Nomor resi / pelacakan</p>
+                                    <p class="mt-1 break-all text-sm font-bold text-slate-900">{{ $shipment->tracking_number ?: $shipment->biteship_waybill_id ?: $shipment->biteship_tracking_id }}</p>
+                                    @if($shipment->biteship_status)
+                                        <p class="mt-1 text-xs text-slate-500">Status kurir: {{ $shipment->biteship_status }}</p>
+                                    @endif
+                                </div>
+                            @endif
+
+                            @if($shipmentCanProcess)
+                                <form class="fulfillment-ship-form mt-4 space-y-3"
+                                    data-action-title="Proses {{ $shipmentLabel }}"
+                                    data-action-message="Pastikan alamat dan layanan kurir sudah benar sebelum melanjutkan."
+                                    data-action-confirm-text="Ya, Proses Pengiriman"
+                                    action="{{ route('admin.transactions.shipments.ship', ['transaction' => $transaction, 'shipment' => $shipment]) }}"
+                                    method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    @if(!$shipment->courier_code || !$shipment->courier_service_code)
+                                        <input type="text" name="courier" placeholder="Nama kurir manual" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="tracking_number" placeholder="Nomor resi manual" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                                    @endif
+                                    <button type="submit" class="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">Proses Pengiriman</button>
+                                </form>
+                            @endif
+                        </article>
+                    @endforeach
+                </div>
+            @endif
             <div class="mx-auto grid w-full grid-cols-1 gap-4 {{ $transaction->fulfillments->count() > 1 ? 'xl:grid-cols-2' : 'xl:max-w-2xl' }}">
                 @foreach($transaction->fulfillments as $fulfillment)
                     @php
@@ -307,6 +404,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             'CANCELLED' => 'Dibatalkan',
                         ];
                         $canEditGroupAddress = in_array($transaction->status, ['PAID', 'ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
+                            && $transaction->shipments->isEmpty()
                             && $fulfillment->shipping_method === 'Kurir'
                             && !$fulfillment->biteship_order_id
                             && !$fulfillment->biteship_tracking_id
@@ -516,7 +614,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     </form>
                                 @endif
 
-                                @if($canProcessGroup)
+                                @if($canProcessGroup && $transaction->shipments->isEmpty())
                                     <form class="fulfillment-ship-form space-y-2"
                                         data-action-title="Proses pengiriman {{ $groupLabel }}"
                                         data-action-message="Pengiriman {{ $groupLabel }} akan diproses sekarang. Lanjutkan?"

@@ -1308,6 +1308,99 @@ class BiteshipWebhookTest extends TestCase
         Mail::assertSent(OrderCompletedMail::class, 1);
     }
 
+    public function test_delivered_combined_shipment_completes_both_fulfillments_and_emails_only_once(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 0,
+            'biteship_status' => 'in_transit',
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+        ]);
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 20000,
+            'biteship_status' => 'in_transit',
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+        ]);
+
+        $orderId = $this->biteshipOrderId('COMBINED');
+        $shipment = \App\Models\TransactionShipment::create([
+            'transaction_id' => $transaction->id,
+            'shipment_type' => \App\Models\TransactionShipment::TYPE_COMBINED,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 20000,
+            'shipping_address' => 'Alamat Gabungan',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'in_transit',
+            'status' => \App\Models\TransactionShipment::STATUS_SHIPPED,
+        ]);
+
+        $shipment->fulfillments()->attach([$ready->id, $preOrder->id]);
+
+        $payload = [
+            'event' => 'order.status',
+            'order_id' => $orderId,
+            'status' => 'delivered',
+        ];
+
+        $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', $payload)
+            ->assertOk();
+
+        $this->assertSame(
+            'delivered',
+            $shipment->fresh()->biteship_status
+        );
+        $this->assertSame(
+            \App\Models\TransactionShipment::STATUS_COMPLETED,
+            $shipment->fresh()->status
+        );
+
+        $this->assertSame(
+            'delivered',
+            $ready->fresh()->biteship_status
+        );
+        $this->assertSame(
+            TransactionFulfillment::STATUS_COMPLETED,
+            $ready->fresh()->status
+        );
+
+        $this->assertSame(
+            'delivered',
+            $preOrder->fresh()->biteship_status
+        );
+        $this->assertSame(
+            TransactionFulfillment::STATUS_COMPLETED,
+            $preOrder->fresh()->status
+        );
+
+        $this->assertSame(
+            Transaction::ORDER_COMPLETED,
+            $transaction->fresh()->status
+        );
+
+        Mail::assertSent(OrderCompletedMail::class, 1);
+
+        $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', $payload)
+            ->assertOk();
+
+        Mail::assertSent(OrderCompletedMail::class, 1);
+    }
     public function test_delivered_webhook_for_unknown_fulfillment_does_not_change_existing_transaction(): void
     {
         Mail::fake();

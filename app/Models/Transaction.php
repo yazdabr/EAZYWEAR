@@ -12,6 +12,9 @@ class Transaction extends Model
 {
     use HasFactory;
 
+    public const FULFILLMENT_MODE_SEPARATE = 'separate';
+    public const FULFILLMENT_MODE_COMBINED = 'combined';
+
     protected $fillable = [
         'customer_id',
         'invoice_number',
@@ -32,6 +35,7 @@ class Transaction extends Model
         'subtotal',
         'discount',
         'shipping',
+        'fulfillment_mode',
         'total',
         'status',
         'paid_at',
@@ -192,5 +196,9 @@ class Transaction extends Model
     public function fulfillments(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(TransactionFulfillment::class);
+    }
+    public function shipments(): HasMany
+    {
+        return $this->hasMany(TransactionShipment::class);
     }
 }

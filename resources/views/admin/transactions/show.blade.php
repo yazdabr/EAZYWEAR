@@ -294,9 +294,9 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 </div>
             </div>
 
-            @if($transaction->shipments->isNotEmpty())
-                <div class="mb-5 mx-auto grid w-full grid-cols-1 gap-4 {{ $transaction->shipments->count() > 1 ? 'xl:grid-cols-2' : 'xl:max-w-2xl' }}">
-                    @foreach($transaction->shipments as $shipment)
+            @if($transaction->shipments->where('shipment_type', 'combined')->isNotEmpty())
+                <div class="mb-5 mx-auto grid w-full grid-cols-1 gap-4 xl:max-w-2xl">
+                    @foreach($transaction->shipments->where('shipment_type', 'combined') as $shipment)
                         @php
                             $shipmentCanEditAddress = in_array($transaction->status, ['PAID', 'ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
                                 && $shipment->shipping_method === 'Kurir'
@@ -434,6 +434,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
             @endif
             @php
                 $shippedFulfillmentIds = $transaction->shipments
+                    ->where('shipment_type', 'combined')
                     ->flatMap(fn ($shipment) => $shipment->fulfillments->pluck('id'))
                     ->all();
             @endphp

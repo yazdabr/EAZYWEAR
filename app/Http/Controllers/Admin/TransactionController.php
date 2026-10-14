@@ -41,7 +41,14 @@ class TransactionController extends Controller
 
     public function index(Request $request)
     {
+        $user = $request->user();
+        $hiddenStatuses = $user?->hidden_transaction_statuses ?? [];
+
         $query = Transaction::with(['customer', 'items.productVariant.product.images', 'items.productVariant.size', 'items.productVariant.color']);
+
+        if ($hiddenStatuses !== []) {
+            $query->whereNotIn('status', $hiddenStatuses);
+        }
 
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
@@ -183,6 +190,34 @@ class TransactionController extends Controller
             'revenueGrowth' => $revenueGrowth,
             'completedGrowth' => $completedGrowth,
         ]);
+    }
+
+    public function updateHiddenStatuses(Request $request)
+    {
+        $validated = $request->validate([
+            'hidden_statuses' => ['present', 'array'],
+            'hidden_statuses.*' => [
+                'string',
+                Rule::in([
+                    'PENDING',
+                    'PAID',
+                    'EXPIRED',
+                    'ORDER_PROCESSING',
+                    'ORDER_SHIPPED',
+                    'ORDER_COMPLETED',
+                    'CANCELLED',
+                    'ORDER_CANCELLED',
+                ]),
+            ],
+        ]);
+
+        $request->user()->forceFill([
+            'hidden_transaction_statuses' => array_values(array_unique($validated['hidden_statuses'])),
+        ])->save();
+
+        return redirect()
+            ->route('admin.transactions')
+            ->with('success', 'Pengaturan status transaksi berhasil disimpan.');
     }
 
     public function customerSearch(Request $request)

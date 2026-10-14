@@ -314,16 +314,57 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 : 'Pengiriman ' . ($shipment->fulfillments->pluck('group_type')->contains('ready') ? 'Ready Stock' : 'Pre-Order');
                         @endphp
 
-                        <article class="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 shadow-sm">
+                        <article class="rounded-2xl border p-4 shadow-sm {{ $shipment->shipment_type === 'combined' ? 'border-emerald-200 bg-emerald-50/50' : 'border-amber-200 bg-amber-50/40' }}">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <h3 class="text-sm font-bold text-slate-900">{{ $shipmentLabel }}</h3>
                                     <p class="mt-1 text-xs text-slate-500">{{ $shipment->shipping_method }}</p>
                                 </div>
-                                <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">
+                                <span class="rounded-full px-2.5 py-1 text-xs font-bold {{ $shipment->shipment_type === 'combined' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
                                     {{ $shipment->status ?: 'PENDING' }}
                                 </span>
                             </div>
+
+                            @if($shipment->shipment_type === 'combined')
+                                <div class="mt-4 space-y-3">
+                                    @foreach($shipment->fulfillments as $shipmentFulfillment)
+                                        <div class="rounded-xl border border-emerald-100 bg-white p-3">
+                                            <p class="mb-3 text-xs font-bold uppercase tracking-wide {{ $shipmentFulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY ? 'text-emerald-700' : 'text-[#AE7C18]' }}">
+                                                {{ $shipmentFulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY ? 'Ready Stock' : 'Pre-Order' }}
+                                            </p>
+                                            <div class="space-y-3">
+                                                @forelse($shipmentFulfillment->items as $shipmentItem)
+                                                    <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0">
+                                                        <div class="min-w-0 flex-1">
+                                                            <p class="text-sm font-bold text-slate-900">{{ $shipmentItem->productVariant?->product?->name ?? $shipmentItem->custom_name ?? 'Produk' }}</p>
+                                                            <p class="mt-1 text-xs text-slate-600">
+                                                                Ukuran: {{ $shipmentItem->productVariant?->size?->name ?? '-' }}
+                                                                · {{ $shipmentItem->qty }} pcs
+                                                            </p>
+                                                            @if($shipmentItem->custom_name)
+                                                                <p class="mt-1 text-xs text-slate-600">Nama: <span class="font-semibold">{{ $shipmentItem->custom_name }}</span></p>
+                                                            @endif
+                                                            @if($shipmentItem->custom_number)
+                                                                <p class="mt-1 text-xs text-slate-600">Nomor: <span class="font-semibold">{{ $shipmentItem->custom_number }}</span></p>
+                                                            @endif
+                                                            @if($shipmentItem->is_longsleeve || $shipmentItem->is_patch)
+                                                                <p class="mt-1 text-xs text-slate-500">
+                                                                    @if($shipmentItem->is_longsleeve) Longsleeve @endif
+                                                                    @if($shipmentItem->is_longsleeve && $shipmentItem->is_patch) · @endif
+                                                                    @if($shipmentItem->is_patch) Patch @endif
+                                                                </p>
+                                                            @endif
+                                                        </div>
+                                                        <p class="shrink-0 text-right text-sm font-bold text-slate-900">Rp{{ number_format((float) $shipmentItem->subtotal, 0, ',', '.') }}</p>
+                                                    </div>
+                                                @empty
+                                                    <p class="text-xs text-slate-500">Belum ada item untuk kelompok ini.</p>
+                                                @endforelse
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
 
                             <div class="mt-4 rounded-xl border border-slate-100 bg-white p-3">
                                 <p class="text-xs font-semibold text-slate-500">Alamat pengiriman</p>
@@ -391,8 +432,17 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                     @endforeach
                 </div>
             @endif
+            @php
+                $combinedFulfillmentIds = $transaction->shipments
+                    ->where('shipment_type', 'combined')
+                    ->flatMap(fn ($shipment) => $shipment->fulfillments->pluck('id'))
+                    ->all();
+            @endphp
             <div class="mx-auto grid w-full grid-cols-1 gap-4 {{ $transaction->fulfillments->count() > 1 ? 'xl:grid-cols-2' : 'xl:max-w-2xl' }}">
                 @foreach($transaction->fulfillments as $fulfillment)
+                    @if(in_array($fulfillment->id, $combinedFulfillmentIds, true))
+                        @continue
+                    @endif
                     @php
                         $isReadyGroup = $fulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY;
                         $groupLabel = $isReadyGroup ? 'Ready Stock' : 'Pre-Order';

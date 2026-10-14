@@ -128,6 +128,10 @@
                         >
                             <option value="">Semua Status</option>
 
+                            <option value="EXPIRED" @selected(request('status') === 'EXPIRED')>
+                                Expired
+                            </option>
+
                             <option value="PENDING" @selected(request('status') === 'PENDING')>
                                 Pending
                             </option>
@@ -202,17 +206,24 @@
                         </select>
                     </div>
 
-                    {{-- RESET --}}
-                    <div class="col-span-2 flex items-center justify-end sm:col-span-1">
+                    {{-- HIDE STATUS + RESET: DUA KOLOM DI MOBILE --}}
+                    <div class="col-span-2 grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end">
+                        <button
+                            type="button"
+                            @click="$dispatch('open-hide-status-modal')"
+                            class="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 active:scale-[0.98] sm:h-[50px] sm:w-[50px] sm:px-0"
+                            title="Sembunyikan status transaksi"
+                        >
+                            <x-heroicon-o-eye-slash class="h-4 w-4"/>
+                            <span class="sm:hidden">Hide Status</span>
+                        </button>
                         <a
                             href="{{ route('admin.transactions') }}"
                             title="Atur Ulang Filter"
-                            class="inline-flex h-[42px] w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98] sm:h-[50px] sm:w-[50px]"
+                            class="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98] sm:h-[50px] sm:w-[50px] sm:px-0"
                         >
                             <x-heroicon-o-arrow-path class="h-4 w-4"/>
-                            <span class="ml-2 text-xs font-medium sm:hidden">
-                                Reset Filter
-                            </span>
+                            <span class="text-xs font-medium sm:hidden">Reset Filter</span>
                         </a>
                     </div>
 
@@ -394,6 +405,42 @@
 
 @include('admin.transactions.partials.view-transaction')
 @include('admin.transactions.partials.delete-transaction')
+@include('admin.transactions.partials.hide-status-dialog')
+
+@push('styles')
+<style>
+    .hide-status-dialog {
+        opacity: 0;
+        transform: translateY(18px) scale(.97);
+        transition: opacity 220ms ease, transform 220ms ease, overlay 220ms allow-discrete, display 220ms allow-discrete;
+    }
+    .hide-status-dialog[open] {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    .hide-status-dialog::backdrop {
+        background: rgb(15 23 42 / 0%);
+        transition: background 220ms ease, overlay 220ms allow-discrete, display 220ms allow-discrete;
+    }
+    .hide-status-dialog[open]::backdrop {
+        background: rgb(15 23 42 / 45%);
+    }
+    @starting-style {
+        .hide-status-dialog[open] {
+            opacity: 0;
+            transform: translateY(18px) scale(.97);
+        }
+        .hide-status-dialog[open]::backdrop {
+            background: rgb(15 23 42 / 0%);
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .hide-status-dialog, .hide-status-dialog::backdrop {
+            transition: none;
+        }
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>

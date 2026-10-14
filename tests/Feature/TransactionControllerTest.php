@@ -105,6 +105,53 @@ class TransactionControllerTest extends TestCase
             ->assertDontSee('INV-TEST-PICKUP-FILTER');
     }
 
+    public function test_hidden_transaction_statuses_are_persisted_per_admin_account(): void
+    {
+        $admin = $this->superAdmin();
+        $otherAdmin = $this->superAdmin();
+
+        Transaction::factory()->create([
+            'invoice_number' => 'INV-TEST-HIDE-EXPIRED',
+            'status' => 'EXPIRED',
+        ]);
+        Transaction::factory()->create([
+            'invoice_number' => 'INV-TEST-HIDE-PENDING',
+            'status' => 'PENDING',
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.transactions.hidden-statuses.update'), [
+                'hidden_statuses' => ['EXPIRED'],
+            ])
+            ->assertRedirect(route('admin.transactions'));
+
+        $this->actingAs($admin)
+            ->get(route('admin.transactions'))
+            ->assertOk()
+            ->assertDontSee('INV-TEST-HIDE-EXPIRED')
+            ->assertSee('INV-TEST-HIDE-PENDING');
+
+        // Preferensi tersimpan pada akun, bukan hanya session/browser.
+        $admin->refresh();
+        $this->assertSame(['EXPIRED'], $admin->hidden_transaction_statuses);
+
+        // Admin lain tetap melihat status EXPIRED.
+        $this->actingAs($otherAdmin)
+            ->get(route('admin.transactions'))
+            ->assertOk()
+            ->assertSee('INV-TEST-HIDE-EXPIRED');
+
+        // Menyimpan tanpa pilihan menghapus seluruh status tersembunyi.
+        $this->actingAs($admin)
+            ->put(route('admin.transactions.hidden-statuses.update'), [])
+            ->assertRedirect(route('admin.transactions'));
+
+        $this->actingAs($admin)
+            ->get(route('admin.transactions'))
+            ->assertOk()
+            ->assertSee('INV-TEST-HIDE-EXPIRED');
+    }
+
     public function test_admin_transaction_snapshots_product_variant_weight(): void
     {
         $user = $this->superAdmin();

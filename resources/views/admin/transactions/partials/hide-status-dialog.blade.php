@@ -19,31 +19,33 @@
     <div
         x-show="open"
         x-cloak
-        x-transition:enter="transition-opacity duration-300 ease-out"
+        x-transition:enter="transition-opacity duration-200 ease-out"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
-        x-transition:leave="transition-opacity duration-200 ease-in"
+        x-transition:leave="transition-opacity duration-150 ease-in"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         @click="open = false; toggleBodyScroll()"
         class="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm"
     ></div>
 
-    {{-- MODAL --}}
+    {{-- MODAL (Ditambahkan @click agar area luar card menutup modal) --}}
     <div
         x-show="open"
         x-cloak
-        x-transition:enter="transition duration-300 ease-out"
+        x-transition:enter="transition duration-200 ease-out"
         x-transition:enter-start="opacity-0 scale-95 translate-y-2 sm:scale-90 sm:translate-y-0"
         x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-        x-transition:leave="transition duration-200 ease-in"
+        x-transition:leave="transition duration-150 ease-in"
         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
         x-transition:leave-end="opacity-0 scale-95 translate-y-2 sm:scale-90 sm:translate-y-0"
+        @click="open = false; toggleBodyScroll()"
         class="fixed inset-0 z-[201] flex items-center justify-center p-4 sm:p-6"
     >
+        {{-- CARD CONTAINER (Diberi @click.stop agar klik di dalam card tidak menutup modal) --}}
         <div
             @click.stop
-            class="w-full max-w-md max-h-[90dvh] overflow-y-auto rounded-2xl sm:rounded-3xl bg-white p-5 sm:p-7 shadow-2xl"
+            class="w-full max-w-lg max-h-[90dvh] overflow-y-auto rounded-2xl sm:rounded-3xl bg-white p-5 sm:p-7 shadow-2xl"
         >
             <form method="POST" action="{{ route('admin.transactions.hidden-statuses.update') }}">
                 @csrf
@@ -70,7 +72,7 @@
                     ];
                     $hiddenStatuses = auth()->user()->hidden_transaction_statuses ?? [];
                 @endphp
-                <div class="mt-5 space-y-2">
+                <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     @foreach($hideableStatuses as $statusValue => $statusLabel)
                         <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50">
                             <input type="checkbox" name="hidden_statuses[]" value="{{ $statusValue }}" @checked(in_array($statusValue, $hiddenStatuses, true)) class="rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]">

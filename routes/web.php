@@ -190,6 +190,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     Route::middleware('role:super_admin,management')->group(function () {
         Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
+        Route::put('/transactions/hidden-statuses', [TransactionController::class, 'updateHiddenStatuses'])->name('transactions.hidden-statuses.update');
         Route::get('/sales-reports', [SalesReportController::class, 'index'])->name('sales-reports');
         Route::get('/sales-reports/print', [SalesReportController::class, 'print'])->name('sales-reports.print');
         Route::get('/sales-reports/export', [SalesReportController::class, 'export'])->name('sales-reports.export');

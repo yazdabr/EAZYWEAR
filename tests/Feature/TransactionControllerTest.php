@@ -79,6 +79,32 @@ class TransactionControllerTest extends TestCase
         return $transaction->load('items');
     }
 
+    public function test_admin_transaction_list_can_be_filtered_by_pickup_or_courier(): void
+    {
+        $user = $this->superAdmin();
+
+        Transaction::factory()->create([
+            'invoice_number' => 'INV-TEST-PICKUP-FILTER',
+            'shipping_method' => 'Ambil di Tempat',
+        ]);
+        Transaction::factory()->create([
+            'invoice_number' => 'INV-TEST-COURIER-FILTER',
+            'shipping_method' => 'Kurir',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('admin.transactions', ['shipping_type' => 'pickup']))
+            ->assertOk()
+            ->assertSee('INV-TEST-PICKUP-FILTER')
+            ->assertDontSee('INV-TEST-COURIER-FILTER');
+
+        $this->actingAs($user)
+            ->get(route('admin.transactions', ['shipping_type' => 'courier']))
+            ->assertOk()
+            ->assertSee('INV-TEST-COURIER-FILTER')
+            ->assertDontSee('INV-TEST-PICKUP-FILTER');
+    }
+
     public function test_admin_transaction_snapshots_product_variant_weight(): void
     {
         $user = $this->superAdmin();

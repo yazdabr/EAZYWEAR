@@ -73,6 +73,16 @@ class TransactionController extends Controller
             $query->where('status', $request->input('status'));
         }
 
+        if ($request->filled('shipping_type')) {
+            $shippingType = $request->input('shipping_type');
+
+            if ($shippingType === 'pickup') {
+                $query->where('shipping_method', 'Ambil di Tempat');
+            } elseif ($shippingType === 'courier') {
+                $query->where('shipping_method', 'Kurir');
+            }
+        }
+
         $transactions = $query->latest('transaction_date')->paginate(10)->withQueryString();
 
         $transactions->through(function ($transaction) {

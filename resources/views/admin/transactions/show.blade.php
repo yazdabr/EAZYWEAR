@@ -431,7 +431,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                         <div class="mt-4 space-y-3">
                             <div>
-                                <p class="text-[12px] font-semibold uppercase tracking-wide text-slate-600">Produk</p>
+                                <p class="text-[10px] uppercase tracking-wide text-slate-600 sm:text-xs font-medium">Produk</p>
                                 <div class="mt-3 space-y-3">
                                     @forelse($fulfillment->items as $fulfillmentItem)
                                         <div class="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
@@ -495,14 +495,14 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                             <div class="grid grid-cols-2 gap-3">
                                 <div class="rounded-xl border border-slate-100 bg-white p-3">
-                                    <p class="text-[10px] uppercase tracking-wide text-slate-400">Ongkos kirim</p>
+                                    <p class="text-[10px] uppercase tracking-wide text-slate-400 sm:text-xs font-medium">Ongkos kirim</p>
                                     <p class="mt-1 text-sm font-bold text-slate-900">
                                         Rp{{ number_format((float) $fulfillment->shipping_cost, 0, ',', '.') }}
                                     </p>
                                 </div>
                                 <div class="rounded-xl border border-slate-100 bg-white p-3">
                                     @if($fulfillment->shipping_method === 'Kurir')
-                                        <p class="text-[10px] uppercase tracking-wide text-slate-400">Pengiriman</p>
+                                        <p class="text-[10px] uppercase tracking-wide text-slate-400 sm:text-xs font-medium">Pengiriman</p>
                                         <p class="mt-1 text-sm font-bold text-slate-900">Menunggu proses pengiriman</p>
                                         <p class="mt-1 text-xs leading-relaxed text-slate-500">
                                             Pesanan akan diproses untuk pengiriman melalui kurir.
@@ -528,16 +528,16 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             @if($fulfillment->shipping_method === 'Kurir')
                                 <div class="rounded-xl border border-slate-100 bg-white p-3">
                                     <div class="flex items-center justify-between gap-2">
-                                        <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Alamat pengiriman</p>
+                                        <p class="text-[10px] uppercase tracking-wide text-slate-400 sm:text-xs font-medium">Alamat pengiriman</p>
                                         @if($canEditGroupAddress)
                                             <button type="button"
                                                 onclick="toggleFulfillmentAddressEditor({{ $fulfillment->id }}, true)"
-                                                class="inline-flex items-center gap-1.5 rounded-lg border border-[#AE7C18]/40 bg-[#AE7C18]/10 px-3 py-1.5 text-xs font-bold text-[#8A6110] shadow-sm transition hover:bg-[#AE7C18]/20 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/40">
+                                                class="inline-flex items-center gap-1.5 rounded-lg border border-[#AE7C18]/40 bg-[#AE7C18]/10 px-3 py-1.5 text-xs font-semibold text-[#8A6110] shadow-sm transition hover:bg-[#AE7C18]/20 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/40">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                     <path d="M12 20h9"/>
                                                     <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/>
                                                 </svg>
-                                                Edit alamat
+                                                Edit Alamat
                                             </button>
                                         @endif
                                     </div>
@@ -576,11 +576,11 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                                 <div class="grid grid-cols-2 gap-3">
                                     <div class="rounded-xl border border-slate-100 bg-white p-3">
-                                        <p class="text-[10px] uppercase tracking-wide text-slate-400">Kurir</p>
+                                        <p class="text-[10px] uppercase tracking-wide text-slate-400 sm:text-xs font-medium">Kurir</p>
                                         <p class="mt-1 break-words text-xs font-semibold text-slate-800">{{ $fulfillment->courier ?: '-' }}</p>
                                     </div>
                                     <div class="rounded-xl border border-slate-100 bg-white p-3">
-                                        <p class="text-[10px] uppercase tracking-wide text-slate-400">Nomor resi</p>
+                                        <p class="text-[10px] uppercase tracking-wide text-slate-400 sm:text-xs font-medium">Nomor resi</p>
                                         <p class="mt-1 break-all text-xs font-semibold text-slate-800">{{ $fulfillment->tracking_number ?: $fulfillment->biteship_waybill_id ?: '-' }}</p>
                                     </div>
                                 </div>
@@ -760,12 +760,12 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
             <div class="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                 <h2 class="mb-3 sm:mb-4 font-bold text-slate-900 text-sm sm:text-base">Pembayaran</h2>
                 <div class="space-y-2.5 text-xs sm:text-sm">
-                    <div class="flex justify-between gap-4"><span class="text-slate-500">Metode</span><span class="font-bold text-slate-900 text-right">{{ $transaction->payment_method }}</span></div>
+                    <div class="flex justify-between gap-4"><span class="font-medium text-slate-500">Metode</span><span class="font-bold text-slate-900 text-right">{{ $transaction->payment_method }}</span></div>
 
                     @if($transaction->va_number)
-                        <div class="flex justify-between gap-4"><span class="text-slate-500">VA Number</span><span class="font-bold text-slate-900 text-right break-all">{{ $transaction->va_number }}</span></div>
+                        <div class="flex justify-between gap-4"><span class="font-medium text-slate-500">VA Number</span><span class="font-bold text-slate-900 text-right break-all">{{ $transaction->va_number }}</span></div>
                         <div class="flex justify-between gap-4">
-                            <span class="text-slate-500">Expired</span>
+                            <span class="font-medium text-slate-500">Expired</span>
                             <span class="text-slate-700 text-right">{{ $transaction->va_expired_at ? $transaction->va_expired_at->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y H:i') . ' WITA' : '-' }}</span>
                         </div>
                     @endif
@@ -775,9 +775,9 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
             <div class="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                 <h2 class="mb-3 sm:mb-4 font-bold text-slate-900 text-sm sm:text-base">Ringkasan</h2>
                 <div class="space-y-2.5 text-xs sm:text-sm">
-                    <div class="flex justify-between gap-4"><span class="text-slate-500">Subtotal</span><span class="font-medium text-slate-900">Rp {{ number_format($transaction->subtotal,0,',','.') }}</span></div>
-                    <div class="flex justify-between gap-4"><span class="text-slate-500">Diskon</span><span class="font-medium text-slate-900">Rp {{ number_format($transaction->discount,0,',','.') }}</span></div>
-                    <div class="flex justify-between gap-4"><span class="text-slate-500">Pengiriman</span><span class="font-medium text-slate-900">Rp {{ number_format($transaction->shipping,0,',','.') }}</span></div>
+                    <div class="flex justify-between gap-4"><span class="font-medium text-slate-500">Subtotal</span><span class="font-medium text-slate-900">Rp {{ number_format($transaction->subtotal,0,',','.') }}</span></div>
+                    <div class="flex justify-between gap-4"><span class="font-medium text-slate-500">Diskon</span><span class="font-medium text-slate-900">Rp {{ number_format($transaction->discount,0,',','.') }}</span></div>
+                    <div class="flex justify-between gap-4"><span class="font-medium text-slate-500">Pengiriman</span><span class="font-medium text-slate-900">Rp {{ number_format($transaction->shipping,0,',','.') }}</span></div>
                     <div class="border-t border-slate-100 pt-3 flex justify-between gap-4 text-sm sm:text-base font-bold"><span class="text-slate-900">Total</span><span class="text-[#AE7C18]">Rp {{ number_format($transaction->total,0,',','.') }}</span></div>
                 </div>
             </div>
@@ -806,7 +806,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                                 <div class="min-w-0 flex-1">
                                     <p class="font-bold text-slate-900 text-xs sm:text-sm">{{ $status['label'] ?? $history->status }}</p>
-                                    @if($history->note)<p class="mt-0.5 text-xs leading-relaxed text-slate-500">{{ $history->note }}</p>@endif
+                                    @if($history->note)<p class="mt-0.5 text-xs sm:text-sm leading-relaxed text-slate-500">{{ $history->note }}</p>@endif
                                     <p class="mt-0.5 text-[10px] sm:text-xs text-slate-400">{{ $history->created_at->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y H:i') }} WITA</p>
                                 </div>
                             </div>

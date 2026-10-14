@@ -314,13 +314,13 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 : 'Pengiriman ' . ($shipment->fulfillments->pluck('group_type')->contains('ready') ? 'Ready Stock' : 'Pre-Order');
                         @endphp
 
-                        <article class="min-w-0 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5 shadow-sm">
+                        <article class="min-w-0 rounded-2xl border p-4 sm:p-5 shadow-sm {{ $shipment->shipment_type === 'combined' ? 'border-slate-200 bg-slate-50/60' : 'border-amber-200 bg-amber-50/40' }}">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <h3 class="text-sm font-bold text-slate-900">{{ $shipmentLabel }}</h3>
                                     <p class="mt-1 text-xs text-slate-500">{{ $shipment->shipping_method }}</p>
                                 </div>
-                                <span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                                <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $shipment->shipment_type === 'combined' ? 'bg-white text-slate-600 ring-1 ring-slate-200' : 'bg-amber-100 text-amber-800' }}">
                                     {{ $shipment->status ?: 'PENDING' }}
                                 </span>
                             </div>
@@ -339,6 +339,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                                             <p class="mt-2 text-sm font-semibold">
                                                                 <span class="text-slate-700">Ukuran:</span>
                                                                 <span class="font-bold text-[#AE7C18]">{{ $shipmentItem->productVariant?->size?->name ?? '-' }}</span>
+                                                                <span class="font-semibold text-[#AE7C18]">· Rp{{ number_format((float) ($shipmentItem->productVariant?->price ?? 0), 0, ',', '.') }}</span>
                                                                 <span class="font-medium text-slate-500">· {{ $shipmentItem->qty }} pcs</span>
                                                             </p>
                                                             @if($shipmentItem->custom_name)

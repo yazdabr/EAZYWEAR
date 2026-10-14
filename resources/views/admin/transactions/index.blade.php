@@ -233,7 +233,7 @@
     </form>
 
     {{-- PREFERENSI HIDE STATUS PER AKUN ADMIN --}}
-    <dialog id="hide-transaction-status-dialog" class="w-[calc(100%-2rem)] max-w-md rounded-2xl p-0 shadow-2xl backdrop:bg-slate-900/40">
+    <dialog id="hide-transaction-status-dialog" class="hide-status-dialog fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl p-0 shadow-2xl backdrop:bg-slate-900/40">
         <form method="POST" action="{{ route('admin.transactions.hidden-statuses.update') }}" class="p-5 sm:p-6">
             @csrf
             @method('PUT')
@@ -448,6 +448,41 @@
 
 @include('admin.transactions.partials.view-transaction')
 @include('admin.transactions.partials.delete-transaction')
+
+@push('styles')
+<style>
+    .hide-status-dialog {
+        opacity: 0;
+        transform: translateY(18px) scale(.97);
+        transition: opacity 220ms ease, transform 220ms ease, overlay 220ms allow-discrete, display 220ms allow-discrete;
+    }
+    .hide-status-dialog[open] {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    .hide-status-dialog::backdrop {
+        background: rgb(15 23 42 / 0%);
+        transition: background 220ms ease, overlay 220ms allow-discrete, display 220ms allow-discrete;
+    }
+    .hide-status-dialog[open]::backdrop {
+        background: rgb(15 23 42 / 45%);
+    }
+    @starting-style {
+        .hide-status-dialog[open] {
+            opacity: 0;
+            transform: translateY(18px) scale(.97);
+        }
+        .hide-status-dialog[open]::backdrop {
+            background: rgb(15 23 42 / 0%);
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .hide-status-dialog, .hide-status-dialog::backdrop {
+            transition: none;
+        }
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>

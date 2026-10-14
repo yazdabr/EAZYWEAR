@@ -281,7 +281,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                 ====================================================== --}}
                 <div class="flex flex-col gap-6 lg:col-span-5">
 
-                    {{-- INFORMASI & DETAIL PENGIRIMAN (DIBUAT TERPADU) --}}
+                    {{-- INFORMASI & DETAIL PENGIRIMAN --}}
                     <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm space-y-4">
                         <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
                             <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#AE7C18]/10 text-[#AE7C18]">
@@ -292,83 +292,225 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                             </h2>
                         </div>
 
-                        {{-- DETAIL RESI (JIKA TERSEDIA) --}}
-                        @if(in_array($transaction->status, ['ORDER_SHIPPED', 'ORDER_COMPLETED'], true))
-                            <div class="rounded-xl bg-slate-50 p-3.5 space-y-2 text-xs sm:text-sm border border-slate-200/60">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-slate-500">Kurir Express</span>
-                                    <span class="font-bold text-slate-900">{{ $transaction->courier ?? $transaction->shipping_method ?? '-' }}</span>
+                        @if($transaction->shipments->isNotEmpty())
+                            @foreach($transaction->shipments as $shipment)
+                                @php
+                                    $shipmentGroups = $shipment->fulfillments
+                                        ->pluck('group_type')
+                                        ->unique()
+                                        ->values();
+
+                                    $shipmentLabel = $shipment->shipment_type === 'combined'
+                                        ? 'Pengiriman Gabungan'
+                                        : ($shipmentGroups->contains('ready')
+                                            ? 'Ready Stock'
+                                            : ($shipmentGroups->contains('pre_order')
+                                                ? 'Pre-Order'
+                                                : 'Pengiriman'));
+
+                                    $shipmentStatusMap = [
+                                        'PENDING' => 'Menunggu Diproses',
+                                        'PROCESSING' => 'Sedang Diproses',
+                                        'SHIPPED' => 'Sedang Dikirim',
+                                        'COMPLETED' => 'Pengiriman Selesai',
+                                        'CANCELLED' => 'Dibatalkan',
+                                    ];
+
+                                    $shipmentStatus = strtoupper((string) $shipment->status);
+                                @endphp
+
+                                @if(!$loop->first)
+                                    <div class="border-t border-slate-200 pt-4"></div>
+                                @endif
+
+                                <div class="space-y-3">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="text-sm font-bold text-slate-900">
+                                            {{ $shipmentLabel }}
+                                        </p>
+                                        <span class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-700">
+                                            {{ $shipmentStatusMap[$shipmentStatus] ?? $shipment->status ?? 'Status belum tersedia' }}
+                                        </span>
+                                    </div>
+
+                                    <div class="rounded-xl bg-slate-50 p-3.5 space-y-2 text-xs sm:text-sm border border-slate-200/60">
+                                        <div class="flex justify-between items-start gap-3">
+                                            <span class="text-slate-500">Metode</span>
+                                            <span class="font-semibold text-slate-900 text-right">
+                                                {{ $shipment->shipping_method ?? '-' }}
+                                            </span>
+                                        </div>
+
+                                        <div class="flex justify-between items-start gap-3 border-t border-slate-200/60 pt-2">
+                                            <span class="text-slate-500">Biaya Pengiriman</span>
+                                            <span class="font-bold text-slate-900 text-right">
+                                                Rp {{ number_format((float) $shipment->shipping_cost, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+
+                                        @if($shipment->tracking_number || $shipment->biteship_waybill_id)
+                                            <div class="flex justify-between items-start gap-3 border-t border-slate-200/60 pt-2">
+                                                <span class="text-slate-500">Kurir</span>
+                                                <span class="font-bold text-slate-900 text-right">
+                                                    {{ $shipment->courier ?? $shipment->shipping_method ?? '-' }}
+                                                </span>
+                                            </div>
+                                            <div class="flex justify-between items-start gap-3 border-t border-slate-200/60 pt-2">
+                                                <span class="text-slate-500">Nomor Resi</span>
+                                                <span class="font-mono font-semibold text-slate-900 break-all text-right">
+                                                    {{ $shipment->tracking_number ?? $shipment->biteship_waybill_id }}
+                                                </span>
+                                            </div>
+                                        @elseif($shipment->shipping_method === 'Kurir')
+                                            <div class="border-t border-slate-200/60 pt-2 text-xs text-slate-500">
+                                                Nomor resi belum tersedia.
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    @if($shipment->fulfillments->isNotEmpty())
+                                        <div class="space-y-2">
+                                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                                Produk dalam pengiriman ini
+                                            </p>
+
+                                            @foreach($shipment->fulfillments as $fulfillment)
+                                                @foreach($fulfillment->items as $shipmentItem)
+                                                    <div class="flex justify-between gap-3 text-xs sm:text-sm">
+                                                        <span class="text-slate-600">
+                                                            {{ $shipmentItem->productVariant?->product?->name ?? 'Produk' }}
+                                                            @if($fulfillment->group_type === 'ready')
+                                                                <span class="text-slate-400">(Ready Stock)</span>
+                                                            @elseif($fulfillment->group_type === 'pre_order')
+                                                                <span class="text-slate-400">(Pre-Order)</span>
+                                                            @endif
+                                                            × {{ $shipmentItem->qty }}
+                                                        </span>
+                                                    </div>
+                                                @endforeach
+                                            @endforeach
+                                        </div>
+                                    @endif
+
+                                    <div class="space-y-3 text-xs sm:text-sm">
+                                        <div>
+                                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Penerima</p>
+                                            <p class="mt-0.5 font-semibold text-slate-800">
+                                                {{ $shipment->shipping_name ?? $transaction->shipping_name ?? $transaction->customer?->name ?? '-' }}
+                                            </p>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Telepon</p>
+                                                <p class="mt-0.5 font-medium text-slate-800">
+                                                    {{ $shipment->shipping_phone ?? $transaction->shipping_phone ?? '-' }}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Jadwal / Metode</p>
+                                                <p class="mt-0.5 font-medium text-slate-800">
+                                                    {{ $shipment->shipping_method ?? '-' }}
+                                                </p>
+
+                                                @if(
+                                                    $shipment->shipping_method === 'Ambil di Tempat' &&
+                                                    $shipment->pickup_date &&
+                                                    $shipment->pickup_time_start &&
+                                                    $shipment->pickup_time_end
+                                                )
+                                                    <p class="mt-0.5 text-xs font-semibold text-slate-600">
+                                                        {{ \Carbon\Carbon::parse($shipment->pickup_date)->locale('id')->translatedFormat('l, d F Y') }},
+                                                        {{ \Carbon\Carbon::parse($shipment->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($shipment->pickup_time_end)->format('H:i') }} WITA
+                                                    </p>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Email</p>
+                                            <p class="mt-0.5 font-medium text-slate-800 break-all">
+                                                {{ $shipment->shipping_email ?? $transaction->shipping_email ?? '-' }}
+                                            </p>
+                                        </div>
+
+                                        <div class="border-t border-slate-100 pt-3">
+                                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat Lengkap</p>
+                                            <p class="mt-0.5 font-medium leading-relaxed text-slate-800">
+                                                {{ $shipment->shipping_address ?? $transaction->shipping_address ?? '-' }}
+                                            </p>
+                                            <p class="mt-1 text-xs text-slate-500">
+                                                {{ $shipment->shipping_district ?? $transaction->shipping_district ?? '-' }},
+                                                {{ $shipment->shipping_city ?? $transaction->shipping_city ?? '-' }},
+                                                {{ $shipment->shipping_province ?? $transaction->shipping_province ?? '-' }}
+                                                {{ $shipment->shipping_postal_code ?? $transaction->shipping_postal_code ?? '' }}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="flex justify-between items-center border-t border-slate-200/60 pt-2">
-                                    <span class="text-slate-500">Nomor Resi</span>
-                                    <span class="font-mono font-semibold text-slate-900 break-all">{{ $transaction->tracking_number ?? '-' }}</span>
+                            @endforeach
+                        @else
+                            {{-- Fallback untuk transaksi lama yang belum memiliki data shipment --}}
+                            @if(in_array($transaction->status, ['ORDER_SHIPPED', 'ORDER_COMPLETED'], true))
+                                <div class="rounded-xl bg-slate-50 p-3.5 space-y-2 text-xs sm:text-sm border border-slate-200/60">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-slate-500">Kurir Express</span>
+                                        <span class="font-bold text-slate-900">{{ $transaction->courier ?? $transaction->shipping_method ?? '-' }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center border-t border-slate-200/60 pt-2">
+                                        <span class="text-slate-500">Nomor Resi</span>
+                                        <span class="font-mono font-semibold text-slate-900 break-all">{{ $transaction->tracking_number ?? '-' }}</span>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <div class="space-y-3 text-xs sm:text-sm">
+                                <div>
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Penerima</p>
+                                    <p class="mt-0.5 font-semibold text-slate-800">
+                                        {{ $transaction->shipping_name ?? $transaction->customer?->name ?? '-' }}
+                                    </p>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Telepon</p>
+                                        <p class="mt-0.5 font-medium text-slate-800">{{ $transaction->shipping_phone ?? '-' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pengiriman</p>
+                                        <p class="mt-0.5 font-medium text-slate-800">{{ $transaction->shipping_method ?? '-' }}</p>
+
+                                        @if(
+                                            $transaction->shipping_method === 'Ambil di Tempat' &&
+                                            $transaction->pickup_date &&
+                                            $transaction->pickup_time_start &&
+                                            $transaction->pickup_time_end
+                                        )
+                                            <p class="mt-0.5 text-xs font-semibold text-slate-600">
+                                                {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }},
+                                                {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
+                                            </p>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Email</p>
+                                    <p class="mt-0.5 font-medium text-slate-800 break-all">{{ $transaction->shipping_email ?? '-' }}</p>
+                                </div>
+
+                                <div class="border-t border-slate-100 pt-3">
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat Lengkap</p>
+                                    <p class="mt-0.5 font-medium leading-relaxed text-slate-800">{{ $transaction->shipping_address ?? '-' }}</p>
+                                    <p class="mt-1 text-xs text-slate-500">
+                                        {{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}
+                                    </p>
                                 </div>
                             </div>
                         @endif
-
-                        {{-- DETAIL ALAMAT --}}
-                        <div class="space-y-3 text-xs sm:text-sm">
-                            <div>
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Penerima</p>
-                                <p class="mt-0.5 font-semibold text-slate-800">
-                                    {{ $transaction->shipping_name ?? $transaction->customer?->name ?? '-' }}
-                                </p>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                        Telepon
-                                    </p>
-                                    <p class="mt-0.5 font-medium text-slate-800">
-                                        {{ $transaction->shipping_phone ?? '-' }}
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                        Pengiriman
-                                    </p>
-
-                                    <p class="mt-0.5 font-medium text-slate-800">
-                                        {{ $transaction->shipping_method ?? '-' }}
-                                    </p>
-
-                                    @if(
-                                        $transaction->shipping_method === 'Ambil di Tempat' &&
-                                        $transaction->pickup_date &&
-                                        $transaction->pickup_time_start &&
-                                        $transaction->pickup_time_end
-                                    )
-                                        <p class="mt-0.5 text-xs font-semibold text-slate-600">
-                                            {{ \Carbon\Carbon::parse($transaction->pickup_date)
-                                                ->locale('id')
-                                                ->translatedFormat('l, d F Y') }},
-                                            {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
-                                        </p>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div>
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Email</p>
-                                <p class="mt-0.5 font-medium text-slate-800 break-all">
-                                    {{ $transaction->shipping_email ?? '-' }}
-                                </p>
-                            </div>
-
-                            <div class="border-t border-slate-100 pt-3">
-                                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Alamat Lengkap</p>
-                                <p class="mt-0.5 font-medium leading-relaxed text-slate-800">
-                                    {{ $transaction->shipping_address ?? '-' }}
-                                </p>
-                                <p class="mt-1 text-xs text-slate-500">
-                                    {{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}
-                                </p>
-                            </div>
-                        </div>
                     </div>
-
                     {{-- RINGKASAN PEMBAYARAN --}}
                     <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
                         <h2 class="mb-4 text-base font-bold text-slate-900 border-b border-slate-100 pb-3">

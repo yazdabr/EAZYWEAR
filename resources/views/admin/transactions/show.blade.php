@@ -321,7 +321,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     <p class="mt-1 text-xs text-slate-500">{{ $shipment->shipping_method }}</p>
                                 </div>
                                 <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $shipment->shipment_type === 'combined' ? 'bg-white text-slate-600 ring-1 ring-slate-200' : 'bg-amber-100 text-amber-800' }}">
-                                    {{ $shipment->status ?: 'PENDING' }}
+                                    {{ !$shipment->status || $shipment->status === 'PENDING' ? 'Menunggu diproses' : $shipment->status }}
                                 </span>
                             </div>
 

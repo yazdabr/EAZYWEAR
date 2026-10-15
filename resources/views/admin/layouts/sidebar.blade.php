@@ -10,7 +10,7 @@
             href="{{
                 $role === 'super_admin'
                     ? route('admin.dashboard')
-                    : ($role === 'production'
+                    : (in_array($role, ['production', 'reports'], true)
                         ? route('admin.production-reports')
                         : route('admin.transactions'))
             }}"
@@ -204,7 +204,7 @@
         {{-- LAPORAN --}}
         {{-- ========================================================= --}}
 
-        @if (in_array($role, ['super_admin', 'management', 'production']))
+        @if (in_array($role, ['super_admin', 'management', 'production', 'reports']))
 
             <div class="mt-6 px-2">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
@@ -215,7 +215,7 @@
             <nav class="mt-2 space-y-1">
 
                 {{-- Laporan Penjualan --}}
-                @if (in_array($role, ['super_admin', 'management', 'production']))
+                @if (in_array($role, ['super_admin', 'management', 'production', 'reports']))
 
                     <a
                         href="{{ route('admin.sales-reports') }}"

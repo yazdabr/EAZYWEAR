@@ -81,8 +81,10 @@ Route::get('/login', function () {
     if (auth()->check()) {
         $role = auth()->user()->role;
 
-        if ($role === 'production') {
+        if (in_array($role, ['production', 'reports'], true)) {
+
             return redirect()->route('admin.production-reports');
+
         }
 
         if ($role === 'management') {
@@ -193,7 +195,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::put('/transactions/hidden-statuses', [TransactionController::class, 'updateHiddenStatuses'])->name('transactions.hidden-statuses.update');
     });
 
-    Route::middleware('role:super_admin,management,production')->group(function () {
+    Route::middleware('role:super_admin,management,production,reports')->group(function () {
         Route::get('/sales-reports', [SalesReportController::class, 'index'])->name('sales-reports');
         Route::get('/sales-reports/print', [SalesReportController::class, 'print'])->name('sales-reports.print');
         Route::get('/sales-reports/export', [SalesReportController::class, 'export'])->name('sales-reports.export');
@@ -208,7 +210,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/productions/{production}', [ProductionController::class, 'show'])->name('productions.show');
     });
 
-    Route::middleware('role:super_admin,management,production')->group(function () {
+    Route::middleware('role:super_admin,management,production,reports')->group(function () {
         Route::get('/production-reports', [ProductionReportController::class, 'index'])->name('production-reports');
         Route::get('/production-reports/print', [ProductionReportController::class, 'print'])->name('production-reports.print');
         Route::get('/production-reports/export', [ProductionReportController::class, 'export'])->name('production-reports.export');

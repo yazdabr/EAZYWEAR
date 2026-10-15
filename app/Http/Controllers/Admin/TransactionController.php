@@ -90,6 +90,30 @@ class TransactionController extends Controller
             }
         }
 
+        // Filter berdasarkan ketersediaan produk dalam transaksi.
+        $availability = $request->input('availability');
+
+        if ($availability === 'ready') {
+            $query->whereHas(
+                'items.productVariant.product',
+                fn ($product) => $product->where('availability', 'ready')
+            );
+        } elseif ($availability === 'pre_order') {
+            $query->whereHas(
+                'items.productVariant.product',
+                fn ($product) => $product->where('availability', 'pre_order')
+            );
+        } elseif ($availability === 'mixed') {
+            $query
+                ->whereHas(
+                    'items.productVariant.product',
+                    fn ($product) => $product->where('availability', 'ready')
+                )
+                ->whereHas(
+                    'items.productVariant.product',
+                    fn ($product) => $product->where('availability', 'pre_order')
+                );
+        }
         $transactions = $query->latest('transaction_date')->paginate(10)->withQueryString();
 
         $transactions->through(function ($transaction) {

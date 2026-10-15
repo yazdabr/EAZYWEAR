@@ -105,6 +105,85 @@ class TransactionControllerTest extends TestCase
             ->assertDontSee('INV-TEST-PICKUP-FILTER');
     }
 
+    public function test_admin_transaction_list_can_be_filtered_by_product_availability(): void
+    {
+        $user = $this->superAdmin();
+
+        $variants = ProductVariant::query()
+            ->with('product')
+            ->get()
+            ->filter(fn ($variant) => $variant->product !== null)
+            ->unique('product_id')
+            ->take(2)
+            ->values();
+
+        $this->assertCount(
+            2,
+            $variants,
+            'Pengujian membutuhkan varian dari dua produk berbeda.'
+        );
+
+        $readyVariant = $variants[0];
+        $poVariant = $variants[1];
+
+        $readyVariant->product->update(['availability' => 'ready']);
+        $poVariant->product->update(['availability' => 'pre_order']);
+
+        $createTransaction = function (
+            string $invoice,
+            array $variantIds
+        ): Transaction {
+            $transaction = Transaction::factory()->create([
+                'invoice_number' => $invoice,
+            ]);
+
+            foreach ($variantIds as $variantId) {
+                TransactionItem::query()->create([
+                    'transaction_id' => $transaction->id,
+                    'product_variant_id' => $variantId,
+                    'qty' => 1,
+                    'price' => 100000,
+                    'subtotal' => 100000,
+                ]);
+            }
+
+            return $transaction;
+        };
+
+        $createTransaction('INV-TEST-AVAILABILITY-READY', [$readyVariant->id]);
+        $createTransaction('INV-TEST-AVAILABILITY-PO', [$poVariant->id]);
+        $createTransaction('INV-TEST-AVAILABILITY-MIXED', [$readyVariant->id, $poVariant->id]);
+
+        $this->actingAs($user)
+            ->get(route('admin.transactions', ['availability' => 'ready']))
+            ->assertOk()
+            ->assertSee('INV-TEST-AVAILABILITY-READY')
+            ->assertSee('INV-TEST-AVAILABILITY-MIXED')
+            ->assertDontSee('INV-TEST-AVAILABILITY-PO');
+
+        $this->actingAs($user)
+            ->get(route('admin.transactions', ['availability' => 'pre_order']))
+            ->assertOk()
+            ->assertSee('INV-TEST-AVAILABILITY-PO')
+            ->assertSee('INV-TEST-AVAILABILITY-MIXED')
+            ->assertDontSee('INV-TEST-AVAILABILITY-READY');
+
+        $this->actingAs($user)
+            ->get(route('admin.transactions', ['availability' => 'mixed']))
+            ->assertOk()
+            ->assertSee('INV-TEST-AVAILABILITY-MIXED')
+            ->assertDontSee('INV-TEST-AVAILABILITY-READY')
+            ->assertDontSee('INV-TEST-AVAILABILITY-PO');
+
+        $this->actingAs($user)
+            ->get(route('admin.transactions', [
+                'availability' => 'ready',
+                'search' => 'INV-TEST-AVAILABILITY-READY',
+            ]))
+            ->assertOk()
+            ->assertSee('INV-TEST-AVAILABILITY-READY')
+            ->assertDontSee('INV-TEST-AVAILABILITY-MIXED');
+    }
     public function test_hidden_transaction_statuses_are_persisted_per_admin_account(): void
     {
         $admin = $this->superAdmin();

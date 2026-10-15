@@ -115,6 +115,23 @@
                         </select>
                     </div>
 
+                    {{-- JENIS PRODUK --}}
+                    <div class="col-span-1 w-full sm:w-52">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
+                            Jenis Produk
+                        </label>
+
+                        <select
+                            name="availability"
+                            onchange="this.form.submit()"
+                            class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
+                        >
+                            <option value="" @selected(request('availability', '') === '')>Semua Produk</option>
+                            <option value="ready" @selected(request('availability') === 'ready')>Ready Stock</option>
+                            <option value="pre_order" @selected(request('availability') === 'pre_order')>PO</option>
+                            <option value="mixed" @selected(request('availability') === 'mixed')>Ready Stock + PO</option>
+                        </select>
+                    </div>
                     {{-- STATUS --}}
                     <div class="col-span-1 w-full sm:w-52">
                         <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">

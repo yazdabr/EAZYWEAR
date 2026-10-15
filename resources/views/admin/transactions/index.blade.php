@@ -372,6 +372,7 @@
                         <th class="px-6 py-4">Invoice</th>
                         <th class="px-6 py-4">Tanggal</th>
                         <th class="px-6 py-4">Pelanggan</th>
+                        <th class="px-6 py-4">Ringkasan Pesanan</th>
                         <th class="px-6 py-4 text-center">PO/READY</th>
                         <th class="px-6 py-4 text-center">Total</th>
                         <th class="px-6 py-4 text-center">Pembayaran</th>
@@ -385,7 +386,7 @@
                         <x-admin.transaction-row :transaction="$transaction"/>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-14 text-center">
+                            <td colspan="9" class="px-6 py-14 text-center">
                                 <div class="flex flex-col items-center">
                                     <x-heroicon-o-receipt-percent class="h-10 w-10 text-slate-300"/>
                                     <p class="mt-3 font-medium text-slate-600">Tidak ada transaksi</p>

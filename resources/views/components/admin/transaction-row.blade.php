@@ -42,6 +42,40 @@
         </div>
     </td>
 
+    <td class="px-6 py-5">
+        @php
+            $orderItems = $transaction['items'] ?? [];
+        @endphp
+
+        <div class="min-w-[190px] max-w-[280px] space-y-2">
+            @forelse (array_slice($orderItems, 0, 3) as $item)
+                <div class="text-sm">
+                    <p class="font-semibold text-slate-800">{{ $item['name'] ?? 'Produk' }}</p>
+                    <p class="mt-0.5 text-xs text-slate-500">
+                        @if (!empty($item['size']) && $item['size'] !== '-')
+                            Ukuran {{ $item['size'] }}
+                        @endif
+                        @if (!empty($item['custom_name']) || !empty($item['custom_number']))
+                            · {{ trim(($item['custom_name'] ?? '') . ' ' . ($item['custom_number'] ?? '')) }}
+                        @endif
+                        · {{ (int) ($item['qty'] ?? 0) }} pcs
+                        @if (!empty($item['is_longsleeve']))
+                            · Lengan panjang
+                        @endif
+                    </p>
+                </div>
+            @empty
+                <span class="text-xs text-slate-400">Tidak ada item</span>
+            @endforelse
+
+            @if (count($orderItems) > 3)
+                <p class="text-xs font-medium text-slate-500">
+                    +{{ count($orderItems) - 3 }} produk lainnya
+                </p>
+            @endif
+        </div>
+    </td>
+
     <td class="px-6 py-5 text-center">
         @php
             $availabilityLabel = $transaction['availability_label'] ?? '-';

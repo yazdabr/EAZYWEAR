@@ -215,7 +215,7 @@
             <nav class="mt-2 space-y-1">
 
                 {{-- Laporan Penjualan --}}
-                @if (in_array($role, ['super_admin', 'management']))
+                @if (in_array($role, ['super_admin', 'management', 'production']))
 
                     <a
                         href="{{ route('admin.sales-reports') }}"

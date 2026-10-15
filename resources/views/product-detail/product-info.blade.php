@@ -275,7 +275,7 @@
                             </div>
                         </div>
                         {{-- LONGSLEEVE & PATCH OPTIONS --}}
-                        <div class="mt-5 grid grid-cols-2 items-stretch gap-3 sm:mt-6 sm:gap-4">
+                        <div x-show="longsleeveEnabled || patchEnabled" x-cloak class="mt-5 grid items-stretch gap-3 sm:mt-6 sm:gap-4" :class="longsleeveEnabled && patchEnabled ? 'grid-cols-2' : 'grid-cols-1'">
                             {{-- LONGSLEEVE: KOLOM KIRI --}}
                             <div x-show="longsleeveEnabled" x-cloak class="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-[#AE7C18]/50 sm:p-4" :class="isLongsleeve ? 'border-[#AE7C18] bg-[#AE7C18]/5 ring-1 ring-[#AE7C18]/20' : ''">
                                 <label class="flex h-full cursor-pointer flex-col">

@@ -114,10 +114,27 @@ class TransactionController extends Controller
                     fn ($product) => $product->where('availability', 'pre_order')
                 );
         }
+        $summaryQuery = clone $query;
         $transactions = $query->latest('transaction_date')->paginate(10)->withQueryString();
 
         $transactions->through(function ($transaction) {
+            $hasReady = $transaction->items->contains(
+                fn ($item) => $item->productVariant?->product?->availability === 'ready'
+            );
+
+            $hasPreOrder = $transaction->items->contains(
+                fn ($item) => $item->productVariant?->product?->availability === 'pre_order'
+            );
+
+            $availabilityLabel = match (true) {
+                $hasReady && $hasPreOrder => 'READY + PO',
+                $hasReady => 'READY',
+                $hasPreOrder => 'PO',
+                default => '-',
+            };
+
             return [
+                'availability_label' => $availabilityLabel,
                 'id' => $transaction->id,
                 'invoice' => $transaction->invoice_number,
                 'date' => $transaction->transaction_date
@@ -168,10 +185,10 @@ class TransactionController extends Controller
             ];
         });
 
-        $totalTransactions = Transaction::count();
-        $totalRevenue = Transaction::where('status', 'PAID')->sum('total');
-        $completedOrders = Transaction::where('status', Transaction::ORDER_COMPLETED)->count();
-        $pendingTransactions = Transaction::where('status', 'PENDING')->count();
+        $totalTransactions = (clone $summaryQuery)->count();
+        $totalRevenue = (clone $summaryQuery)->where('status', 'PAID')->sum('total');
+        $completedOrders = (clone $summaryQuery)->where('status', Transaction::ORDER_COMPLETED)->count();
+        $pendingTransactions = (clone $summaryQuery)->where('status', 'PENDING')->count();
         $currentMonth = Carbon::now()->startOfMonth();
         $previousMonth = Carbon::now()->subMonth()->startOfMonth();
 

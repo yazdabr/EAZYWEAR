@@ -43,6 +43,21 @@
     </td>
 
     <td class="px-6 py-5 text-center">
+        @php
+            $availabilityLabel = $transaction['availability_label'] ?? '-';
+            $availabilityColor = match ($availabilityLabel) {
+                'READY' => 'bg-emerald-100 text-emerald-700',
+                'PO' => 'bg-sky-100 text-sky-700',
+                'READY + PO' => 'bg-amber-100 text-amber-800',
+                default => 'bg-slate-100 text-slate-600',
+            };
+        @endphp
+        <span class="inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold {{ $availabilityColor }}">
+            {{ $availabilityLabel }}
+        </span>
+    </td>
+
+    <td class="px-6 py-5 text-center">
         <span class="font-bold text-[#AE7C18]">
             Rp {{ number_format($total,0,',','.') }}
         </span>

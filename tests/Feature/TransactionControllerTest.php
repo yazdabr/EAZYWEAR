@@ -172,6 +172,7 @@ class TransactionControllerTest extends TestCase
             ->get(route('admin.transactions', ['availability' => 'mixed']))
             ->assertOk()
             ->assertSee('INV-TEST-AVAILABILITY-MIXED')
+            ->assertSee('READY + PO')
             ->assertDontSee('INV-TEST-AVAILABILITY-READY')
             ->assertDontSee('INV-TEST-AVAILABILITY-PO');
 

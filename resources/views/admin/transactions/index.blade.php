@@ -309,6 +309,10 @@
                             <p class="truncate text-xs font-medium text-slate-800">
                                 {{ $transaction['customer'] ?? '-' }}
                             </p>
+                            <span class="mt-1 inline-flex rounded-md px-2 py-0.5 text-[10px] font-bold
+                                {{ ($transaction['availability_label'] ?? '-') === 'READY' ? 'bg-emerald-100 text-emerald-700' : ((($transaction['availability_label'] ?? '-') === 'PO') ? 'bg-sky-100 text-sky-700' : ((($transaction['availability_label'] ?? '-') === 'READY + PO') ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600')) }}">
+                                {{ $transaction['availability_label'] ?? '-' }}
+                            </span>
                         </div>
 
                         <div class="shrink-0 text-right">
@@ -368,6 +372,7 @@
                         <th class="px-6 py-4">Invoice</th>
                         <th class="px-6 py-4">Tanggal</th>
                         <th class="px-6 py-4">Pelanggan</th>
+                        <th class="px-6 py-4 text-center">PO/READY</th>
                         <th class="px-6 py-4 text-center">Total</th>
                         <th class="px-6 py-4 text-center">Pembayaran</th>
                         <th class="px-6 py-4 text-center">Status</th>
@@ -380,7 +385,7 @@
                         <x-admin.transaction-row :transaction="$transaction"/>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-14 text-center">
+                            <td colspan="8" class="px-6 py-14 text-center">
                                 <div class="flex flex-col items-center">
                                     <x-heroicon-o-receipt-percent class="h-10 w-10 text-slate-300"/>
                                     <p class="mt-3 font-medium text-slate-600">Tidak ada transaksi</p>

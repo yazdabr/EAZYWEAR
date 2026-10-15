@@ -9,6 +9,7 @@ use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Size;
+use App\Support\ProductImageThumbnail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -280,6 +281,11 @@ class ProductController extends Controller
                 if ($request->hasFile('image')) {
                     foreach ($request->file('image') as $index => $file) {
                         $imagePath = $file->store('products', 'public');
+                        try {
+                            ProductImageThumbnail::generate($imagePath);
+                        } catch (\Throwable $thumbnailException) {
+                            report($thumbnailException);
+                        }
                         $product->images()->create([
                             'image' => $imagePath,
                             'is_thumbnail' => $index === 0,
@@ -555,6 +561,11 @@ class ProductController extends Controller
             }
             foreach($newFiles as $index=>$file){
                 $imagePath=$file->store('products','public');
+                try {
+                    ProductImageThumbnail::generate($imagePath);
+                } catch (\Throwable $thumbnailException) {
+                    report($thumbnailException);
+                }
                 $product->images()->create([
                     'image'=>$imagePath,
                     'is_thumbnail'=>count($keptImages)+$index===0,

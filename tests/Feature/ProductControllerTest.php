@@ -264,4 +264,58 @@ class ProductControllerTest extends TestCase
             'availability' => 'ready',
         ]);
     }
+    public function test_product_upload_generates_webp_thumbnail(): void
+    {
+        if (!function_exists('imagewebp')) {
+            $this->markTestSkipped('GD WebP tidak tersedia.');
+        }
+
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $image = \Illuminate\Http\UploadedFile::fake()->image('jersey.png', 800, 600);
+
+        $response = $this->actingAs($this->superAdmin())->postJson(
+            route('admin.products.store'),
+            $this->storePayload(['image' => [$image]])
+        );
+
+        $response->assertCreated();
+
+        $productId = $response->json('data.id');
+        $this->assertNotNull($productId);
+
+        $productImage = \App\Models\ProductImage::where('product_id', $productId)->firstOrFail();
+        $originalPath = $productImage->image;
+        $thumbnailPath = \App\Support\ProductImageThumbnail::pathFor($originalPath);
+
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($originalPath);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($thumbnailPath);
+    }
+
+    #[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
+    #[\PHPUnit\Framework\Attributes\PreserveGlobalState(false)]
+    public function test_product_upload_succeeds_when_thumbnail_generation_fails(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $image = \Illuminate\Http\UploadedFile::fake()->image('jersey.png', 800, 600);
+
+        \Mockery::mock('alias:App\Support\ProductImageThumbnail')
+            ->shouldReceive('generate')
+            ->once()
+            ->andThrow(new \RuntimeException('Simulated thumbnail failure'));
+
+        $response = $this->actingAs($this->superAdmin())->postJson(
+            route('admin.products.store'),
+            $this->storePayload(['image' => [$image]])
+        );
+
+        $response->assertCreated();
+
+        $productId = $response->json('data.id');
+        $this->assertNotNull($productId);
+
+        $productImage = \App\Models\ProductImage::where('product_id', $productId)->firstOrFail();
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($productImage->image);
+    }
 }

@@ -4,18 +4,12 @@
 $thumbnail=$product->images->where('is_thumbnail',true)->first();
 $firstImage=$product->images->first();
 $imagePath=$thumbnail?->image??$firstImage?->image;
-if($imagePath){
-    $image=(str_starts_with($imagePath,'http://')||str_starts_with($imagePath,'https://'))
-        ?$imagePath
-        :((str_starts_with($imagePath,'images/')||str_starts_with($imagePath,'storage/'))
-            ?asset($imagePath)
-            :asset('storage/'.$imagePath));
-}else{
-    $image=asset('images/products/1.png');
-}
+$image = $imagePath
+    ? \App\Support\ProductImageThumbnail::adminUrl($imagePath)
+    : asset('images/products/1.png');
 $galleryImages=$product->images->sortBy('sort_order')->take(10)->map(function($galleryImage){
     $path=$galleryImage->image;
-    $url=(str_starts_with($path,'http://')||str_starts_with($path,'https://'))?$path:((str_starts_with($path,'images/')||str_starts_with($path,'storage/'))?asset($path):asset('storage/'.$path));
+    $url = \App\Support\ProductImageThumbnail::adminUrl($path);
     return ['id'=>$galleryImage->id,'url'=>$url];
 })->values()->all();
 

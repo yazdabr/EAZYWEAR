@@ -173,9 +173,25 @@
                             return Number(this.selectedPrice) + this.customizationFee + this.longsleeveFee + this.patchFee;
                         }
                     }">
-                        <div class="mb-2 flex items-center justify-between sm:mb-3">
-                            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-900 sm:text-sm">Available Sizes</h3>
-                            <span class="text-xs text-gray-500 sm:text-sm" x-show="selectedStock > 0">Stock: Pre-Order</span>
+                        <div class="mb-2 flex items-center justify-between gap-3 sm:mb-3">
+                            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-900 sm:text-sm">
+                                Available Sizes
+                            </h3>
+
+                            @if ($product->availability === 'pre_order')
+                                <span class="text-xs font-semibold text-[#AE7C18] sm:text-sm">
+                                    Pre-Order
+                                </span>
+                            @elseif ($product->availability === 'ready')
+                                <span
+                                    class="text-xs font-semibold sm:text-sm"
+                                    :class="selectedStock > 0 ? 'text-emerald-600' : 'text-red-600'"
+                                >
+                                    <span x-text="selectedStock > 0
+                                        ? 'Stock: ' + selectedStock
+                                        : 'Out of Stock'"></span>
+                                </span>
+                            @endif
                         </div>
                         <div class="flex flex-wrap gap-2 sm:gap-2.5">
                             @foreach($availableSizes as $size)

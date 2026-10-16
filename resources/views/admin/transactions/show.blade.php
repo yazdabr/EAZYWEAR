@@ -327,7 +327,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                             <div class="mt-4 space-y-3">
                                     @foreach($shipment->fulfillments as $shipmentFulfillment)
-                                        <div class="rounded-xl border border-slate-200 bg-white p-4">
+                                        <div class="rounded-xl border border-slate-300 bg-white p-4">
                                             <p class="mb-3 text-xs font-bold uppercase tracking-wide {{ $shipmentFulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY ? 'text-emerald-700' : 'text-[#AE7C18]' }}">
                                                 {{ $shipmentFulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY ? 'Ready Stock' : 'Pre-Order' }}
                                             </p>
@@ -393,7 +393,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                         @method('PATCH')
                                         <label for="shipment-address-{{ $shipment->id }}" class="block text-xs font-semibold text-slate-600">Ubah alamat sebelum membuat resi</label>
                                         <textarea id="shipment-address-{{ $shipment->id }}" name="shipping_address" rows="3" required maxlength="2000"
-                                            class="w-full rounded-lg border-2 border-slate-400 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20">{{ $shipment->shipping_address ?: $transaction->shipping_address }}</textarea>
+                                            class="w-full rounded-lg border-2 border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20">{{ $shipment->shipping_address ?: $transaction->shipping_address }}</textarea>
                                         <p id="fulfillment-address-error-shipment-{{ $shipment->id }}" class="hidden text-xs text-red-600"></p>
                                         <div class="flex flex-wrap gap-2">
                                             <button type="submit" class="rounded-lg bg-[#AE7C18] px-3 py-2 text-xs font-semibold text-white">Simpan Alamat</button>
@@ -404,11 +404,11 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             </div>
 
                             <div class="mt-3 grid grid-cols-2 gap-3">
-                                <div class="rounded-xl bg-white p-3">
+                                <div class="rounded-xl border border-slate-300 bg-white p-3">
                                     <p class="text-[12px] font-semibold uppercase text-slate-400">Ongkos kirim</p>
                                     <p class="mt-1 text-sm font-bold text-slate-900">Rp{{ number_format((float) $shipment->shipping_cost, 0, ',', '.') }}</p>
                                 </div>
-                                <div class="rounded-xl bg-white p-3">
+                                <div class="rounded-xl border border-slate-300 bg-white p-3">
                                     <p class="text-[12px] font-semibold uppercase text-slate-400">Kurir / layanan</p>
                                     <p class="mt-1 text-sm font-bold text-slate-900">{{ $shipment->courier ?: $shipment->courier_code ?: '-' }}</p>
                                     <p class="mt-1 text-xs text-slate-500">{{ $shipment->courier_service_code ?: '-' }}</p>

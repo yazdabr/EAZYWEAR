@@ -501,4 +501,51 @@ class BiteshipService
             'raw' => $response,
         ];
     }
+
+    /**
+     * Retrieve tracking history from Biteship.
+     */
+    public function getTracking(string $trackingId): array
+    {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException(
+                'Konfigurasi Biteship belum lengkap.'
+            );
+        }
+
+        $trackingId = trim($trackingId);
+
+        if ($trackingId === '') {
+            throw new InvalidArgumentException(
+                'Biteship tracking ID wajib diisi.'
+            );
+        }
+
+        $response = $this->request(
+            'GET',
+            '/v1/trackings/' . rawurlencode($trackingId)
+        );
+
+        return [
+            'success' => ! empty($response['success']),
+            'tracking_id' => $response['id'] ?? $trackingId,
+            'waybill_id' => $response['waybill_id'] ?? null,
+            'courier_code' => $response['courier']['company'] ?? null,
+            'status' => $response['status'] ?? null,
+            'history' => is_array($response['history'] ?? null)
+                ? $response['history']
+                : [],
+            'link' => $response['link'] ?? null,
+            'courier' => is_array($response['courier'] ?? null)
+                ? $response['courier']
+                : [],
+            'origin' => is_array($response['origin'] ?? null)
+                ? $response['origin']
+                : [],
+            'destination' => is_array($response['destination'] ?? null)
+                ? $response['destination']
+                : [],
+            'raw' => $response,
+        ];
+    }
 }

@@ -1380,6 +1380,279 @@ class TransactionController extends Controller
         }
     }
 
+    public function trackingLegacyTransaction(
+        Transaction $transaction,
+        BiteshipService $biteshipService
+    ) {
+        if (
+            ! $transaction->biteship_order_id
+            || ! $transaction->biteship_tracking_id
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tracking Biteship belum tersedia untuk transaksi ini.',
+            ], 422);
+        }
+
+        try {
+            $tracking = $biteshipService->getTracking(
+                $transaction->biteship_tracking_id
+            );
+
+            if (empty($tracking['success'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Biteship belum menyediakan data tracking untuk transaksi ini.',
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'tracking_number' => $transaction->tracking_number
+                        ?: ($transaction->biteship_waybill_id ?: ($tracking['waybill_id'] ?? null)),
+                    'courier' => $tracking['courier_code'] ?? null,
+                    'status' => ($tracking['status'] ?? null)
+                        ?: ($transaction->biteship_status ?? null),
+                    'history' => $tracking['history'] ?? [],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Tracking belum dapat dimuat. Silakan coba kembali.',
+            ], 502);
+        }
+    }
+    public function trackingShipment(
+        Transaction $transaction,
+        TransactionShipment $shipment,
+        BiteshipService $biteshipService
+    ) {
+        if ((int) $shipment->transaction_id !== (int) $transaction->id) {
+            abort(404);
+        }
+
+        if (
+            ! $shipment->biteship_order_id
+            || ! $shipment->biteship_tracking_id
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tracking Biteship belum tersedia untuk pengiriman ini.',
+            ], 422);
+        }
+
+        try {
+            $tracking = $biteshipService->getTracking(
+                $shipment->biteship_tracking_id
+            );
+
+            if (empty($tracking['success'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Biteship belum menyediakan data tracking untuk pengiriman ini.',
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'tracking_number' => $shipment->tracking_number
+                        ?: ($shipment->biteship_waybill_id ?: ($tracking['waybill_id'] ?? null)),
+                    'courier' => $shipment->courier
+                        ?: ($shipment->courier_code ?: ($tracking['courier_code'] ?? null)),
+                    'status' => $tracking['status']
+                        ?: $shipment->biteship_status,
+                    'history' => $tracking['history'],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Tracking belum dapat dimuat. Silakan coba kembali.',
+            ], 502);
+        }
+    }
+    public function trackingFulfillment(
+        Transaction $transaction,
+        TransactionFulfillment $fulfillment,
+        BiteshipService $biteshipService
+    ) {
+        if ((int) $fulfillment->transaction_id !== (int) $transaction->id) {
+            abort(404);
+        }
+
+        if (
+            ! $fulfillment->biteship_order_id
+            || ! $fulfillment->biteship_tracking_id
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tracking Biteship belum tersedia untuk pemenuhan ini.',
+            ], 422);
+        }
+
+        try {
+            $tracking = $biteshipService->getTracking(
+                $fulfillment->biteship_tracking_id
+            );
+
+            if (empty($tracking['success'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Biteship belum menyediakan data tracking untuk pemenuhan ini.',
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'tracking_number' => $fulfillment->tracking_number
+                        ?: $fulfillment->biteship_waybill_id
+                        ?: $tracking['waybill_id'],
+                    'courier' => $fulfillment->courier
+                        ?: $fulfillment->courier_code
+                        ?: $tracking['courier_code'],
+                    'status' => $tracking['status']
+                        ?: $fulfillment->biteship_status,
+                    'history' => $tracking['history'],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Tracking belum dapat dimuat. Silakan coba kembali.',
+            ], 502);
+        }
+    }
+    public function printLegacyTransactionLabel(Transaction $transaction)
+    {
+        if ($transaction->shipping_method !== 'Kurir') {
+            abort(404, 'Label hanya tersedia untuk transaksi dengan pengiriman kurir.');
+        }
+
+        if ($transaction->shipments()->exists()) {
+            abort(404, 'Transaksi ini sudah memiliki shipment. Gunakan label shipment.');
+        }
+
+        $transaction->loadMissing([
+            'items.productVariant.product',
+            'items.productVariant.size',
+            'items.productVariant.color',
+        ]);
+
+        $shipment = new TransactionShipment([
+            'transaction_id' => $transaction->id,
+            'shipment_type' => 'legacy',
+            'shipping_method' => $transaction->shipping_method,
+            'shipping_cost' => $transaction->shipping,
+            'shipping_name' => $transaction->shipping_name,
+            'shipping_email' => $transaction->shipping_email,
+            'shipping_phone' => $transaction->shipping_phone,
+            'shipping_address' => $transaction->shipping_address,
+            'shipping_district' => $transaction->shipping_district,
+            'shipping_city' => $transaction->shipping_city,
+            'shipping_province' => $transaction->shipping_province,
+            'shipping_postal_code' => $transaction->shipping_postal_code,
+            'courier' => $transaction->courier,
+            'courier_code' => $transaction->courier_code,
+            'courier_service_code' => $transaction->courier_service_code,
+            'tracking_number' => $transaction->tracking_number,
+            'biteship_order_id' => $transaction->biteship_order_id,
+            'biteship_tracking_id' => $transaction->biteship_tracking_id,
+            'biteship_waybill_id' => $transaction->biteship_waybill_id,
+            'biteship_status' => $transaction->biteship_status,
+        ]);
+
+        $shipment->setRelation('fulfillments', collect());
+
+        return view('admin.transactions.shipment-label', [
+            'transaction' => $transaction,
+            'shipment' => $shipment,
+            'origin' => config('biteship.origin', []),
+            'legacyLabel' => true,
+        ]);
+    }
+    public function printFulfillmentLabel(
+        Transaction $transaction,
+        TransactionFulfillment $fulfillment
+    ) {
+        if ((int) $fulfillment->transaction_id !== (int) $transaction->id) {
+            abort(404);
+        }
+
+        if ($fulfillment->shipping_method !== 'Kurir') {
+            abort(404, 'Label pengiriman hanya tersedia untuk fulfillment kurir.');
+        }
+
+        $transaction->loadMissing('items');
+        $fulfillment->load([
+            'items.productVariant.product',
+            'items.productVariant.size',
+            'items.productVariant.color',
+        ]);
+
+        $shipment = new TransactionShipment([
+            'id' => $fulfillment->id,
+            'transaction_id' => $transaction->id,
+            'shipment_type' => 'fulfillment',
+            'shipping_method' => $fulfillment->shipping_method,
+            'shipping_cost' => $fulfillment->shipping_cost,
+            'shipping_name' => $fulfillment->shipping_name ?: $transaction->shipping_name,
+            'shipping_email' => $fulfillment->shipping_email ?: $transaction->shipping_email,
+            'shipping_phone' => $fulfillment->shipping_phone ?: $transaction->shipping_phone,
+            'shipping_address' => $fulfillment->shipping_address ?: $transaction->shipping_address,
+            'shipping_district' => $fulfillment->shipping_district ?: $transaction->shipping_district,
+            'shipping_city' => $fulfillment->shipping_city ?: $transaction->shipping_city,
+            'shipping_province' => $fulfillment->shipping_province ?: $transaction->shipping_province,
+            'shipping_postal_code' => $fulfillment->shipping_postal_code ?: $transaction->shipping_postal_code,
+            'courier' => $fulfillment->courier,
+            'courier_code' => $fulfillment->courier_code,
+            'courier_service_code' => $fulfillment->courier_service_code,
+            'tracking_number' => $fulfillment->tracking_number,
+            'biteship_order_id' => $fulfillment->biteship_order_id,
+            'biteship_tracking_id' => $fulfillment->biteship_tracking_id,
+            'biteship_waybill_id' => $fulfillment->biteship_waybill_id,
+            'biteship_status' => $fulfillment->biteship_status,
+        ]);
+
+        $shipment->setRelation('fulfillments', collect([$fulfillment]));
+
+        return view('admin.transactions.shipment-label', [
+            'transaction' => $transaction,
+            'shipment' => $shipment,
+            'origin' => config('biteship.origin', []),
+            'fulfillmentLabel' => true,
+            'labelFulfillment' => $fulfillment,
+        ]);
+    }
+    public function printShipmentLabel(
+        Transaction $transaction,
+        TransactionShipment $shipment
+    ) {
+        if ((int) $shipment->transaction_id !== (int) $transaction->id) {
+            abort(404);
+        }
+
+        if ($shipment->shipping_method !== 'Kurir') {
+            abort(404, 'Label pengiriman hanya tersedia untuk shipment kurir.');
+        }
+
+        $origin = config('biteship.origin', []);
+
+        return view('admin.transactions.shipment-label', [
+            'transaction' => $transaction,
+            'shipment' => $shipment,
+            'origin' => $origin,
+        ]);
+    }
     public function updateShipmentShippingAddress(
         Request $request,
         Transaction $transaction,

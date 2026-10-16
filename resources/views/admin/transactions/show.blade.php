@@ -83,11 +83,13 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 <h2 class="font-bold text-slate-900 text-sm sm:text-base">Informasi Pelanggan</h2>
                 <p class="text-xs text-slate-500">Rincian kontak dan pengiriman pesanan</p>
             </div>
+
+
         </div>
 
         <!-- Grid Content (2 Kolom Seimbang) -->
         <div class="grid grid-cols-1 {{ $transaction->fulfillments->isEmpty() ? 'md:grid-cols-2' : 'md:grid-cols-1' }} gap-6 text-xs sm:text-sm">
-            
+
             {{-- Seksi 1: Kontak Pelanggan --}}
             <div class="space-y-4 rounded-xl bg-slate-50/70 p-4 border border-slate-100">
                 <div class="flex flex-wrap items-center justify-between gap-2">
@@ -180,7 +182,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                     <p class=" text-xs leading-relaxed text-amber-800">
                         <strong>Informasi:</strong> Edit alamat hanya untuk Kurir sebelum resi dibuat.
                     </p>
-                    
+
                     <!-- Grid Berdampingan untuk Metode & Jadwal -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                         <div>
@@ -228,6 +230,31 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                         <p id="shipping-address-display" class="mt-1 text-sm leading-relaxed font-semibold text-slate-900 sm:text-base">{{ $transaction->shipping_address }}</p>
                         <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}</p>
+
+                        @if($transaction->shipping_method === 'Kurir' && $transaction->fulfillments->isEmpty() && $transaction->shipments->isEmpty())
+                            <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                <a
+                                    href="{{ route('admin.transactions.legacy-label', $transaction) }}"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-700"
+                                >
+                                    <x-heroicon-o-printer class="h-4 w-4" />
+                                    Cetak Label Pengiriman
+                                </a>
+
+                                @if($transaction->biteship_order_id && $transaction->biteship_tracking_id)
+                                    <button
+                                        type="button"
+                                        onclick="openShipmentTrackingModal(@js(route('admin.transactions.legacy-tracking', $transaction)))"
+                                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                                    >
+                                        <x-heroicon-o-map-pin class="h-4 w-4" />
+                                        Tracking Resi
+                                    </button>
+                                @endif
+                            </div>
+                        @endif
 
                         @if(
                             in_array($transaction->status, ['PAID', 'ORDER_PROCESSING'], true) &&
@@ -415,13 +442,43 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 </div>
                             </div>
 
-                            @if($shipment->tracking_number || $shipment->biteship_tracking_id || $shipment->biteship_waybill_id)
+                            @if($shipment->shipping_method === 'Kurir' || $shipment->tracking_number || $shipment->biteship_tracking_id || $shipment->biteship_waybill_id)
                                 <div class="mt-3 rounded-xl bg-white p-3">
                                     <p class="text-xs font-semibold text-slate-500">Nomor resi / pelacakan</p>
                                     <p class="mt-1 break-all text-sm font-bold text-slate-900">{{ $shipment->tracking_number ?: $shipment->biteship_waybill_id ?: $shipment->biteship_tracking_id }}</p>
                                     @if($shipment->biteship_status)
                                         <p class="mt-1 text-xs text-slate-500">Status kurir: {{ $shipment->biteship_status }}</p>
                                     @endif
+                                    <div class="mt-3 grid grid-cols-2 gap-2">
+@if($shipment->shipping_method === 'Kurir')
+                                        <a
+                                            href="{{ route('admin.transactions.shipments.label', ['transaction' => $transaction, 'shipment' => $shipment]) }}"
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-slate-700">
+                                            <x-heroicon-o-printer class="h-4 w-4 shrink-0" />
+                                            <span>Cetak Label Resi</span>
+                                        </a>
+                                    @endif
+                                    @if($shipment->biteship_order_id && $shipment->biteship_tracking_id)
+                                        <button
+                                            type="button"
+                                            onclick="openShipmentTrackingModal(@js(route('admin.transactions.shipments.tracking', ['transaction' => $transaction, 'shipment' => $shipment])))"
+                                            class="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2.5 text-center text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
+                                            <x-heroicon-o-map-pin class="h-4 w-4 shrink-0" />
+                                            <span>Tracking Resi</span>
+                                        </button>
+                                    @else
+                                        <button
+                                            type="button"
+                                            disabled
+                                            title="Tracking tersedia setelah data tracking Biteship tersimpan"
+                                            class="inline-flex min-w-0 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-2 py-2.5 text-center text-xs font-semibold text-slate-400">
+                                            <x-heroicon-o-map-pin class="h-4 w-4 shrink-0" />
+                                            <span>Tracking Belum Tersedia</span>
+                                        </button>
+                                    @endif
+</div>
                                 </div>
                             @endif
 
@@ -451,6 +508,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 ->flatMap(fn ($shipment) => $shipment->fulfillments->pluck('id'))
                 ->all();
             @endphp
+
             <div class="mx-auto grid w-full grid-cols-1 gap-4 {{ $transaction->fulfillments->count() > 1 ? 'xl:grid-cols-2' : 'xl:max-w-2xl' }}">
                 @foreach($transaction->fulfillments as $fulfillment)
                     @if(in_array($fulfillment->id, $shippedFulfillmentIds, true))
@@ -648,7 +706,36 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     </div>
                                 </div>
 
-                                @if($fulfillment->biteship_status)
+
+                                @if($fulfillment->shipping_method === 'Kurir' && $transaction->shipments->isEmpty())
+                                    <div class="mt-3 grid grid-cols-2 gap-2">
+                                        <a
+                                            href="{{ route('admin.transactions.fulfillments.label', ['transaction' => $transaction, 'fulfillment' => $fulfillment]) }}"
+                                            target="_blank"
+                                            rel="noopener"
+                                            class="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-slate-700"
+                                        >
+                                            <x-heroicon-o-printer class="h-4 w-4 shrink-0" />
+                                            <span>Cetak Label Resi</span>
+                                        </a>
+
+                                        @if($fulfillment->biteship_order_id && $fulfillment->biteship_tracking_id)
+                                            <button
+                                                type="button"
+                                                onclick="openShipmentTrackingModal(@js(route('admin.transactions.fulfillments.tracking', ['transaction' => $transaction, 'fulfillment' => $fulfillment])))"
+                                                class="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2 py-2.5 text-center text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                                            >
+                                                <x-heroicon-o-map-pin class="h-4 w-4 shrink-0" />
+                                                <span>Tracking Resi</span>
+                                            </button>
+                                        @else
+                                            <div class="flex w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-2 py-2.5 text-center text-xs font-medium text-slate-400">
+                                                Tracking belum tersedia
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
+@if($fulfillment->biteship_status)
                                     <p class="text-[11px] text-slate-500">
                                         Status Biteship:
                                         <span class="font-semibold">{{ str_replace('_', ' ', ucfirst($fulfillment->biteship_status)) }}</span>
@@ -749,6 +836,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
             </div>
         </section>
     @endif
+
     <div class="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-3">
             <div class="h-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                 <div class="mb-4 sm:mb-5 flex items-center gap-2.5 sm:gap-3">
@@ -1121,6 +1209,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 </div>
 
 @include('admin.transactions.partials.action-confirmation-modal')
+@include('admin.transactions.partials.tracking-modal')
 
 <script>
 function checkDokuPayment(id) {

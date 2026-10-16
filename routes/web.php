@@ -157,11 +157,31 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/transactions/{transaction}/fulfillments/{fulfillment}/ship', [TransactionController::class, 'shipFulfillment'])->name('transactions.fulfillments.ship');
         Route::patch('/transactions/{transaction}/fulfillments/{fulfillment}/shipping-address', [TransactionController::class, 'updateFulfillmentShippingAddress'])->name('transactions.fulfillments.shipping-address.update');
         Route::patch('/transactions/{transaction}/fulfillments/{fulfillment}/complete', [TransactionController::class, 'completeFulfillment'])->name('transactions.fulfillments.complete');
+        Route::get('/transactions/{transaction}/fulfillments/{fulfillment}/tracking', [TransactionController::class, 'trackingFulfillment'])->name('transactions.fulfillments.tracking');
+        Route::get('/transactions/{transaction}/fulfillments/{fulfillment}/label', [TransactionController::class, 'printFulfillmentLabel'])->name('transactions.fulfillments.label');
 
         Route::patch(
             '/transactions/{transaction}/shipments/{shipment}/ship',
             [TransactionController::class, 'shipShipment']
         )->name('transactions.shipments.ship');
+
+        Route::get(
+            '/transactions/{transaction}/tracking',
+            [TransactionController::class, 'trackingLegacyTransaction']
+        )->name('transactions.legacy-tracking');
+        Route::get(
+            '/transactions/{transaction}/shipments/{shipment}/tracking',
+            [TransactionController::class, 'trackingShipment']
+        )->name('transactions.shipments.tracking');
+        Route::get(
+            '/transactions/{transaction}/shipments/{shipment}/label',
+            [TransactionController::class, 'printShipmentLabel']
+        )->name('transactions.shipments.label');
+
+        Route::get(
+            '/transactions/{transaction}/label',
+            [TransactionController::class, 'printLegacyTransactionLabel']
+        )->name('transactions.legacy-label');
 
         Route::patch(
             '/transactions/{transaction}/shipments/{shipment}/shipping-address',

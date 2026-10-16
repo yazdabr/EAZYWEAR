@@ -628,4 +628,59 @@ class BiteshipServiceTest extends TestCase
             $this->orderPayload()
         );
     }
+    public function test_get_tracking_accepts_successful_response_with_empty_status_and_history(): void
+    {
+        Http::fake([
+            'https://api.biteship.test/v1/trackings/track-empty-001' =>
+                Http::response([
+                    'success' => true,
+                    'id' => 'track-empty-001',
+                    'waybill_id' => null,
+                    'status' => null,
+                    'history' => [],
+                ], 200),
+        ]);
+
+        $result = app(BiteshipService::class)->getTracking(
+            'track-empty-001'
+        );
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('track-empty-001', $result['tracking_id']);
+        $this->assertNull($result['waybill_id']);
+        $this->assertNull($result['status']);
+        $this->assertSame([], $result['history']);
+    }
+
+    public function test_get_tracking_maps_waybill_status_and_history(): void
+    {
+        Http::fake([
+            'https://api.biteship.test/v1/trackings/track-ready-001' =>
+                Http::response([
+                    'success' => true,
+                    'id' => 'track-ready-001',
+                    'waybill_id' => 'WB-TEST-001',
+                    'status' => 'in_transit',
+                    'courier' => [
+                        'company' => 'jne',
+                    ],
+                    'history' => [
+                        [
+                            'status' => 'in_transit',
+                            'note' => 'Paket sedang dalam perjalanan',
+                        ],
+                    ],
+                ], 200),
+        ]);
+
+        $result = app(BiteshipService::class)->getTracking(
+            'track-ready-001'
+        );
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('WB-TEST-001', $result['waybill_id']);
+        $this->assertSame('jne', $result['courier_code']);
+        $this->assertSame('in_transit', $result['status']);
+        $this->assertCount(1, $result['history']);
+    }
 }

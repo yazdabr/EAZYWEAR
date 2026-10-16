@@ -721,6 +721,12 @@ class TransactionController extends Controller
                     ]);
                 }
 
+                if ($lockedTransaction->fulfillments()->exists()) {
+                    throw ValidationException::withMessages([
+                        'transaction' => 'Transaksi dengan fulfillment harus diproses melalui pengiriman fulfillment atau shipment.'
+                    ]);
+                }
+
                 if ($lockedTransaction->shipping_method !== 'Kurir') {
                     throw ValidationException::withMessages([
                         'transaction' => 'Pesanan ini bukan menggunakan metode pengiriman kurir.'
@@ -809,10 +815,16 @@ class TransactionController extends Controller
                         'courier' => $biteshipOrder['courier_code'] ?? $lockedTransaction->courier,
                     ]);
 
-                    $lockedTransaction->updateStatus(
-                        'ORDER_SHIPPED',
-                        'Pesanan telah dikirim melalui Biteship.'
-                    );
+                    $providerStatus = strtolower(trim((string) ($biteshipOrder['status'] ?? '')));
+
+                    if (in_array($providerStatus, ['picked', 'in_transit', 'dropping_off', 'delivered'], true)) {
+                        $lockedTransaction->updateStatus(
+                            'ORDER_SHIPPED',
+                            $providerStatus === 'delivered'
+                                ? 'Pengiriman Biteship telah selesai.'
+                                : 'Pesanan telah dikirim melalui Biteship.'
+                        );
+                    }
 
                     return $lockedTransaction->fresh();
                 });
@@ -886,34 +898,52 @@ class TransactionController extends Controller
                         'tracking_number' => $biteshipOrder['waybill_id'] ?? $biteshipOrder['tracking_id'],
                     ]);
 
-                    $lockedTransaction->updateStatus(
-                        'ORDER_SHIPPED',
-                        'Pesanan telah dikirim melalui Biteship.'
-                    );
+                    $providerStatus = strtolower(trim((string) ($biteshipOrder['status'] ?? '')));
+
+                    if (in_array($providerStatus, ['picked', 'in_transit', 'dropping_off', 'delivered'], true)) {
+                        $lockedTransaction->updateStatus(
+                            'ORDER_SHIPPED',
+                            $providerStatus === 'delivered'
+                                ? 'Pengiriman Biteship telah selesai.'
+                                : 'Pesanan telah dikirim melalui Biteship.'
+                        );
+                    }
 
                     return $lockedTransaction->fresh();
                 });
             }
 
-            $notification = TransactionNotification::firstOrCreate(
-                [
-                    'transaction_id' => $shippedTransaction->id,
-                    'type' => 'ORDER_SHIPPED_EMAIL',
-                ],
-                [
-                    'sent_at' => null,
-                ]
-            );
+            if ($shippedTransaction->biteship_status === 'delivered') {
+                $shippedTransaction = $this->transactionCompletionService
+                    ->completeFromBiteship($shippedTransaction);
 
-            if (is_null($notification->sent_at)) {
-                try {
-                    app(EmailArchiveService::class)->send($shippedTransaction->shipping_email, new OrderShippedMail($shippedTransaction));
+                $shippedTransaction = $shippedTransaction->fresh();
+            }
 
-                    $notification->update([
-                        'sent_at' => now(),
-                    ]);
-                } catch (\Throwable $e) {
-                    report($e);
+            if ($shippedTransaction->status === 'ORDER_SHIPPED') {
+                $notification = TransactionNotification::firstOrCreate(
+                    [
+                        'transaction_id' => $shippedTransaction->id,
+                        'type' => 'ORDER_SHIPPED_EMAIL',
+                    ],
+                    [
+                        'sent_at' => null,
+                    ]
+                );
+
+                if (is_null($notification->sent_at)) {
+                    try {
+                        app(EmailArchiveService::class)->send(
+                            $shippedTransaction->shipping_email,
+                            new OrderShippedMail($shippedTransaction)
+                        );
+
+                        $notification->update([
+                            'sent_at' => now(),
+                        ]);
+                    } catch (\Throwable $e) {
+                        report($e);
+                    }
                 }
             }
 
@@ -1092,7 +1122,9 @@ class TransactionController extends Controller
                 }
             }
 
-            DB::transaction(function () use ($snapshot, $order) {
+            $providerStatus = null;
+
+            DB::transaction(function () use ($snapshot, $order, &$providerStatus) {
                 $group = TransactionFulfillment::query()
                     ->whereKey($snapshot['fulfillment_id'])
                     ->lockForUpdate()
@@ -1121,18 +1153,51 @@ class TransactionController extends Controller
                     ]);
                 }
 
-                $group->update([
+                $providerStatus = strtolower(trim((string) (
+                    $order['status'] ?? $group->biteship_status ?? ''
+                )));
+
+                $updates = [
                     'biteship_order_id' => $order['order_id'],
                     'biteship_tracking_id' => $order['tracking_id'] ?? $group->biteship_tracking_id,
                     'biteship_waybill_id' => $order['waybill_id'] ?? $group->biteship_waybill_id,
-                    'biteship_status' => $order['status'] ?? $group->biteship_status,
+                    'biteship_status' => $providerStatus ?: $group->biteship_status,
                     'tracking_number' => $order['waybill_id']
                         ?? $order['tracking_id']
                         ?? $group->tracking_number,
                     'courier' => $order['courier_code'] ?? $group->courier,
-                    'status' => TransactionFulfillment::STATUS_SHIPPED,
-                ]);
+                ];
+
+                $mappedStatus = match ($providerStatus) {
+                    'picked', 'in_transit', 'dropping_off' => TransactionFulfillment::STATUS_SHIPPED,
+                    'delivered' => null,
+                    'cancelled', 'returned', 'rejected', 'courier_not_found',
+                    'disposed', 'return_in_transit' => null,
+                    default => TransactionFulfillment::STATUS_PROCESSING,
+                };
+
+                if (
+                    $mappedStatus !== null
+                    && $group->status !== TransactionFulfillment::STATUS_COMPLETED
+                    && ! (
+                        $mappedStatus === TransactionFulfillment::STATUS_PROCESSING
+                        && $group->status === TransactionFulfillment::STATUS_SHIPPED
+                    )
+                ) {
+                    $updates['status'] = $mappedStatus;
+                }
+
+                $group->update($updates);
             });
+
+            if ($providerStatus === 'delivered') {
+                $deliveredGroup = TransactionFulfillment::query()
+                    ->whereKey($snapshot['fulfillment_id'])
+                    ->firstOrFail();
+
+                $this->transactionCompletionService
+                    ->completeFulfillmentFromBiteship($deliveredGroup);
+            }
 
             return response()->json([
                 'success' => true,
@@ -1317,7 +1382,9 @@ class TransactionController extends Controller
                 );
             }
 
-            DB::transaction(function () use ($snapshot, $order) {
+            $providerStatus = null;
+
+            DB::transaction(function () use ($snapshot, $order, &$providerStatus) {
                 $shipment = TransactionShipment::query()
                     ->whereKey($snapshot['shipment_id'])
                     ->lockForUpdate()
@@ -1377,28 +1444,84 @@ class TransactionController extends Controller
                 $waybill = $order['waybill_id'] ?? $shipment->biteship_waybill_id;
                 $trackingId = $order['tracking_id'] ?? $shipment->biteship_tracking_id;
                 $courier = $order['courier_code'] ?? $shipment->courier;
+                $providerStatus = strtolower(trim((string) (
+                    $order['status'] ?? $shipment->biteship_status ?? ''
+                )));
 
-                $shipment->update([
+                $shipmentUpdates = [
                     'biteship_order_id' => $order['order_id'],
                     'biteship_tracking_id' => $trackingId,
                     'biteship_waybill_id' => $waybill,
-                    'biteship_status' => $order['status'] ?? $shipment->biteship_status,
+                    'biteship_status' => $providerStatus ?: $shipment->biteship_status,
                     'tracking_number' => $waybill ?? $trackingId ?? $shipment->tracking_number,
                     'courier' => $courier,
-                    'status' => TransactionShipment::STATUS_SHIPPED,
-                ]);
+                ];
+
+                $shipmentStatus = match ($providerStatus) {
+                    'picked', 'in_transit', 'dropping_off' => TransactionShipment::STATUS_SHIPPED,
+                    'delivered' => TransactionShipment::STATUS_COMPLETED,
+                    'cancelled', 'returned', 'rejected', 'courier_not_found',
+                    'disposed', 'return_in_transit' => null,
+                    default => TransactionShipment::STATUS_PROCESSING,
+                };
+
+                if (
+                    $shipmentStatus !== null
+                    && $shipment->status !== TransactionShipment::STATUS_COMPLETED
+                    && ! (
+                        $shipmentStatus === TransactionShipment::STATUS_PROCESSING
+                        && $shipment->status === TransactionShipment::STATUS_SHIPPED
+                    )
+                ) {
+                    $shipmentUpdates['status'] = $shipmentStatus;
+                }
+
+                $shipment->update($shipmentUpdates);
 
                 foreach ($groups as $group) {
-                    $group->update([
+                    $groupUpdates = [
                         'biteship_tracking_id' => $trackingId ?? $group->biteship_tracking_id,
                         'biteship_waybill_id' => $waybill ?? $group->biteship_waybill_id,
-                        'biteship_status' => $order['status'] ?? $group->biteship_status,
+                        'biteship_status' => $providerStatus ?: $group->biteship_status,
                         'tracking_number' => $waybill ?? $trackingId ?? $group->tracking_number,
                         'courier' => $courier ?? $group->courier,
-                        'status' => TransactionFulfillment::STATUS_SHIPPED,
-                    ]);
+                    ];
+
+                    $groupStatus = match ($providerStatus) {
+                        'picked', 'in_transit', 'dropping_off' => TransactionFulfillment::STATUS_SHIPPED,
+                        'delivered' => null,
+                        'cancelled', 'returned', 'rejected', 'courier_not_found',
+                        'disposed', 'return_in_transit' => null,
+                        default => TransactionFulfillment::STATUS_PROCESSING,
+                    };
+
+                    if (
+                        $groupStatus !== null
+                        && $group->status !== TransactionFulfillment::STATUS_COMPLETED
+                        && ! (
+                            $groupStatus === TransactionFulfillment::STATUS_PROCESSING
+                            && $group->status === TransactionFulfillment::STATUS_SHIPPED
+                        )
+                    ) {
+                        $groupUpdates['status'] = $groupStatus;
+                    }
+
+                    $group->update($groupUpdates);
                 }
             });
+
+            if ($providerStatus === 'delivered') {
+                $deliveredGroups = TransactionFulfillment::query()
+                    ->whereHas('shipments', function ($query) use ($shipment) {
+                        $query->where('transaction_shipments.id', $shipment->id);
+                    })
+                    ->get();
+
+                foreach ($deliveredGroups as $group) {
+                    $this->transactionCompletionService
+                        ->completeFulfillmentFromBiteship($group);
+                }
+            }
 
             return response()->json([
                 'success' => true,

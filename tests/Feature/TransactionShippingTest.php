@@ -97,7 +97,7 @@ class TransactionShippingTest extends TestCase
                 'success' => true,
                 'data' => [
                     'id' => $transaction->id,
-                    'status' => Transaction::ORDER_SHIPPED,
+                    'status' => Transaction::ORDER_PROCESSING,
                     'biteship_order_id' => 'BTS-TEST-ORDER-001',
                     'biteship_tracking_id' => 'BTS-TRACK-001',
                     'biteship_waybill_id' => 'BTS-WAYBILL-001',
@@ -108,7 +108,7 @@ class TransactionShippingTest extends TestCase
         $transaction->refresh();
 
         $this->assertSame(
-            Transaction::ORDER_SHIPPED,
+            Transaction::ORDER_PROCESSING,
             $transaction->status
         );
 
@@ -142,14 +142,9 @@ class TransactionShippingTest extends TestCase
             $transaction->courier
         );
 
-        Mail::assertSent(
-            OrderShippedMail::class,
-            function (OrderShippedMail $mail) use ($transaction) {
-                return $mail->transaction->id === $transaction->id;
-            }
-        );
+        Mail::assertNotSent(OrderShippedMail::class);
 
-        $this->assertDatabaseHas('transaction_notifications', [
+        $this->assertDatabaseMissing('transaction_notifications', [
             'transaction_id' => $transaction->id,
             'type' => 'ORDER_SHIPPED_EMAIL',
         ]);
@@ -300,7 +295,7 @@ class TransactionShippingTest extends TestCase
                 'success' => true,
                 'data' => [
                     'id' => $transaction->id,
-                    'status' => Transaction::ORDER_SHIPPED,
+                    'status' => Transaction::ORDER_PROCESSING,
                     'biteship_order_id' => 'BTS-EXISTING-ORDER-001',
                     'biteship_tracking_id' => 'BTS-EXISTING-TRACK-001',
                     'biteship_waybill_id' => 'BTS-EXISTING-WAYBILL-001',
@@ -311,7 +306,7 @@ class TransactionShippingTest extends TestCase
         $transaction->refresh();
 
         $this->assertSame(
-            Transaction::ORDER_SHIPPED,
+            Transaction::ORDER_PROCESSING,
             $transaction->status
         );
 
@@ -340,12 +335,12 @@ class TransactionShippingTest extends TestCase
             $transaction->tracking_number
         );
 
-        Mail::assertSent(
-            OrderShippedMail::class,
-            function (OrderShippedMail $mail) use ($transaction) {
-                return $mail->transaction->id === $transaction->id;
-            }
-        );
+        Mail::assertNotSent(OrderShippedMail::class);
+
+        $this->assertDatabaseMissing('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_SHIPPED_EMAIL',
+        ]);
     }
     public function test_admin_ship_uses_manual_tracking_when_biteship_courier_is_unavailable(): void
     {
@@ -487,6 +482,142 @@ class TransactionShippingTest extends TestCase
         }
     }
 
+    public function test_admin_ship_shipment_delivered_completes_shipment_and_all_fulfillments(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $this->actingAs($user);
+
+        $customer = Customer::query()->firstOrFail();
+        $variant = ProductVariant::query()->with('product')->firstOrFail();
+
+        $transaction = Transaction::create([
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-COMBINED-DELIVERED-TEST',
+            'transaction_date' => now(),
+            'payment_method' => 'VA',
+            'subtotal' => 200000,
+            'discount' => 0,
+            'shipping' => 15000,
+            'total' => 215000,
+            'status' => Transaction::ORDER_PROCESSING,
+            'source' => 'Website',
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+            'shipping_name' => 'Customer Delivered Test',
+            'shipping_email' => 'combined-delivered@test.com',
+            'shipping_phone' => '08123456789',
+            'shipping_address' => 'Alamat Delivered Test',
+            'shipping_district' => 'Banjarmasin Selatan',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+        ]);
+
+        $groups = collect([
+            TransactionFulfillment::GROUP_READY,
+            TransactionFulfillment::GROUP_PRE_ORDER,
+        ])->map(function (string $type) use ($transaction, $variant) {
+            $group = TransactionFulfillment::create([
+                'transaction_id' => $transaction->id,
+                'group_type' => $type,
+                'shipping_method' => 'Kurir',
+                'shipping_cost' => 0,
+                'shipping_name' => $transaction->shipping_name,
+                'shipping_email' => $transaction->shipping_email,
+                'shipping_phone' => $transaction->shipping_phone,
+                'shipping_address' => $transaction->shipping_address,
+                'shipping_city' => $transaction->shipping_city,
+                'shipping_province' => $transaction->shipping_province,
+                'shipping_postal_code' => $transaction->shipping_postal_code,
+                'courier_code' => 'jnt',
+                'courier_service_code' => 'ez',
+                'status' => TransactionFulfillment::STATUS_PENDING,
+            ]);
+
+            TransactionItem::create([
+                'transaction_id' => $transaction->id,
+                'transaction_fulfillment_id' => $group->id,
+                'product_variant_id' => $variant->id,
+                'qty' => 1,
+                'price' => 100000,
+                'subtotal' => 100000,
+                'weight' => 500,
+            ]);
+
+            return $group;
+        });
+
+        $shipment = TransactionShipment::create([
+            'transaction_id' => $transaction->id,
+            'shipment_type' => TransactionShipment::TYPE_COMBINED,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 15000,
+            'shipping_name' => $transaction->shipping_name,
+            'shipping_email' => $transaction->shipping_email,
+            'shipping_phone' => $transaction->shipping_phone,
+            'shipping_address' => $transaction->shipping_address,
+            'shipping_district' => $transaction->shipping_district,
+            'shipping_city' => $transaction->shipping_city,
+            'shipping_province' => $transaction->shipping_province,
+            'shipping_postal_code' => $transaction->shipping_postal_code,
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'status' => TransactionShipment::STATUS_PENDING,
+        ]);
+
+        $shipment->fulfillments()->attach($groups->pluck('id')->all());
+
+        $this->mock(BiteshipService::class)
+            ->shouldReceive('createOrder')
+            ->once()
+            ->andReturn([
+                'success' => true,
+                'order_id' => 'BTS-COMBINED-DELIVERED-001',
+                'tracking_id' => 'BTS-COMBINED-DELIVERED-TRACK',
+                'waybill_id' => 'BTS-COMBINED-DELIVERED-WAYBILL',
+                'status' => 'delivered',
+                'reference_id' => $transaction->invoice_number . '-SHIPMENT-' . $shipment->id,
+                'courier_code' => 'jnt',
+                'courier_type' => 'ez',
+            ]);
+
+        $response = $this->patch(route('admin.transactions.shipments.ship', [
+            'transaction' => $transaction->id,
+            'shipment' => $shipment->id,
+        ]));
+
+        $response->assertOk()->assertJson(['success' => true]);
+
+        $this->assertSame(
+            TransactionShipment::STATUS_COMPLETED,
+            $shipment->fresh()->status
+        );
+
+        foreach ($groups as $group) {
+            $this->assertSame(
+                'delivered',
+                $group->fresh()->biteship_status
+            );
+            $this->assertSame(
+                TransactionFulfillment::STATUS_COMPLETED,
+                $group->fresh()->status
+            );
+        }
+
+        $this->assertSame(
+            Transaction::ORDER_COMPLETED,
+            $transaction->fresh()->status
+        );
+
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_COMPLETED_EMAIL',
+        ]);
+    }
     public function test_admin_ship_creates_one_biteship_order_for_combined_fulfillments(): void
     {
         Mail::fake();
@@ -639,13 +770,192 @@ class TransactionShippingTest extends TestCase
         $this->assertSame('BTS-COMBINED-TEST-001', $shipment->biteship_order_id);
         $this->assertSame('BTS-COMBINED-TRACK-001', $shipment->biteship_tracking_id);
         $this->assertSame('BTS-COMBINED-WAYBILL-001', $shipment->biteship_waybill_id);
-        $this->assertSame(TransactionFulfillment::STATUS_SHIPPED, $ready->status);
-        $this->assertSame(TransactionFulfillment::STATUS_SHIPPED, $preOrder->status);
+        $this->assertSame(TransactionFulfillment::STATUS_PROCESSING, $ready->status);
+        $this->assertSame(TransactionFulfillment::STATUS_PROCESSING, $preOrder->status);
 
         $this->assertNull($ready->biteship_order_id);
         $this->assertNull($preOrder->biteship_order_id);
 
         $this->assertDatabaseCount('transaction_shipments', 1);
         $this->assertDatabaseCount('transaction_shipment_fulfillment', 2);
+    }
+
+    public function test_admin_ship_completes_legacy_transaction_when_biteship_returns_delivered(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $this->actingAs($user);
+
+        $customer = Customer::query()->firstOrFail();
+
+        $transaction = Transaction::create([
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-LEGACY-DELIVERED-TEST',
+            'transaction_date' => now(),
+            'payment_method' => 'VA',
+            'subtotal' => 100000,
+            'discount' => 0,
+            'shipping' => 8000,
+            'total' => 108000,
+            'status' => Transaction::ORDER_PROCESSING,
+            'source' => 'Website',
+            'shipping_name' => 'Legacy Delivered Test',
+            'shipping_email' => 'legacy-delivered@test.com',
+            'shipping_phone' => '08123456789',
+            'shipping_address' => 'Alamat Legacy Delivered',
+            'shipping_district' => 'Banjarmasin Selatan',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+        ]);
+
+        $this->mock(BiteshipService::class)
+            ->shouldReceive('createOrder')
+            ->once()
+            ->andReturn([
+                'success' => true,
+                'order_id' => 'BTS-LEGACY-DELIVERED',
+                'tracking_id' => 'TRACK-LEGACY-DELIVERED',
+                'waybill_id' => 'WAYBILL-LEGACY-DELIVERED',
+                'status' => 'delivered',
+                'reference_id' => $transaction->invoice_number,
+                'courier_code' => 'jnt',
+                'courier_type' => 'ez',
+            ]);
+
+        $response = $this->patch(
+            route('admin.transactions.ship', $transaction)
+        );
+
+        $response->assertOk()->assertJson([
+            'success' => true,
+            'data' => [
+                'status' => Transaction::ORDER_COMPLETED,
+                'biteship_status' => 'delivered',
+            ],
+        ]);
+
+        $this->assertSame(
+            Transaction::ORDER_COMPLETED,
+            $transaction->fresh()->status
+        );
+
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_COMPLETED_EMAIL',
+        ]);
+
+        $this->assertDatabaseMissing('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_SHIPPED_EMAIL',
+        ]);
+    }
+
+    public function test_admin_ship_fulfillment_completes_group_when_biteship_returns_delivered(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create(['role' => 'super_admin']);
+        $this->actingAs($user);
+
+        $customer = Customer::query()->firstOrFail();
+        $variant = ProductVariant::query()->with('product')->firstOrFail();
+
+        $transaction = Transaction::create([
+            'customer_id' => $customer->id,
+            'invoice_number' => 'INV-FULFILLMENT-DELIVERED-TEST',
+            'transaction_date' => now(),
+            'payment_method' => 'VA',
+            'subtotal' => 100000,
+            'discount' => 0,
+            'shipping' => 8000,
+            'total' => 108000,
+            'status' => Transaction::ORDER_PROCESSING,
+            'source' => 'Website',
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+            'shipping_name' => 'Fulfillment Delivered Test',
+            'shipping_email' => 'fulfillment-delivered@test.com',
+            'shipping_phone' => '08123456789',
+            'shipping_address' => 'Alamat Fulfillment Delivered',
+            'shipping_district' => 'Banjarmasin Selatan',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'shipping_method' => 'Kurir',
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+        ]);
+
+        $group = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'shipping_name' => $transaction->shipping_name,
+            'shipping_email' => $transaction->shipping_email,
+            'shipping_phone' => $transaction->shipping_phone,
+            'shipping_address' => $transaction->shipping_address,
+            'shipping_city' => $transaction->shipping_city,
+            'shipping_province' => $transaction->shipping_province,
+            'shipping_postal_code' => $transaction->shipping_postal_code,
+            'courier_code' => 'jnt',
+            'courier_service_code' => 'ez',
+            'status' => TransactionFulfillment::STATUS_PENDING,
+        ]);
+
+        TransactionItem::create([
+            'transaction_id' => $transaction->id,
+            'transaction_fulfillment_id' => $group->id,
+            'product_variant_id' => $variant->id,
+            'qty' => 1,
+            'price' => 100000,
+            'subtotal' => 100000,
+            'weight' => 500,
+        ]);
+
+        $this->mock(BiteshipService::class)
+            ->shouldReceive('createOrder')
+            ->once()
+            ->andReturn([
+                'success' => true,
+                'order_id' => 'BTS-FULFILLMENT-DELIVERED',
+                'tracking_id' => 'TRACK-FULFILLMENT-DELIVERED',
+                'waybill_id' => 'WAYBILL-FULFILLMENT-DELIVERED',
+                'status' => 'delivered',
+                'reference_id' => $transaction->invoice_number . '-READY',
+                'courier_code' => 'jnt',
+                'courier_type' => 'ez',
+            ]);
+
+        $response = $this->patch(route('admin.transactions.fulfillments.ship', [
+            'transaction' => $transaction->id,
+            'fulfillment' => $group->id,
+        ]));
+
+        $response->assertOk()->assertJson(['success' => true]);
+
+        $this->assertSame(
+            'delivered',
+            $group->fresh()->biteship_status
+        );
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_COMPLETED,
+            $group->fresh()->status
+        );
+
+        $this->assertSame(
+            Transaction::ORDER_COMPLETED,
+            $transaction->fresh()->status
+        );
+
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_COMPLETED_EMAIL',
+        ]);
     }
 }

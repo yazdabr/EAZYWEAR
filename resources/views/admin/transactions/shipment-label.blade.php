@@ -490,8 +490,8 @@
         <main class="label">
             <header class="top">
                 <img class="brand-logo"
-                     src="{{ asset('images/shipping/logoeazywear.svg') }}"
-                     alt="Eazywear">
+                    src="{{ asset('images/shipping/logoeazywear.svg') }}?v=20261016"
+                    alt="Eazywear">
                 <img class="platform-logo"
                      src="{{ asset('images/shipping/logobiteship.svg') }}"
                      alt="Biteship">

@@ -10,7 +10,7 @@
         ]);
     }
 
-    $shipment->loadMissing('fulfillments.items.productVariant.product');
+    $shipment->loadMissing('fulfillments.items.productVariant.product', 'fulfillments.items.productVariant.size');
 
     $fulfillmentItems = $legacyLabel
         ? $transaction->items->values()
@@ -35,8 +35,8 @@
         $barcodeSvg = $barcodeGenerator->getBarcode(
             $trackingNumber,
             $barcodeGenerator::TYPE_CODE_128,
-            1.5,
-            32
+            2.2,
+            42
         );
     }
 
@@ -188,7 +188,7 @@
             width: 28mm;
             object-position: left center;
             align-self: flex-start;
-            margin-top: -0.6mm;
+            margin-top: -0.5mm;
         }
 
         .platform-logo {
@@ -272,14 +272,15 @@
             display: block;
             width: auto;
             max-width: 100%;
-            height: 7mm;
+            height: 10mm;
             margin: 0 auto;
         }
 
         .meta {
             flex: 0 0 auto;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            /* Kolom kanan dibuat secukupnya/compact agar dirapatkan ke kanan */
+            grid-template-columns: 1fr 22mm;
             border-bottom: 1px solid #111;
             margin-left: -2mm;
             margin-right: -2mm;
@@ -378,6 +379,18 @@
 
         .item-name {
             overflow-wrap: anywhere;
+        }
+
+        .item-details {
+            grid-column: 2;
+            font-size: 5pt;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+            margin-top: 0.2mm;
+        }
+
+        .item-detail-line {
+            display: block;
         }
 
         .empty-items {
@@ -556,10 +569,42 @@
                         $productName = $item->productVariant?->product?->name
                             ?? $item->custom_name
                             ?? 'Produk Eazywear';
+
+                        $sizeName = $item->productVariant?->size?->name
+                            ?? $item->productVariant?->size?->label
+                            ?? '';
+
+                        $customName = trim((string) ($item->custom_name ?? ''));
+                        $customNumber = trim((string) ($item->custom_number ?? ''));
+                        $isPatch = (bool) ($item->is_patch ?? false);
+                        $isLongsleeve = (bool) ($item->is_longsleeve ?? false);
                     @endphp
+
                     <div class="item-row">
                         <div class="item-qty">{{ max(0, (int) $item->qty) }}x</div>
-                        <div class="item-name">{{ $productName }}</div>
+                        <div class="item-name">
+                            {{ $productName }}
+                            @if(trim((string) $sizeName) !== '')
+                                <span class="item-detail-line">Ukuran: {{ $sizeName }}</span>
+                            @endif
+                        </div>
+
+                        @if($customName !== '' || $customNumber !== '' || $isPatch || $isLongsleeve)
+                            <div class="item-details">
+                                @if($customName !== '')
+                                    <span class="item-detail-line">Nama custom: {{ $customName }}</span>
+                                @endif
+                                @if($customNumber !== '')
+                                    <span class="item-detail-line">Nomor punggung: {{ $customNumber }}</span>
+                                @endif
+                                @if($isPatch)
+                                    <span class="item-detail-line">Patch: Ya</span>
+                                @endif
+                                @if($isLongsleeve)
+                                    <span class="item-detail-line">Lengan: Longsleeve</span>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 @empty
                     <div class="empty-items">Rincian barang belum tersedia.</div>

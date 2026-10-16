@@ -116,6 +116,13 @@ class BiteshipWebhookController extends Controller
                         : TransactionShipment::STATUS_PROCESSING;
                 }
 
+                if (
+                    ($updates['status'] ?? null) === TransactionShipment::STATUS_PROCESSING
+                    && $shipment->status === TransactionShipment::STATUS_SHIPPED
+                ) {
+                    unset($updates['status']);
+                }
+
                 $shipment->update($updates);
 
                 $groups = TransactionFulfillment::query()
@@ -156,6 +163,13 @@ class BiteshipWebhookController extends Controller
                                 ? TransactionFulfillment::STATUS_SHIPPED
                                 : TransactionFulfillment::STATUS_PROCESSING;
                         }
+                    }
+
+                    if (
+                        ($groupUpdates['status'] ?? null) === TransactionFulfillment::STATUS_PROCESSING
+                        && $group->status === TransactionFulfillment::STATUS_SHIPPED
+                    ) {
+                        unset($groupUpdates['status']);
                     }
 
                     $group->update($groupUpdates);
@@ -243,6 +257,13 @@ class BiteshipWebhookController extends Controller
                         ? TransactionFulfillment::STATUS_SHIPPED
                         : TransactionFulfillment::STATUS_PROCESSING;
                 }
+                if (
+                    ($updates['status'] ?? null) === TransactionFulfillment::STATUS_PROCESSING
+                    && $row->status === TransactionFulfillment::STATUS_SHIPPED
+                ) {
+                    unset($updates['status']);
+                }
+
                 $row->update($updates);
 
                 return $row->fresh();

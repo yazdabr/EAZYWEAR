@@ -1518,4 +1518,127 @@ class BiteshipWebhookTest extends TestCase
         );
     }
 
+    public function test_picking_up_webhook_preserves_already_shipped_status(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+            'biteship_order_id' => null,
+            'biteship_status' => 'confirmed',
+        ]);
+
+        $shipment = \App\Models\TransactionShipment::create([
+            'transaction_id' => $transaction->id,
+            'shipment_type' => \App\Models\TransactionShipment::TYPE_COMBINED,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'shipping_address' => 'Alamat Tes Status Guard',
+            'status' => \App\Models\TransactionShipment::STATUS_SHIPPED,
+            'biteship_order_id' => $this->biteshipOrderId('STATUS-GUARD'),
+            'biteship_status' => 'confirmed',
+        ]);
+
+        $shipment->fulfillments()->attach($ready->id);
+
+        $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $shipment->biteship_order_id,
+                'status' => 'picking_up',
+            ])
+            ->assertOk();
+
+        $this->assertSame('picking_up', $shipment->fresh()->biteship_status);
+        $this->assertSame(
+            \App\Models\TransactionShipment::STATUS_SHIPPED,
+            $shipment->fresh()->status
+        );
+        $this->assertSame(
+            TransactionFulfillment::STATUS_SHIPPED,
+            $ready->fresh()->status
+        );
+        $this->assertSame(
+            Transaction::ORDER_PROCESSING,
+            $transaction->fresh()->status
+        );
+    }
+    public function test_stale_picking_up_webhook_does_not_regress_combined_shipment_or_fulfillments(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'biteship_status' => 'in_transit',
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+        ]);
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 12000,
+            'biteship_status' => 'in_transit',
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+        ]);
+
+        $orderId = $this->biteshipOrderId('STALE-COMBINED');
+
+        $shipment = \App\Models\TransactionShipment::create([
+            'transaction_id' => $transaction->id,
+            'shipment_type' => \App\Models\TransactionShipment::TYPE_COMBINED,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 20000,
+            'shipping_address' => 'Alamat Tes Regresi',
+            'biteship_order_id' => $orderId,
+            'biteship_status' => 'in_transit',
+            'status' => \App\Models\TransactionShipment::STATUS_SHIPPED,
+        ]);
+
+        $shipment->fulfillments()->attach([$ready->id, $preOrder->id]);
+
+        $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $orderId,
+                'status' => 'picking_up',
+            ])
+            ->assertOk();
+
+        $this->assertSame('in_transit', $shipment->fresh()->biteship_status);
+        $this->assertSame(
+            \App\Models\TransactionShipment::STATUS_SHIPPED,
+            $shipment->fresh()->status
+        );
+
+        $this->assertSame('in_transit', $ready->fresh()->biteship_status);
+        $this->assertSame(
+            TransactionFulfillment::STATUS_SHIPPED,
+            $ready->fresh()->status
+        );
+
+        $this->assertSame('in_transit', $preOrder->fresh()->biteship_status);
+        $this->assertSame(
+            TransactionFulfillment::STATUS_SHIPPED,
+            $preOrder->fresh()->status
+        );
+
+        $this->assertSame(Transaction::ORDER_PROCESSING, $transaction->fresh()->status);
+    }
+
 }

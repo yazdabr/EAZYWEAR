@@ -294,9 +294,9 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 </div>
             </div>
 
-            @if($transaction->shipments->where('shipment_type', 'combined')->isNotEmpty())
+            @if($transaction->shipments->isNotEmpty())
                 <div class="mb-5 mx-auto grid w-full grid-cols-1 gap-4 xl:max-w-2xl">
-                    @foreach($transaction->shipments->where('shipment_type', 'combined') as $shipment)
+                    @foreach($transaction->shipments as $shipment)
                         @php
                             $shipmentCanEditAddress = in_array($transaction->status, ['PAID', 'ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
                                 && $shipment->shipping_method === 'Kurir'
@@ -305,7 +305,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 && !$shipment->biteship_waybill_id
                                 && !$shipment->tracking_number;
 
-                            $shipmentCanProcess = in_array($transaction->status, ['PAID', 'ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
+                            $shipmentCanProcess = in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
                                 && $shipment->shipping_method === 'Kurir'
                                 && !in_array($shipment->status, ['SHIPPED', 'COMPLETED', 'CANCELLED'], true);
 
@@ -367,25 +367,38 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             </div>
 
                             <div class="mt-4 rounded-xl border border-slate-100 bg-white p-3">
-                                <p class="text-xs font-semibold text-slate-500">Alamat pengiriman</p>
+                                <div class="mb-2 flex items-center justify-between gap-3">
+                                    <p class="text-xs font-semibold text-slate-500">Alamat pengiriman</p>
+                                    @if($shipmentCanEditAddress)
+                                        <button
+                                            type="button"
+                                            onclick="toggleFulfillmentAddressEditor('shipment-{{ $shipment->id }}', true)"
+                                            class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#AE7C18]/40 bg-[#AE7C18]/10 px-3 py-1.5 text-xs font-semibold text-[#8A6110] shadow-sm transition hover:bg-[#AE7C18]/20 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/40">
+                                            <x-heroicon-o-pencil-square class="h-3.5 w-3.5" />
+                                            Edit Alamat
+                                        </button>
+                                    @endif
+                                </div>
                                 <p class="mt-2 text-sm font-semibold text-slate-800">{{ $shipment->shipping_name ?: $transaction->shipping_name }}</p>
                                 <p class="mt-1 text-xs text-slate-600">{{ $shipment->shipping_phone ?: $transaction->shipping_phone }}</p>
                                 <p class="mt-1 whitespace-pre-line text-xs leading-relaxed text-slate-600">{{ $shipment->shipping_address ?: $transaction->shipping_address }}</p>
                                 <p class="mt-1 text-xs text-slate-500">
                                     {{ collect([$shipment->shipping_district ?: $transaction->shipping_district, $shipment->shipping_city ?: $transaction->shipping_city, $shipment->shipping_province ?: $transaction->shipping_province, $shipment->shipping_postal_code ?: $transaction->shipping_postal_code])->filter()->implode(', ') }}
                                 </p>
-
                                 @if($shipmentCanEditAddress)
                                     <form id="fulfillment-address-form-shipment-{{ $shipment->id }}"
                                         action="{{ route('admin.transactions.shipments.shipping-address.update', ['transaction' => $transaction, 'shipment' => $shipment]) }}"
-                                        method="POST" class="mt-3 space-y-2">
+                                        method="POST" class="mt-3 hidden space-y-2">
                                         @csrf
                                         @method('PATCH')
                                         <label for="shipment-address-{{ $shipment->id }}" class="block text-xs font-semibold text-slate-600">Ubah alamat sebelum membuat resi</label>
                                         <textarea id="shipment-address-{{ $shipment->id }}" name="shipping_address" rows="3" required maxlength="2000"
                                             class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">{{ $shipment->shipping_address ?: $transaction->shipping_address }}</textarea>
                                         <p id="fulfillment-address-error-shipment-{{ $shipment->id }}" class="hidden text-xs text-red-600"></p>
-                                        <button type="submit" class="rounded-lg bg-amber-700 px-3 py-2 text-xs font-bold text-white">Simpan Alamat</button>
+                                        <div class="flex flex-wrap gap-2">
+                                            <button type="submit" class="rounded-lg bg-[#AE7C18] px-3 py-2 text-xs font-semibold text-white">Simpan Alamat</button>
+                                            <button type="button" onclick="toggleFulfillmentAddressEditor('shipment-{{ $shipment->id }}', false)" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">Batal</button>
+                                        </div>
                                     </form>
                                 @endif
                             </div>

@@ -28,8 +28,33 @@
     $trackingNumber = $shipment->biteship_waybill_id
         ?: ($shipment->tracking_number ?: $shipment->biteship_tracking_id);
 
+    $barcodeSvg = null;
+
+    if (filled($trackingNumber) && preg_match('/^[A-Za-z0-9-]+$/', $trackingNumber)) {
+        $barcodeGenerator = new \Picqer\Barcode\BarcodeGeneratorSVG();
+        $barcodeSvg = $barcodeGenerator->getBarcode(
+            $trackingNumber,
+            $barcodeGenerator::TYPE_CODE_128,
+            1.5,
+            32
+        );
+    }
+
     $invoiceNumber = $transaction->invoice_number ?: ('TRANSAKSI-' . $transaction->id);
     $shipmentReference = $legacyLabel ? $invoiceNumber : ($invoiceNumber . ($fulfillmentLabel ? '-FULFILLMENT-' . $labelFulfillment->id : '-SHIPMENT-' . $shipment->id));
+
+    $referenceBarcodeSvg = null;
+
+    if (filled($shipmentReference) && preg_match('/^[A-Za-z0-9-]+$/', $shipmentReference)) {
+        $referenceBarcodeGenerator = new \Picqer\Barcode\BarcodeGeneratorSVG();
+
+        $referenceBarcodeSvg = $referenceBarcodeGenerator->getBarcode(
+            $shipmentReference,
+            $referenceBarcodeGenerator::TYPE_CODE_128,
+            1,
+            24
+        );
+    }
 
     $courierCode = strtolower(trim((string) ($shipment->courier_code ?: '')));
     $courierLabel = $shipment->courier ?: ($shipment->courier_code ?: 'Kurir');
@@ -77,7 +102,7 @@
 
     <style>
         @page {
-            size: 100mm 150mm;
+            size: 80mm 100mm;
             margin: 0;
         }
 
@@ -97,7 +122,7 @@
         }
 
         .toolbar {
-            width: 100mm;
+            width: 80mm;
             margin: 10px auto;
             display: flex;
             justify-content: space-between;
@@ -115,76 +140,95 @@
             cursor: pointer;
         }
 
-        .label {
-            width: 100mm;
-            height: 150mm;
+        /* Wrapper luar dibuat tipis agar bingkai hitam mengisi sebagian besar area 80x100mm */
+        .label-wrapper {
+            width: 80mm;
+            height: 100mm;
             margin: 0 auto 10px;
-            padding: 3mm;
+            padding: 2mm 2mm;
+            background: #fff;
+        }
+
+        .label {
+            width: 100%;
+            height: 100%;
+            padding: 1.5mm 2mm;
             background: #fff;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            font-size: 6.5pt;
-            line-height: 1.15;
+            font-size: 5.2pt;
+            line-height: 1.05;
+            border: 1.5px solid #111;
         }
 
         .top {
-            height: 12mm;
-            flex: 0 0 12mm;
+            height: 7mm;
+            flex: 0 0 7mm;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 3mm;
             border-bottom: 1px solid #111;
-            padding: 0 0 1.5mm;
+            margin-left: -2mm;
+            margin-right: -2mm;
+            padding-left: 2mm;
+            padding-right: 2mm;
+            padding-bottom: 1mm;
         }
 
         .brand-logo,
         .platform-logo {
             display: block;
-            height: 7mm;
+            height: 6mm;
             object-fit: contain;
-            align-self: center;
         }
 
         .brand-logo {
-            width: 31mm;
+            width: 28mm;
             object-position: left center;
+            align-self: flex-start;
+            margin-top: -0.6mm;
         }
 
         .platform-logo {
-            width: 25mm;
+            width: 22mm;
             object-position: right center;
+            align-self: center;
         }
 
         .courier {
-            min-height: 10mm;
+            min-height: 8mm;
             flex: 0 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 2mm;
-            padding: 1.2mm 0;
+            padding: 1mm 0;
             border-bottom: 1px solid #111;
+            margin-left: -2mm;
+            margin-right: -2mm;
+            padding-left: 2mm;
+            padding-right: 2mm;
         }
 
         .courier-logo {
             display: block;
-            width: 19mm;
-            height: 6mm;
+            width: 17mm;
+            height: 5mm;
             object-fit: contain;
             object-position: left center;
-            margin-top: .5mm;
+            margin-top: .3mm;
         }
 
         .courier-caption,
         .caption {
-            font-size: 5.8pt;
+            font-size: 5.2pt;
             font-weight: 700;
         }
 
         .courier-name {
-            max-width: 36mm;
+            max-width: 32mm;
             text-align: right;
             font-size: 7pt;
             font-weight: 700;
@@ -192,23 +236,44 @@
         }
 
         .tracking {
+            text-align: center;
             flex: 0 0 auto;
-            padding: 1.7mm 0;
+            padding: 0.6mm 0;
             border-bottom: 1px solid #111;
+            margin-left: -2mm;
+            margin-right: -2mm;
+            padding-left: 2mm;
+            padding-right: 2mm;
         }
 
         .tracking-number {
-            margin-top: .7mm;
-            font-size: 10pt;
+            text-align: center;
+            margin-top: .4mm;
+            font-size: 9.5pt;
             line-height: 1.05;
             font-weight: 800;
             overflow-wrap: anywhere;
         }
 
         .tracking-note {
-            margin-top: .7mm;
-            font-size: 5.5pt;
+            margin-top: .4mm;
+            font-size: 5pt;
             line-height: 1.1;
+        }
+
+        .tracking-barcode {
+            margin-top: 0.6mm;
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .tracking-barcode svg {
+            display: block;
+            width: auto;
+            max-width: 100%;
+            height: 7mm;
+            margin: 0 auto;
         }
 
         .meta {
@@ -216,83 +281,94 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             border-bottom: 1px solid #111;
+            margin-left: -2mm;
+            margin-right: -2mm;
+            padding-left: 2mm;
+            padding-right: 2mm;
         }
 
         .meta-cell {
             min-width: 0;
-            padding: 1.3mm 1.2mm 1.3mm 0;
+            padding: 0.5mm 0.8mm 0.5mm 0;
         }
 
         .meta-cell:nth-child(odd) {
             border-right: 1px solid #aaa;
+            padding-right: 1.5mm;
         }
 
         .meta-cell:nth-child(even) {
-            padding-left: 2mm;
+            padding-left: 1.5mm;
         }
 
         .meta-label {
             display: block;
-            font-size: 5.5pt;
-            margin-bottom: .5mm;
+            font-size: 5pt;
+            margin-bottom: .3mm;
         }
 
         .meta-value {
             display: block;
-            font-size: 6.5pt;
+            font-size: 6.2pt;
             font-weight: 700;
             overflow-wrap: anywhere;
         }
 
         .section {
             flex: 0 0 auto;
-            padding: 1.5mm 0;
+            padding: 0.6mm 0;
             border-bottom: 1px solid #111;
             min-width: 0;
         }
 
         .section-title {
-            font-size: 6pt;
+            font-size: 5.4pt;
             font-weight: 800;
             text-transform: uppercase;
-            margin-bottom: .8mm;
+            margin-bottom: .4mm;
         }
 
         .address-name {
-            font-size: 7pt;
+            font-size: 6.2pt;
             font-weight: 700;
             overflow-wrap: anywhere;
+            margin-bottom: 0.6mm;
         }
 
         .address-phone {
-            margin-top: .4mm;
-            font-size: 6.3pt;
+            margin-top: 0;
+            font-size: 5.8pt;
             overflow-wrap: anywhere;
+            margin-bottom: 0.6mm;
         }
 
         .address-text {
-            margin-top: .6mm;
-            font-size: 6pt;
-            line-height: 1.2;
+            margin-top: .3mm;
+            font-size: 5.4pt;
+            line-height: 1.15;
             overflow-wrap: anywhere;
         }
 
         .items {
             flex: 1 1 auto;
-            min-height: 10mm;
-            max-height: 23mm;
+            min-height: 8mm;
+            max-height: 18mm;
             overflow: hidden;
-            padding: 1.5mm 0;
+            padding: 0.6mm 0;
             border-bottom: 1px solid #111;
+            margin-left: -2mm;
+            margin-right: -2mm;
+            padding-left: 2mm;
+            padding-right: 2mm;
         }
 
         .item-row {
             display: grid;
-            grid-template-columns: 8mm 1fr;
+            grid-template-columns: 7mm 1fr;
             gap: 1mm;
-            padding: .6mm 0;
-            font-size: 6pt;
-            line-height: 1.15;
+            padding: .3mm 0;
+            font-size: 5.4pt;
+            line-height: 1.1;
         }
 
         .item-qty {
@@ -305,40 +381,59 @@
         }
 
         .empty-items {
-            font-size: 6pt;
+            font-size: 5.4pt;
+        }
+
+        .reference-barcode {
+            margin-top: 0.5mm;
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .reference-barcode svg {
+            display: block;
+            width: auto;
+            max-width: 100%;
+            height: 5.5mm;
+            margin: 0 auto;
         }
 
         .reference {
             flex: 0 0 auto;
-            padding: 1.4mm 0;
+            padding: 0.5mm 0;
             border-bottom: 1px solid #111;
+            margin-left: -2mm;
+            margin-right: -2mm;
+            padding-left: 2mm;
+            padding-right: 2mm;
         }
 
         .reference-number {
-            margin-top: .5mm;
-            font-size: 6.5pt;
+            margin-top: .3mm;
+            font-size: 6.2pt;
             font-weight: 700;
             overflow-wrap: anywhere;
         }
 
         .footer {
             flex: 0 0 auto;
-            padding-top: 1.3mm;
+            padding-top: 0.5mm;
             text-align: center;
-            font-size: 5.5pt;
-            line-height: 1.15;
+            font-size: 5pt;
+            line-height: 1.1;
         }
 
         .footer strong {
             display: block;
-            font-size: 6pt;
+            font-size: 5.4pt;
         }
 
         @media print {
             html,
             body {
-                width: 100mm;
-                height: 150mm;
+                width: 80mm;
+                height: 100mm;
                 margin: 0 !important;
                 padding: 0 !important;
                 background: #fff;
@@ -348,15 +443,25 @@
                 display: none !important;
             }
 
+            .label-wrapper {
+                width: 80mm;
+                height: 100mm;
+                margin: 0 auto;
+                padding: 2mm 2mm;
+                background: #fff;
+            }
+
             .label {
-                width: 100mm;
-                height: 150mm;
-                margin: 0;
-                padding: 3mm;
-                page-break-after: avoid;
-                page-break-inside: avoid;
-                break-after: avoid-page;
-                break-inside: avoid-page;
+                width: 100%;
+                height: 100%;
+                padding: 1.5mm 2mm;
+                background: #fff;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                font-size: 5.2pt;
+                line-height: 1.05;
+                border: 1.5px solid #111;
             }
         }
     </style>
@@ -364,106 +469,118 @@
 
 <body>
     <div class="toolbar">
-        <span>Label internal · 100 × 150 mm</span>
+        <span>Label internal · 80 × 100 mm</span>
         <button type="button" onclick="window.print()">Cetak Label</button>
     </div>
 
-    <main class="label">
-        <header class="top">
-            <img class="brand-logo"
-                 src="{{ asset('images/shipping/logoeazywear.svg') }}"
-                 alt="Eazywear">
-            <img class="platform-logo"
-                 src="{{ asset('images/shipping/logobiteship.svg') }}"
-                 alt="Biteship">
-        </header>
+    <div class="label-wrapper">
+        <main class="label">
+            <header class="top">
+                <img class="brand-logo"
+                     src="{{ asset('images/shipping/logoeazywear.svg') }}"
+                     alt="Eazywear">
+                <img class="platform-logo"
+                     src="{{ asset('images/shipping/logobiteship.svg') }}"
+                     alt="Biteship">
+            </header>
 
-        <section class="courier">
-            <div>
-                <div class="courier-caption">KURIR PENGIRIMAN</div>
-                @if($courierLogo)
-                    <img class="courier-logo" src="{{ $courierLogo }}" alt="{{ $courierLabel }}">
-                @else
-                    <div class="courier-name" style="text-align:left">{{ $courierLabel }}</div>
+            <section class="courier">
+                <div>
+                    <div class="courier-caption">KURIR PENGIRIMAN</div>
+                    @if($courierLogo)
+                        <img class="courier-logo" src="{{ $courierLogo }}" alt="{{ $courierLabel }}">
+                    @else
+                        <div class="courier-name" style="text-align:left">{{ $courierLabel }}</div>
+                    @endif
+                </div>
+                <div class="courier-name">{{ $courierLabel }}</div>
+            </section>
+
+            <section class="tracking">
+                <div class="caption">{{ $trackingNumber ? 'NOMOR RESI' : 'NOMOR RESI BELUM TERSEDIA' }}</div>
+                <div class="tracking-number">{{ $trackingNumber ?: 'BELUM TERSEDIA' }}</div>
+                @if($barcodeSvg)
+                    <div class="tracking-barcode" aria-label="Barcode nomor resi">
+                        {!! $barcodeSvg !!}
+                    </div>
                 @endif
-            </div>
-            <div class="courier-name">{{ $courierLabel }}</div>
-        </section>
+                @unless($trackingNumber)
+                    <div class="tracking-note">
+                        Resi belum tersedia. Label ini merupakan label internal, bukan airwaybill resmi kurir.
+                    </div>
+                @endunless
+            </section>
 
-        <section class="tracking">
-            <div class="caption">{{ $trackingNumber ? 'NOMOR RESI' : 'NOMOR RESI BELUM TERSEDIA' }}</div>
-            <div class="tracking-number">{{ $trackingNumber ?: 'BELUM TERSEDIA' }}</div>
-            @unless($trackingNumber)
-                <div class="tracking-note">
-                    Resi belum tersedia. Label ini merupakan label internal, bukan airwaybill resmi kurir.
+            <section class="meta">
+                <div class="meta-cell">
+                    <span class="meta-label">Ongkos Kirim</span>
+                    <span class="meta-value">Rp {{ number_format($shippingCost, 0, ',', '.') }}</span>
                 </div>
-            @endunless
-        </section>
-
-        <section class="meta">
-            <div class="meta-cell">
-                <span class="meta-label">Ongkos Kirim</span>
-                <span class="meta-value">Rp {{ number_format($shippingCost, 0, ',', '.') }}</span>
-            </div>
-            <div class="meta-cell">
-                <span class="meta-label">Jenis Layanan</span>
-                <span class="meta-value">{{ $serviceLabel }}</span>
-            </div>
-            <div class="meta-cell">
-                <span class="meta-label">Jumlah Barang</span>
-                <span class="meta-value">{{ $totalQuantity }} Pcs</span>
-            </div>
-            <div class="meta-cell">
-                <span class="meta-label">Total Berat</span>
-                <span class="meta-value">
-                    {{ $totalWeightGrams > 0 ? number_format($totalWeightGrams / 1000, 2, ',', '.') . ' Kg' : '—' }}
-                </span>
-            </div>
-        </section>
-
-        <section class="section">
-            <div class="section-title">Alamat Penerima</div>
-            <div class="address-name">{{ $recipientName }}</div>
-            <div class="address-phone">{{ $recipientPhone }}</div>
-            <div class="address-text">
-                {{ $recipientAddress }}@if($recipientLocality !== ''), {{ $recipientLocality }}@endif
-            </div>
-        </section>
-
-        <section class="section">
-            <div class="section-title">Alamat Pengirim</div>
-            <div class="address-name">{{ $originName ?: 'Eazywear' }}</div>
-            <div class="address-phone">{{ $originPhone ?: '—' }}</div>
-            <div class="address-text">{{ $originAddressLine ?: 'Alamat pengirim belum dikonfigurasi' }}</div>
-        </section>
-
-        <section class="items">
-            <div class="section-title">Jenis Barang</div>
-            @forelse($fulfillmentItems as $item)
-                @php
-                    $productName = $item->productVariant?->product?->name
-                        ?? $item->custom_name
-                        ?? 'Produk Eazywear';
-                @endphp
-                <div class="item-row">
-                    <div class="item-qty">{{ max(0, (int) $item->qty) }}x</div>
-                    <div class="item-name">{{ $productName }}</div>
+                <div class="meta-cell">
+                    <span class="meta-label">Jenis Layanan</span>
+                    <span class="meta-value">{{ $serviceLabel }}</span>
                 </div>
-            @empty
-                <div class="empty-items">Rincian barang belum tersedia.</div>
-            @endforelse
-        </section>
+                <div class="meta-cell">
+                    <span class="meta-label">Jumlah Barang</span>
+                    <span class="meta-value">{{ $totalQuantity }} Pcs</span>
+                </div>
+                <div class="meta-cell">
+                    <span class="meta-label">Total Berat</span>
+                    <span class="meta-value">
+                        {{ $totalWeightGrams > 0 ? number_format($totalWeightGrams / 1000, 2, ',', '.') . ' Kg' : '—' }}
+                    </span>
+                </div>
+            </section>
 
-        <section class="reference">
-            <div class="caption">REFERENCE NUMBER</div>
-            <div class="reference-number">{{ $shipmentReference }}</div>
-            <div class="tracking-note">Invoice: {{ $invoiceNumber }}</div>
-        </section>
+            <section class="meta">
+                <div class="meta-cell">
+                    <div class="section-title">Alamat Penerima</div>
+                    <div class="address-name">{{ $recipientName }}</div>
+                    <div class="address-phone">{{ $recipientPhone }}</div>
+                    <div class="address-text">
+                        {{ $recipientAddress }}@if($recipientLocality !== ''), {{ $recipientLocality }}@endif
+                    </div>
+                </div>
+                <div class="meta-cell">
+                    <div class="section-title">Alamat Pengirim</div>
+                    <div class="address-name">{{ $originName ?: 'Eazywear' }}</div>
+                    <div class="address-phone">{{ $originPhone ?: '—' }}</div>
+                    <div class="address-text">{{ $originAddressLine ?: 'Alamat pengirim belum dikonfigurasi' }}</div>
+                </div>
+            </section>
 
-        <footer class="footer">
-            <strong>Pengiriman melalui platform Biteship</strong>
-            biteship.com · Label internal Eazywear
-        </footer>
-    </main>
+            <section class="items">
+                <div class="section-title">Jenis Barang</div>
+                @forelse($fulfillmentItems as $item)
+                    @php
+                        $productName = $item->productVariant?->product?->name
+                            ?? $item->custom_name
+                            ?? 'Produk Eazywear';
+                    @endphp
+                    <div class="item-row">
+                        <div class="item-qty">{{ max(0, (int) $item->qty) }}x</div>
+                        <div class="item-name">{{ $productName }}</div>
+                    </div>
+                @empty
+                    <div class="empty-items">Rincian barang belum tersedia.</div>
+                @endforelse
+            </section>
+
+            <section class="reference">
+                <div class="caption">REFERENCE NUMBER</div>
+                <div class="reference-number">{{ $shipmentReference }}</div>
+                @if($referenceBarcodeSvg)
+                    <div class="reference-barcode">
+                        {!! $referenceBarcodeSvg !!}
+                    </div>
+                @endif
+            </section>
+
+            <footer class="footer">
+                <strong>Pengiriman melalui platform Biteship</strong>
+                biteship.com · Label internal Eazywear
+            </footer>
+        </main>
+    </div>
 </body>
 </html>

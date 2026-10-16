@@ -70,18 +70,18 @@
                             </div>
                         </template>
 
-                        <template x-for="customer in results" :key="customer.id">
+                        <template x-for="result in results" :key="result.type + '-' + result.id">
                             <button
                                 type="button"
-                                @click="selectCustomer(customer)"
+                                @click="result.type === 'invoice' ? selectInvoice(result) : selectCustomer(result)"
                                 class="flex w-full items-center justify-between border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 last:border-none"
                             >
                                 <div class="min-w-0 pr-2">
-                                    <p class="truncate text-sm font-semibold text-slate-800" x-text="customer.name"></p>
+                                    <p class="truncate text-sm font-semibold text-slate-800" x-text="result.type === 'invoice' ? result.invoice_number : result.name"></p>
                                     <p
-                                        x-show="customer.email"
+                                        x-show="result.type === 'invoice' ? result.customer_name : result.email"
                                         class="mt-0.5 truncate text-xs text-slate-400"
-                                        x-text="customer.email"
+                                        x-text="result.type === 'invoice' ? result.customer_name : result.email"
                                     ></p>
                                 </div>
                                 <x-heroicon-o-chevron-right class="h-4 w-4 shrink-0 text-slate-400"/>
@@ -90,7 +90,7 @@
 
                         <template x-if="!loading && search.trim().length >= 2 && results.length === 0">
                             <div class="px-4 py-4 text-center text-sm text-slate-400">
-                                Pelanggan tidak ditemukan. Tekan Enter untuk mencari nomor invoice.
+                                Tidak ada pelanggan atau invoice yang cocok.
                             </div>
                         </template>
                     </div>
@@ -522,6 +522,16 @@ function transactionCustomerSearch() {
             this.selectedCustomerId = '';
             this.showResults = false;
             this.$root.closest('form')?.requestSubmit();
+        },
+
+        selectInvoice(invoice) {
+            const form = this.$root.closest('form');
+            const url = new URL(form.action, window.location.origin);
+
+            url.searchParams.set('search', invoice.invoice_number);
+            url.searchParams.delete('customer_id');
+
+            window.location.href = url.toString();
         },
 
         selectCustomer(customer) {

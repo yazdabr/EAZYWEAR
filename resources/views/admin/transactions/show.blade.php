@@ -262,7 +262,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     <button
                                         type="button"
                                         onclick="toggleShippingAddressEditor(false)"
-                                        class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                                        class="rounded-lg border border-slate-400 bg-white px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-100"
                                     >Batal</button>
                                 </div>
                             </form>
@@ -314,11 +314,11 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 : 'Pengiriman ' . ($shipment->fulfillments->pluck('group_type')->contains('ready') ? 'Ready Stock' : 'Pre-Order');
                         @endphp
 
-                        <article class="min-w-0 rounded-2xl border p-4 sm:p-5 shadow-sm {{ $shipment->shipment_type === 'combined' ? 'border-slate-200 bg-slate-50/60' : 'border-amber-200 bg-amber-50/40' }}">
+                        <article class="min-w-0 rounded-2xl border p-4 sm:p-5 shadow-sm {{ $shipment->shipment_type === 'combined' ? 'border-slate-200 bg-slate-50/60' : 'border-slate-200 bg-slate-50/40' }}">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <h3 class="text-sm font-bold text-slate-900">{{ $shipmentLabel }}</h3>
-                                    <p class="mt-1 text-xs text-slate-500">{{ $shipment->shipping_method }}</p>
+                                    <p class="mt-1 text-sm text-slate-500">{{ $shipment->shipping_method }}</p>
                                 </div>
                                 <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $shipment->shipment_type === 'combined' ? 'bg-white text-slate-600 ring-1 ring-slate-200' : 'bg-amber-100 text-amber-800' }}">
                                     {{ !$shipment->status || $shipment->status === 'PENDING' ? 'Menunggu diproses' : $shipment->status }}
@@ -339,19 +339,19 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                                             <p class="mt-2 text-sm font-semibold">
                                                                 <span class="text-slate-700">Ukuran:</span>
                                                                 <span class="font-bold text-[#AE7C18]">{{ $shipmentItem->productVariant?->size?->name ?? '-' }}</span>
-                                                                <span class="font-semibold text-[#AE7C18]">· Rp{{ number_format((float) ($shipmentItem->productVariant?->price ?? 0), 0, ',', '.') }}</span>
-                                                                <span class="font-medium text-slate-500">· {{ $shipmentItem->qty }} pcs</span>
+                                                                <span class="font-semibold text-[#AE7C18]">| Rp{{ number_format((float) ($shipmentItem->productVariant?->price ?? 0), 0, ',', '.') }}</span>
+                                                                <span class="font-medium text-slate-500">| {{ $shipmentItem->qty }} pcs</span>
                                                             </p>
                                                             @if($shipmentItem->custom_name)
-                                                                <p class="mt-1 text-xs text-slate-600">Nama: <span class="font-semibold">{{ $shipmentItem->custom_name }}</span></p>
+                                                                <p class="mt-1 text-xs font-bold uppercase text-[#AE7C18]">Nama: <span>{{ $shipmentItem->custom_name }}</span></p>
                                                             @endif
                                                             @if($shipmentItem->custom_number)
                                                                 <p class="mt-1 text-xs text-slate-600">Nomor: <span class="font-semibold">{{ $shipmentItem->custom_number }}</span></p>
                                                             @endif
                                                             @if($shipmentItem->is_longsleeve || $shipmentItem->is_patch)
-                                                                <p class="mt-1 text-xs text-slate-500">
+                                                                <p class="mt-1 text-xs font-bold text-[#AE7C18]">
                                                                     @if($shipmentItem->is_longsleeve) Longsleeve @endif
-                                                                    @if($shipmentItem->is_longsleeve && $shipmentItem->is_patch) · @endif
+                                                                    @if($shipmentItem->is_longsleeve && $shipmentItem->is_patch) | @endif
                                                                     @if($shipmentItem->is_patch) Patch @endif
                                                                 </p>
                                                             @endif
@@ -366,9 +366,9 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     @endforeach
                             </div>
 
-                            <div class="mt-4 rounded-xl border border-slate-100 bg-white p-3">
+                            <div class="mt-4 rounded-xl border border-slate-300 bg-white p-3">
                                 <div class="mb-2 flex items-center justify-between gap-3">
-                                    <p class="text-xs font-semibold text-slate-500">Alamat pengiriman</p>
+                                    <p class="text-sm font-semibold text-slate-500">Alamat pengiriman</p>
                                     @if($shipmentCanEditAddress)
                                         <button
                                             type="button"
@@ -379,9 +379,9 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                         </button>
                                     @endif
                                 </div>
-                                <p class="mt-2 text-sm font-semibold text-slate-800">{{ $shipment->shipping_name ?: $transaction->shipping_name }}</p>
-                                <p class="mt-1 text-xs text-slate-600">{{ $shipment->shipping_phone ?: $transaction->shipping_phone }}</p>
-                                <p class="mt-1 whitespace-pre-line text-xs leading-relaxed text-slate-600">{{ $shipment->shipping_address ?: $transaction->shipping_address }}</p>
+                                <p class="mt-2 text-sm font-bold text-slate-900">{{ $shipment->shipping_name ?: $transaction->shipping_name }}</p>
+                                <p class="mt-1 text-sm font-semibold text-slate-800">{{ $shipment->shipping_phone ?: $transaction->shipping_phone }}</p>
+                                <p class="mt-1 whitespace-pre-line text-sm font-medium leading-relaxed text-slate-800">{{ $shipment->shipping_address ?: $transaction->shipping_address }}</p>
                                 <p class="mt-1 text-xs text-slate-500">
                                     {{ collect([$shipment->shipping_district ?: $transaction->shipping_district, $shipment->shipping_city ?: $transaction->shipping_city, $shipment->shipping_province ?: $transaction->shipping_province, $shipment->shipping_postal_code ?: $transaction->shipping_postal_code])->filter()->implode(', ') }}
                                 </p>
@@ -393,11 +393,11 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                         @method('PATCH')
                                         <label for="shipment-address-{{ $shipment->id }}" class="block text-xs font-semibold text-slate-600">Ubah alamat sebelum membuat resi</label>
                                         <textarea id="shipment-address-{{ $shipment->id }}" name="shipping_address" rows="3" required maxlength="2000"
-                                            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">{{ $shipment->shipping_address ?: $transaction->shipping_address }}</textarea>
+                                            class="w-full rounded-lg border-2 border-slate-400 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20">{{ $shipment->shipping_address ?: $transaction->shipping_address }}</textarea>
                                         <p id="fulfillment-address-error-shipment-{{ $shipment->id }}" class="hidden text-xs text-red-600"></p>
                                         <div class="flex flex-wrap gap-2">
                                             <button type="submit" class="rounded-lg bg-[#AE7C18] px-3 py-2 text-xs font-semibold text-white">Simpan Alamat</button>
-                                            <button type="button" onclick="toggleFulfillmentAddressEditor('shipment-{{ $shipment->id }}', false)" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">Batal</button>
+                                            <button type="button" onclick="toggleFulfillmentAddressEditor('shipment-{{ $shipment->id }}', false)" class="rounded-lg border border-slate-400 bg-white px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-100">Batal</button>
                                         </div>
                                     </form>
                                 @endif
@@ -405,11 +405,11 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                             <div class="mt-3 grid grid-cols-2 gap-3">
                                 <div class="rounded-xl bg-white p-3">
-                                    <p class="text-[10px] font-semibold uppercase text-slate-400">Ongkos kirim</p>
+                                    <p class="text-[12px] font-semibold uppercase text-slate-400">Ongkos kirim</p>
                                     <p class="mt-1 text-sm font-bold text-slate-900">Rp{{ number_format((float) $shipment->shipping_cost, 0, ',', '.') }}</p>
                                 </div>
                                 <div class="rounded-xl bg-white p-3">
-                                    <p class="text-[10px] font-semibold uppercase text-slate-400">Kurir / layanan</p>
+                                    <p class="text-[12px] font-semibold uppercase text-slate-400">Kurir / layanan</p>
                                     <p class="mt-1 text-sm font-bold text-slate-900">{{ $shipment->courier ?: $shipment->courier_code ?: '-' }}</p>
                                     <p class="mt-1 text-xs text-slate-500">{{ $shipment->courier_service_code ?: '-' }}</p>
                                 </div>
@@ -435,8 +435,8 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     @csrf
                                     @method('PATCH')
                                     @if(!$shipment->courier_code || !$shipment->courier_service_code)
-                                        <input type="text" name="courier" placeholder="Nama kurir manual" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                                        <input type="text" name="tracking_number" placeholder="Nomor resi manual" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                                        <input type="text" name="courier" placeholder="Nama kurir manual" class="w-full rounded-lg border-2 border-slate-400 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20">
+                                        <input type="text" name="tracking_number" placeholder="Nomor resi manual" class="w-full rounded-lg border-2 border-slate-400 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20">
                                     @endif
                                     <button type="submit" class="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-bold text-white">Proses Pengiriman</button>
                                 </form>
@@ -507,14 +507,14 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                                     <span class="text-slate-700">Ukuran:</span>
                                                     <span class="font-bold text-[#AE7C18]">{{ $fulfillmentItem->productVariant?->size?->name ?? '-' }}</span>
                                                     <span class="font-semibold text-[#AE7C18]">
-                                                        · Rp{{ number_format((float) ($fulfillmentItem->productVariant?->price ?? 0), 0, ',', '.') }}
+                                                        | Rp{{ number_format((float) ($fulfillmentItem->productVariant?->price ?? 0), 0, ',', '.') }}
                                                     </span>
-                                                    <span class="font-medium text-slate-500">· {{ $fulfillmentItem->qty }} pcs</span>
+                                                    <span class="font-medium text-slate-500">| {{ $fulfillmentItem->qty }} pcs</span>
                                                 </p>
 
                                                 @if($fulfillmentItem->custom_name)
                                                     <p class="mt-1.5 text-sm">
-                                                        <span class="font-semibold text-slate-700">Nama:</span>
+                                                        <span class="font-bold uppercase text-[#AE7C18]">Nama:</span>
                                                         <span class="font-bold uppercase text-[#AE7C18]">{{ $fulfillmentItem->custom_name }}</span>
                                                     </p>
                                                 @endif
@@ -557,13 +557,13 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             </div>
 
                             <div class="grid grid-cols-2 gap-3">
-                                <div class="rounded-xl border border-slate-100 bg-white p-3">
+                                <div class="rounded-xl border border-slate-300 bg-white p-3">
                                     <p class="text-[10px] uppercase tracking-wide text-slate-400 sm:text-xs font-medium">Ongkos kirim</p>
                                     <p class="mt-1 text-sm font-bold text-slate-900">
                                         Rp{{ number_format((float) $fulfillment->shipping_cost, 0, ',', '.') }}
                                     </p>
                                 </div>
-                                <div class="rounded-xl border border-slate-100 bg-white p-3">
+                                <div class="rounded-xl border border-slate-300 bg-white p-3">
                                     @if($fulfillment->shipping_method === 'Kurir')
                                         <p class="text-[10px] uppercase tracking-wide text-slate-400 sm:text-xs font-medium">Pengiriman</p>
                                         <p class="mt-1 text-sm font-bold text-slate-900">Menunggu proses pengiriman</p>
@@ -589,7 +589,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             </div>
 
                             @if($fulfillment->shipping_method === 'Kurir')
-                                <div class="rounded-xl border border-slate-100 bg-white p-3">
+                                <div class="rounded-xl border border-slate-300 bg-white p-3">
                                     <div class="flex items-center justify-between gap-2">
                                         <p class="text-[10px] uppercase tracking-wide text-slate-400 sm:text-xs font-medium">Alamat pengiriman</p>
                                         @if($canEditGroupAddress)
@@ -638,11 +638,11 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-3">
-                                    <div class="rounded-xl border border-slate-100 bg-white p-3">
+                                    <div class="rounded-xl border border-slate-300 bg-white p-3">
                                         <p class="text-[10px] uppercase tracking-wide text-slate-400 sm:text-xs font-medium">Kurir</p>
                                         <p class="mt-1 break-words text-xs font-semibold text-slate-800">{{ $fulfillment->courier ?: '-' }}</p>
                                     </div>
-                                    <div class="rounded-xl border border-slate-100 bg-white p-3">
+                                    <div class="rounded-xl border border-slate-300 bg-white p-3">
                                         <p class="text-[10px] uppercase tracking-wide text-slate-400 sm:text-xs font-medium">Nomor resi</p>
                                         <p class="mt-1 break-all text-xs font-semibold text-slate-800">{{ $fulfillment->tracking_number ?: $fulfillment->biteship_waybill_id ?: '-' }}</p>
                                     </div>

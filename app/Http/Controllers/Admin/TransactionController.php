@@ -265,11 +265,40 @@ class TransactionController extends Controller
     {
         $search = trim($request->input('search', ''));
 
-        if (strlen($search) < 2) return response()->json(['data' => []]);
+        if (strlen($search) < 2) {
+            return response()->json(['data' => []]);
+        }
 
-        $customers = Customer::query()->where('name', 'like', "%{$search}%")->orderBy('name')->limit(10)->get(['id', 'name', 'email']);
+        $customers = Customer::query()
+            ->where('name', 'like', "%{$search}%")
+            ->orderBy('name')
+            ->limit(5)
+            ->get(['id', 'name', 'email'])
+            ->map(fn ($customer) => [
+                'type' => 'customer',
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'email' => $customer->email,
+            ]);
 
-        return response()->json(['data' => $customers]);
+        $invoices = Transaction::query()
+            ->with('customer:id,name,email')
+            ->where('invoice_number', 'like', "%{$search}%")
+            ->latest('transaction_date')
+            ->limit(5)
+            ->get(['id', 'invoice_number', 'customer_id', 'shipping_name', 'shipping_email'])
+            ->map(fn ($transaction) => [
+                'type' => 'invoice',
+                'id' => $transaction->id,
+                'invoice_number' => $transaction->invoice_number,
+                'name' => $transaction->invoice_number,
+                'customer_name' => $transaction->shipping_name ?? $transaction->customer?->name ?? 'Pelanggan',
+                'email' => $transaction->shipping_email ?? $transaction->customer?->email,
+            ]);
+
+        return response()->json([
+            'data' => $customers->concat($invoices)->values(),
+        ]);
     }
 
     public function create()

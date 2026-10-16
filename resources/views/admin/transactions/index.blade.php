@@ -479,9 +479,11 @@ function transactionCustomerSearch() {
         async searchCustomers() {
             const keyword = this.search.trim();
 
-            if (keyword.length < 2) {
+            // Nomor invoice dicari oleh filter transaksi, bukan endpoint autocomplete pelanggan.
+            if (keyword.length < 2 || /^INV-/i.test(keyword)) {
                 this.results = [];
                 this.showResults = false;
+                this.loading = false;
                 return;
             }
 

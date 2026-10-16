@@ -446,10 +446,10 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 </div>
             @endif
             @php
-                $shippedFulfillmentIds = $transaction->shipments
-                    ->where('shipment_type', 'combined')
-                    ->flatMap(fn ($shipment) => $shipment->fulfillments->pluck('id'))
-                    ->all();
+
+            $shippedFulfillmentIds = $transaction->shipments
+                ->flatMap(fn ($shipment) => $shipment->fulfillments->pluck('id'))
+                ->all();
             @endphp
             <div class="mx-auto grid w-full grid-cols-1 gap-4 {{ $transaction->fulfillments->count() > 1 ? 'xl:grid-cols-2' : 'xl:max-w-2xl' }}">
                 @foreach($transaction->fulfillments as $fulfillment)

@@ -44,11 +44,12 @@
                 <div x-data="transactionCustomerSearch()" class="relative w-full">
                     <x-admin.search-input
                         name="search"
-                        placeholder="Cari nama pelanggan..."
+                        placeholder="Cari nama pelanggan atau nomor INV..."
                         autocomplete="off"
                         x-model="search"
                         @focus="searchCustomers()"
                         @input.debounce.300ms="searchCustomers()"
+                        @keydown.enter.prevent="submitSearch()"
                     />
 
                     <input type="hidden" name="customer_id" x-model="selectedCustomerId">
@@ -89,7 +90,7 @@
 
                         <template x-if="!loading && search.trim().length >= 2 && results.length === 0">
                             <div class="px-4 py-4 text-center text-sm text-slate-400">
-                                Pelanggan tidak ditemukan.
+                                Pelanggan tidak ditemukan. Tekan Enter untuk mencari nomor invoice.
                             </div>
                         </template>
                     </div>
@@ -513,6 +514,12 @@ function transactionCustomerSearch() {
             } finally {
                 this.loading = false;
             }
+        },
+
+        submitSearch() {
+            this.selectedCustomerId = '';
+            this.showResults = false;
+            this.$root.closest('form')?.requestSubmit();
         },
 
         selectCustomer(customer) {

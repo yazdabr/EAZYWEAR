@@ -39,12 +39,12 @@
 
         <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-12 sm:gap-4">
             <div class="md:col-span-2 lg:col-span-4">
-                <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">Cari Pelanggan</label>
+                <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">Cari Nama / INV Pelanggan</label>
 
                 <div x-data="transactionCustomerSearch()" class="relative w-full">
                     <x-admin.search-input
                         name="search"
-                        placeholder="Cari nama pelanggan atau nomor INV..."
+                        placeholder="Cari Nama / INV Pelanggan..."
                         autocomplete="off"
                         x-model="search"
                         @focus="searchCustomers()"

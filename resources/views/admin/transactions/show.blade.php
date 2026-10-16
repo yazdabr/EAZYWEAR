@@ -334,7 +334,11 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                             $shipmentCanProcess = in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
                                 && $shipment->shipping_method === 'Kurir'
-                                && !in_array($shipment->status, ['SHIPPED', 'COMPLETED', 'CANCELLED'], true);
+                                && !in_array($shipment->status, ['SHIPPED', 'COMPLETED', 'CANCELLED'], true)
+                                && !$shipment->biteship_order_id
+                                && !$shipment->biteship_tracking_id
+                                && !$shipment->biteship_waybill_id
+                                && !$shipment->tracking_number;
 
                             $shipmentLabel = $shipment->shipment_type === 'combined'
                                 ? 'Pengiriman Gabungan'

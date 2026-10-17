@@ -11,12 +11,12 @@
         @media print {
             @page {
                 margin: 0;
-                size: 240mm 140mm; /* Kustom ukuran 24 cm x 14 cm */
+                size: 21.59cm 13.97cm; /* Kustom ukuran baru 21.59 cm x 13.97 cm */
             }
 
             html, body {
-                width: 240mm;
-                height: 140mm;
+                width: 21.59cm;
+                height: 13.97cm;
                 margin: 0 !important;
                 padding: 0 !important;
                 background-color: #ffffff !important;
@@ -32,10 +32,10 @@
             .print-container {
                 box-shadow: none !important;
                 border: none !important;
-                width: 240mm !important;
-                height: 140mm !important;
-                max-width: 240mm !important;
-                padding: 8mm 10mm !important;
+                width: 21.59cm !important;
+                height: 13.97cm !important;
+                max-width: 21.59cm !important;
+                padding: 6mm 8mm !important;
                 margin: 0 !important;
                 border-radius: 0 !important;
                 box-sizing: border-box;
@@ -54,7 +54,7 @@
                 <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
             </span>
             <div>
-                <p class="text-sm font-semibold text-slate-800">Pratinjau Invoice (24 x 14 cm)</p>
+                <p class="text-sm font-semibold text-slate-800">Pratinjau Invoice (21.59 x 13.97 cm)</p>
                 <p class="text-xs text-slate-500">Didesain khusus muat 1 halaman cetak</p>
             </div>
         </div>
@@ -68,43 +68,42 @@
         </div>
     </div>
 
-    {{-- Main Invoice Card --}}
-    <div class="print-container relative overflow-hidden mx-auto max-w-[240mm] min-h-[140mm] bg-white p-6 rounded-2xl shadow-xl border border-slate-200/80 flex flex-col justify-between">
+    {{-- Main Invoice Card (Ukuran disesuaikan ke max-w-[21.59cm] dan min-h-[13.97cm]) --}}
+    <div class="print-container relative overflow-hidden mx-auto max-w-[21.59cm] min-h-[13.97cm] bg-white p-5 rounded-2xl shadow-xl border border-slate-200/80 flex flex-col justify-between">
         
         {{-- Top Accent Bar --}}
         <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#AE7C18] via-[#D4A038] to-[#AE7C18]"></div>
 
         <div>
-            {{-- Header Section (Status Dihilangkan) --}}
-            <div class="flex justify-between items-start pb-2.5 border-b border-slate-300">
+            {{-- Header Section --}}
+            <div class="flex justify-between items-start pb-2 border-b border-slate-300">
                 <div class="flex items-baseline gap-2">
-                    <h1 class="text-2xl font-black tracking-tight text-slate-900">INVOICE</h1>
+                    <h1 class="text-xl font-black tracking-tight text-slate-900">INVOICE</h1>
                     <span class="text-xs font-bold text-[#AE7C18] tracking-wider uppercase">
                         #{{ $transaction->invoice_number }}
                     </span>
                 </div>
 
                 <div class="text-right flex items-center gap-2">
-                    <span class="text-base font-bold text-slate-900 tracking-tight">Eazywear</span>
-                    <span class="text-[11px] text-slate-700 font-medium">| +62 857 5443 1105</span>
+                    <span class="text-sm font-bold text-slate-900 tracking-tight">Eazywear</span>
+                    <span class="text-[10px] text-slate-700 font-medium">| +62 857 5443 1105</span>
                 </div>
             </div>
 
             {{-- Info Meta & Pelanggan --}}
-            <div class="mt-2.5 grid grid-cols-12 gap-3 text-xs">
+            <div class="mt-2 grid grid-cols-12 gap-2 text-xs">
                 {{-- Ditagihkan Kepada --}}
-                <div class="col-span-7 bg-slate-50/80 rounded-xl p-2.5 border border-slate-200 flex flex-col justify-between">
+                <div class="col-span-7 bg-slate-50/80 rounded-xl p-2 border border-slate-200 flex flex-col justify-between">
                     <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-700">Ditagihkan Kepada:</span>
-                            <span class="text-[10px] font-bold text-slate-800">Pengiriman: {{ $transaction->shipping_method ?? '-' }}</span>
+                        <div class="flex justify-between items-center mb-0.5">
+                            <span class="text-[9.5px] font-bold uppercase tracking-wider text-slate-700">Ditagihkan Kepada:</span>
+                            <span class="text-[9.5px] font-bold text-slate-800">Pengiriman: {{ $transaction->shipping_method ?? '-' }}</span>
                         </div>
                         <p class="font-bold text-slate-900 leading-tight">
                             {{ $transaction->shipping_name ?? $transaction->customer?->name ?? '-' }}
                             <span class="font-medium text-slate-700">({{ $transaction->shipping_phone ?? $transaction->customer?->phone ?? '-' }})</span>
                         </p>
-                        {{-- Alamat Terus ke Baris Berikutnya (Tidak Terpotong) --}}
-                        <p class="text-[10px] text-slate-800 leading-snug mt-0.5 whitespace-normal break-words">
+                        <p class="text-[9.5px] text-slate-800 leading-snug mt-0.5 whitespace-normal break-words">
                             {{ $transaction->shipping_address ?? '-' }}, 
                             {{ collect([
                                 $transaction->shipping_district,
@@ -121,7 +120,7 @@
                         $transaction->pickup_time_start &&
                         $transaction->pickup_time_end
                     )
-                        <div class="mt-1 flex justify-between items-center text-[10px] pt-1 border-t border-slate-200">
+                        <div class="mt-1 flex justify-between items-center text-[9.5px] pt-1 border-t border-slate-200">
                             <span class="font-bold text-slate-900">Jadwal Ambil:</span>
                             <span class="text-slate-900 font-semibold">
                                 {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('D, d M Y') }}
@@ -132,18 +131,18 @@
                 </div>
 
                 {{-- Detail Transaksi --}}
-                <div class="col-span-5 bg-slate-50/80 rounded-xl p-2.5 border border-slate-200 flex flex-col justify-between text-[11px]">
+                <div class="col-span-5 bg-slate-50/80 rounded-xl p-2 border border-slate-200 flex flex-col justify-between text-[10.5px]">
                     <div class="flex justify-between items-center">
                         <span class="text-slate-700 font-medium">Tgl Invoice:</span>
                         <span class="font-bold text-slate-900">
                             {{ $transaction->transaction_date?->copy()->setTimezone('Asia/Makassar')->format('d/m/Y H:i') ?? '-' }}
                         </span>
                     </div>
-                    <div class="flex justify-between items-center mt-1">
+                    <div class="flex justify-between items-center mt-0.5">
                         <span class="text-slate-700 font-medium">No. Transaksi:</span>
                         <span class="font-bold text-slate-900">{{ $transaction->invoice_number }}</span>
                     </div>
-                    <div class="flex justify-between items-center mt-1">
+                    <div class="flex justify-between items-center mt-0.5">
                         <span class="text-slate-700 font-medium">Pembayaran:</span>
                         <span class="font-bold text-slate-900">{{ $transaction->payment_method ?? '-' }}</span>
                     </div>
@@ -151,15 +150,15 @@
             </div>
 
             {{-- Tabel Produk --}}
-            <div class="mt-2.5 overflow-hidden rounded-xl border border-slate-200">
+            <div class="mt-2 overflow-hidden rounded-xl border border-slate-200">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-slate-300 text-[10px] font-bold uppercase tracking-wider text-slate-800 bg-slate-100">
-                            <th class="py-1.5 px-2.5">Detail Produk</th>
-                            <th class="py-1.5 px-2 text-center">Ukuran</th>
-                            <th class="py-1.5 px-2 text-center">Qty</th>
-                            <th class="py-1.5 px-2.5 text-right">Harga Satuan</th>
-                            <th class="py-1.5 px-2.5 text-right">Subtotal</th>
+                        <tr class="border-b border-slate-300 text-[9.5px] font-bold uppercase tracking-wider text-slate-800 bg-slate-100">
+                            <th class="py-1 px-2">Detail Produk</th>
+                            <th class="py-1 px-2 text-center">Ukuran</th>
+                            <th class="py-1 px-2 text-center">Qty</th>
+                            <th class="py-1 px-2 text-right">Harga Satuan</th>
+                            <th class="py-1 px-2 text-right">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 text-xs">
@@ -169,11 +168,11 @@
                                 $product = $variant?->product;
                             @endphp
                             <tr>
-                                <td class="px-2.5 py-1.5">
+                                <td class="px-2 py-1">
                                     <p class="font-bold text-slate-900 leading-tight">
                                         {{ $product?->name ?? '-' }}
                                     </p>
-                                    <div class="flex flex-wrap gap-x-2 text-[10px] text-slate-700 font-medium">
+                                    <div class="flex flex-wrap gap-x-2 text-[9.5px] text-slate-700 font-medium">
                                         @if($item->custom_name)
                                             <span class="text-slate-900 font-semibold">Nama: {{ $item->custom_name }}</span>
                                         @endif
@@ -188,24 +187,24 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="px-2 py-1.5 text-center">
-                                    <span class="inline-block rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-900">
+                                <td class="px-2 py-1 text-center">
+                                    <span class="inline-block rounded bg-slate-200 px-1.5 py-0.5 text-[9.5px] font-bold text-slate-900">
                                         {{ $variant?->size?->name ?? '-' }}
                                     </span>
                                 </td>
-                                <td class="px-2 py-1.5 text-center font-bold text-slate-900">
+                                <td class="px-2 py-1 text-center font-bold text-slate-900">
                                     {{ $item->qty }}
                                 </td>
-                                <td class="px-2.5 py-1.5 text-right text-slate-900 font-medium">
+                                <td class="px-2 py-1 text-right text-slate-900 font-medium">
                                     Rp {{ number_format($item->price, 0, ',', '.') }}
                                 </td>
-                                <td class="px-2.5 py-1.5 text-right font-bold text-slate-900">
+                                <td class="px-2 py-1 text-right font-bold text-slate-900">
                                     Rp {{ number_format($item->subtotal, 0, ',', '.') }}
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-3 py-4 text-center text-slate-500 text-xs">
+                                <td colspan="5" class="px-3 py-3 text-center text-slate-500 text-xs">
                                     Tidak ada produk dalam transaksi.
                                 </td>
                             </tr>
@@ -216,40 +215,40 @@
         </div>
 
         {{-- Footer & Total Section --}}
-        <div class="mt-2 pt-2 border-t border-slate-300 flex justify-between items-end gap-4">
+        <div class="mt-2 pt-1.5 border-t border-slate-300 flex justify-between items-end gap-4">
             {{-- Syarat, Catatan, & Logo Eazywear --}}
-            <div class="w-7/12 flex flex-col justify-end space-y-1">
+            <div class="w-7/12 flex flex-col justify-end space-y-0.5">
                 {{-- Logo Eazywear --}}
-                <img src="{{ asset('images/shipping/logoeazywear.svg') }}?v=20261016" alt="Eazywear Logo" class="h-9 w-auto object-contain self-start mb-0.5">
+                <img src="{{ asset('images/shipping/logoeazywear.svg') }}?v=20261016" alt="Eazywear Logo" class="h-8 w-auto object-contain self-start mb-0.5">
 
-                <div class="text-[10px] text-slate-800 flex items-center gap-1.5">
+                <div class="text-[9.5px] text-slate-800 flex items-center gap-1.5">
                     <span class="font-bold text-slate-900 whitespace-nowrap">Ketentuan Retur & Garansi:</span>
                     <span class="text-slate-700 leading-tight">Maks. 3 hari setelah diterima & wajib video unboxing.</span>
                 </div>
-                <p class="text-[9.5px] text-slate-600 italic">
+                <p class="text-[9px] text-slate-600 italic">
                     Terima kasih telah berbelanja di Eazywear!
                 </p>
             </div>
 
             {{-- Price Breakdown --}}
-            <div class="w-5/12 max-w-[210px] space-y-0.5 text-xs">
-                <div class="flex justify-between text-[11px] text-slate-700 font-medium">
+            <div class="w-5/12 max-w-[200px] space-y-0.5 text-xs">
+                <div class="flex justify-between text-[10.5px] text-slate-700 font-medium">
                     <span>Subtotal</span>
                     <span class="font-bold text-slate-900">Rp {{ number_format($transaction->subtotal, 0, ',', '.') }}</span>
                 </div>
-                <div class="flex justify-between text-[11px] text-slate-700 font-medium">
+                <div class="flex justify-between text-[10.5px] text-slate-700 font-medium">
                     <span>Ongkir</span>
                     <span class="font-bold text-slate-900">Rp {{ number_format($transaction->shipping, 0, ',', '.') }}</span>
                 </div>
                 @if($transaction->discount > 0)
-                <div class="flex justify-between text-[11px] text-slate-700 font-medium">
+                <div class="flex justify-between text-[10.5px] text-slate-700 font-medium">
                     <span>Diskon</span>
                     <span class="font-bold text-emerald-700">-Rp {{ number_format($transaction->discount, 0, ',', '.') }}</span>
                 </div>
                 @endif
-                <div class="flex items-baseline justify-between border-t border-slate-300 pt-1 mt-1">
+                <div class="flex items-baseline justify-between border-t border-slate-300 pt-1 mt-0.5">
                     <span class="text-xs font-bold text-slate-900">Total Bayar</span>
-                    <span class="text-base font-black text-[#895e0c]">
+                    <span class="text-sm font-black text-[#895e0c]">
                         Rp {{ number_format($transaction->total, 0, ',', '.') }}
                     </span>
                 </div>

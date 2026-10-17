@@ -100,7 +100,7 @@
             <div class="text-left sm:text-right">
                 <div class="inline-flex items-center gap-2 mb-1">
                     <span class="h-6 w-6 rounded-lg bg-[#AE7C18] flex items-center justify-center text-white font-bold text-xs">E</span>
-                    <h2 class="text-xl font-bold text-slate-900 tracking-tight">EazyWear</h2>
+                    <h2 class="text-xl font-bold text-slate-900 tracking-tight">Eazywear</h2>
                 </div>
                 <p class="text-xs text-slate-500">Jl. Asang Permai No.Km 11.200, Mekar Raya</p>
                 <p class="text-xs text-slate-500">Kertak Hanyar, Banjar, Kalsel</p>
@@ -330,7 +330,7 @@
 
         {{-- Footer Note --}}
         <div class="mt-12 pt-6 border-t border-slate-100 text-center page-break-inside-avoid">
-            <p class="text-xs font-bold text-slate-800">Terima kasih telah berbelanja di EazyWear!</p>
+            <p class="text-xs font-bold text-slate-800">Terima kasih telah berbelanja di Eazywear!</p>
             <p class="text-[11px] text-slate-400 mt-0.5">Invoice ini diterbitkan secara otomatis dan sah tanpa tanda tangan basah.</p>
         </div>
 

@@ -155,7 +155,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         ->name('transactions.check-payment');
         Route::patch('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])->name('transactions.cancel');
         Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy');
-        Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->name('transactions.print');
+
 
         Route::patch('/transactions/{transaction}/fulfillments/{fulfillment}/ship', [TransactionController::class, 'shipFulfillment'])->name('transactions.fulfillments.ship');
         Route::patch('/transactions/{transaction}/fulfillments/{fulfillment}/shipping-address', [TransactionController::class, 'updateFulfillmentShippingAddress'])->name('transactions.fulfillments.shipping-address.update');
@@ -215,6 +215,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     Route::middleware('role:super_admin,management')->group(function () {
         Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
+        Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->name('transactions.print');
         Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->middleware('role:super_admin,management')->name('transactions.show');
         Route::put('/transactions/hidden-statuses', [TransactionController::class, 'updateHiddenStatuses'])->name('transactions.hidden-statuses.update');
     });

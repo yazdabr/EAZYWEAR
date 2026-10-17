@@ -1,3 +1,31 @@
+<style>
+    #customer-tracking-modal {
+        padding: 12px;
+    }
+
+    #customer-tracking-modal > div {
+        box-sizing: border-box;
+        width: min(82vw, 340px);
+        height: min(52dvh, 400px);
+        min-height: 0;
+        max-height: min(400px, calc(100dvh - 24px));
+    }
+
+    #customer-tracking-modal > div > div:nth-child(2) {
+        min-height: 0;
+        flex: 1 1 0%;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    @media (min-width: 640px) {
+        #customer-tracking-modal > div {
+            width: min(480px, calc(100vw - 48px));
+            height: min(540px, calc(100dvh - 48px));
+            max-height: calc(100dvh - 48px);
+        }
+    }
+</style>
 <div
     id="customer-tracking-modal"
     class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-950/60 p-4"

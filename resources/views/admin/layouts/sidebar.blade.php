@@ -152,6 +152,19 @@
         {{-- ========================================================= --}}
 
         @if ($role === 'management')
+            {{-- DASHBOARD MANAGEMENT --}}
+            <nav class="space-y-1">
+                <a
+                    href="{{ route('admin.dashboard') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
+                    {{ request()->routeIs('admin.dashboard')
+                        ? 'bg-[#C4902C] text-white shadow-md'
+                        : 'text-gray-400 hover:bg-[#C4902C] hover:text-white' }}"
+                >
+                    <x-heroicon-o-squares-2x2 class="h-5 w-5 shrink-0"/>
+                    <span>Dashboard</span>
+                </a>
+            </nav>
 
             {{-- TRANSAKSI --}}
             <div class="mt-2 px-2">

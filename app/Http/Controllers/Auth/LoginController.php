@@ -56,7 +56,7 @@ class LoginController extends Controller
             }
 
             if ($user->role === 'management') {
-                return redirect()->route('admin.transactions');
+                return redirect()->route('admin.dashboard');
             }
 
             if ($user->role === 'super_admin') {

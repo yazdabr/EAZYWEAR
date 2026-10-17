@@ -94,7 +94,7 @@ Route::get('/login', function () {
         }
 
         if ($role === 'management') {
-            return redirect()->route('admin.transactions');
+            return redirect()->route('admin.dashboard');
         }
 
         if ($role === 'super_admin') {
@@ -111,7 +111,7 @@ Route::post('/login', [LoginController::class, 'store'])->middleware('guest')->n
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
 
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
-    Route::middleware('role:super_admin')->group(function () {
+    Route::middleware('role:super_admin,management')->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     });
 

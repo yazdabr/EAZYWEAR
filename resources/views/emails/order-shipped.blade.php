@@ -64,32 +64,32 @@
 
                         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa; border-radius:8px;">
                             <tr>
-                                <td style="padding:14px 16px; color:#777777; font-size:13px; width:40%;">
-                                    Invoice
-                                </td>
-                                <td style="padding:14px 16px; font-size:14px; font-weight:bold;">
-                                    {{ $transaction->invoice_number }}
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td style="padding:14px 16px; color:#777777; font-size:13px;">
-                                    Kurir
-                                </td>
-                                <td style="padding:14px 16px; font-size:14px;">
-                                    {{ $transaction->courier ?? '-' }}
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td style="padding:14px 16px; color:#777777; font-size:13px;">
-                                    Nomor Resi
-                                </td>
-                                <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#AE7C18;">
-                                    {{ $transaction->tracking_number ?? '-' }}
-                                </td>
+                                <td style="padding:14px 16px; color:#777777; font-size:13px; width:40%;">Invoice</td>
+                                <td style="padding:14px 16px; font-size:14px; font-weight:bold;">{{ $transaction->invoice_number }}</td>
                             </tr>
                         </table>
+
+                        @forelse($transaction->shipments as $shipment)
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px; background:#fafafa; border-radius:8px;">
+                                <tr>
+                                    <td colspan="2" style="padding:14px 16px 6px; font-size:14px; font-weight:bold;">
+                                        {{ $shipment->shipment_type === 'combined' ? 'Pengiriman Gabungan' : 'Pengiriman' }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:8px 16px; color:#777777; font-size:13px; width:40%;">Kurir</td>
+                                    <td style="padding:8px 16px; font-size:14px;">{{ $shipment->courier ?: $shipment->shipping_method ?: '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:8px 16px 14px; color:#777777; font-size:13px;">Nomor Resi</td>
+                                    <td style="padding:8px 16px 14px; font-size:14px; font-weight:bold; color:#AE7C18;">
+                                        {{ $shipment->tracking_number ?: $shipment->biteship_waybill_id ?: '-' }}
+                                    </td>
+                                </tr>
+                            </table>
+                        @empty
+                            <p style="font-size:13px; color:#777777;">Informasi pengiriman belum tersedia.</p>
+                        @endforelse
                     </td>
                 </tr>
 

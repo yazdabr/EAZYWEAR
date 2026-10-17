@@ -16,6 +16,7 @@ class OrderShippedMail extends Mailable
     public function __construct(
         public Transaction $transaction
     ) {
+        $this->transaction->loadMissing('shipments');
     }
 
     public function envelope(): Envelope

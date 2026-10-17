@@ -1,22 +1,26 @@
-﻿<div
+<div
     id="customer-tracking-modal"
     class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-950/60 p-4"
     role="dialog"
     aria-modal="true"
     aria-labelledby="customer-tracking-title"
 >
-    <div class="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div class="flex items-center justify-between border-b border-slate-100 p-5">
+    <!-- Modal Card: Dibuat lebih pendek (max-h-[460px]) agar berbentuk kotak kompak -->
+    <div class="flex h-[52dvh] max-h-[400px] w-[82vw] max-w-[340px] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl sm:h-[540px] sm:max-h-[540px] sm:w-[480px] sm:max-w-[480px]">
+
+        <!-- Header (Fixed) -->
+        <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-3 py-2.5 sm:px-4 sm:py-3.5">
             <div>
-                <h2 id="customer-tracking-title" class="text-base font-bold text-slate-900">Tracking Resi</h2>
-                <p class="mt-1 text-xs text-slate-500">Riwayat perjalanan paket</p>
+                <h2 id="customer-tracking-title" class="text-sm font-bold text-slate-900">Tracking Resi</h2>
+                <p class="text-[11px] text-slate-500">Riwayat perjalanan paket</p>
             </div>
             <button type="button" onclick="closeCustomerTrackingModal()"
-                class="rounded-lg px-3 py-2 text-lg text-slate-500 hover:bg-slate-100"
+                class="rounded-lg px-2.5 py-1 text-base text-slate-500 hover:bg-slate-100"
                 aria-label="Tutup modal">&times;</button>
         </div>
 
-        <div class="space-y-4 overflow-y-auto p-5">
+        <!-- Body Area (Scrollable) -->
+        <div class="min-h-0 flex-1 overflow-y-auto p-3 space-y-2.5 sm:p-4 sm:space-y-3">
             <div id="customer-tracking-shipment-list" class="space-y-2">
                 @foreach($transaction->shipments->filter(fn ($shipment) => filled($shipment->biteship_tracking_id)) as $shipment)
                     <button
@@ -27,46 +31,46 @@
                             'email' => $transaction->shipping_email,
                         ]) }}"
                         onclick="loadCustomerTracking(this.dataset.trackingUrl)"
-                        class="w-full rounded-xl border border-slate-200 p-3 text-left transition hover:border-[#AE7C18] hover:bg-amber-50/40"
+                        class="w-full rounded-xl border border-slate-200 p-2.5 text-left transition hover:border-[#AE7C18] hover:bg-amber-50/40"
                     >
-                        <span class="block text-xs text-slate-500">
+                        <span class="block text-[11px] text-slate-500">
                             {{ $shipment->shipment_type === 'combined' ? 'Pengiriman Gabungan' : 'Pengiriman' }}
                         </span>
-                        <span class="mt-1 block break-all text-sm font-bold text-slate-900">
+                        <span class="mt-0.5 block break-all text-xs font-bold text-slate-900">
                             {{ $shipment->tracking_number ?: $shipment->biteship_waybill_id ?: 'Nomor resi belum tersedia' }}
                         </span>
-                        <span class="mt-1 block text-xs text-slate-500">
+                        <span class="mt-0.5 block text-[11px] text-slate-500">
                             {{ $shipment->courier ?: $shipment->shipping_method ?: '-' }}
                         </span>
                     </button>
                 @endforeach
             </div>
 
-            <p id="customer-tracking-loading" class="hidden text-sm text-slate-500">
+            <p id="customer-tracking-loading" class="hidden text-xs text-slate-500">
                 Memuat riwayat pengiriman...
             </p>
-            <div id="customer-tracking-error" class="hidden rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert"></div>
+            <div id="customer-tracking-error" class="hidden rounded-xl bg-red-50 p-2.5 text-xs text-red-700" role="alert"></div>
 
             <div id="customer-tracking-content" class="hidden">
-                <div class="rounded-xl bg-slate-50 p-4">
-                    <p class="text-xs text-slate-500">Nomor resi</p>
-                    <p id="customer-tracking-number" class="mt-1 break-all text-sm font-bold text-slate-900">-</p>
-                    <p class="mt-3 text-xs text-slate-500">Kurir</p>
-                    <p id="customer-tracking-courier" class="mt-1 text-sm font-semibold text-slate-900">-</p>
+                <div class="rounded-xl bg-slate-50 p-3">
+                    <p class="text-[11px] text-slate-500">Nomor resi</p>
+                    <p id="customer-tracking-number" class="mt-0.5 break-all text-xs font-bold text-slate-900">-</p>
+                    <p class="mt-2 text-[11px] text-slate-500">Kurir</p>
+                    <p id="customer-tracking-courier" class="mt-0.5 text-xs font-semibold text-slate-900">-</p>
                 </div>
 
-                <h3 class="mb-3 mt-5 text-sm font-bold text-slate-900">Riwayat pengiriman</h3>
-                <div id="customer-tracking-history" class="space-y-4"></div>
+                <h3 class="mb-2 mt-3.5 text-xs font-bold text-slate-900">Riwayat pengiriman</h3>
+                <div id="customer-tracking-history" class="space-y-3"></div>
             </div>
         </div>
 
-        <div class="border-t border-slate-100 p-4 text-right">
+        <!-- Footer (Fixed) -->
+        <div class="shrink-0 border-t border-slate-100 p-2.5 text-right sm:p-3">
             <button type="button" onclick="closeCustomerTrackingModal()"
-                class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700">Tutup</button>
+                class="rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-700">Tutup</button>
         </div>
     </div>
 </div>
-
 <script>
 (function () {
     const modal = document.getElementById('customer-tracking-modal');

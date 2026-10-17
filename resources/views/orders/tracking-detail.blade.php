@@ -1,4 +1,4 @@
-﻿@extends('layouts.website')
+@extends('layouts.website')
 
 @section('title', 'Detail Pesanan - Eazywear Indonesia')
 
@@ -397,7 +397,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                                             @elseif($fulfillment->group_type === 'pre_order')
                                                                 <span class="text-slate-400">(Pre-Order)</span>
                                                             @endif
-                                                            Ã— {{ $shipmentItem->qty }}
+                                                            &times; {{ $shipmentItem->qty }}
                                                         </span>
                                                     </div>
                                                 @endforeach

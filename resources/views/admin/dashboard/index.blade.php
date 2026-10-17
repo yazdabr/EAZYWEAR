@@ -34,7 +34,7 @@
 
         {{-- Pesanan Selesai --}}
         <x-admin.stat-card
-            title="Pesanan Selesai"
+            title="Total Transaksi"
             value="{{ number_format($totalOrders, 0, ',', '.') }}"
             iconBg="bg-emerald-50"
             iconColor="text-emerald-600"
@@ -46,7 +46,7 @@
 
         {{-- Pesanan Pending --}}
         <x-admin.stat-card
-            title="Pesanan Pending"
+            title="Transaksi Pending"
             value="{{ number_format($pendingOrders, 0, ',', '.') }}"
             iconBg="bg-orange-50"
             iconColor="text-orange-600"

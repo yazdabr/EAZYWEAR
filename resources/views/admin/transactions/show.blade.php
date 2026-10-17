@@ -484,7 +484,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                             <button type="submit"
                                                 class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700">
                                                 <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
-                                                Konfirmasi Pesanan Siap Diambil Pelanggan
+                                                Konfirmasi Pesanan Selesai, Siap Diambil Pelanggan
                                             </button>
                                         </form>
                                     @endif

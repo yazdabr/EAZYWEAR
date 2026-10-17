@@ -63,7 +63,7 @@ class TransactionCompletionService
             if (! $remaining && $transaction->status !== Transaction::ORDER_COMPLETED) {
                 $transaction->updateStatus(
                     Transaction::ORDER_COMPLETED,
-                    'Seluruh kelompok pengiriman telah selesai berdasarkan status delivered Biteship.'
+                    'Seluruh pesanan pengiriman telah selesai berdasarkan status delivered Biteship.'
                 );
             }
 

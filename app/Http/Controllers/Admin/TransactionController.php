@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\TransactionInvoiceExport;
+use Maatwebsite\Excel\Facades\Excel;
+
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Inventory;
@@ -513,6 +516,23 @@ class TransactionController extends Controller
         return view('admin.transactions.show', compact('transaction'));
     }
 
+
+    public function exportInvoiceExcel($invoice)
+    {
+        $transaction = Transaction::with([
+            'customer',
+            'items.productVariant.product',
+            'items.productVariant.size',
+            'items.productVariant.color',
+        ])->where('invoice_number', $invoice)->firstOrFail();
+
+        $filename = 'Invoice-' . preg_replace('/[^A-Za-z0-9_-]/', '-', $transaction->invoice_number) . '.xlsx';
+
+        return Excel::download(
+            new TransactionInvoiceExport($transaction),
+            $filename
+        );
+    }
     public function print($invoice)
     {
         $transaction = Transaction::with(['customer', 'items.productVariant.product.images', 'items.productVariant.size', 'items.productVariant.color'])->where('invoice_number', $invoice)->firstOrFail();

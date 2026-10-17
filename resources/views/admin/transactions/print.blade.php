@@ -11,14 +11,18 @@
         @media print {
             @page {
                 margin: 0;
-                size: A4 portrait;
+                size: 240mm 140mm; /* Kustom ukuran 24 cm x 14 cm */
             }
 
-            body {
-                background-color: #ffffff !important;
+            html, body {
+                width: 240mm;
+                height: 140mm;
+                margin: 0 !important;
                 padding: 0 !important;
+                background-color: #ffffff !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+                overflow: hidden; /* Memastikan tidak ada overflow ke page 2 */
             }
 
             .no-print {
@@ -28,38 +32,36 @@
             .print-container {
                 box-shadow: none !important;
                 border: none !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                padding: 20mm 15mm !important;
+                width: 240mm !important;
+                height: 140mm !important;
+                max-width: 240mm !important;
+                padding: 8mm 10mm !important;
                 margin: 0 !important;
                 border-radius: 0 !important;
-            }
-
-            .page-break-inside-avoid {
-                page-break-inside: avoid;
+                box-sizing: border-box;
             }
         }
     </style>
 </head>
 
-<body class="bg-slate-100 font-sans antialiased min-h-screen py-6 px-4 sm:px-6 lg:py-10">
+<body class="bg-slate-100 font-sans antialiased min-h-screen py-6 px-4">
 
     {{-- Floating Print Bar (Hidden on Print) --}}
-    <div class="no-print mx-auto max-w-4xl mb-6 flex flex-wrap items-center justify-between gap-4 bg-white px-6 py-4 rounded-2xl shadow-sm border border-slate-200">
+    <div class="no-print mx-auto max-w-5xl mb-4 flex flex-wrap items-center justify-between gap-4 bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center gap-3">
             <span class="relative flex h-3 w-3">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
             </span>
             <div>
-                <p class="text-sm font-semibold text-slate-800">Pratinjau Invoice Pembayaran</p>
-                <p class="text-xs text-slate-500">Siap dicetak atau disimpan ke PDF</p>
+                <p class="text-sm font-semibold text-slate-800">Pratinjau Invoice (24 x 14 cm)</p>
+                <p class="text-xs text-slate-500">Didesain khusus muat 1 halaman cetak</p>
             </div>
         </div>
         <div class="flex items-center gap-3">
             <button 
                 onclick="window.print()" 
-                class="inline-flex items-center gap-2 rounded-xl bg-[#AE7C18] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#AE7C18]/20 transition-all hover:bg-[#96690F] active:scale-95 cursor-pointer">
+                class="inline-flex items-center gap-2 rounded-xl bg-[#AE7C18] px-5 py-2 text-sm font-semibold text-white shadow-md shadow-[#AE7C18]/20 transition-all hover:bg-[#96690F] active:scale-95 cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                 Cetak Invoice
             </button>
@@ -67,271 +69,191 @@
     </div>
 
     {{-- Main Invoice Card --}}
-    <div class="print-container relative overflow-hidden mx-auto max-w-4xl bg-white p-8 sm:p-12 rounded-3xl shadow-xl border border-slate-200/80">
+    <div class="print-container relative overflow-hidden mx-auto max-w-[240mm] min-h-[140mm] bg-white p-6 rounded-2xl shadow-xl border border-slate-200/80 flex flex-col justify-between">
         
         {{-- Top Accent Bar --}}
-        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#AE7C18] via-[#D4A038] to-[#AE7C18]"></div>
+        <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#AE7C18] via-[#D4A038] to-[#AE7C18]"></div>
 
-        {{-- Header Section --}}
-        <div class="flex flex-col sm:flex-row justify-between items-start gap-6 pb-8 border-b border-slate-100">
-            <div>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-3xl font-black tracking-tight text-slate-900">Invoice</h1>
-                    @php
-                        $statusLabel = match (strtoupper($transaction->status ?? '')) {
-                            'PAID' => 'DIBAYAR',
-                            'COMPLETED' => 'SELESAI',
-                            'CANCELLED' => 'DIBATALKAN',
-                            'PENDING' => 'PENDING',
-                            default => $transaction->status ?? '-',
-                        };
-                    @endphp
-
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                        {{ $statusLabel }}
+        <div>
+            {{-- Header Section (Status Dihilangkan) --}}
+            <div class="flex justify-between items-start pb-2.5 border-b border-slate-300">
+                <div class="flex items-baseline gap-2">
+                    <h1 class="text-2xl font-black tracking-tight text-slate-900">INVOICE</h1>
+                    <span class="text-xs font-bold text-[#AE7C18] tracking-wider uppercase">
+                        #{{ $transaction->invoice_number }}
                     </span>
                 </div>
-                <p class="mt-2 text-sm font-bold tracking-wider text-[#AE7C18] uppercase">
-                    #{{ $transaction->invoice_number }}
-                </p>
-            </div>
 
-            <div class="text-left sm:text-right">
-                <div class="inline-flex items-center gap-2 mb-1">
-                    <span class="h-6 w-6 rounded-lg bg-[#AE7C18] flex items-center justify-center text-white font-bold text-xs">E</span>
-                    <h2 class="text-xl font-bold text-slate-900 tracking-tight">Eazywear</h2>
+                <div class="text-right flex items-center gap-2">
+                    <span class="text-base font-bold text-slate-900 tracking-tight">Eazywear</span>
+                    <span class="text-[11px] text-slate-700 font-medium">| +62 857 5443 1105</span>
                 </div>
-                <p class="text-xs text-slate-500">Jl. Asang Permai No.Km 11.200, Mekar Raya</p>
-                <p class="text-xs text-slate-500">Kertak Hanyar, Banjar, Kalsel</p>
-                <p class="text-xs text-slate-500 mt-1">+62 857 5443 1105</p>
-            </div>
-        </div>
-
-        {{-- Meta & Billed To Section --}}
-        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div class="bg-slate-50/80 rounded-2xl p-5 border border-slate-100">
-                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Ditagihkan Kepada</p>
-                <h3 class="text-base font-bold text-slate-900">
-                    {{ $transaction->shipping_name ?? $transaction->customer?->name ?? '-' }}
-                </h3>
-                <p class="mt-1 text-xs text-slate-600">
-                    {{ $transaction->shipping_phone ?? $transaction->customer?->phone ?? '-' }}
-                </p>
-                <p class="text-xs text-slate-600">
-                    {{ $transaction->shipping_email ?? $transaction->customer?->email ?? '-' }}
-                </p>
-                <p class="mt-2 border-t border-slate-200/60 pt-2 text-xs text-slate-500">
-                    {{ $transaction->shipping_address ?? '-' }}
-                </p>
-                <p class="mt-1 text-xs text-slate-500">
-                    {{ collect([
-                        $transaction->shipping_district,
-                        $transaction->shipping_city,
-                        $transaction->shipping_province,
-                        $transaction->shipping_postal_code
-                    ])->filter()->implode(', ') }}
-                </p>
-                <p class="mt-1 text-xs font-semibold text-slate-700">
-                    Pengiriman: {{ $transaction->shipping_method ?? '-' }}
-                </p>
-                @if(
-                    $transaction->shipping_method === 'Ambil di Tempat' &&
-                    $transaction->pickup_date &&
-                    $transaction->pickup_time_start &&
-                    $transaction->pickup_time_end
-                )
-                    <div class="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
-                        <p class="text-[11px] font-bold uppercase tracking-wider text-amber-700">
-                            Jadwal Pengambilan
-                        </p>
-                        <p class="mt-1 text-xs font-bold text-slate-900">
-                            {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}
-                        </p>
-                        <p class="mt-0.5 text-xs text-slate-700">
-                            {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}
-                            – {{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
-                        </p>
-                    </div>
-                @endif
             </div>
 
-            <div class="bg-slate-50/80 rounded-2xl p-5 border border-slate-100 flex flex-col justify-between">
-                <div class="grid grid-cols-2 gap-4">
+            {{-- Info Meta & Pelanggan --}}
+            <div class="mt-2.5 grid grid-cols-12 gap-3 text-xs">
+                {{-- Ditagihkan Kepada --}}
+                <div class="col-span-7 bg-slate-50/80 rounded-xl p-2.5 border border-slate-200 flex flex-col justify-between">
                     <div>
-                        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Tanggal Invoice</p>
-                        <p class="text-xs font-bold text-slate-900">
-                            {{ $transaction->transaction_date?->copy()->setTimezone('Asia/Makassar')->format('d M Y') ?? '-' }}
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-700">Ditagihkan Kepada:</span>
+                            <span class="text-[10px] font-bold text-slate-800">Pengiriman: {{ $transaction->shipping_method ?? '-' }}</span>
+                        </div>
+                        <p class="font-bold text-slate-900 leading-tight">
+                            {{ $transaction->shipping_name ?? $transaction->customer?->name ?? '-' }}
+                            <span class="font-medium text-slate-700">({{ $transaction->shipping_phone ?? $transaction->customer?->phone ?? '-' }})</span>
+                        </p>
+                        {{-- Alamat Terus ke Baris Berikutnya (Tidak Terpotong) --}}
+                        <p class="text-[10px] text-slate-800 leading-snug mt-0.5 whitespace-normal break-words">
+                            {{ $transaction->shipping_address ?? '-' }}, 
+                            {{ collect([
+                                $transaction->shipping_district,
+                                $transaction->shipping_city,
+                                $transaction->shipping_province,
+                                $transaction->shipping_postal_code
+                            ])->filter()->implode(', ') }}
                         </p>
                     </div>
-                    <div>
-                        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">No. Transaksi</p>
-                        <p class="text-xs font-bold text-slate-900">
-                            {{ $transaction->invoice_number }}
-                        </p>
-                    </div>
+
+                    @if(
+                        $transaction->shipping_method === 'Ambil di Tempat' &&
+                        $transaction->pickup_date &&
+                        $transaction->pickup_time_start &&
+                        $transaction->pickup_time_end
+                    )
+                        <div class="mt-1 flex justify-between items-center text-[10px] pt-1 border-t border-slate-200">
+                            <span class="font-bold text-slate-900">Jadwal Ambil:</span>
+                            <span class="text-slate-900 font-semibold">
+                                {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('D, d M Y') }}
+                                ({{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA)
+                            </span>
+                        </div>
+                    @endif
                 </div>
-                <div class="mt-4 pt-3 border-t border-slate-200/60 flex justify-between items-center">
-                    <div>
-                        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Metode Pembayaran</p>
-                        <p class="mt-0.5 text-xs font-bold text-slate-900">
-                            {{ $transaction->payment_method ?? '-' }}
-                        </p>
+
+                {{-- Detail Transaksi --}}
+                <div class="col-span-5 bg-slate-50/80 rounded-xl p-2.5 border border-slate-200 flex flex-col justify-between text-[11px]">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-700 font-medium">Tgl Invoice:</span>
+                        <span class="font-bold text-slate-900">
+                            {{ $transaction->transaction_date?->copy()->setTimezone('Asia/Makassar')->format('d/m/Y H:i') ?? '-' }}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-slate-700 font-medium">No. Transaksi:</span>
+                        <span class="font-bold text-slate-900">{{ $transaction->invoice_number }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mt-1">
+                        <span class="text-slate-700 font-medium">Pembayaran:</span>
+                        <span class="font-bold text-slate-900">{{ $transaction->payment_method ?? '-' }}</span>
                     </div>
                 </div>
             </div>
-        </div>
 
-        {{-- Items Table --}}
-        <div class="mt-8 overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50/50">
-                        <th class="py-3 px-3 rounded-l-xl">Detail Produk</th>
-                        <th class="py-3 px-3 text-center">Ukuran</th>
-                        <th class="py-3 px-3 text-center">Qty</th>
-                        <th class="py-3 px-3 text-right">Harga Satuan</th>
-                        <th class="py-3 px-3 text-right rounded-r-xl">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-xs sm:text-sm">
-                    @forelse($transaction->items as $item)
-                        @php
-                            $variant = $item->productVariant;
-                            $product = $variant?->product;
-                        @endphp
-
-                        <tr class="hover:bg-slate-50/50 transition-colors">
-                            <td class="px-3 py-4">
-                                <div class="flex items-center gap-3">
-                                    @php
-                                        $image = $product?->images
-                                            ?->sortBy([
-                                                ['is_thumbnail', 'desc'],
-                                                ['sort_order', 'asc'],
-                                            ])
-                                            ->first();
-                                    @endphp
-
-                                    <div class="min-w-0">
-                                        <p class="font-bold text-slate-900">
-                                            {{ $product?->name ?? '-' }}
-                                        </p>
+            {{-- Tabel Produk --}}
+            <div class="mt-2.5 overflow-hidden rounded-xl border border-slate-200">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-300 text-[10px] font-bold uppercase tracking-wider text-slate-800 bg-slate-100">
+                            <th class="py-1.5 px-2.5">Detail Produk</th>
+                            <th class="py-1.5 px-2 text-center">Ukuran</th>
+                            <th class="py-1.5 px-2 text-center">Qty</th>
+                            <th class="py-1.5 px-2.5 text-right">Harga Satuan</th>
+                            <th class="py-1.5 px-2.5 text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-xs">
+                        @forelse($transaction->items as $item)
+                            @php
+                                $variant = $item->productVariant;
+                                $product = $variant?->product;
+                            @endphp
+                            <tr>
+                                <td class="px-2.5 py-1.5">
+                                    <p class="font-bold text-slate-900 leading-tight">
+                                        {{ $product?->name ?? '-' }}
+                                    </p>
+                                    <div class="flex flex-wrap gap-x-2 text-[10px] text-slate-700 font-medium">
                                         @if($item->custom_name)
-                                            <p class="mt-1 text-xs font-semibold uppercase tracking-wide text-[#AE7C18]">
-                                                Nama Jersey: {{ $item->custom_name }}
-                                            </p>
+                                            <span class="text-slate-900 font-semibold">Nama: {{ $item->custom_name }}</span>
                                         @endif
                                         @if($item->custom_number)
-                                            <p class="mt-1 text-xs font-semibold text-slate-600">
-                                                Nomor Punggung: {{ $item->custom_number }}
-                                            </p>
+                                            <span class="text-slate-900 font-semibold">No: {{ $item->custom_number }}</span>
                                         @endif
-
                                         @if($item->is_longsleeve)
-                                            <p class="mt-1 text-xs font-semibold text-[#AE7C18]">
-                                                Longsleeve
-                                                <span class="font-normal text-slate-500">
-                                                    (+ Rp {{ number_format((int) $item->longsleeve_price, 0, ',', '.') }})
-                                                </span>
-                                            </p>
+                                            <span class="text-slate-900 font-semibold">Longsleeve (+{{ number_format((int) $item->longsleeve_price, 0, ',', '.') }})</span>
                                         @endif
-
                                         @if($item->is_patch)
-                                            <p class="mt-1 text-xs font-semibold text-[#AE7C18]">
-                                                Patch
-                                                <span class="font-normal text-slate-500">
-                                                    (+ Rp {{ number_format((int) $item->patch_price, 0, ',', '.') }})
-                                                </span>
-                                            </p>
+                                            <span class="text-slate-900 font-semibold">Patch (+{{ number_format((int) $item->patch_price, 0, ',', '.') }})</span>
                                         @endif
                                     </div>
-                                </div>
-                            </td>
-
-                            <td class="px-3 py-4 text-center">
-                                <span class="inline-block rounded bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700">
-                                    {{ $variant?->size?->name ?? '-' }}
-                                </span>
-                            </td>
-
-                            <td class="px-3 py-4 text-center font-semibold text-slate-700">
-                                {{ $item->qty }}
-                            </td>
-
-                            <td class="px-3 py-4 text-right text-slate-600">
-                                Rp {{ number_format($item->price, 0, ',', '.') }}
-                            </td>
-
-                            <td class="px-3 py-4 text-right font-bold text-slate-900">
-                                Rp {{ number_format($item->subtotal, 0, ',', '.') }}
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="px-3 py-8 text-center text-slate-400">
-                                Tidak ada produk dalam transaksi.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                                </td>
+                                <td class="px-2 py-1.5 text-center">
+                                    <span class="inline-block rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-900">
+                                        {{ $variant?->size?->name ?? '-' }}
+                                    </span>
+                                </td>
+                                <td class="px-2 py-1.5 text-center font-bold text-slate-900">
+                                    {{ $item->qty }}
+                                </td>
+                                <td class="px-2.5 py-1.5 text-right text-slate-900 font-medium">
+                                    Rp {{ number_format($item->price, 0, ',', '.') }}
+                                </td>
+                                <td class="px-2.5 py-1.5 text-right font-bold text-slate-900">
+                                    Rp {{ number_format($item->subtotal, 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-3 py-4 text-center text-slate-500 text-xs">
+                                    Tidak ada produk dalam transaksi.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        {{-- Summary & Notes Section --}}
-        <div class="mt-8 flex flex-col sm:flex-row justify-between items-start gap-8 border-t border-slate-100 pt-8 page-break-inside-avoid">
-            {{-- Terms & Notes --}}
-            <div class="w-full sm:w-1/2 space-y-3">
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                    <p class="text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5 text-[#AE7C18]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Syarat & Ketentuan:
-                    </p>
-                    <ul class="text-[11px] text-slate-500 leading-relaxed list-disc list-inside space-y-0.5">
-                        <li>Pengembalian barang berlaku maks. 3 hari setelah diterima.</li>
-                        <li>Wajib menyertakan video unboxing untuk klaim cacat produksi.</li>
-                    </ul>
+        {{-- Footer & Total Section --}}
+        <div class="mt-2 pt-2 border-t border-slate-300 flex justify-between items-end gap-4">
+            {{-- Syarat, Catatan, & Logo Eazywear --}}
+            <div class="w-7/12 flex flex-col justify-end space-y-1">
+                {{-- Logo Eazywear --}}
+                <img src="{{ asset('images/shipping/logoeazywear.svg') }}?v=20261016" alt="Eazywear Logo" class="h-9 w-auto object-contain self-start mb-0.5">
+
+                <div class="text-[10px] text-slate-800 flex items-center gap-1.5">
+                    <span class="font-bold text-slate-900 whitespace-nowrap">Ketentuan Retur & Garansi:</span>
+                    <span class="text-slate-700 leading-tight">Maks. 3 hari setelah diterima & wajib video unboxing.</span>
                 </div>
+                <p class="text-[9.5px] text-slate-600 italic">
+                    Terima kasih telah berbelanja di Eazywear!
+                </p>
             </div>
 
             {{-- Price Breakdown --}}
-            <div class="w-full sm:w-72 space-y-2.5">
-                <div class="flex justify-between text-xs text-slate-600">
-                    <span>Subtotal Produk</span>
-                    <span class="font-semibold text-slate-900">
-                        Rp {{ number_format($transaction->subtotal, 0, ',', '.') }}
-                    </span>
+            <div class="w-5/12 max-w-[210px] space-y-0.5 text-xs">
+                <div class="flex justify-between text-[11px] text-slate-700 font-medium">
+                    <span>Subtotal</span>
+                    <span class="font-bold text-slate-900">Rp {{ number_format($transaction->subtotal, 0, ',', '.') }}</span>
                 </div>
-
-                <div class="flex justify-between text-xs text-slate-600">
-                    <span>Ongkos Kirim</span>
-                    <span class="font-semibold text-slate-900">
-                        Rp {{ number_format($transaction->shipping, 0, ',', '.') }}
-                    </span>
+                <div class="flex justify-between text-[11px] text-slate-700 font-medium">
+                    <span>Ongkir</span>
+                    <span class="font-bold text-slate-900">Rp {{ number_format($transaction->shipping, 0, ',', '.') }}</span>
                 </div>
-
-                <div class="flex justify-between text-xs text-slate-600">
+                @if($transaction->discount > 0)
+                <div class="flex justify-between text-[11px] text-slate-700 font-medium">
                     <span>Diskon</span>
-                    <span class="font-semibold text-emerald-600">
-                        -Rp {{ number_format($transaction->discount, 0, ',', '.') }}
-                    </span>
+                    <span class="font-bold text-emerald-700">-Rp {{ number_format($transaction->discount, 0, ',', '.') }}</span>
                 </div>
-
-                <div class="flex items-baseline justify-between border-t border-slate-200 pt-3">
-                    <span class="text-sm font-bold text-slate-900">
-                        Total Bayar
-                    </span>
-                    <span class="text-xl font-black text-[#AE7C18]">
+                @endif
+                <div class="flex items-baseline justify-between border-t border-slate-300 pt-1 mt-1">
+                    <span class="text-xs font-bold text-slate-900">Total Bayar</span>
+                    <span class="text-base font-black text-[#895e0c]">
                         Rp {{ number_format($transaction->total, 0, ',', '.') }}
                     </span>
                 </div>
             </div>
-        </div>
-
-        {{-- Footer Note --}}
-        <div class="mt-12 pt-6 border-t border-slate-100 text-center page-break-inside-avoid">
-            <p class="text-xs font-bold text-slate-800">Terima kasih telah berbelanja di Eazywear!</p>
-            <p class="text-[11px] text-slate-400 mt-0.5">Invoice ini diterbitkan secara otomatis dan sah tanpa tanda tangan basah.</p>
         </div>
 
     </div>

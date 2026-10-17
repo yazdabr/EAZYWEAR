@@ -355,7 +355,7 @@
                         </div>
                         <div class="rounded-xl bg-[#AE7C18] p-3.5 text-white sm:rounded-2xl sm:p-4">
                             <h4 class="text-xs font-semibold sm:text-base">Production Time</h4>
-                            <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">Pre-Order • Ready from 30 October - 3 November 2026</p>
+                            <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">Stock Ready</p>
                         </div>
                     </div>
                 </div>

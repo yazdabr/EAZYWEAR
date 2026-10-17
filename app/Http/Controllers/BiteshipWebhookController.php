@@ -7,6 +7,10 @@ use App\Models\TransactionFulfillment;
 use App\Models\TransactionShipment;
 use App\Services\BiteshipWebhookSignatureVerifier;
 use App\Services\TransactionCompletionService;
+use App\Mail\OrderShippedMail;
+use App\Models\TransactionNotification;
+use App\Services\EmailArchiveService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -208,6 +212,10 @@ class BiteshipWebhookController extends Controller
                         ->with('transaction')
                         ->findOrFail($shipmentResult['shipment_id'])
                         ->transaction;
+
+                    if (in_array($status, ['picked', 'in_transit', 'dropping_off'], true)) {
+                        $transaction = $this->markTransactionShippedAndNotify($transaction);
+                    }
                 }
 
                 return response()->json([
@@ -276,6 +284,10 @@ class BiteshipWebhookController extends Controller
                     $transaction = $fulfillment->transaction()->firstOrFail();
                 }
 
+                if (in_array($status, ['picked', 'in_transit', 'dropping_off'], true)) {
+                    $transaction = $this->markTransactionShippedAndNotify($transaction);
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Webhook diterima.',
@@ -330,6 +342,91 @@ class BiteshipWebhookController extends Controller
         }
     }
 
+    private function markTransactionShippedAndNotify(Transaction $transaction): Transaction
+    {
+        $lock = Cache::lock('transaction:shipped-email:' . $transaction->id, 30);
+
+        if (! $lock->get()) {
+            return $transaction->fresh();
+        }
+
+        try {
+            $transaction = DB::transaction(function () use ($transaction) {
+                $locked = Transaction::query()
+                    ->whereKey($transaction->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $fulfillments = TransactionFulfillment::query()
+                    ->where('transaction_id', $locked->id)
+                    ->lockForUpdate()
+                    ->get();
+
+                $allFulfillmentsShipped = $fulfillments->isNotEmpty()
+                    && $fulfillments->every(fn ($fulfillment) => in_array(
+                        $fulfillment->status,
+                        [
+                            TransactionFulfillment::STATUS_SHIPPED,
+                            TransactionFulfillment::STATUS_COMPLETED,
+                        ],
+                        true
+                    ));
+
+                if (
+                    $allFulfillmentsShipped
+                    && in_array($locked->status, [
+                        'PAID',
+                        Transaction::ORDER_PROCESSING,
+                    ], true)
+                ) {
+                    $locked->updateStatus(
+                        Transaction::ORDER_SHIPPED,
+                        'Pesanan telah dikirim berdasarkan pembaruan status Biteship.'
+                    );
+                }
+
+                return $locked->fresh();
+            });
+
+            if ($transaction->status !== Transaction::ORDER_SHIPPED) {
+                return $transaction;
+            }
+
+            $notification = TransactionNotification::firstOrCreate([
+                'transaction_id' => $transaction->id,
+                'type' => 'ORDER_SHIPPED_EMAIL',
+            ], [
+                'sent_at' => null,
+            ]);
+
+            if ($notification->sent_at === null) {
+                $recipient = $transaction->shipping_email;
+
+                if (! is_string($recipient) || trim($recipient) === '') {
+                    report(new \RuntimeException(
+                        "Email pengiriman kosong untuk transaksi ID {$transaction->id}."
+                    ));
+
+                    return $transaction->fresh();
+                }
+
+                app(EmailArchiveService::class)->send(
+                    $recipient,
+                    new OrderShippedMail($transaction->fresh())
+                );
+
+                $notification->update(['sent_at' => now()]);
+            }
+
+            return $transaction->fresh();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $transaction->fresh();
+        } finally {
+            $lock->release();
+        }
+    }
     private function isSupportedStatus(string $status): bool
     {
         return isset(self::PROGRESS_STATUSES[$status])

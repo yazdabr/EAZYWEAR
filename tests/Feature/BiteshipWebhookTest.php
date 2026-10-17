@@ -1641,4 +1641,109 @@ class BiteshipWebhookTest extends TestCase
         $this->assertSame(Transaction::ORDER_PROCESSING, $transaction->fresh()->status);
     }
 
+
+    public function test_dropping_off_keeps_combined_transaction_processing_while_pre_order_is_not_shipped(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+            'biteship_status' => 'in_transit',
+            'biteship_order_id' => $this->biteshipOrderId('READY-DROPPING'),
+        ]);
+
+        $preOrder = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_PRE_ORDER,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 12000,
+            'status' => TransactionFulfillment::STATUS_PROCESSING,
+            'biteship_status' => 'confirmed',
+            'biteship_order_id' => $this->biteshipOrderId('PREORDER-DROPPING'),
+        ]);
+
+        $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $ready->biteship_order_id,
+                'status' => 'dropping_off',
+            ])
+            ->assertOk();
+
+        $this->assertSame(
+            Transaction::ORDER_PROCESSING,
+            $transaction->fresh()->status
+        );
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_SHIPPED,
+            $ready->fresh()->status
+        );
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_PROCESSING,
+            $preOrder->fresh()->status
+        );
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_dropping_off_ships_single_fulfillment_transaction_and_sends_email_once(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+        ]);
+
+        $fulfillment = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+            'biteship_status' => 'in_transit',
+            'biteship_order_id' => $this->biteshipOrderId('SINGLE-DROPPING'),
+        ]);
+
+        $payload = [
+            'event' => 'order.status',
+            'order_id' => $fulfillment->biteship_order_id,
+            'status' => 'dropping_off',
+        ];
+
+        $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', $payload)
+            ->assertOk();
+
+        $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', $payload)
+            ->assertOk();
+
+        $this->assertSame(
+            Transaction::ORDER_SHIPPED,
+            $transaction->fresh()->status
+        );
+
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_SHIPPED_EMAIL',
+        ]);
+
+        Mail::assertSent(\App\Mail\OrderShippedMail::class, 1);
+    }
 }

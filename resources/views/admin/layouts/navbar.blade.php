@@ -43,7 +43,7 @@
                             @if(auth()->user()->role === 'super_admin')
                                 Super Admin
                             @elseif(auth()->user()->role === 'management')
-                                Manajemen
+                                Management
                             @else
                                 {{ ucfirst(str_replace('_', ' ', auth()->user()->role)) }}
                             @endif
@@ -80,7 +80,7 @@
                                 @if(auth()->user()->role === 'super_admin')
                                     Super Admin
                                 @elseif(auth()->user()->role === 'management')
-                                    Manajemen
+                                    Management
                                 @else
                                     {{ ucfirst(str_replace('_', ' ', auth()->user()->role)) }}
                                 @endif

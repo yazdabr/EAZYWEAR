@@ -199,7 +199,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             <div>
                                 <p class="text-[10px] sm:text-xs uppercase text-slate-400 font-medium">Jadwal Pengambilan</p>
                                 <p class="mt-0.5 font-semibold text-slate-900">
-                                    {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}<span class="font-normal text-[#AE7C18]">, {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}-{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA</span>
+                                    {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }}<span class="font-normal text-[#AE7C18]">, {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }} - {{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA</span>
                                 </p>
                             </div>
                         @endif
@@ -349,12 +349,29 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <h3 class="text-sm font-bold text-slate-900">{{ $shipmentLabel }}</h3>
-                                    <p class="mt-1 text-sm text-slate-500">{{ $shipment->shipping_method }}</p>
+                                    <p class="mt-2 text-sm text-slate-500">{{ $shipment->shipping_method }}</p>
                                 </div>
                                 <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $shipment->shipment_type === 'combined' ? 'bg-white text-slate-600 ring-1 ring-slate-200' : 'bg-amber-100 text-amber-800' }}">
                                     {{ !$shipment->status || $shipment->status === 'PENDING' ? 'Menunggu diproses' : $shipment->status }}
                                 </span>
                             </div>
+
+                            @if($shipment->shipping_method === 'Ambil di Tempat')
+                                @php
+                                    $pickupDate = $shipment->pickup_date ?: $transaction->pickup_date ?: $transaction->fulfillment_date;
+                                    $pickupStart = $shipment->pickup_time_start ?: $transaction->pickup_time_start;
+                                    $pickupEnd = $shipment->pickup_time_end ?: $transaction->pickup_time_end;
+                                @endphp
+                                <div id="pickup-shipment-schedule-{{ $shipment->id }}" class="mt-3 mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                                    <p class="text-xs font-bold uppercase tracking-wide text-emerald-800">Jadwal Pengambilan</p>
+                                    <p class="mt-2 text-sm font-bold text-slate-900">
+                                        {{ $pickupDate ? \Carbon\Carbon::parse($pickupDate)->locale('id')->translatedFormat('d F Y') : 'Tanggal belum ditentukan' }}
+                                    </p>
+                                    <p class="mt-1 text-sm font-medium text-slate-700">
+                                        {{ $pickupStart ? \Carbon\Carbon::parse($pickupStart)->format('H:i') : '--:--' }} – {{ $pickupEnd ? \Carbon\Carbon::parse($pickupEnd)->format('H:i') : '--:--' }} WITA
+                                    </p>
+                                </div>
+                            @endif
 
                             <div class="mt-4 space-y-3">
                                     @foreach($shipment->fulfillments as $shipmentFulfillment)
@@ -396,6 +413,8 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                         </div>
                                     @endforeach
                             </div>
+
+
 
                             <div class="mt-4 rounded-xl border border-slate-300 bg-white p-3">
                                 <div class="mb-2 flex items-center justify-between gap-3">
@@ -445,6 +464,32 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     <p class="mt-1 text-xs text-slate-500">{{ $shipment->courier_service_code ?: '-' }}</p>
                                 </div>
                             </div>
+
+
+                            @if($shipment->shipping_method === 'Ambil di Tempat')
+                                @foreach($shipment->fulfillments as $pickupFulfillment)
+                                    @if(
+                                        in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
+                                        && !in_array($pickupFulfillment->status, [\App\Models\TransactionFulfillment::STATUS_COMPLETED, 'CANCELLED'], true)
+                                    )
+                                        <form class="fulfillment-complete-form mt-4"
+                                            data-action-title="Konfirmasi pengambilan {{ $pickupFulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY ? 'Ready Stock' : 'Pre-Order' }}"
+                                            data-action-message="Pastikan pesanan benar-benar sudah diambil pelanggan sebelum melanjutkan."
+                                            data-action-confirm-text="Ya, Konfirmasi Pengambilan"
+                                            action="{{ route('admin.transactions.fulfillments.complete', ['transaction' => $transaction, 'fulfillment' => $pickupFulfillment]) }}"
+                                            method="POST">
+                                            @csrf
+                                            @method('PATCH')
+                                            <p class="fulfillment-action-error hidden mb-2 text-xs text-red-600"></p>
+                                            <button type="submit"
+                                                class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700">
+                                                <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
+                                                Konfirmasi Pesanan Siap Diambil Pelanggan
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endforeach
+                            @endif
 
                             @if($shipment->shipping_method === 'Kurir' || $shipment->tracking_number || $shipment->biteship_tracking_id || $shipment->biteship_waybill_id)
                                 <div class="mt-3 rounded-xl bg-white p-3">

@@ -70,6 +70,12 @@ Route::post('/cek-pesanan', [OrderTrackingController::class, 'search'])
     ->middleware('throttle:5,1')
     ->name('orders.tracking.search');
 
+Route::get('/cek-pesanan/{invoice}/shipment/{shipment}/tracking', [
+    OrderTrackingController::class,
+    'trackingShipment',
+])
+    ->middleware('throttle:30,1')
+    ->name('orders.tracking.shipment');
 Route::view('/about', 'pages.about')->name('about');
 Route::view('/contact', 'pages.contact')->name('contact');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');

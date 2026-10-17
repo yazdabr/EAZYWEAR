@@ -1,4 +1,4 @@
-@extends('layouts.website')
+﻿@extends('layouts.website')
 
 @section('title', 'Detail Pesanan - Eazywear Indonesia')
 
@@ -203,9 +203,22 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
 
                     {{-- STATUS PESANAN (TIMELINE) --}}
                     <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm">
-                        <h2 class="mb-4 text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
-                            Status Pesanan
-                        </h2>
+                        <div class="mb-4 flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                            <h2 class="text-base font-bold text-slate-900">
+                                Status Pesanan
+                            </h2>
+
+                            @if($transaction->shipments->contains(fn ($shipment) => filled($shipment->biteship_tracking_id)))
+                                <button
+                                    type="button"
+                                    onclick="openCustomerTrackingModal()"
+                                    class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#AE7C18] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#8F6514]"
+                                >
+                                    <x-heroicon-o-truck class="h-4 w-4"/>
+                                    Tracking Resi
+                                </button>
+                            @endif
+                        </div>
 
                         <div class="space-y-4">
                             @forelse($transaction->orderStatusHistories->sortByDesc('created_at') as $history)
@@ -384,7 +397,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                                             @elseif($fulfillment->group_type === 'pre_order')
                                                                 <span class="text-slate-400">(Pre-Order)</span>
                                                             @endif
-                                                            × {{ $shipmentItem->qty }}
+                                                            Ã— {{ $shipmentItem->qty }}
                                                         </span>
                                                     </div>
                                                 @endforeach
@@ -422,7 +435,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                                 )
                                                     <p class="mt-0.5 text-xs font-semibold text-slate-600">
                                                         {{ \Carbon\Carbon::parse($shipment->pickup_date)->locale('id')->translatedFormat('l, d F Y') }},
-                                                        {{ \Carbon\Carbon::parse($shipment->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($shipment->pickup_time_end)->format('H:i') }} WITA
+                                                        {{ \Carbon\Carbon::parse($shipment->pickup_time_start)->format('H:i') }}â€“{{ \Carbon\Carbon::parse($shipment->pickup_time_end)->format('H:i') }} WITA
                                                     </p>
                                                 @endif
                                             </div>
@@ -490,7 +503,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                         )
                                             <p class="mt-0.5 text-xs font-semibold text-slate-600">
                                                 {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }},
-                                                {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}–{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
+                                                {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}â€“{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
                                             </p>
                                         @endif
                                     </div>
@@ -548,5 +561,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
         </div>
     </x-ui.container>
 </section>
+
+@include('orders.partials.tracking-modal')
 
 @endsection

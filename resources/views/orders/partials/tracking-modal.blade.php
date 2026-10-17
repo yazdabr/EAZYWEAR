@@ -87,7 +87,7 @@
                     <p id="customer-tracking-courier" class="mt-0.5 text-xs font-semibold text-slate-900">-</p>
                 </div>
 
-                <h3 class="mb-2 mt-3.5 text-xs font-bold text-slate-900">Riwayat pengiriman</h3>
+                <h3 class="mb-2 mt-5 text-xs font-bold text-slate-900">Riwayat pengiriman</h3>
                 <div id="customer-tracking-history" class="space-y-3"></div>
             </div>
         </div>

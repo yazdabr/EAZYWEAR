@@ -188,16 +188,29 @@ class BiteshipWebhookController extends Controller
             });
 
             if ($shipmentResult !== null) {
+                $transaction = null;
+
                 if ($shipmentResult['ignored']) {
+                    if (in_array($status, ['picked', 'in_transit', 'dropping_off'], true)) {
+                        $transaction = TransactionShipment::query()
+                            ->with('transaction')
+                            ->findOrFail($shipmentResult['shipment_id'])
+                            ->transaction;
+
+                        $transaction = $this->markTransactionShippedAndNotify($transaction);
+                    }
+
                     return response()->json([
                         'success' => true,
-                        'message' => 'Webhook diterima; status lama diabaikan.',
+                        'message' => 'Webhook diterima; status shipment tidak diubah.',
                         'order_id' => $orderId,
                         'status' => $shipmentResult['status'],
+                        'shipment_status' => TransactionShipment::query()
+                            ->whereKey($shipmentResult['shipment_id'])
+                            ->value('status'),
+                        'transaction_status' => $transaction?->fresh()->status,
                     ]);
                 }
-
-                $transaction = null;
 
                 if ($status === 'delivered') {
                     foreach ($shipmentResult['fulfillment_ids'] as $fulfillmentId) {

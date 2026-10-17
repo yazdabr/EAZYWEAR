@@ -1699,6 +1699,71 @@ class BiteshipWebhookTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_duplicate_shipment_dropping_off_recovers_parent_status_and_sends_email_once(): void
+    {
+        Mail::fake();
+
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_PROCESSING,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'customer@example.com',
+            'fulfillment_mode' => Transaction::FULFILLMENT_MODE_COMBINED,
+        ]);
+
+        $ready = TransactionFulfillment::create([
+            'transaction_id' => $transaction->id,
+            'group_type' => TransactionFulfillment::GROUP_READY,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'status' => TransactionFulfillment::STATUS_SHIPPED,
+            'biteship_status' => 'dropping_off',
+            'biteship_order_id' => null,
+        ]);
+
+        $shipment = \App\Models\TransactionShipment::create([
+            'transaction_id' => $transaction->id,
+            'shipment_type' => \App\Models\TransactionShipment::TYPE_COMBINED,
+            'shipping_method' => 'Kurir',
+            'shipping_cost' => 8000,
+            'shipping_address' => 'Alamat Tes Recovery',
+            'status' => \App\Models\TransactionShipment::STATUS_SHIPPED,
+            'biteship_order_id' => $this->biteshipOrderId('DUPLICATE-DROPPING'),
+            'biteship_status' => 'dropping_off',
+        ]);
+
+        $shipment->fulfillments()->attach($ready->id);
+
+        $this->withHeaders($this->webhookHeaders())
+            ->postJson('/webhooks/biteship', [
+                'event' => 'order.status',
+                'order_id' => $shipment->biteship_order_id,
+                'status' => 'dropping_off',
+            ])
+            ->assertOk()
+            ->assertJsonPath('transaction_status', Transaction::ORDER_SHIPPED);
+
+        $this->assertSame(
+            Transaction::ORDER_SHIPPED,
+            $transaction->fresh()->status
+        );
+
+        $this->assertSame(
+            'dropping_off',
+            $shipment->fresh()->biteship_status
+        );
+
+        $this->assertSame(
+            \App\Models\TransactionShipment::STATUS_SHIPPED,
+            $shipment->fresh()->status
+        );
+
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_SHIPPED_EMAIL',
+        ]);
+
+        Mail::assertSent(\App\Mail\OrderShippedMail::class, 1);
+    }
     public function test_dropping_off_ships_single_fulfillment_transaction_and_sends_email_once(): void
     {
         Mail::fake();

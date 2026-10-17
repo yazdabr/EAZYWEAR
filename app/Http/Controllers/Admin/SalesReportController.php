@@ -177,6 +177,12 @@ class SalesReportController extends Controller
                 $products[$id]['revenue'] += $revenue;
                 $products[$id]['sizes'][$size] =
                     ($products[$id]['sizes'][$size] ?? 0) + $qty;
+
+                // Hitung longsleeve berdasarkan ukuran masing-masing.
+                if ((bool) ($item->is_longsleeve ?? false)) {
+                    $products[$id]['longsleeve_sizes'][$size] =
+                        ($products[$id]['longsleeve_sizes'][$size] ?? 0) + $qty;
+                }
             }
         }
 

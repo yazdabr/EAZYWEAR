@@ -257,7 +257,7 @@
                                         <div class="mt-1 flex flex-wrap gap-1">
                                             @foreach($product['sizes'] as $size => $qty)
                                                 <span class="rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-medium text-slate-600">
-                                                    {{ $size }}: {{ number_format($qty, 0, ',', '.') }}
+                                                    {{ $size }} : {{ number_format($qty, 0, ',', '.') }}@if(($product['longsleeve_sizes'][$size] ?? 0) > 0) - LS : {{ number_format($product['longsleeve_sizes'][$size], 0, ',', '.') }}@endif
                                                 </span>
                                             @endforeach
                                         </div>
@@ -303,7 +303,7 @@
                                         <div class="flex flex-wrap justify-center gap-1">
                                             @foreach($product['sizes'] as $size => $qty)
                                                 <span class="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-600">
-                                                    {{ $size }}: {{ number_format($qty, 0, ',', '.') }}
+                                                    {{ $size }} : {{ number_format($qty, 0, ',', '.') }}@if(($product['longsleeve_sizes'][$size] ?? 0) > 0) - LS : {{ number_format($product['longsleeve_sizes'][$size], 0, ',', '.') }}@endif
                                                 </span>
                                             @endforeach
                                         </div>

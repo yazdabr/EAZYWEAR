@@ -449,6 +449,9 @@ class BiteshipService
             'courier_type' =>
                 $response['courier']['type'] ?? null,
 
+            'price' =>
+                $response['price'] ?? null,
+
             'raw' => $response,
         ];
     }

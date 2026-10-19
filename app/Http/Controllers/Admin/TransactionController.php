@@ -834,6 +834,9 @@ class TransactionController extends Controller
                         'biteship_waybill_id' => $biteshipOrder['waybill_id'],
                         'biteship_status' => $biteshipOrder['status'],
                         'tracking_number' => $biteshipOrder['waybill_id'] ?? $biteshipOrder['tracking_id'],
+                        'actual_shipping_cost' => is_numeric($biteshipOrder['price'] ?? null) && (float) $biteshipOrder['price'] > 0
+                            ? (int) round((float) $biteshipOrder['price'])
+                            : $lockedTransaction->actual_shipping_cost,
                         'courier' => $biteshipOrder['courier_code'] ?? $lockedTransaction->courier,
                     ]);
 
@@ -918,6 +921,9 @@ class TransactionController extends Controller
                         'biteship_status' => $biteshipOrder['status'],
                         'courier' => $biteshipOrder['courier_code'] ?? $lockedTransaction->courier_code,
                         'tracking_number' => $biteshipOrder['waybill_id'] ?? $biteshipOrder['tracking_id'],
+                        'actual_shipping_cost' => is_numeric($biteshipOrder['price'] ?? null) && (float) $biteshipOrder['price'] > 0
+                            ? (int) round((float) $biteshipOrder['price'])
+                            : $lockedTransaction->actual_shipping_cost,
                     ]);
 
                     $providerStatus = strtolower(trim((string) ($biteshipOrder['status'] ?? '')));
@@ -1726,7 +1732,7 @@ class TransactionController extends Controller
             'transaction_id' => $transaction->id,
             'shipment_type' => 'legacy',
             'shipping_method' => $transaction->shipping_method,
-            'shipping_cost' => $transaction->shipping,
+            'shipping_cost' => $transaction->actual_shipping_cost ?? $transaction->shipping,
             'shipping_name' => $transaction->shipping_name,
             'shipping_email' => $transaction->shipping_email,
             'shipping_phone' => $transaction->shipping_phone,

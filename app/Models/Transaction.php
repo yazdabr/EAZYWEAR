@@ -35,6 +35,7 @@ class Transaction extends Model
         'subtotal',
         'discount',
         'shipping',
+        'actual_shipping_cost',
         'fulfillment_mode',
         'total',
         'status',

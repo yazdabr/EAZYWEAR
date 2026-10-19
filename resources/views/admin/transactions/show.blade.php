@@ -977,7 +977,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                 <div class="space-y-2.5 text-xs sm:text-sm">
                     <div class="flex justify-between gap-4"><span class="font-medium text-slate-500">Subtotal</span><span class="font-medium text-slate-900">Rp {{ number_format($transaction->subtotal,0,',','.') }}</span></div>
                     <div class="flex justify-between gap-4"><span class="font-medium text-slate-500">Diskon</span><span class="font-medium text-slate-900">Rp {{ number_format($transaction->discount,0,',','.') }}</span></div>
-                    <div class="flex justify-between gap-4"><span class="font-medium text-slate-500">Pengiriman</span><span class="font-medium text-slate-900">Rp {{ number_format($transaction->shipping,0,',','.') }}</span></div>
+                    <div class="flex justify-between gap-4"><span class="font-medium text-slate-500">Pengiriman</span><span class="font-medium text-slate-900">Rp {{ number_format($transaction->actual_shipping_cost ?? $transaction->shipping,0,',','.') }}</span></div>
                     <div class="border-t border-slate-100 pt-3 flex justify-between gap-4 text-sm sm:text-base font-bold"><span class="text-slate-900">Total</span><span class="text-[#AE7C18]">Rp {{ number_format($transaction->total,0,',','.') }}</span></div>
                 </div>
             </div>

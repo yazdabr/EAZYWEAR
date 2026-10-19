@@ -503,7 +503,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                         )
                                             <p class="mt-0.5 text-xs font-semibold text-slate-600">
                                                 {{ \Carbon\Carbon::parse($transaction->pickup_date)->locale('id')->translatedFormat('l, d F Y') }},
-                                                {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}â€“{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
+                                                {{ \Carbon\Carbon::parse($transaction->pickup_time_start)->format('H:i') }}-{{ \Carbon\Carbon::parse($transaction->pickup_time_end)->format('H:i') }} WITA
                                             </p>
                                         @endif
                                     </div>

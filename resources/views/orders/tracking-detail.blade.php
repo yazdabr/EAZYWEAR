@@ -538,15 +538,26 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                 </span>
                             </div>
 
-                            <div class="flex justify-between gap-3 text-slate-600">
-                                <span>Biaya Pengiriman</span>
-                                <span class="font-medium text-slate-900 text-right">
-                                    Rp {{ number_format($transaction->shipping, 0, ',', '.') }}
-                                </span>
-                            </div>
+                            @if($transaction->invoice_number === 'INV-20261010-VWHRJG')
+    <div class="flex justify-between gap-3 text-slate-600">
+        <span>Biaya Pengiriman (J&T EZ)</span>
+        <span class="font-medium text-slate-900 text-right">Rp {{ number_format(9000, 0, ',', '.') }}</span>
+    </div>
+    <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-relaxed text-blue-900">
+        <p class="font-bold">Informasi perubahan alamat</p>
+        <p class="mt-1">Kode pos tujuan diperbarui menjadi 70238. Tarif aktual J&T EZ adalah Rp 9.000. Selisih biaya pengiriman ditanggung Eazywear dan tidak ada tagihan tambahan kepada pelanggan.</p>
+    </div>
+@else
+    <div class="flex justify-between gap-3 text-slate-600">
+        <span>Biaya Pengiriman</span>
+        <span class="font-medium text-slate-900 text-right">
+            Rp {{ number_format($transaction->shipping, 0, ',', '.') }}
+        </span>
+    </div>
+@endif
 
                             <div class="border-t border-slate-100 pt-3 mt-3 flex items-center justify-between gap-3">
-                                <span class="font-bold text-slate-900 text-sm sm:text-base">Total Bayar</span>
+                                <span class="font-bold text-slate-900 text-sm sm:text-base">{{ $transaction->invoice_number === 'INV-20261010-VWHRJG' ? 'Total yang Sudah Dibayar' : 'Total Bayar' }}</span>
                                 <span class="text-base sm:text-lg font-extrabold text-[#AE7C18] text-right">
                                     Rp {{ number_format($transaction->total, 0, ',', '.') }}
                                 </span>

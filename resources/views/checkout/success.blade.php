@@ -92,17 +92,28 @@
                                 <span>Subtotal</span>
                                 <span>Rp {{ number_format($transaction->subtotal, 0, ',', '.') }}</span>
                             </div>
-                            <div class="flex justify-between text-xs text-gray-600 sm:text-sm">
-                                <span>Pengiriman</span>
-                                <span>Rp {{ number_format($transaction->shipping, 0, ',', '.') }}</span>
-                            </div>
+                            @if($transaction->invoice_number === 'INV-20261010-VWHRJG')
+    <div class="flex justify-between text-xs text-gray-600 sm:text-sm">
+        <span>Pengiriman (J&T EZ)</span>
+        <span>Rp {{ number_format(9000, 0, ',', '.') }}</span>
+    </div>
+    <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-relaxed text-blue-900">
+        <p class="font-bold">Informasi perubahan alamat</p>
+        <p class="mt-1">Kode pos tujuan diperbarui menjadi 70238. Tarif aktual J&T EZ adalah Rp 9.000. Selisih biaya ditanggung Eazywear dan tidak ada tagihan tambahan kepada pelanggan.</p>
+    </div>
+@else
+    <div class="flex justify-between text-xs text-gray-600 sm:text-sm">
+        <span>Pengiriman</span>
+        <span>Rp {{ number_format($transaction->shipping, 0, ',', '.') }}</span>
+    </div>
+@endif
                             <div class="flex justify-between text-xs text-gray-600 sm:text-sm">
                                 <span>Metode Pembayaran</span>
                                 <span class="font-bold text-slate-900">{{ $transaction->payment_method === 'VA' ? 'Virtual Account' : $transaction->payment_method }}</span>
                             </div>
                             <div class="border-t border-gray-100 pt-2.5 sm:pt-4">
                                 <div class="flex items-center justify-between gap-4">
-                                    <span class="text-xs font-bold text-slate-900 sm:text-base">Total</span>
+                                    <span class="text-xs font-bold text-slate-900 sm:text-base">{{ $transaction->invoice_number === 'INV-20261010-VWHRJG' ? 'Total yang Sudah Dibayar' : 'Total' }}</span>
                                     <span class="text-base font-extrabold text-[#AE7C18] sm:text-2xl">Rp {{ number_format($transaction->total, 0, ',', '.') }}</span>
                                 </div>
                             </div>

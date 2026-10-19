@@ -189,7 +189,9 @@ class TransactionController extends Controller
         });
 
         $totalTransactions = (clone $summaryQuery)->count();
-        $totalRevenue = (clone $summaryQuery)->where('status', 'PAID')->sum('total');
+        $totalRevenue = (clone $summaryQuery)
+            ->whereIn('status', Transaction::SALES_REPORT_STATUSES)
+            ->sum('total');
         $completedOrders = (clone $summaryQuery)->where('status', Transaction::ORDER_COMPLETED)->count();
         $pendingTransactions = (clone $summaryQuery)->where('status', 'PENDING')->count();
         $currentMonth = Carbon::now()->startOfMonth();

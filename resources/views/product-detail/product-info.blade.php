@@ -1,4 +1,4 @@
-@php
+﻿@php
     $images = $product->gallery_images;
     $imageUrls = $images->map(function ($image) {
         return asset('storage/' . $image->image);
@@ -11,7 +11,7 @@
         ->min('price') ?? 0;
     $whatsappMessage = 'Halo Eazywear, saya ingin bertanya mengenai jersey dan informasi lebih lanjut.';
     $whatsappUrl = 'https://wa.me/628138377763?text=' . urlencode($whatsappMessage);
-    // Urutan size dari terkecil → terbesar
+
     $sizeOrder = [
         'XXXS' => 1, 'XXS' => 2, 'XS' => 3, 'S' => 4, 'M' => 5,
         'L' => 6, 'XL' => 7, 'XXL' => 8, '2XL' => 8, 'XXXL' => 9,
@@ -24,6 +24,15 @@
         })
         ->values()
         ->all();
+
+    $defaultSize = collect($availableSizes)->first(function ($size) use ($product) {
+        return $product->availability !== 'ready'
+            || (int) ($size['stock'] ?? 0) > 0;
+    }) ?? ($availableSizes[0] ?? [
+        'id' => null,
+        'price' => 0,
+        'stock' => 0,
+    ]);
 @endphp
 <section x-data="galleryProduct()" class="bg-white py-6 sm:py-10 lg:py-14">
     <x-ui.container>
@@ -101,10 +110,17 @@
                 </div>
                 {{-- SIZE / VARIANT --}}
                 @if(count($availableSizes))
-                    <div class="mt-4 sm:mt-7" x-data="{
-                        selectedVariant: {{ $availableSizes[0]['id'] ?? 'null' }},
-                        selectedPrice: {{ $availableSizes[0]['price'] ?? 0 }},
-                        selectedStock: {{ $availableSizes[0]['stock'] ?? 0 }},
+
+                <div class="mt-4 sm:mt-7" x-data="{
+                    availability: @js($product->availability),
+                    selectedVariant: @js($defaultSize['id']),
+                    selectedPrice: @js((float) $defaultSize['price']),
+                    selectedStock: @js((int) $defaultSize['stock']),
+
+                    get isOutOfStock() {
+                        return this.availability === 'ready'
+                            && Number(this.selectedStock) <= 0;
+                    },
                         customName: '',
                         customNumber: '',
                         showPlayerList: false,
@@ -195,7 +211,32 @@
                         </div>
                         <div class="flex flex-wrap gap-2 sm:gap-2.5">
                             @foreach($availableSizes as $size)
-                                <button type="button" @click="selectedVariant = {{ $size['id'] }}; selectedPrice = {{ $size['price'] }}; selectedStock = {{ $size['stock'] }};" class="h-9 min-w-[44px] rounded-full border px-3 text-xs transition sm:h-10 sm:min-w-[50px] sm:px-4 sm:text-sm" x-bind:class="selectedVariant === {{ $size['id'] }} ? 'border-[#AE7C18] bg-[#AE7C18] text-white' : 'border-gray-300 hover:border-[#AE7C18]'">{{ $size['name'] }}</button>
+                                <button
+                                    type="button"
+                                    @click="
+                                        if (availability !== 'ready' || {{ (int) ($size['stock'] ?? 0) }} > 0) {
+                                            selectedVariant = {{ $size['id'] }};
+                                            selectedPrice = {{ (float) $size['price'] }};
+                                            selectedStock = {{ (int) ($size['stock'] ?? 0) }};
+                                        }
+                                    "
+                                    @disabled(
+                                        $product->availability === 'ready'
+                                        && (int) ($size['stock'] ?? 0) <= 0
+                                    )
+                                    class="relative inline-flex h-10 min-w-[50px] items-center justify-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition duration-200"
+                                    :class="Number(selectedVariant) === {{ $size['id'] }}
+                                        ? 'border-[#AE7C18] bg-[#AE7C18] text-white shadow-md shadow-[#AE7C18]/20'
+                                        : (
+                                            {{ $product->availability === 'ready' && (int) ($size['stock'] ?? 0) <= 0 ? 'true' : 'false' }}
+                                                ? 'cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500 opacity-100'
+                                                : 'border-gray-300 bg-white text-slate-700 hover:border-[#AE7C18] hover:bg-[#AE7C18]/5'
+                                        )"
+                                    aria-label="{{ $size['name'] }}{{ $product->availability === 'ready' && (int) ($size['stock'] ?? 0) <= 0 ? ', stok habis' : '' }}"
+                                    title="{{ $product->availability === 'ready' && (int) ($size['stock'] ?? 0) <= 0 ? 'Ukuran ini sedang habis' : 'Pilih ukuran ' . $size['name'] }}"
+                                >
+                                    <span>{{ $size['name'] }}</span>
+                                </button>
                             @endforeach
                         </div>
                         {{-- *JERSEY CUSTOMIZATION* --}}
@@ -238,7 +279,7 @@
                                 </div>
                                 <div x-show="showPlayerList" x-cloak x-transition class="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl">
                                     <div class="border-b border-slate-100 bg-slate-50 px-4 py-2.5">
-                                        <p class="text-xs font-semibold text-slate-600">Daftar Pemain · 28 Pemain</p>
+                                        <p class="text-xs font-semibold text-slate-600">Daftar Pemain - 28 Pemain</p>
                                     </div>
                                     <div class="grid max-h-64 grid-cols-1 gap-1 overflow-y-auto p-2 sm:grid-cols-2">
                                         <template x-for="player in baritoPlayers" :key="player.number">
@@ -261,7 +302,7 @@
                                         <span class="text-[10px] tabular-nums text-gray-400 sm:text-xs"><span x-text="customName.length"></span>/20</span>
                                     </div>
                                     <input id="custom_name" type="text" name="custom_name" x-model="customName" form="add-to-cart-form" maxlength="20" autocomplete="off" placeholder="e.g. BARITO PUTERA" pattern="[A-Za-zÀ-ÿ\s]+" title="Jersey name may only contain letters and spaces." class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold uppercase tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base">
-                                    <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">Optional · Letters and spaces only</p>
+                                    <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">Optional - Letters and spaces only</p>
                                 </div>
                                 {{-- *BACK NUMBER* --}}
                                 <div>
@@ -270,7 +311,7 @@
                                         <p class="text-[10px] text-gray-400 sm:text-xs">Optional</p>
                                     </div>
                                     <input id="custom_number" type="text" name="custom_number" x-model="customNumber" form="add-to-cart-form" maxlength="2" inputmode="numeric" autocomplete="off" placeholder="e.g. 10" pattern="[0-9]{1,2}" title="Back number may only contain 1-2 digits." class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base">
-                                    <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">Optional · Numbers only · Maximum 2 digits</p>
+                                    <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">Optional - Numbers only - Maximum 2 digits</p>
                                 </div>
                             </div>
                         </div>
@@ -330,10 +371,15 @@
                             <input type="hidden" name="custom_number" :value="customNumber">
                             <input type="hidden" name="is_longsleeve" :value="isLongsleeve ? 1 : 0">
                             <input type="hidden" name="is_patch" :value="isPatch ? 1 : 0">
-                            <button type="submit" x-bind:disabled="selectedStock <= 0" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base">
+                            <button
+                                type="submit"
+                                :disabled="isOutOfStock"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:active:scale-100 sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base"
+                            >
                                 <x-heroicon-o-shopping-cart class="h-5 w-5"/>
-                                <span x-show="selectedStock > 0">Add to Cart</span>
-                                <span x-show="selectedStock <= 0">Out of Stock</span>
+
+                                <span x-show="!isOutOfStock">Add to Cart</span>
+                                <span x-show="isOutOfStock" x-cloak>Out of Stock</span>
                             </button>
                         </form>
                         <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98] sm:mt-5 sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base">
@@ -354,8 +400,28 @@
                             <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">Premium quality material for comfortable use.</p>
                         </div>
                         <div class="rounded-xl bg-[#AE7C18] p-3.5 text-white sm:rounded-2xl sm:p-4">
-                            <h4 class="text-xs font-semibold sm:text-base">Production Time</h4>
-                            <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">Stock Ready</p>
+                            @if ($product->availability === 'pre_order')
+                                <h4 class="text-xs font-semibold sm:text-base">
+                                    Pre-Order
+                                </h4>
+                                <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">
+                                    Estimasi tersedia 30 Okt - 3 Nov 2026.
+                                </p>
+                            @elseif ($product->availability === 'ready')
+                                <h4 class="text-xs font-semibold sm:text-base">
+                                    Ready Stock
+                                </h4>
+                                <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">
+                                    Siap diproses dan dikirim sesuai stok ukuran yang tersedia.
+                                </p>
+                            @else
+                                <h4 class="text-xs font-semibold sm:text-base">
+                                    Product Availability
+                                </h4>
+                                <p class="mt-1 text-[10px] leading-4 opacity-90 sm:mt-1.5 sm:text-sm sm:leading-5">
+                                    Informasi ketersediaan produk dapat ditanyakan kepada tim Eazywear.
+                                </p>
+                            @endif
                         </div>
                     </div>
                 </div>

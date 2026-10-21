@@ -19,6 +19,7 @@ class Product extends Model
         'description',
         'material',
         'availability',
+        'pre_order_closed',
         'status',
         'customization_enabled',
         'customization_price',
@@ -29,6 +30,7 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'pre_order_closed' => 'boolean',
         'status' => 'boolean',
         'customization_enabled' => 'boolean',
         'customization_price' => 'integer',

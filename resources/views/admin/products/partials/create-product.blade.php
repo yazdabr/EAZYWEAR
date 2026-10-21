@@ -1,4 +1,4 @@
-<div x-data="{
+﻿<div x-data="{
     open:false,
     loading:false,
     errors:{},
@@ -11,6 +11,7 @@
         description:'',
         material:'',
         availability:'pre_order',
+        pre_order_closed:'0',
         customization_enabled:false,
         customization_price:0,
         longsleeve_enabled:false,
@@ -181,6 +182,7 @@
             description:'',
             material:'',
             availability:'pre_order',
+        pre_order_closed:'0',
             customization_enabled:false,
             customization_price:0,
             longsleeve_enabled:false,
@@ -213,6 +215,7 @@
             description:product?.description||'',
             material:product?.material||'',
             availability:product?.availability||'pre_order',
+            pre_order_closed:(product?.pre_order_closed === true || product?.pre_order_closed === 1 || product?.pre_order_closed === '1') ? '1' : '0',
             customization_enabled:product?.customization_enabled===true||product?.customization_enabled===1||product?.customization_enabled==='1',
             customization_price:product?.customization_price!==''&&product?.customization_price!==null&&product?.customization_price!==undefined
                 ? parseInt(product.customization_price)
@@ -337,6 +340,21 @@
                     <p class="mt-1.5 text-xs text-slate-400 sm:mt-2">
                         Pilihan ini menentukan badge pada kartu produk di katalog.
                     </p>
+                    <template x-if="form.availability === 'pre_order'">
+                        <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                            <label for="pre_order_closed" class="mb-2 block text-sm font-semibold text-slate-800">
+                                Status Periode Pre-Order
+                            </label>
+                            <select id="pre_order_closed" name="pre_order_closed" x-model="form.pre_order_closed"
+                                class="w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm text-slate-700">
+                                <option value="0">PO Dibuka</option>
+                                <option value="1">Tutup PO</option>
+                            </select>
+                            <p class="mt-2 text-xs text-slate-600">
+                                Jika ditutup, pelanggan tidak dapat memesan produk ini sampai PO dibuka kembali.
+                            </p>
+                        </div>
+                    </template>
                     <template x-if="errors.availability">
                         <p class="mt-1.5 text-xs text-red-500" x-text="errors.availability"></p>
                     </template>

@@ -64,6 +64,7 @@ document.addEventListener('alpine:init', () => {
         image: '',
         price: '',
         description: '',
+        preOrderClosed: false,
         isDragging: false,
         offsetY: 0,
         startY: 0,
@@ -76,6 +77,7 @@ document.addEventListener('alpine:init', () => {
             this.image = product.image ?? '';
             this.price = product.price ?? '';
             this.description = product.description ?? '';
+            this.preOrderClosed = product.preOrderClosed === true || product.preOrderClosed === 1 || product.preOrderClosed === '1';
             this.offsetY = 0;
             this.isDragging = false;
             this.open = true;

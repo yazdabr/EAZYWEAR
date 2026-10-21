@@ -1838,6 +1838,94 @@ class CheckoutControllerTest extends TestCase
                 'message' => 'Produk ini tidak menyediakan custom nama atau nomor.',
             ]);
     }
+    public function test_shipping_rates_rejects_closed_pre_order_product(): void
+    {
+        $variant = ProductVariant::query()
+            ->with('product')
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+                $query->where('availability', 'pre_order');
+            })
+            ->firstOrFail();
+
+        $variant->product->update([
+            'pre_order_closed' => true,
+        ]);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => $variant->price,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $biteship = $this->mock(BiteshipService::class);
+        $biteship->shouldNotReceive('getCourierRates');
+
+        $response = $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+            ])
+            ->assertJsonFragment([
+                'message' => "Periode pre-order untuk {$variant->product->name} telah ditutup. Hapus produk ini dari keranjang untuk melanjutkan.",
+            ]);
+    }
+
+    public function test_checkout_rejects_closed_pre_order_product(): void
+    {
+        $variant = ProductVariant::query()
+            ->with('product')
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+                $query->where('availability', 'pre_order');
+            })
+            ->firstOrFail();
+
+        $variant->product->update([
+            'pre_order_closed' => true,
+        ]);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => $variant->price,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Closed PO Test',
+            'email' => 'closed-po-test@example.com',
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+            'pre_order_shipping_method' => 'Ambil di Tempat',
+            'pre_order_pickup_date' => now()->addDay()->format('Y-m-d'),
+            'pre_order_pickup_time_start' => '09:00',
+            'pre_order_pickup_time_end' => '11:00',
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+
+        $response->assertRedirect()
+            ->assertSessionHasErrors('cart');
+
+        $this->assertDatabaseMissing('transactions', [
+            'shipping_email' => 'closed-po-test@example.com',
+        ]);
+    }
     public function test_checkout_rejects_empty_cart(): void
     {
         Session::put('cart', []);

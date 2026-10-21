@@ -84,7 +84,10 @@
                         ></h2>
 
                         {{-- Description --}}
-                        <p class="mt-4 whitespace-pre-line text-sm leading-relaxed text-slate-500" x-text="description || 'Tidak ada deskripsi.'"></p>
+                        <p x-show="preOrderClosed" class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium leading-relaxed text-red-800">
+                            PO Ditutup — Pemesanan tidak tersedia.
+                        </p>
+                        <p x-show="!preOrderClosed" class="mt-4 whitespace-pre-line text-sm leading-relaxed text-slate-500" x-text="description || 'Tidak ada deskripsi.'"></p>
 
                     </div>
 
@@ -115,7 +118,7 @@
                                     @click.stop
                                     class="inline-flex items-center justify-center rounded-full bg-[#AE7C18] px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/25 transition-all hover:bg-[#8F6514] hover:shadow-xl hover:shadow-[#AE7C18]/35"
                                 >
-                                    View Detail
+                                    <span x-text="preOrderClosed ? 'View Detail' : 'View Detail'"></span>
                                 </a>
 
                             </div>
@@ -198,7 +201,10 @@
                 ></h2>
 
                 {{-- Description --}}
-                <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600" x-text="description || 'Tidak ada deskripsi.'"></p>
+                <p x-show="preOrderClosed" class="mt-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium leading-relaxed text-red-800">
+                    PO Ditutup — Pemesanan tidak tersedia.
+                </p>
+                <p x-show="!preOrderClosed" class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600" x-text="description || 'Tidak ada deskripsi.'"></p>
 
             </div>
 
@@ -233,7 +239,7 @@
                         @click.stop
                         class="flex w-full items-center justify-center rounded-full bg-[#AE7C18] py-3 text-sm font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition-all hover:bg-[#8F6514]"
                     >
-                        View Detail
+                        <span x-text="preOrderClosed ? 'View Detail' : 'View Detail'"></span>
                     </a>
 
                 </div>

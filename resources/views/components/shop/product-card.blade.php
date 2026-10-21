@@ -17,6 +17,7 @@
         ->min('price') ?? 0;
 
     $category = $product->category?->name ?? 'Product';
+    $preOrderClosed = ($product->availability ?? 'pre_order') === 'pre_order' && (bool) $product->pre_order_closed;
 
     $detailUrl = route('product.detail', [
         'product' => $product->slug,
@@ -35,7 +36,8 @@
             series: @js($category),
             image: @js($image),
             price: @js('Rp ' . number_format($price, 0, ',', '.')),
-            description: @js($product->description)
+            description: @js($product->description),
+            preOrderClosed: @js($preOrderClosed)
         })"
     >
 
@@ -43,6 +45,10 @@
         @if (($product->availability ?? 'pre_order') === 'ready')
             <div class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-emerald-600 px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]">
                 Ready Stock
+            </div>
+        @elseif ($preOrderClosed)
+            <div class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-red-700 px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]">
+                PO Ditutup
             </div>
         @else
             <div class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-[#AE7C18] px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]">
@@ -83,7 +89,11 @@
         </h3>
 
         {{-- Product Description --}}
-        @if (filled($product->description))
+        @if ($preOrderClosed)
+            <p class="mt-1.5 text-[10px] font-semibold leading-4 text-red-700 sm:text-[11px] lg:mt-2 lg:text-xs lg:leading-5">
+                Pemesanan tidak tersedia.
+            </p>
+        @elseif (filled($product->description))
             <p class="mt-1.5 line-clamp-3 text-[10px] leading-4 text-gray-500 sm:text-[11px] sm:leading-[1.125rem] lg:mt-2 lg:text-xs lg:leading-5">
                 {{ $product->description }}
             </p>
@@ -107,7 +117,7 @@
                 variant="outline"
                 class="h-9 w-full rounded-lg px-3 text-[10px] font-semibold sm:h-9 sm:text-[11px] lg:h-10 lg:text-xs"
             >
-                View Detail
+                {{ $preOrderClosed ? 'View Detail' : 'View Detail' }}
             </x-ui.button>
         </div>
 

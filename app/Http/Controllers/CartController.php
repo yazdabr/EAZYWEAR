@@ -48,6 +48,16 @@ class CartController extends Controller
 
         abort_unless($variant->product?->status, 404);
 
+        if (
+            $variant->product->availability === 'pre_order'
+            && $variant->product->pre_order_closed
+        ) {
+            return back()->with(
+                'error',
+                'Periode pre-order produk ini telah ditutup. Nantikan informasi pemesanan berikutnya.'
+            );
+        }
+
         $isLongsleeve = (bool) ($validated['is_longsleeve'] ?? false);
         $longsleeveEnabled = (bool) $variant->product->longsleeve_enabled;
 

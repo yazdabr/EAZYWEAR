@@ -231,6 +231,47 @@ class ProductControllerTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_save_closed_pre_order_status(): void
+    {
+        $user = $this->superAdmin();
+
+        $response = $this->actingAs($user)->postJson(
+            route('admin.products.store'),
+            $this->storePayload([
+                'availability' => 'pre_order',
+                'pre_order_closed' => 1,
+            ])
+        );
+
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('products', [
+            'id' => $response->json('data.id'),
+            'availability' => 'pre_order',
+            'pre_order_closed' => 1,
+        ]);
+    }
+
+    public function test_ready_stock_cannot_keep_pre_order_closed_flag(): void
+    {
+        $user = $this->superAdmin();
+
+        $response = $this->actingAs($user)->postJson(
+            route('admin.products.store'),
+            $this->storePayload([
+                'availability' => 'ready',
+                'pre_order_closed' => 1,
+            ])
+        );
+
+        $response->assertCreated();
+
+        $this->assertDatabaseHas('products', [
+            'id' => $response->json('data.id'),
+            'availability' => 'ready',
+            'pre_order_closed' => 0,
+        ]);
+    }
     public function test_admin_can_update_product_availability(): void
     {
         $user = $this->superAdmin();

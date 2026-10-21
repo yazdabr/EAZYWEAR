@@ -96,6 +96,16 @@ class CheckoutController extends Controller
                         ], 422);
                     }
 
+                    if (
+                        $variant->product->availability === 'pre_order'
+                        && $variant->product->pre_order_closed
+                    ) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Periode pre-order untuk {$variant->product->name} telah ditutup. Hapus produk ini dari keranjang untuk melanjutkan.",
+                        ], 422);
+                    }
+
                     // Filter kelompok dilakukan berdasarkan data produk di database.
                     if (
                         isset($validated['group_type'])
@@ -490,6 +500,15 @@ class CheckoutController extends Controller
                     if (! $variant->product || ! $variant->product->status) {
                         throw ValidationException::withMessages([
                             'cart' => "Produk {$variant->product?->name} sudah tidak aktif.",
+                        ]);
+                    }
+
+                    if (
+                        $variant->product->availability === 'pre_order'
+                        && $variant->product->pre_order_closed
+                    ) {
+                        throw ValidationException::withMessages([
+                            'cart' => "Periode pre-order untuk {$variant->product->name} telah ditutup. Hapus produk ini dari keranjang untuk melanjutkan.",
                         ]);
                     }
 

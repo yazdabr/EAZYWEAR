@@ -42,6 +42,25 @@ class CartControllerTest extends TestCase
         ], $overrides);
     }
 
+    public function test_cart_rejects_closed_pre_order_product(): void
+    {
+        $variant = $this->activeVariant();
+
+        $variant->product->update([
+            'availability' => 'pre_order',
+            'pre_order_closed' => true,
+        ]);
+
+        $response = $this->from('/shop')->post(
+            route('cart.add'),
+            $this->addPayload($variant)
+        );
+
+        $response->assertRedirect('/shop');
+        $response->assertSessionHas('error');
+
+        $this->assertEmpty(session('cart', []));
+    }
     public function test_custom_off_without_custom_input_has_no_fee(): void
     {
         $variant = $this->activeVariant();

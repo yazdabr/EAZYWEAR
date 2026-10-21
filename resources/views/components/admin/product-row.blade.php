@@ -66,6 +66,7 @@ $editData=[
     'description'=>$product->description,
     'material'=>$product->material,
     'availability' => $product->availability ?? 'pre_order',
+    'pre_order_closed' => (bool) $product->pre_order_closed,
     'customization_enabled'=>(bool)$product->customization_enabled,
     'customization_price'=>(int)$product->customization_price,
     'longsleeve_enabled' => (bool) $product->longsleeve_enabled,

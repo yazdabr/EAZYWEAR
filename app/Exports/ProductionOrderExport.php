@@ -114,21 +114,48 @@ class ProductionOrderExport implements FromArray, WithHeadings, WithStyles, With
     public function columnWidths(): array
     {
         return [
-            'A' => 16, 'B' => 22, 'C' => 28, 'D' => 18, 'E' => 22,
-            'F' => 48, 'G' => 18, 'H' => 12, 'I' => 10, 'J' => 20,
-            'K' => 16, 'L' => 14, 'M' => 12,
+            'A' => 18,
+            'B' => 24,
+            'C' => 32,
+            'D' => 20,
+            'E' => 26,
+            'F' => 52,
+            'G' => 20,
+            'H' => 14,
+            'I' => 12,
+            'J' => 24,
+            'K' => 18,
+            'L' => 16,
+            'M' => 14,
         ];
     }
 
     public function styles(Worksheet $sheet): array
     {
+        $lastRow = max(1, $sheet->getHighestRow());
+
+        // Ratakan semua isi sel ke tengah, baik horizontal maupun vertikal.
+        $sheet->getStyle("A1:M{$lastRow}")->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+            ->setVertical(Alignment::VERTICAL_CENTER)
+            ->setWrapText(true);
+
         $sheet->getStyle('A1:M1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'AE7C18']],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
         ]);
-        $sheet->getRowDimension(1)->setRowHeight(32);
-        $sheet->getStyle('A:M')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER)->setWrapText(true);
+
+        // Tambahkan tinggi baris agar data tidak terlihat terlalu rapat.
+        $sheet->getRowDimension(1)->setRowHeight(36);
+        for ($row = 2; $row <= $lastRow; $row++) {
+            $sheet->getRowDimension($row)->setRowHeight(30);
+        }
+
         $sheet->freezePane('A2');
         $sheet->setAutoFilter('A1:M1');
 

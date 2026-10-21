@@ -227,7 +227,8 @@ class TransactionController extends Controller
         $completedGrowth = $calculateGrowth($currentCompleted, $previousCompleted);
 
         return view('admin.transactions.index', [
-            'transactions' => $transactions,\n            'exportProducts' => \App\Models\Product::query()
+            'transactions' => $transactions,
+            'exportProducts' => \App\Models\Product::query()
                 ->whereIn('id', TransactionItem::query()
                     ->whereHas('transaction', fn ($query) => $query->whereIn('status', ['PAID', 'ORDER_PROCESSING']))
                     ->with('productVariant:id,product_id')

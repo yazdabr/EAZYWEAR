@@ -214,7 +214,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     });
 
     Route::middleware('role:super_admin,management')->group(function () {
-        Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
+        Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');\n        Route::get('/transactions/production-export', [TransactionController::class, 'exportProductionOrders'])->name('transactions.production-export');
         Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->name('transactions.print');
         Route::get('/transactions/{invoice}/excel', [TransactionController::class, 'exportInvoiceExcel'])->name('transactions.excel');
         Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->middleware('role:super_admin,management')->name('transactions.show');

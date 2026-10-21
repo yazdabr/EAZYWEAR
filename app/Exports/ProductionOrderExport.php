@@ -101,6 +101,26 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
                 ? Carbon::parse($transaction->transaction_date)->setTimezone('Asia/Makassar')->format('d/m/Y')
                 : '-';
 
+            $shippingMethod = $transaction->shipping_method ?? '-';
+
+            if ($shippingMethod === 'Ambil di Tempat' && $transaction->pickup_date) {
+                $pickupDate = Carbon::parse($transaction->pickup_date)->format('d/m/Y');
+                $pickupStart = $transaction->pickup_time_start
+                    ? Carbon::parse($transaction->pickup_time_start)->format('H:i')
+                    : null;
+                $pickupEnd = $transaction->pickup_time_end
+                    ? Carbon::parse($transaction->pickup_time_end)->format('H:i')
+                    : null;
+
+                $pickupSchedule = implode('–', array_filter([$pickupStart, $pickupEnd]));
+
+                $shippingMethod .= ' — ' . $pickupDate;
+
+                if ($pickupSchedule !== '') {
+                    $shippingMethod .= ' (' . $pickupSchedule . ')';
+                }
+            }
+
             foreach ($transaction->items as $item) {
                 $variant = $item->productVariant;
                 $product = $variant?->product;
@@ -116,7 +136,7 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
                     $transaction->status ?? '-',
                     $customerName,
                     (string) $phone,
-                    $transaction->shipping_method ?? '-',
+                    $shippingMethod,
                     $product?->name ?? '-',
                     $variant?->color?->name ?? '-',
                     $variant?->size?->name ?? '-',

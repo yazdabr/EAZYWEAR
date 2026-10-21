@@ -41,6 +41,58 @@
                 box-sizing: border-box;
             }
         }
+        /* PURE BLACK INVOICE PREVIEW */
+        .print-container,
+        .print-container * {
+            color: #000000 !important;
+            border-color: #000000 !important;
+            text-shadow: none !important;
+            box-shadow: none !important;
+        }
+
+        .print-container,
+        .print-container * {
+            background-color: #ffffff !important;
+            background-image: none !important;
+        }
+
+        .print-container > div.absolute {
+            background: #000000 !important;
+        }
+
+        .print-container img {
+            filter: none !important;
+        }
+        /* PURE BLACK PRINT */
+        @media print {
+            .print-container,
+            .print-container * {
+                color: #000000 !important;
+                border-color: #000000 !important;
+                text-shadow: none !important;
+                box-shadow: none !important;
+            }
+
+            .print-container,
+            .print-container * {
+                background-color: #ffffff !important;
+                background-image: none !important;
+            }
+
+            html,
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            .print-container > div.absolute {
+                display: none !important;
+            }
+
+            .print-container img {
+                filter: none !important;
+            }
+        }
     </style>
 </head>
 

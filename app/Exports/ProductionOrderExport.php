@@ -1,16 +1,16 @@
 <?php
 
-namespace App\\Exports;
+namespace App\Exports;
 
-use App\\Models\\Transaction;
-use Carbon\\Carbon;
-use Maatwebsite\\Excel\\Concerns\\FromArray;
-use Maatwebsite\\Excel\\Concerns\\WithColumnWidths;
-use Maatwebsite\\Excel\\Concerns\\WithHeadings;
-use Maatwebsite\\Excel\\Concerns\\WithStyles;
-use PhpOffice\\PhpSpreadsheet\\Style\\Alignment;
-use PhpOffice\\PhpSpreadsheet\\Style\\Fill;
-use PhpOffice\\PhpSpreadsheet\\Worksheet\\Worksheet;
+use App\Models\Transaction;
+use Carbon\Carbon;
+use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class ProductionOrderExport implements FromArray, WithHeadings, WithStyles, WithColumnWidths
 {

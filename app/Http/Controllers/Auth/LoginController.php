@@ -51,7 +51,7 @@ class LoginController extends Controller
 
             $user = $request->user();
 
-            if ($user->role === 'production') {
+            if (in_array($user->role, ['production', 'reports'], true)) {
                 return redirect()->route('admin.production-reports');
             }
 

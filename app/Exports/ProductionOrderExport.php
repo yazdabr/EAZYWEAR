@@ -6,13 +6,17 @@ use App\Models\Transaction;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ProductionOrderExport implements FromArray, WithHeadings, WithStyles, WithColumnWidths
+class ProductionOrderExport extends DefaultValueBinder implements FromArray, WithHeadings, WithStyles, WithColumnWidths, WithCustomValueBinder
 {
     public function __construct(private readonly array $filters = [])
     {
@@ -35,6 +39,21 @@ class ProductionOrderExport implements FromArray, WithHeadings, WithStyles, With
             'Longsleeve',
             'Patch',
         ];
+    }
+
+    /**
+     * Simpan nomor telepon sebagai teks agar Excel tidak mengubahnya
+     * menjadi notasi ilmiah (contoh: 6.28233E+12) atau menghilangkan nol awal.
+     */
+    public function bindValue(Cell $cell, $value): bool
+    {
+        if ($cell->getColumn() === 'D' && $cell->getRow() > 1 && $value !== null) {
+            $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
+
+            return true;
+        }
+
+        return parent::bindValue($cell, $value);
     }
 
     public function array(): array
@@ -94,7 +113,7 @@ class ProductionOrderExport implements FromArray, WithHeadings, WithStyles, With
                     $date,
                     $transaction->invoice_number ?? '-',
                     $customerName,
-                    $phone,
+                    (string) $phone,
                     $transaction->shipping_method ?? '-',
                     $product?->name ?? '-',
                     $variant?->color?->name ?? '-',
@@ -139,6 +158,9 @@ class ProductionOrderExport implements FromArray, WithHeadings, WithStyles, With
             ->setHorizontal(Alignment::HORIZONTAL_CENTER)
             ->setVertical(Alignment::VERTICAL_CENTER)
             ->setWrapText(true);
+
+        // Format nomor telepon sebagai teks untuk menjaga digit dan nol di depan.
+        $sheet->getStyle("D2:D{$lastRow}")->getNumberFormat()->setFormatCode('@');
 
         $sheet->getStyle('A1:M1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],

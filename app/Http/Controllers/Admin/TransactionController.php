@@ -228,6 +228,17 @@ class TransactionController extends Controller
 
         return view('admin.transactions.index', [
             'transactions' => $transactions,
+            'exportProducts' => \App\Models\Product::query()
+                ->whereIn('id', TransactionItem::query()
+                    ->whereHas('transaction', fn ($query) => $query->whereIn('status', ['PAID', 'ORDER_PROCESSING']))
+                    ->with('productVariant:id,product_id')
+                    ->get()
+                    ->pluck('productVariant.product_id')
+                    ->filter()
+                    ->unique()
+                    ->values())
+                ->orderBy('name')
+                ->get(['id', 'name']),
             'totalTransactions' => $totalTransactions,
             'totalRevenue' => $totalRevenue,
             'completedOrders' => $completedOrders,
@@ -236,6 +247,26 @@ class TransactionController extends Controller
             'revenueGrowth' => $revenueGrowth,
             'completedGrowth' => $completedGrowth,
         ]);
+    }
+
+    public function exportProductionOrders(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id' => ['nullable', 'integer', 'exists:products,id'],
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:2020,2100'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+        ], [
+            'end_date.after_or_equal' => 'Tanggal akhir harus sama dengan atau setelah tanggal mulai.',
+        ]);
+
+        $filename = 'data-produksi-' . now('Asia/Makassar')->format('Ymd-His') . '.xlsx';
+
+        return Excel::download(
+            new \App\Exports\ProductionOrderExport($validated),
+            $filename
+        );
     }
 
     public function updateHiddenStatuses(Request $request)

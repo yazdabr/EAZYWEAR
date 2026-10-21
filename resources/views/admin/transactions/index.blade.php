@@ -12,11 +12,19 @@
             <p class="mt-1 text-xs text-slate-500 sm:text-sm">Kelola semua transaksi dan pembayaran pelanggan.</p>
         </div>
 
-        {{-- TOMBOL DEKSTOP --}}
-        <a href="{{ route('admin.transactions.create') }}" class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex">
-            <x-heroicon-o-plus class="h-5 w-5"/>
-            Transaksi Baru
-        </a>
+        {{-- AKSI UTAMA --}}
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <button type="button" @click="$dispatch('open-production-export-modal')"
+                class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100 active:scale-95 sm:px-5"
+                title="Ekspor data produksi ke Excel">
+                <x-heroicon-o-document-arrow-down class="h-5 w-5"/>
+                <span>Ekspor Excel</span>
+            </button>
+            <a href="{{ route('admin.transactions.create') }}" class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex">
+                <x-heroicon-o-plus class="h-5 w-5"/>
+                Transaksi Baru
+            </a>
+        </div>
     </div>
 
     {{-- FLOATING ACTION BUTTON (FAB) KHUSUS MOBILE --}}
@@ -429,7 +437,7 @@
 
 @include('admin.transactions.partials.view-transaction')
 @include('admin.transactions.partials.delete-transaction')
-@include('admin.transactions.partials.hide-status-dialog')
+@include('admin.transactions.partials.hide-status-dialog')\n@include('admin.transactions.partials.production-export-dialog')
 
 @push('styles')
 <style>

@@ -27,6 +27,7 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
         return [
             'Tanggal Pesanan',
             'Invoice',
+            'Status Transaksi',
             'Nama Pelanggan',
             'No. Telepon',
             'Metode Pengiriman',
@@ -47,7 +48,7 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
      */
     public function bindValue(Cell $cell, $value): bool
     {
-        if ($cell->getColumn() === 'D' && $cell->getRow() > 1 && $value !== null) {
+        if ($cell->getColumn() === 'E' && $cell->getRow() > 1 && $value !== null) {
             $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
 
             return true;
@@ -112,6 +113,7 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
                 $rows[] = [
                     $date,
                     $transaction->invoice_number ?? '-',
+                    $transaction->status ?? '-',
                     $customerName,
                     (string) $phone,
                     $transaction->shipping_method ?? '-',
@@ -135,17 +137,18 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
         return [
             'A' => 18,
             'B' => 24,
-            'C' => 32,
-            'D' => 20,
-            'E' => 26,
-            'F' => 52,
-            'G' => 20,
-            'H' => 14,
-            'I' => 12,
-            'J' => 24,
-            'K' => 18,
-            'L' => 16,
-            'M' => 14,
+            'C' => 22,
+            'D' => 32,
+            'E' => 20,
+            'F' => 26,
+            'G' => 52,
+            'H' => 20,
+            'I' => 14,
+            'J' => 12,
+            'K' => 24,
+            'L' => 18,
+            'M' => 16,
+            'N' => 14,
         ];
     }
 
@@ -154,15 +157,15 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
         $lastRow = max(1, $sheet->getHighestRow());
 
         // Ratakan semua isi sel ke tengah, baik horizontal maupun vertikal.
-        $sheet->getStyle("A1:M{$lastRow}")->getAlignment()
+        $sheet->getStyle("A1:N{$lastRow}")->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER)
             ->setVertical(Alignment::VERTICAL_CENTER)
             ->setWrapText(true);
 
         // Format nomor telepon sebagai teks untuk menjaga digit dan nol di depan.
-        $sheet->getStyle("D2:D{$lastRow}")->getNumberFormat()->setFormatCode('@');
+        $sheet->getStyle("E2:E{$lastRow}")->getNumberFormat()->setFormatCode('@');
 
-        $sheet->getStyle('A1:M1')->applyFromArray([
+        $sheet->getStyle('A1:N1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'AE7C18']],
             'alignment' => [
@@ -179,7 +182,7 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
         }
 
         $sheet->freezePane('A2');
-        $sheet->setAutoFilter('A1:M1');
+        $sheet->setAutoFilter('A1:N1');
 
         return [];
     }

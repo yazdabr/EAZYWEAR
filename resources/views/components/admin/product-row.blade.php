@@ -50,7 +50,12 @@ foreach($product->variants as $variant){
     ];
 }
 
-$sizeIds=array_values(array_unique($sizeIds));
+$sizeIds = \App\Models\Size::ordered()
+    ->whereIn('id', array_unique($sizeIds))
+    ->pluck('id')
+    ->map(fn ($id) => (int) $id)
+    ->values()
+    ->all();
 
 $firstVariant=$product->variants->first();
 $price=$firstVariant?->price??0;
@@ -136,6 +141,17 @@ $viewData=[
     <td class="px-6 py-5 text-center">
         <x-admin.badge-status status="{{ $status }}" />
     </td>
+    <td class="px-6 py-5 text-center">
+    @if (($product->availability ?? 'pre_order') === 'pre_order')
+        @if ($product->pre_order_closed)
+            <span class="inline-flex whitespace-nowrap rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-200">PO Ditutup</span>
+        @else
+            <span class="inline-flex whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">PO Dibuka</span>
+        @endif
+    @else
+        <span class="text-xs text-slate-400">—</span>
+    @endif
+</td>
 
     <td class="px-6 py-5 text-center">
         <span class="text-sm text-slate-500">{{ $updated }}</span>

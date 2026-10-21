@@ -21,6 +21,7 @@
                 <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Harga</th>
                 <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Stok</th>
                 <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Status</th>
+                <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Status PO</th>
                 <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Diperbarui</th>
                 <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Aksi</th>
             </tr>
@@ -30,7 +31,7 @@
                 <x-admin.product-row :product="$product" />
             @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-12 text-center">
+                    <td colspan="8" class="px-6 py-12 text-center">
                         <div class="flex flex-col items-center">
                             <x-heroicon-o-cube class="h-10 w-10 text-slate-300"/>
                             <p class="mt-3 font-medium text-slate-600">Belum ada produk</p>
@@ -93,7 +94,12 @@
                 ];
             }
 
-            $sizeIds = array_values(array_unique($sizeIds));
+            $sizeIds = \App\Models\Size::ordered()
+    ->whereIn('id', array_unique($sizeIds))
+    ->pluck('id')
+    ->map(fn ($id) => (int) $id)
+    ->values()
+    ->all();
 
             $firstVariant = $product->variants->first();
             $price = $firstVariant?->price ?? 0;

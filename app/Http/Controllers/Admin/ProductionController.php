@@ -63,9 +63,7 @@ class ProductionController extends Controller
             ->orderBy('name')
             ->get();
 
-        $sizes = Size::query()
-            ->orderBy('id')
-            ->get();
+        $sizes = Size::ordered()->get();
 
         $products = Product::query()
             ->orderBy('name')
@@ -381,7 +379,7 @@ class ProductionController extends Controller
     {
         $categories = Category::orderBy('name')->get();
 
-        $sizes = Size::orderBy('id')->get();
+        $sizes = Size::ordered()->get();
 
         $production->load('items');
 

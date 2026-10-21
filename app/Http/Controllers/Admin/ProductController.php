@@ -41,9 +41,9 @@ class ProductController extends Controller
         $products = $query->latest('id')->paginate(10)->withQueryString();
 
         $products->getCollection()->transform(function ($product) {
-            $sizeIds = $product->variants
-                ->pluck('size_id')
-                ->filter()
+            $sizeIds = Size::ordered()
+                ->whereIn('id', $product->variants->pluck('size_id')->filter()->unique())
+                ->pluck('id')
                 ->map(fn ($id) => (int) $id)
                 ->values()
                 ->all();
@@ -75,9 +75,7 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        $sizes = Size::query()
-            ->orderBy('name')
-            ->get();
+        $sizes = Size::ordered()->get();
 
         $lastProductCode = Product::query()
             ->where('product_code', 'like', 'PRD-%')
@@ -124,7 +122,7 @@ class ProductController extends Controller
     public function create(): View
     {
         $categories = Category::query()->where('status', true)->orderBy('name')->get();
-        $sizes = Size::query()->orderBy('name')->get();
+        $sizes = Size::ordered()->get();
 
         return view('admin.products.create', compact('categories', 'sizes'));
     }
@@ -333,7 +331,7 @@ class ProductController extends Controller
     {
         $product->load(['category', 'images', 'variants.size', 'variants.color', 'variants.inventory']);
         $categories = Category::query()->where('status', true)->orderBy('name')->get();
-        $sizes = Size::query()->orderBy('name')->get();
+        $sizes = Size::ordered()->get();
 
         return view('admin.products.edit', compact('product', 'categories', 'sizes'));
     }

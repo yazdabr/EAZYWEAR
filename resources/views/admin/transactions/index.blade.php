@@ -14,7 +14,7 @@
 
         {{-- AKSI UTAMA --}}
         <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-            <button type="button" @click="$dispatch('open-production-export-modal')"
+            <button type="button" onclick="window.dispatchEvent(new CustomEvent('open-production-export-modal'))"
                 class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100 active:scale-95 sm:px-5"
                 title="Ekspor data produksi ke Excel">
                 <x-heroicon-o-document-arrow-down class="h-5 w-5"/>

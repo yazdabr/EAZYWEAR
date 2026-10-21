@@ -437,7 +437,8 @@
 
 @include('admin.transactions.partials.view-transaction')
 @include('admin.transactions.partials.delete-transaction')
-@include('admin.transactions.partials.hide-status-dialog')\n@include('admin.transactions.partials.production-export-dialog')
+@include('admin.transactions.partials.hide-status-dialog')
+@include('admin.transactions.partials.production-export-dialog')
 
 @push('styles')
 <style>

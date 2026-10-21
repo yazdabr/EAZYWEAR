@@ -166,7 +166,6 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
             'K' => 24,
             'L' => 18,
             'M' => 16,
-            'N' => 14,
         ];
     }
 
@@ -175,7 +174,7 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
         $lastRow = max(1, $sheet->getHighestRow());
 
         // Ratakan semua isi sel ke tengah, baik horizontal maupun vertikal.
-        $sheet->getStyle("A1:N{$lastRow}")->getAlignment()
+        $sheet->getStyle("A1:M{$lastRow}")->getAlignment()
             ->setHorizontal(Alignment::HORIZONTAL_CENTER)
             ->setVertical(Alignment::VERTICAL_CENTER)
             ->setWrapText(true);
@@ -183,7 +182,7 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
         // Format nomor telepon sebagai teks untuk menjaga digit dan nol di depan.
         $sheet->getStyle("E2:E{$lastRow}")->getNumberFormat()->setFormatCode('@');
 
-        $sheet->getStyle('A1:N1')->applyFromArray([
+        $sheet->getStyle('A1:M1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'AE7C18']],
             'alignment' => [
@@ -200,7 +199,7 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
         }
 
         $sheet->freezePane('A2');
-        $sheet->setAutoFilter('A1:N1');
+        $sheet->setAutoFilter('A1:M1');
 
         return [];
     }

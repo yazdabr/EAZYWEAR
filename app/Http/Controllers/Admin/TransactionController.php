@@ -227,7 +227,7 @@ class TransactionController extends Controller
         $completedGrowth = $calculateGrowth($currentCompleted, $previousCompleted);
 
         return view('admin.transactions.index', [
-            'transactions' => $transactions,\n            'exportProducts' => \\App\\Models\\Product::query()\n                ->whereIn('id', TransactionItem::query()\n                    ->whereHas('transaction', fn ($query) => $query->whereIn('status', ['PAID', 'ORDER_PROCESSING']))\n                    ->with('productVariant:id,product_id')\n                    ->get()\n                    ->pluck('productVariant.product_id')\n                    ->filter()\n                    ->unique()\n                    ->values())\n                ->orderBy('name')\n                ->get(['id', 'name']),
+            'transactions' => $transactions,\n            'exportProducts' => \App\Models\Product::query()\n                ->whereIn('id', TransactionItem::query()\n                    ->whereHas('transaction', fn ($query) => $query->whereIn('status', ['PAID', 'ORDER_PROCESSING']))\n                    ->with('productVariant:id,product_id')\n                    ->get()\n                    ->pluck('productVariant.product_id')\n                    ->filter()\n                    ->unique()\n                    ->values())\n                ->orderBy('name')\n                ->get(['id', 'name']),
             'totalTransactions' => $totalTransactions,
             'totalRevenue' => $totalRevenue,
             'completedOrders' => $completedOrders,
@@ -253,7 +253,7 @@ class TransactionController extends Controller
         $filename = 'data-produksi-' . now('Asia/Makassar')->format('Ymd-His') . '.xlsx';
 
         return Excel::download(
-            new \\App\\Exports\\ProductionOrderExport($validated),
+            new \App\Exports\ProductionOrderExport($validated),
             $filename
         );
     }

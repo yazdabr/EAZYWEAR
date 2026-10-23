@@ -3,7 +3,8 @@
     'topProductsMax' => 0
 ])
 
-<div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm sm:rounded-3xl">
+{{-- Tambahkan h-full flex flex-col di sini --}}
+<div class="h-full flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm sm:rounded-3xl">
     {{-- Card Header --}}
     <div class="border-b border-slate-100 p-4 sm:p-6">
         <h3 class="text-base font-bold text-slate-900 sm:text-xl">Produk Terlaris</h3>
@@ -11,7 +12,8 @@
     </div>
 
     {{-- Product List Container --}}
-    <div class="max-h-[380px] space-y-3 overflow-y-auto p-3 sm:max-h-[430px] sm:space-y-4 sm:p-5">
+    {{-- Ubah max-h menjadi flex-1 agar merenggang dinamis --}}
+    <div class="flex-1 space-y-3 overflow-y-auto p-3 sm:space-y-4 sm:p-5">
         @forelse($products as $index => $product)
             <div class="group rounded-xl border border-slate-100 bg-slate-50/50 p-3 transition hover:border-[#AE7C18]/40 hover:bg-white hover:shadow-sm sm:rounded-2xl sm:p-4">
                 <div class="flex items-center gap-3">
@@ -73,7 +75,7 @@
                 </div>
             </div>
         @empty
-            <div class="flex flex-col items-center justify-center py-8 text-center sm:py-12">
+            <div class="flex flex-col items-center justify-center h-full py-8 text-center sm:py-12">
                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 sm:h-12 sm:w-12">
                     <x-heroicon-o-cube class="h-5 w-5 text-slate-300 sm:h-6 sm:w-6"/>
                 </div>

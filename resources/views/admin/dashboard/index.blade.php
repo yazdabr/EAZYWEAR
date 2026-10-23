@@ -94,11 +94,13 @@
             />
         </div>
 
-        <div>
-            <x-admin.top-products
-                :products="$topProducts"
-                :top-products-max="$topProductsMax"
-            />
+        <div class="relative">
+            <div class="h-full xl:absolute xl:inset-0">
+                <x-admin.top-products
+                    :products="$topProducts"
+                    :top-products-max="$topProductsMax"
+                />
+            </div>
         </div>
     </div>
 </div>

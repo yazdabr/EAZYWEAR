@@ -6,7 +6,8 @@
     'data' => [],
 ])
 
-<div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:shadow-md sm:rounded-3xl">
+{{-- Tambahkan h-full flex flex-col di sini --}}
+<div class="h-full flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:shadow-md sm:rounded-3xl">
     {{-- Card Header --}}
     <div class="flex items-center justify-between border-b border-slate-100 p-4 sm:p-6">
         <div>
@@ -22,7 +23,7 @@
     </div>
 
     {{-- Chart Area --}}
-    <div class="p-2 sm:p-6">
+    <div class="flex-1 p-2 sm:p-6">
         <div id="{{ $chartId }}" class="w-full"></div>
     </div>
 </div>

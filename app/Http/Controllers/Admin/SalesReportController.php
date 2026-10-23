@@ -39,6 +39,9 @@ class SalesReportController extends Controller
             'items.productVariant.size',
             'items.productVariant.color',
         ])->whereIn('status', Transaction::SALES_REPORT_STATUSES)
+        ->where(function ($q) {
+            $q->whereNull('source')->orWhere('source', '<>', 'Booth');
+        })
         ->whereNotIn('invoice_number', [
             'INV-20261008-OHJ6PG',
             'INV-20261013-MBXNU0',
@@ -381,6 +384,9 @@ class SalesReportController extends Controller
             'customer',
             'items.productVariant.product',
         ])->whereIn('status', Transaction::SALES_REPORT_STATUSES)
+            ->where(function ($q) {
+                $q->whereNull('source')->orWhere('source', '<>', 'Booth');
+            })
             ->whereNotIn('invoice_number', [
                 'INV-20261008-OHJ6PG',
                 'INV-20261013-MBXNU0',

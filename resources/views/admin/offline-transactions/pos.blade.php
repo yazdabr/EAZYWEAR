@@ -8,17 +8,28 @@
     {{-- Container Utama Produk --}}
     <div class="mx-auto max-w-7xl space-y-4 pb-32 px-3 sm:px-4">
         {{-- Header --}}
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">Kasir Booth</h1>
                 <p class="mt-0.5 text-xs text-slate-500 sm:text-sm">Pilih produk dan ukuran untuk bertransaksi.</p>
             </div>
-            <a
-                href="{{ route('admin.offline-transactions.index') }}"
-                class="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-amber-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 sm:text-sm"
-            >
-                Riwayat Transaksi
-            </a>
+
+            <div class="grid grid-cols-2 gap-2 sm:min-w-[340px]">
+                <button
+                    type="button"
+                    @click="stockModalOpen = true"
+                    class="inline-flex min-h-10 items-center justify-center rounded-xl border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-50 sm:text-sm"
+                >
+                    Edit Stok
+                </button>
+
+                <a
+                    href="{{ route('admin.offline-transactions.index') }}"
+                    class="inline-flex min-h-10 items-center justify-center rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 sm:text-sm"
+                >
+                    Riwayat Transaksi
+                </a>
+            </div>
         </div>
 
         {{-- Sticky Search Bar --}}
@@ -399,6 +410,144 @@
         </section>
     </div>
     
+    {{-- Modal Edit Stok --}}
+    <div
+        x-cloak
+        x-show="stockModalOpen"
+        x-transition.opacity.duration.200ms
+        class="fixed inset-0 z-[9998] flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="booth-stock-title"
+        @keydown.escape.window="stockModalOpen = false"
+        @click.self="stockModalOpen = false"
+    >
+        <div
+            x-show="stockModalOpen"
+            x-transition
+            class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl"
+        >
+            <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <div>
+                    <h2 id="booth-stock-title" class="text-base font-bold text-slate-900 sm:text-lg">Edit Stok Produk</h2>
+                    <p class="mt-1 text-xs text-slate-500">Pilih produk dan ukuran, lalu tentukan stok terbaru.</p>
+                </div>
+                <button
+                    type="button"
+                    @click="stockModalOpen = false"
+                    class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                    aria-label="Tutup modal"
+                ><span aria-hidden="true" class="text-xl leading-none">&times;</span></button>
+            </div>
+
+            <div class="space-y-4 p-5">
+                <div>
+                    <label for="stock-product" class="mb-1.5 block text-xs font-semibold text-slate-600">Produk</label>
+                    <select
+                        id="stock-product"
+                        x-model="stockProductId"
+                        @change="stockVariantId = ''; stockMessage = ''; loadStockVariants()"
+                        class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+                    >
+                        <option value="">Pilih produk</option>
+                        @foreach($products as $product)
+                            <option value="{{ $product->id }}">{{ $product->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="stock-variant" class="mb-1.5 block text-xs font-semibold text-slate-600">Ukuran / Varian</label>
+                    <select
+                        id="stock-variant"
+                        x-model="stockVariantId"
+                        @change="loadSelectedStock()"
+                        :disabled="!stockProductId"
+                        class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-50 disabled:text-slate-400"
+                    >
+                        <option value="">Pilih ukuran</option>
+                        <template x-for="variant in stockVariants" :key="variant.id">
+                            <option :value="String(variant.id)" x-text="variant.label"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="inline-flex items-center gap-2 text-sm text-slate-600">
+                            Stok saat ini
+                        </span>
+                    </div>
+                    <div class="mt-3">
+                        <label for="stock-new-value" class="mb-1.5 block text-xs font-semibold text-slate-600">Stok baru</label>
+                        <input
+                            id="stock-new-value"
+                            type="number"
+                            min="0"
+                            step="1"
+                            x-model.number="stockValue"
+                            :disabled="!stockVariantId"
+                            class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 disabled:bg-slate-100"
+                            placeholder="Masukkan jumlah stok"
+                        >
+                    </div>
+                </div>
+
+                <div
+                    x-show="stockMessage"
+                    x-text="stockMessage"
+                    role="status"
+                    class="rounded-xl px-3 py-2 text-xs font-medium"
+                    :class="stockMessageType === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'"
+                ></div>
+            </div>
+
+            <div class="flex gap-2 border-t border-slate-100 bg-slate-50 p-4">
+                <button
+                    type="button"
+                    @click="stockModalOpen = false"
+                    class="h-11 flex-1 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+                >Batal</button>
+                <button
+                    type="button"
+                    @click="saveStock()"
+                    :disabled="stockSaving || !stockVariantId"
+                    class="h-11 flex-1 rounded-xl bg-amber-600 px-4 text-sm font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                    <span x-text="stockSaving ? 'Menyimpan...' : 'Simpan Stok'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    {{-- Popup sukses penyimpanan stok --}}
+    <div
+        x-cloak
+        x-show="stockSuccessOpen"
+        x-transition.opacity.duration.200ms
+        class="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="stock-success-title"
+        @keydown.escape.window="stockSuccessOpen = false"
+        @click.self="stockSuccessOpen = false"
+    >
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6"/>
+                </svg>
+            </div>
+            <h2 id="stock-success-title" class="mt-4 text-lg font-bold text-slate-900">Stok berhasil diperbarui!</h2>
+            <p class="mt-2 text-sm text-slate-500">Perubahan stok sudah tersimpan.</p>
+            <button
+                type="button"
+                @click="window.location.reload()"
+                class="mt-5 w-full rounded-xl bg-amber-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-amber-700"
+            >
+                OK
+            </button>
+        </div>
+    </div>
     {{-- Popup sukses pembayaran Booth --}}
     <div
         x-cloak
@@ -524,6 +673,55 @@
             paymentStatusUrlTemplate: @js(route('admin.kasir.payment-status', ['invoice' => '__INVOICE__'])),
             csrfToken: @js(csrf_token()),
             checkoutUrl: @js(route('admin.kasir.checkout')),
+            stockUpdateUrl: @js(route('admin.kasir.update-stock')),
+            stockModalOpen: false,
+            stockProductId: '',
+            stockVariantId: '',
+            stockValue: 0,
+            stockSaving: false,
+            stockMessage: '',
+            stockMessageType: 'success',
+            stockSuccessOpen: false,
+            stockVariants: [],
+            selectedStockVariant: null,
+
+            loadStockVariants() {
+                const products = @js($products->map(function ($product) {
+                    return [
+                        'id' => (int) $product->id,
+                        'name' => (string) $product->name,
+                        'variants' => $product->variants->map(function ($variant) {
+                            return [
+                                'id' => (int) $variant->id,
+                                'size' => (string) ($variant->size->name ?? $variant->size->size_name ?? '-'),
+                                'color' => (string) ($variant->color->name ?? $variant->color->color_name ?? '-'),
+                                'sku' => (string) ($variant->sku ?? ''),
+                                'stock' => (int) ($variant->inventory->stock ?? 0),
+                            ];
+                        })->values(),
+                    ];
+                })->values()),
+                product = products.find(item => String(item.id) === String(this.stockProductId));
+
+                this.stockVariants = product
+                    ? product.variants.map(variant => ({
+                        ...variant,
+                        label: variant.size
+                    }))
+                    : [];
+            },
+
+            loadSelectedStock() {
+                this.selectedStockVariant = this.stockVariants.find(
+                    variant => String(variant.id) === String(this.stockVariantId)
+                ) || null;
+
+                this.stockValue = this.selectedStockVariant
+                    ? this.selectedStockVariant.stock
+                    : 0;
+
+                this.stockMessage = '';
+            },
 
             get subtotal() {
                 return this.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -563,6 +761,83 @@
                         qty: 1
                     });
                 }
+            },
+
+            async saveStock() {
+                if (this.stockSaving) return;
+
+                if (!this.stockVariantId) {
+                    this.stockMessage = 'Pilih produk dan ukuran terlebih dahulu.';
+                    this.stockMessageType = 'error';
+                    return;
+                }
+
+                const newStock = Number(this.stockValue);
+
+                if (!Number.isInteger(newStock) || newStock < 0) {
+                    this.stockMessage = 'Stok harus berupa bilangan bulat minimal 0.';
+                    this.stockMessageType = 'error';
+                    return;
+                }
+
+                this.stockSaving = true;
+                this.stockMessage = '';
+
+                try {
+                    const response = await fetch(this.stockUpdateUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            variant_id: Number(this.stockVariantId),
+                            stock: newStock
+                        })
+                    });
+
+                    const data = await response.json().catch(() => ({}));
+
+                    if (!response.ok) {
+                        const messages = Object.values(data.errors || {}).flat();
+                        throw new Error(
+                            messages[0] || data.message || 'Stok gagal diperbarui.'
+                        );
+                    }
+
+                    this.updateDisplayedStock(Number(data.variant_id), Number(data.stock));
+                    this.stockValue = Number(data.stock);
+                    this.stockMessage = data.message || 'Stok berhasil diperbarui.';
+                    this.stockMessageType = 'success';
+                    this.stockSuccessOpen = true;
+                } catch (error) {
+                    this.stockMessage = error.message || 'Terjadi kesalahan saat menyimpan stok.';
+                    this.stockMessageType = 'error';
+                } finally {
+                    this.stockSaving = false;
+                }
+            },
+
+            updateDisplayedStock(variantId, newStock) {
+                document.querySelectorAll('[data-booth-variants]').forEach(element => {
+                    const variants = JSON.parse(element.dataset.boothVariants || '[]');
+                    const variant = variants.find(item => Number(item.id) === variantId);
+
+                    if (variant) {
+                        variant.stock = newStock;
+                        element.dataset.boothVariants = JSON.stringify(variants);
+                    }
+                });
+
+                this.cart.forEach(item => {
+                    if (Number(item.id) === variantId) {
+                        item.stock = newStock;
+                        if (item.qty > newStock) item.qty = newStock;
+                    }
+                });
+
             },
 
             changeQty(id, change) {
@@ -738,4 +1013,3 @@
     }
 </script>
 @endsection
-

@@ -226,6 +226,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'store',
         ])->name('kasir.checkout');
 
+        Route::post('/kasir/update-stock', [
+            \App\Http\Controllers\Admin\BoothPosController::class,
+            'updateStock',
+        ])->name('kasir.update-stock');
+
         Route::get('/kasir/payment-status/{invoice}', [
             \App\Http\Controllers\Admin\BoothPosController::class,
             'paymentStatus',

@@ -48,6 +48,9 @@ class TransactionController extends Controller
         $hiddenStatuses = $user?->hidden_transaction_statuses ?? [];
 
         $query = Transaction::with(['customer', 'items.productVariant.product.images', 'items.productVariant.size', 'items.productVariant.color']);
+        $query->where(function ($q) {
+            $q->whereNull('source')->orWhere('source', '<>', 'Booth');
+        });
 
         if ($hiddenStatuses !== []) {
             $query->whereNotIn('status', $hiddenStatuses);

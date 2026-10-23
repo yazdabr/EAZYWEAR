@@ -36,7 +36,18 @@ class BoothPosController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.offline-transactions.pos', compact('products'));
+        $stockProducts = Product::query()
+            ->where('status', true)
+            ->where('availability', 'ready')
+            ->with([
+                'variants.size',
+                'variants.color',
+                'variants.inventory',
+            ])
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.offline-transactions.pos', compact('products', 'stockProducts'));
     }
 
     public function store(
@@ -228,6 +239,47 @@ class BoothPosController extends Controller
         ]);
     }
 
+    public function updateStock(
+        Request $request,
+        InventoryStockService $stockService
+    ): JsonResponse {
+        $validated = $request->validate([
+            'variant_id' => ['required', 'integer', 'exists:product_variants,id'],
+            'stock' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $variant = ProductVariant::query()
+            ->with('product')
+            ->findOrFail($validated['variant_id']);
+
+        if (!$variant->product) {
+            return response()->json([
+                'message' => 'Produk tidak ditemukan.',
+            ], 404);
+        }
+
+        $inventory = Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->first();
+
+        if (!$inventory) {
+            return response()->json([
+                'message' => 'Data inventory untuk varian ini belum tersedia.',
+            ], 422);
+        }
+
+        $updatedInventory = $stockService->adjust(
+            $inventory->id,
+            (int) $validated['stock'],
+            'Penyesuaian stok melalui Kasir Booth'
+        );
+
+        return response()->json([
+            'message' => 'Stok berhasil diperbarui.',
+            'variant_id' => (int) $variant->id,
+            'stock' => (int) $updatedInventory->stock,
+        ]);
+    }
     public function paymentStatus(string $invoice): JsonResponse
     {
         $transaction = Transaction::query()

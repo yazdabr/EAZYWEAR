@@ -109,6 +109,28 @@
             <nav class="mt-2 space-y-1">
 
                 <a
+                    href="{{ route('admin.kasir') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.kasir*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-shopping-cart class="h-5 w-5 shrink-0"/>
+                    <span>Kasir Booth</span>
+                </a>
+            
+            <nav class="mt-2 space-y-1">
+
+            {{-- TRANSAKSI --}}
+            <div class="mt-6 px-2">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                    TRANSAKSI
+                </p>
+            </div>
+
+            </nav>
+
+                <a
                     href="{{ route('admin.transactions') }}"
                     class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
                     {{ request()->routeIs('admin.transactions*')
@@ -116,7 +138,18 @@
                         : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
                 >
                     <x-heroicon-o-receipt-percent class="h-5 w-5 shrink-0"/>
-                    <span>Daftar Transaksi</span>
+                    <span>Data Transaksi Web</span>
+                </a>
+
+                <a
+                    href="{{ route('admin.offline-transactions.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.offline-transactions.*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-clipboard-document-list class="h-5 w-5 shrink-0"/>
+                    <span>Data Transaksi Offline</span>
                 </a>
 
             </nav>
@@ -169,6 +202,28 @@
             {{-- TRANSAKSI --}}
             <div class="mt-2 px-2">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                    Kasir
+                </p>
+            </div>
+
+            <nav class="mt-2 space-y-1">
+
+                <a
+                    href="{{ route('admin.kasir') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.kasir*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-shopping-cart class="h-5 w-5 shrink-0"/>
+                    <span>Kasir Booth</span>
+                </a>
+
+            </nav>
+
+            {{-- TRANSAKSI --}}
+            <div class="mt-6 px-2">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
                     TRANSAKSI
                 </p>
             </div>
@@ -183,7 +238,18 @@
                         : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
                 >
                     <x-heroicon-o-receipt-percent class="h-5 w-5 shrink-0"/>
-                    <span>Daftar Transaksi</span>
+                    <span>Transaksi Web</span>
+                </a>
+
+                <a
+                    href="{{ route('admin.offline-transactions.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.offline-transactions.*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-clipboard-document-list class="h-5 w-5 shrink-0"/>
+                    <span>Transaksi Offline</span>
                 </a>
 
             </nav>

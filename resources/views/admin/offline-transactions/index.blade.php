@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Data Transaksi Offline')
-@section('page-title', 'Data Transaksi Offline')
+@section('title', 'Transaksi Offline')
+@section('page-title', 'Transaksi Offline')
 
 @section('content')
 
@@ -10,25 +10,20 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
             <h2 class="text-xl font-bold text-slate-900 sm:text-3xl">
-                Data Transaksi Offline
+                Transaksi Offline
             </h2>
             <p class="mt-1 text-xs text-slate-500 sm:text-sm">
-                Riwayat penjualan booth dan bazar Eazywear.
+                Riwayat penjualan offline Eazywear.
             </p>
         </div>
 
-        <div class="grid w-full grid-cols-2 gap-2 lg:w-auto lg:min-w-0">
+        <div class="grid w-full grid-cols-1 gap-2 lg:w-auto lg:min-w-0">
             <a
                 href="{{ route('admin.kasir') }}"
-                class="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg bg-amber-600 px-2 py-2 text-center text-xs font-semibold text-white transition hover:bg-amber-700 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm"
+                class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex"
             >
                 Kembali ke Kasir
             </a>
-
-            <span class="inline-flex min-h-10 items-center justify-center gap-1 rounded-lg bg-amber-50 px-2 py-2 text-center text-xs font-semibold text-amber-800 sm:min-h-11 sm:gap-2 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm">
-                <x-heroicon-o-shopping-bag class="h-4 w-4 shrink-0 sm:h-5 sm:w-5"/>
-                Penjualan Booth
-            </span>
         </div>
     </div>
 
@@ -225,9 +220,9 @@
                         <th class="px-5 py-4">Pelanggan</th>
                         <th class="px-5 py-4">Item</th>
                         <th class="px-5 py-4">Pembayaran</th>
-                        <th class="px-5 py-4">Total</th>
-                        <th class="px-5 py-4">Status</th>
-                        <th class="px-5 py-4">Detail</th>
+                        <th class="px-5 py-4 text-center">Total</th>
+                        <th class="px-5 py-4 text-center">Status</th>
+                        <th class="px-5 py-4 text-center">Detail</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -267,7 +262,7 @@
                             <td class="whitespace-nowrap px-5 py-4 text-slate-600">
                                 {{ $transaction->payment_method ?? '-' }}
                             </td>
-                            <td class="whitespace-nowrap px-5 py-4 font-bold text-slate-900">
+                            <td class="whitespace-nowrap px-5 py-4 text-center font-bold text-slate-900">
                                 Rp {{ number_format((float) $transaction->total, 0, ',', '.') }}
                                 @if ((float) $transaction->discount > 0)
                                     <p class="mt-1 text-xs font-normal text-emerald-600">
@@ -275,7 +270,7 @@
                                     </p>
                                 @endif
                             </td>
-                            <td class="whitespace-nowrap px-5 py-4">
+                            <td class="whitespace-nowrap px-5 py-4 text-center">
                                 @php
                                     $statusClass = match ($transaction->status) {
                                         'PAID', 'COMPLETED', 'ORDER_COMPLETED' => 'bg-emerald-100 text-emerald-700',
@@ -288,7 +283,7 @@
                                     {{ $transaction->status ?? 'PENDING' }}
                                 </span>
                             </td>
-                            <td class="whitespace-nowrap px-5 py-4">
+                            <td class="whitespace-nowrap px-5 py-4 text-center">
                                 <a href="{{ route('admin.offline-transactions.show', $transaction->id) }}"
                                    class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-amber-400 hover:text-amber-700">
                                     <x-heroicon-o-eye class="h-4 w-4"/>

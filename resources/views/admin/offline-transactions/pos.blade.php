@@ -342,22 +342,8 @@
                         </div>
                     </div>
                 </template>
-
-                {{-- Diskon & Metode Pembayaran --}}
-                <div class="space-y-3 pt-2">
-                    <div class="rounded-xl bg-slate-50 p-3 border border-slate-100">
-                        <label for="booth-discount" class="mb-1.5 block text-xs font-medium text-slate-600">Diskon (Rp)</label>
-                        <input
-                            id="booth-discount"
-                            type="number"
-                            min="0"
-                            step="1000"
-                            x-model.number="discount"
-                            class="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 outline-none focus:border-amber-500"
-                        >
-                    </div>
-
-                    <div class="rounded-xl bg-slate-50 p-3 border border-slate-100">
+                {{-- Metode Pembayaran --}}
+                <div class="space-y-3 pt-2"><div class="rounded-xl bg-slate-50 p-3 border border-slate-100">
                         <label for="booth-payment" class="mb-1.5 block text-xs font-medium text-slate-600">Metode Pembayaran</label>
                         <select
                             id="booth-payment"
@@ -375,10 +361,6 @@
                     <div class="flex justify-between">
                         <span>Subtotal</span>
                         <span x-text="money(subtotal)"></span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Diskon</span>
-                        <span x-text="'&#8722; ' + money(appliedDiscount)"></span>
                     </div>
                     <div class="flex justify-between text-sm font-semibold text-slate-900 pt-1">
                         <span>Total Pembayaran</span>

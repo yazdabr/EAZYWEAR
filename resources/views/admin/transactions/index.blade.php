@@ -1,14 +1,14 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Transaksi')
-@section('page-title', 'Transaksi')
+@section('page-title', 'Transaksi Web')
 
 @section('content')
 <div class="space-y-5 sm:space-y-8">
     {{-- HEADER --}}
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">Transaksi</h2>
+            <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">Transaksi Web</h2>
             <p class="mt-1 text-xs text-slate-500 sm:text-sm">Kelola semua transaksi dan pembayaran pelanggan.</p>
         </div>
 

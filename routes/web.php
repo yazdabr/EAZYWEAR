@@ -213,6 +213,36 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/api-logs', [ApiLogController::class, 'index'])->name('api-logs');
     });
 
+    
+    // Kasir Booth dan transaksi offline
+    Route::middleware('role:super_admin,management')->group(function () {
+        Route::get('/kasir', [
+            \App\Http\Controllers\Admin\BoothPosController::class,
+            'index',
+        ])->name('kasir');
+
+        Route::post('/kasir/checkout', [
+            \App\Http\Controllers\Admin\BoothPosController::class,
+            'store',
+        ])->name('kasir.checkout');
+
+        Route::get('/kasir/payment-status/{invoice}', [
+            \App\Http\Controllers\Admin\BoothPosController::class,
+            'paymentStatus',
+        ])->name('kasir.payment-status');
+
+        Route::get('/offline-transactions', [
+            \App\Http\Controllers\Admin\OfflineTransactionController::class,
+            'index',
+        ])->name('offline-transactions.index');
+
+        Route::get('/offline-transactions/{transaction}', [
+            \App\Http\Controllers\Admin\OfflineTransactionController::class,
+            'show',
+        ])->name('offline-transactions.show');
+    });
+
+
     Route::middleware('role:super_admin,management')->group(function () {
         Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
         Route::get('/transactions/production-export', [TransactionController::class, 'exportProductionOrders'])->name('transactions.production-export');

@@ -20,12 +20,9 @@
         <p class="font-semibold text-slate-900">
             {{ $transaction['invoice'] ?? '-' }}
         </p>
-    </td>
-
-    <td class="px-6 py-5">
-        <span class="text-sm text-slate-500">
+        <p class="mt-1 text-xs text-slate-500">
             {{ $transaction['date'] ?? '-' }}
-        </span>
+        </p>
     </td>
 
     <td class="px-6 py-5">

@@ -9,7 +9,7 @@
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">Transaksi Web</h2>
-            <p class="mt-1 text-xs text-slate-500 sm:text-sm">Kelola semua transaksi dan pembayaran pelanggan.</p>
+            <p class="mt-1 text-xs text-slate-500 sm:text-sm">Kelola semua transaksi web dan pembayaran pelanggan.</p>
         </div>
 
         {{-- AKSI UTAMA --}}
@@ -20,10 +20,10 @@
                 <x-heroicon-o-document-arrow-down class="h-5 w-5"/>
                 <span>Ekspor Excel</span>
             </button>
-            <a href="{{ route('admin.transactions.create') }}" class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex">
+            {{-- <a href="{{ route('admin.transactions.create') }}" class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex">
                 <x-heroicon-o-plus class="h-5 w-5"/>
                 Transaksi Baru
-            </a>
+            </a> --}}
         </div>
     </div>
 
@@ -379,7 +379,6 @@
                 <thead class="border-b border-slate-200 bg-slate-50">
                     <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                         <th class="px-6 py-4">Invoice</th>
-                        <th class="px-6 py-4">Tanggal</th>
                         <th class="px-6 py-4">Pelanggan</th>
                         <th class="px-6 py-4">Ringkasan Pesanan</th>
                         <th class="px-6 py-4 text-center">PO/READY</th>
@@ -395,7 +394,7 @@
                         <x-admin.transaction-row :transaction="$transaction"/>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-14 text-center">
+                            <td colspan="8" class="px-6 py-14 text-center">
                                 <div class="flex flex-col items-center">
                                     <x-heroicon-o-receipt-percent class="h-10 w-10 text-slate-300"/>
                                     <p class="mt-3 font-medium text-slate-600">Tidak ada transaksi</p>

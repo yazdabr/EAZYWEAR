@@ -50,6 +50,7 @@ class OfflineTransactionController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+
         $summary = [
             'total_transactions' => (clone $summaryQuery)->count(),
             'paid_transactions' => (clone $summaryQuery)
@@ -61,12 +62,93 @@ class OfflineTransactionController extends Controller
             'total_revenue' => (clone $summaryQuery)
                 ->whereIn('status', Transaction::SALES_REPORT_STATUSES)
                 ->sum('total'),
+            'completed_orders' => (clone $summaryQuery)->where('status', 'PAID')->count(),
         ];
 
+        $currentMonth = now()->startOfMonth();
+        $previousMonth = now()->subMonth()->startOfMonth();
+
+        $currentTransactions = Transaction::where('source', 'Booth')
+            ->whereBetween('transaction_date', [
+                $currentMonth->copy()->startOfMonth(),
+                $currentMonth->copy()->endOfMonth(),
+            ])->count();
+
+        $previousTransactions = Transaction::where('source', 'Booth')
+            ->whereBetween('transaction_date', [
+                $previousMonth->copy()->startOfMonth(),
+                $previousMonth->copy()->endOfMonth(),
+            ])->count();
+
+        $currentRevenue = Transaction::where('source', 'Booth')
+            ->whereBetween('transaction_date', [
+                $currentMonth->copy()->startOfMonth(),
+                $currentMonth->copy()->endOfMonth(),
+            ])
+            ->whereIn('status', Transaction::SALES_REPORT_STATUSES)
+            ->sum('total');
+
+        $previousRevenue = Transaction::where('source', 'Booth')
+            ->whereBetween('transaction_date', [
+                $previousMonth->copy()->startOfMonth(),
+                $previousMonth->copy()->endOfMonth(),
+            ])
+            ->whereIn('status', Transaction::SALES_REPORT_STATUSES)
+            ->sum('total');
+
+        $calculateGrowth = function ($current, $previous) {
+            if ((float) $previous === 0.0) {
+                if ((float) $current === 0.0) {
+                    return ['value' => '0%', 'positive' => true, 'neutral' => true];
+                }
+
+                return ['value' => '+100%', 'positive' => true, 'neutral' => false];
+            }
+
+            $growth = (($current - $previous) / $previous) * 100;
+
+            return [
+                'value' => ($growth >= 0 ? '+' : '') . number_format($growth, 1, ',', '.') . '%',
+                'positive' => $growth >= 0,
+                'neutral' => false,
+            ];
+        };
+
+        $transactionGrowth = $calculateGrowth(
+            $currentTransactions,
+            $previousTransactions
+        );
+
+        $revenueGrowth = $calculateGrowth(
+            $currentRevenue,
+            $previousRevenue
+        );
+
+        $currentCompleted = Transaction::where('source', 'Booth')
+            ->whereBetween('transaction_date', [
+                $currentMonth->copy()->startOfMonth(),
+                $currentMonth->copy()->endOfMonth(),
+            ])
+            ->where('status', 'PAID')
+            ->count();
+
+        $previousCompleted = Transaction::where('source', 'Booth')
+            ->whereBetween('transaction_date', [
+                $previousMonth->copy()->startOfMonth(),
+                $previousMonth->copy()->endOfMonth(),
+            ])
+            ->where('status', 'PAID')
+            ->count();
+
+        $completedGrowth = $calculateGrowth($currentCompleted, $previousCompleted);
         return view('admin.offline-transactions.index', [
             'transactions' => $transactions,
             'summary' => $summary,
+            'transactionGrowth' => $transactionGrowth,
+            'revenueGrowth' => $revenueGrowth,
+            'completedGrowth' => $completedGrowth,
         ]);
+
     }
 
     public function show(Transaction $transaction)

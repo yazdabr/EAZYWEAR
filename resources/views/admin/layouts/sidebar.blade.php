@@ -287,7 +287,7 @@
 
             <div class="mt-6 px-2">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    LAPORAN
+                    LAPORAN PENJUALAN
                 </p>
             </div>
 
@@ -304,12 +304,32 @@
                             : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
                     >
                         <x-heroicon-o-chart-bar class="h-5 w-5 shrink-0"/>
-                        <span>Laporan Penjualan</span>
+                        <span>Penjualan Web</span>
                     </a>
 
                 @endif
 
+                {{-- Laporan Penjualan Offline --}}
+                <a
+                    href="{{ route('admin.offline-sales-reports') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.offline-sales-reports*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-building-storefront class="h-5 w-5 shrink-0"/>
+                    <span>Penjualan Offline</span>
+                </a>
 
+            </nav>
+
+            <div class="mt-6 px-2">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                    LAPORAN PRODUKSI
+                </p>
+            </div>
+
+            <nav class="mt-2 space-y-1">
                 {{-- Laporan Produksi --}}
                 <a
                     href="{{ route('admin.production-reports') }}"
@@ -321,7 +341,6 @@
                     <x-heroicon-o-clipboard-document-list class="h-5 w-5 shrink-0"/>
                     <span>Laporan Produksi</span>
                 </a>
-
             </nav>
 
         @endif

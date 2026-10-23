@@ -5,7 +5,7 @@
 
 @section('content')
 
-<div class="space-y-4 sm:space-y-6">
+<div class="space-y-5 sm:space-y-8">
 
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
@@ -13,115 +13,168 @@
                 Transaksi Offline
             </h2>
             <p class="mt-1 text-xs text-slate-500 sm:text-sm">
-                Riwayat penjualan offline Eazywear.
+                Kelola semua transaksi offline dan pembayaran pelanggan.
             </p>
         </div>
 
-        <div class="grid w-full grid-cols-1 gap-2 lg:w-auto lg:min-w-0">
+        {{-- <div class="grid w-full grid-cols-1 gap-2 lg:w-auto lg:min-w-0">
             <a
                 href="{{ route('admin.kasir') }}"
                 class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex"
             >
                 Kembali ke Kasir
             </a>
-        </div>
+        </div> --}}
     </div>
 
-    <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
-        <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-5">
-            <p class="text-xs text-slate-500 sm:text-sm">Total Transaksi</p>
-            <p class="mt-1.5 text-xl font-bold text-slate-900 sm:mt-2 sm:text-2xl">
-                {{ number_format($summary['total_transactions'], 0, ',', '.') }}
-            </p>
+    {{-- FILTER FORM --}}
+    <form method="GET" action="{{ route('admin.offline-transactions.index') }}" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:rounded-3xl sm:p-6">
+        <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3 sm:mb-5 sm:pb-4">
+            <div>
+                <h3 class="text-base font-semibold text-slate-800 sm:text-xl">Filter Data</h3>
+            </div>
+            <span class="text-[11px] text-slate-400 sm:text-xs">Filter pelanggan & kriteria</span>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-5">
-            <p class="text-xs text-slate-500 sm:text-sm">Transaksi Lunas</p>
-            <p class="mt-1.5 text-xl font-bold text-emerald-600 sm:mt-2 sm:text-2xl">
-                {{ number_format($summary['paid_transactions'], 0, ',', '.') }}
-            </p>
-        </div>
+        <div class="grid gap-3 md:grid-cols-2 lg:grid-cols-12 sm:gap-4">
+            {{-- PENCARIAN --}}
+            <div class="md:col-span-2 lg:col-span-4">
+                <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
+                    Cari Nama / INV Pelanggan
+                </label>
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ request('search') }}"
+                    placeholder="Cari Nama / INV Pelanggan..."
+                    class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-regular text-slate-700 transition-all duration-200 placeholder:text-slate-400 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
+                >
+            </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-5">
-            <p class="text-xs text-slate-500 sm:text-sm">Menunggu Pembayaran</p>
-            <p class="mt-1.5 text-xl font-bold text-amber-600 sm:mt-2 sm:text-2xl">
-                {{ number_format($summary['pending_transactions'], 0, ',', '.') }}
-            </p>
-        </div>
+            {{-- FILTER DI SISI KANAN --}}
+            <div class="md:col-span-2 lg:col-span-8">
+                <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-end sm:justify-end sm:gap-4">
+                    {{-- STATUS --}}
+                    <div class="col-span-1 w-full sm:w-52">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">Status</label>
+                        <select
+                            name="status"
+                            onchange="this.form.submit()"
+                            class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
+                        >
+                            <option value="">Semua Status</option>
+                            @foreach (['PENDING', 'PAID', 'EXPIRED', 'CANCELLED', 'COMPLETED'] as $status)
+                                <option value="{{ $status }}" @selected(request('status') === $status)>
+                                    {{ $status }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-5">
-            <p class="text-xs text-slate-500 sm:text-sm">Total Penjualan</p>
-            <p class="mt-1.5 text-lg font-bold text-slate-900 sm:mt-2 sm:text-xl">
-                Rp {{ number_format($summary['total_revenue'], 0, ',', '.') }}
-            </p>
-            <p class="mt-1 text-[10px] leading-snug text-slate-400 sm:text-xs">Transaksi dengan status penjualan yang diakui</p>
-        </div>
-    </div>
+                    {{-- BULAN --}}
+                    <div class="col-span-1 w-full sm:w-52">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">Bulan</label>
+                        <select
+                            name="month"
+                            onchange="this.form.submit()"
+                            class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
+                        >
+                            <option value="">Semua Bulan</option>
+                            @foreach (range(1, 12) as $month)
+                                <option value="{{ $month }}" @selected((string) request('month') === (string) $month)>
+                                    {{ \Carbon\Carbon::create()->month($month)->locale('id')->translatedFormat('F') }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
-    <form method="GET" action="{{ route('admin.offline-transactions.index') }}"
-          class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:rounded-2xl sm:p-5">
-        <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 xl:grid-cols-5">
-            <input
-                type="text"
-                name="search"
-                value="{{ request('search') }}"
-                placeholder="Cari invoice, nama, telepon..."
-                class="min-w-0 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100 sm:rounded-xl sm:px-4 sm:py-3"
-            >
+                    {{-- TAHUN --}}
+                    <div class="col-span-1 w-full sm:w-40">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">Tahun</label>
+                        <select
+                            name="year"
+                            onchange="this.form.submit()"
+                            class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
+                        >
+                            <option value="">Semua Tahun</option>
+                            @for ($year = now()->year; $year >= now()->year - 5; $year--)
+                                <option value="{{ $year }}" @selected((string) request('year') === (string) $year)>
+                                    {{ $year }}
+                                </option>
+                            @endfor
+                        </select>
+                    </div>
 
-            <select name="status"
-                    class="min-w-0 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-amber-500 focus:outline-none sm:rounded-xl sm:px-4 sm:py-3">
-                <option value="">Semua Status</option>
-                @foreach (['PENDING', 'PAID', 'EXPIRED', 'CANCELLED', 'COMPLETED'] as $status)
-                    <option value="{{ $status }}" @selected(request('status') === $status)>
-                        {{ $status }}
-                    </option>
-                @endforeach
-            </select>
-
-            <select name="month"
-                    class="min-w-0 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-amber-500 focus:outline-none sm:rounded-xl sm:px-4 sm:py-3">
-                <option value="">Semua Bulan</option>
-                @foreach (range(1, 12) as $month)
-                    <option value="{{ $month }}" @selected((string) request('month') === (string) $month)>
-                        {{ \Carbon\Carbon::create()->month($month)->locale('id')->translatedFormat('F') }}
-                    </option>
-                @endforeach
-            </select>
-
-            <input
-                type="number"
-                name="year"
-                value="{{ request('year') }}"
-                placeholder="Tahun"
-                min="2000"
-                max="2100"
-                class="min-w-0 rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-amber-500 focus:outline-none sm:rounded-xl sm:px-4 sm:py-3"
-            >
-
-            <div class="flex gap-2">
-                <button type="submit"
-                        class="min-h-10 flex-1 rounded-lg bg-[#AE7C18] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#96690F] sm:rounded-xl sm:px-4 sm:py-3">
-                    <x-heroicon-o-magnifying-glass class="mr-1 inline h-4 w-4"/>
-                    Cari
-                </button>
-                <a href="{{ route('admin.offline-transactions.index') }}"
-                   class="min-h-10 rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 sm:rounded-xl sm:px-4 sm:py-3">
-                    Reset
-                </a>
+                    {{-- RESET --}}
+                    <div class="col-span-1 grid grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-end">
+                        <a
+                            href="{{ route('admin.offline-transactions.index') }}"
+                            title="Atur Ulang Filter"
+                            class="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-slate-600 transition-all duration-200 hover:border-slate-300 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-300 active:scale-[0.98] sm:h-[50px] sm:w-[50px] sm:px-0"
+                        >
+                            <x-heroicon-o-arrow-path class="h-4 w-4"/>
+                            <span class="text-xs font-medium sm:hidden">Reset Filter</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </form>
 
+    {{-- ================= STATISTICS ================= --}}
+    {{-- ================= STATISTICS ================= --}}
+    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <x-admin.stat-card
+            title="Total Transaksi"
+            value="{{ number_format($summary['total_transactions'], 0, ',', '.') }}"
+            growth="{{ $transactionGrowth['value'] }}"
+            :positive="$transactionGrowth['positive']"
+            :neutral="$transactionGrowth['neutral']"
+        >
+            <x-slot:icon><x-heroicon-o-receipt-percent class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
+        </x-admin.stat-card>
+
+        <x-admin.stat-card
+            title="Transaksi Pending"
+            value="{{ number_format($summary['pending_transactions'], 0, ',', '.') }}"
+            growth="Belum dibayar"
+            :positive="false"
+            :neutral="true"
+        >
+            <x-slot:icon><x-heroicon-o-clock class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
+        </x-admin.stat-card>
+
+        <x-admin.stat-card
+            title="Total Pendapatan"
+            value="Rp {{ number_format($summary['total_revenue'], 0, ',', '.') }}"
+            growth="{{ $revenueGrowth['value'] }}"
+            :positive="$revenueGrowth['positive']"
+            :neutral="$revenueGrowth['neutral']"
+        >
+            <x-slot:icon><x-heroicon-o-banknotes class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
+        </x-admin.stat-card>
+
+        <x-admin.stat-card
+            title="Pesanan Selesai"
+            value="{{ number_format($summary['completed_orders'], 0, ',', '.') }}"
+            growth="{{ $completedGrowth['value'] }}"
+            :positive="$completedGrowth['positive']"
+            :neutral="$completedGrowth['neutral']"
+        >
+            <x-slot:icon><x-heroicon-o-check-badge class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
+        </x-admin.stat-card>
+    </div>
+
+
     <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:rounded-2xl">
-        <div class="flex items-center justify-between border-b border-slate-100 px-3 py-3 sm:px-5 sm:py-4">
+        {{-- <div class="flex items-center justify-between border-b border-slate-100 px-3 py-3 sm:px-5 sm:py-4">
             <div>
                 <h3 class="font-bold text-slate-900">Riwayat Penjualan Offline</h3>
                 <p class="mt-1 text-xs text-slate-500">
                     {{ $transactions->total() }} transaksi ditemukan
                 </p>
             </div>
-        </div>
+        </div> --}}
 
         {{-- MOBILE: CARD TRANSAKSI --}}
         <div class="divide-y divide-slate-100 md:hidden">
@@ -163,52 +216,52 @@
 
                         <div class="mt-3 space-y-2 border-t border-slate-200 pt-2">
                             @if (str_starts_with($transaction->invoice_number ?? '', 'BOOTH-LEGACY-'))
-    @php
-        $legacyGroups = [
-            'Stadium Home, Away & Third' => ['qty' => 0, 'items' => 0],
-            'Supporter Home, Away & Third' => ['qty' => 0, 'items' => 0],
-        ];
+                            @php
+                                $legacyGroups = [
+                                    'Stadium Home, Away & Third' => ['qty' => 0, 'items' => 0],
+                                    'Supporter Home, Away & Third' => ['qty' => 0, 'items' => 0],
+                                ];
 
-        foreach ($transaction->items as $item) {
-            $name = $item->productVariant?->product?->name ?? '';
-            $group = str_contains($name, 'Supporter')
-                ? 'Supporter Home, Away & Third'
-                : 'Stadium Home, Away & Third';
+                                foreach ($transaction->items as $item) {
+                                    $name = $item->productVariant?->product?->name ?? '';
+                                    $group = str_contains($name, 'Supporter')
+                                        ? 'Supporter Home, Away & Third'
+                                        : 'Stadium Home, Away & Third';
 
-            $legacyGroups[$group]['qty'] += (int) $item->qty;
-            $legacyGroups[$group]['items']++;
-        }
-    @endphp
+                                    $legacyGroups[$group]['qty'] += (int) $item->qty;
+                                    $legacyGroups[$group]['items']++;
+                                }
+                            @endphp
 
-    @foreach ($legacyGroups as $groupName => $group)
-        @if ($group['items'] > 0)
-            <div class="mb-2">
-                <p class="font-medium text-slate-700">{{ $groupName }}</p>
-                <p class="text-xs text-slate-500">
-                    {{ $group['qty'] }} pcs | {{ $group['items'] }} jenis produk
-                </p>
-            </div>
-        @endif
-    @endforeach
+                            @foreach ($legacyGroups as $groupName => $group)
+                                @if ($group['items'] > 0)
+                                    <div class="mb-2">
+                                        <p class="font-medium text-slate-700">{{ $groupName }}</p>
+                                        <p class="text-xs text-slate-500">
+                                            {{ $group['qty'] }} pcs | {{ $group['items'] }} jenis produk
+                                        </p>
+                                    </div>
+                                @endif
+                            @endforeach
 
-    <p class="text-xs text-slate-500">
-        Total {{ $transaction->items->count() }} jenis produk | {{ $transaction->items->sum('qty') }} pcs
-    </p>
-@else
-    @foreach ($transaction->items as $item)
-        <div class="mb-2 last:mb-0">
-            <p class="font-medium text-slate-700">
-                {{ $item->productVariant?->product?->name ?? 'Produk' }}
-                @if ($item->productVariant?->size?->name)
-                    ({{ $item->productVariant->size->name }})
-                @endif
-            </p>
-            <p class="text-xs text-slate-500">
-                {{ $item->qty }} x Rp {{ number_format((float) $item->price, 0, ',', '.') }}
-            </p>
-        </div>
-    @endforeach
-@endif
+                            <p class="text-xs text-slate-500">
+                                Total {{ $transaction->items->count() }} jenis produk | {{ $transaction->items->sum('qty') }} pcs
+                            </p>
+                        @else
+                            @foreach ($transaction->items as $item)
+                                <div class="mb-2 last:mb-0">
+                                    <p class="font-medium text-slate-700">
+                                        {{ $item->productVariant?->product?->name ?? 'Produk' }}
+                                        @if ($item->productVariant?->size?->name)
+                                            ({{ $item->productVariant->size->name }})
+                                        @endif
+                                    </p>
+                                    <p class="text-xs text-slate-500">
+                                        {{ $item->qty }} x Rp {{ number_format((float) $item->price, 0, ',', '.') }}
+                                    </p>
+                                </div>
+                            @endforeach
+                        @endif
                         </div>
                     </div>
 
@@ -248,11 +301,11 @@
             <table class="min-w-full divide-y divide-slate-100 text-sm">
                 <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
                     <tr>
-                        <th class="px-5 py-4">Transaksi</th>
+                        <th class="px-5 py-4">INVOICE</th>
                         <th class="px-5 py-4">Pelanggan</th>
-                        <th class="px-5 py-4">Item</th>
-                        <th class="px-5 py-4">Pembayaran</th>
+                        <th class="px-5 py-4">RINGKASAN PESANAN</th>
                         <th class="px-5 py-4 text-center">Total</th>
+                        <th class="px-5 py-4 text-center">Pembayaran</th>
                         <th class="px-5 py-4 text-center">Status</th>
                         <th class="px-5 py-4 text-center">Detail</th>
                     </tr>
@@ -325,7 +378,7 @@
     @endforeach
 @endif
                             </td>
-                            <td class="whitespace-nowrap px-5 py-4 text-slate-600">
+                            <td class="whitespace-nowrap px-5 py-4 text-center text-slate-600">
                                 {{ $transaction->payment_method ?? '-' }}
                             </td>
                             <td class="whitespace-nowrap px-5 py-4 text-center font-bold text-slate-900">
@@ -388,4 +441,3 @@
     </div>
 </div>
 @endsection
-

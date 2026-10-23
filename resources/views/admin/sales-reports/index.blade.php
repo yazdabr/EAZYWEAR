@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
-@section('title','Laporan Penjualan')
-@section('page-title','Laporan Penjualan')
+@section('title',' Web')
+@section('page-title','Laporan Penjualan Web')
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
@@ -14,7 +14,7 @@
 
             <div>
                 <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
-                    Laporan Penjualan
+                    Laporan Penjualan Web
                 </h1>
                 <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">
                     Analisis kinerja penjualan dan pendapatan berdasarkan transaksi.

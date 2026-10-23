@@ -99,7 +99,7 @@
             </nav>
 
 
-            {{-- TRANSAKSI --}}
+            {{-- TRANSAKSI
             <div class="mt-6 px-2">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
                     TRANSAKSI
@@ -119,7 +119,7 @@
                     <span>Kasir Booth</span>
                 </a>
             
-            <nav class="mt-2 space-y-1">
+            <nav class="mt-2 space-y-1"> --}}
 
             {{-- TRANSAKSI --}}
             <div class="mt-6 px-2">
@@ -199,7 +199,7 @@
                 </a>
             </nav>
 
-            {{-- TRANSAKSI --}}
+            {{-- TRANSAKSI
             <div class="mt-2 px-2">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
                     Kasir
@@ -219,7 +219,7 @@
                     <span>Kasir Booth</span>
                 </a>
 
-            </nav>
+            </nav> --}}
 
             {{-- TRANSAKSI --}}
             <div class="mt-6 px-2">

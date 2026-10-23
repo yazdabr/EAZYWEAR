@@ -47,7 +47,7 @@ class OfflineTransactionController extends Controller
 
         $transactions = $query
             ->latest('transaction_date')
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         $summary = [

@@ -162,21 +162,53 @@
                         </p>
 
                         <div class="mt-3 space-y-2 border-t border-slate-200 pt-2">
-                            @foreach ($transaction->items as $item)
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <p class="text-xs font-medium text-slate-700">
-                                            {{ $item->productVariant?->product?->name ?? 'Produk' }}
-                                            @if ($item->productVariant?->size?->name)
-                                                ({{ $item->productVariant->size->name }})
-                                            @endif
-                                        </p>
-                                        <p class="mt-0.5 text-[11px] text-slate-500">
-                                            {{ $item->qty }} × Rp {{ number_format((float) $item->price, 0, ',', '.') }}
-                                        </p>
-                                    </div>
-                                </div>
-                            @endforeach
+                            @if (str_starts_with($transaction->invoice_number ?? '', 'BOOTH-LEGACY-'))
+    @php
+        $legacyGroups = [
+            'Stadium Home, Away & Third' => ['qty' => 0, 'items' => 0],
+            'Supporter Home, Away & Third' => ['qty' => 0, 'items' => 0],
+        ];
+
+        foreach ($transaction->items as $item) {
+            $name = $item->productVariant?->product?->name ?? '';
+            $group = str_contains($name, 'Supporter')
+                ? 'Supporter Home, Away & Third'
+                : 'Stadium Home, Away & Third';
+
+            $legacyGroups[$group]['qty'] += (int) $item->qty;
+            $legacyGroups[$group]['items']++;
+        }
+    @endphp
+
+    @foreach ($legacyGroups as $groupName => $group)
+        @if ($group['items'] > 0)
+            <div class="mb-2">
+                <p class="font-medium text-slate-700">{{ $groupName }}</p>
+                <p class="text-xs text-slate-500">
+                    {{ $group['qty'] }} pcs | {{ $group['items'] }} jenis produk
+                </p>
+            </div>
+        @endif
+    @endforeach
+
+    <p class="text-xs text-slate-500">
+        Total {{ $transaction->items->count() }} jenis produk | {{ $transaction->items->sum('qty') }} pcs
+    </p>
+@else
+    @foreach ($transaction->items as $item)
+        <div class="mb-2 last:mb-0">
+            <p class="font-medium text-slate-700">
+                {{ $item->productVariant?->product?->name ?? 'Produk' }}
+                @if ($item->productVariant?->size?->name)
+                    ({{ $item->productVariant->size->name }})
+                @endif
+            </p>
+            <p class="text-xs text-slate-500">
+                {{ $item->qty }} x Rp {{ number_format((float) $item->price, 0, ',', '.') }}
+            </p>
+        </div>
+    @endforeach
+@endif
                         </div>
                     </div>
 
@@ -245,19 +277,53 @@
                                 </p>
                             </td>
                             <td class="min-w-48 px-5 py-4">
-                                @foreach ($transaction->items as $item)
-                                    <div class="mb-2 last:mb-0">
-                                        <p class="font-medium text-slate-700">
-                                            {{ $item->productVariant?->product?->name ?? 'Produk' }}
-                                            @if ($item->productVariant?->size?->name)
-                                                ({{ $item->productVariant->size->name }})
-                                            @endif
-                                        </p>
-                                        <p class="text-xs text-slate-500">
-                                            {{ $item->qty }} × Rp {{ number_format((float) $item->price, 0, ',', '.') }}
-                                        </p>
-                                    </div>
-                                @endforeach
+                                @if (str_starts_with($transaction->invoice_number ?? '', 'BOOTH-LEGACY-'))
+    @php
+        $legacyGroups = [
+            'Stadium Home, Away & Third' => ['qty' => 0, 'items' => 0],
+            'Supporter Home, Away & Third' => ['qty' => 0, 'items' => 0],
+        ];
+
+        foreach ($transaction->items as $item) {
+            $name = $item->productVariant?->product?->name ?? '';
+            $group = str_contains($name, 'Supporter')
+                ? 'Supporter Home, Away & Third'
+                : 'Stadium Home, Away & Third';
+
+            $legacyGroups[$group]['qty'] += (int) $item->qty;
+            $legacyGroups[$group]['items']++;
+        }
+    @endphp
+
+    @foreach ($legacyGroups as $groupName => $group)
+        @if ($group['items'] > 0)
+            <div class="mb-2">
+                <p class="font-medium text-slate-700">{{ $groupName }}</p>
+                <p class="text-xs text-slate-500">
+                    {{ $group['qty'] }} pcs | {{ $group['items'] }} jenis produk
+                </p>
+            </div>
+        @endif
+    @endforeach
+
+    <p class="text-xs text-slate-500">
+        Total {{ $transaction->items->count() }} jenis produk | {{ $transaction->items->sum('qty') }} pcs
+    </p>
+@else
+    @foreach ($transaction->items as $item)
+        <div class="mb-2 last:mb-0">
+            <p class="font-medium text-slate-700">
+                {{ $item->productVariant?->product?->name ?? 'Produk' }}
+                @if ($item->productVariant?->size?->name)
+                    ({{ $item->productVariant->size->name }})
+                @endif
+            </p>
+            <p class="text-xs text-slate-500">
+                {{ $item->qty }} x Rp {{ number_format((float) $item->price, 0, ',', '.') }}
+            </p>
+        </div>
+    @endforeach
+@endif
                             </td>
                             <td class="whitespace-nowrap px-5 py-4 text-slate-600">
                                 {{ $transaction->payment_method ?? '-' }}
@@ -305,11 +371,20 @@
                 </tbody>
             </table>
         </div>
-        @if ($transactions->hasPages())
-            <div class="border-t border-slate-100 px-5 py-4">
-                {{ $transactions->links() }}
-            </div>
-        @endif
+        {{-- ================= PAGINATION ================= --}}
+        <div class="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-4 py-4 text-center sm:px-6 sm:py-5 md:flex-row md:text-left">
+            <p class="text-xs font-medium text-slate-500 sm:text-sm">
+                Menampilkan
+                <span class="font-semibold text-slate-900">{{ $transactions->firstItem() ?? 0 }}</span>
+                sampai
+                <span class="font-semibold text-slate-900">{{ $transactions->lastItem() ?? 0 }}</span>
+                dari
+                <span class="font-semibold text-slate-900">{{ $transactions->total() }}</span>
+                transaksi
+            </p>
+
+            <x-admin.pagination :paginator="$transactions"/>
+        </div>
     </div>
 </div>
 @endsection

@@ -112,63 +112,186 @@
     </div>
 
     {{-- Rincian produk dan ringkasan pembayaran: 2 kolom --}}
-    <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+    <div class="grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2">
 
         {{-- Kolom kiri: Rincian Produk --}}
-        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div class="border-b border-slate-100 p-5">
-                <h2 class="font-bold text-slate-900">Rincian Produk</h2>
-                <p class="mt-1 text-sm text-slate-500">
-                    {{ $transaction->items->sum('qty') }} barang dalam transaksi ini
-                </p>
+        @if (str_starts_with($transaction->invoice_number ?? '', 'BOOTH-LEGACY-'))
+            @php
+                $legacyGroups = [
+                    'Stadium Home, Away & Third' => ['qty' => 0, 'items' => 0],
+                    'Supporter Home, Away & Third' => ['qty' => 0, 'items' => 0],
+                ];
+
+                foreach ($transaction->items as $item) {
+                    $name = $item->productVariant?->product?->name ?? '';
+                    $group = str_contains($name, 'Supporter')
+                        ? 'Supporter Home, Away & Third'
+                        : 'Stadium Home, Away & Third';
+
+                    $legacyGroups[$group]['qty'] += (int) $item->qty;
+                    $legacyGroups[$group]['items']++;
+                }
+            @endphp
+
+            <div class="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 p-5">
+                    <h2 class="font-bold text-slate-900">Rincian Produk</h2>
+                    <p class="mt-1 text-sm text-slate-500">
+                        {{ $transaction->items->sum('qty') }} barang · {{ $transaction->items->count() }} jenis produk
+                    </p>
+                </div>
+
+                <div class="flex flex-1 flex-col gap-4 p-5">
+                    @foreach ($legacyGroups as $groupName => $group)
+                        @if ($group['items'] > 0)
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-4">
+                                <div>
+                                    <h3 class="font-semibold text-slate-900">{{ $groupName }}</h3>
+                                    <p class="mt-1 text-sm text-slate-500">
+                                        {{ $group['items'] }} jenis produk · {{ $group['qty'] }} pcs
+                                    </p>
+                                </div>
+                                <span class="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                                    {{ $group['qty'] }} pcs
+                                </span>
+                            </div>
+                        @endif
+                    @endforeach
+
+                    <button
+                        type="button"
+                        onclick="const m=document.getElementById('legacy-product-modal'); m.classList.remove('hidden'); m.classList.add('flex'); document.body.classList.add('overflow-hidden'); requestAnimationFrame(()=>{m.classList.remove('opacity-0'); const p=m.querySelector('.legacy-modal-panel'); if(p){p.classList.remove('opacity-0','scale-95','translate-y-2'); p.classList.add('opacity-100','scale-100','translate-y-0')} })"
+                        class="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F]"
+                    >
+                        <x-heroicon-o-eye class="h-4 w-4"/>
+                        Lihat Detail Pesanan Produk
+                    </button>
+                </div>
             </div>
 
-            <div class="divide-y divide-slate-100">
-                @forelse($transaction->items as $item)
-                    @php
-                        $variant = $item->productVariant;
-                        $product = $variant?->product;
-                    @endphp
-
-                    <div class="p-5">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <h3 class="font-semibold text-slate-900">
-                                    {{ $product?->name ?? 'Produk tidak tersedia' }}
-                                </h3>
-
-                                <div class="mt-2 space-y-1 text-xs text-slate-500">
-                                    @if($variant?->size?->name)
-                                        <p>Ukuran: {{ $variant->size->name }}</p>
-                                    @endif
-                                    @if($item->custom_name)
-                                        <p>Nama jersey: {{ $item->custom_name }}</p>
-                                    @endif
-                                    @if($item->custom_number)
-                                        <p>Nomor jersey: {{ $item->custom_number }}</p>
-                                    @endif
-                                </div>
-
-                                <p class="mt-3 text-sm text-slate-500">
-                                    {{ $item->qty }} × Rp{{ number_format((float) $item->price, 0, ',', '.') }}
-                                </p>
-                            </div>
-
-                            <p class="shrink-0 text-sm font-bold text-slate-900">
-                                Rp{{ number_format((float) $item->subtotal, 0, ',', '.') }}
+            <div
+                id="legacy-product-modal"
+                class="fixed inset-0 z-[9999] hidden items-center justify-center overflow-y-auto bg-slate-950/50 p-3 opacity-0 backdrop-blur-sm transition-opacity duration-200 sm:p-6"
+                onclick="if (event.target === this) { this.classList.add('hidden'); this.classList.remove('flex'); document.body.classList.remove('overflow-hidden') }"
+            >
+                <div class="legacy-modal-panel my-auto flex max-h-[85vh] w-full max-w-3xl scale-95 translate-y-2 flex-col overflow-hidden rounded-2xl bg-white opacity-0 shadow-2xl transition-all duration-200 ease-out">
+                    <div class="flex items-center justify-between border-b border-slate-200 p-4 sm:p-5">
+                        <div>
+                            <h2 class="font-bold text-slate-900">Detail Pesanan Produk</h2>
+                            <p class="mt-1 text-xs text-slate-500">
+                                {{ $transaction->items->sum('qty') }} pcs · {{ $transaction->items->count() }} jenis produk
                             </p>
                         </div>
+                        <button
+                            type="button"
+                            onclick="const m=document.getElementById('legacy-product-modal'); m.classList.add('hidden'); m.classList.remove('flex','opacity-0'); const p=m.querySelector('.legacy-modal-panel'); if(p){p.classList.add('opacity-0','scale-95','translate-y-2');p.classList.remove('opacity-100','scale-100','translate-y-0')} document.body.classList.remove('overflow-hidden')"
+                            class="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                            aria-label="Tutup detail produk"
+                        >
+                            <x-heroicon-o-x-mark class="h-5 w-5"/>
+                        </button>
                     </div>
-                @empty
-                    <div class="p-8 text-center text-sm text-slate-500">
-                        Tidak ada rincian produk untuk transaksi ini.
-                    </div>
-                @endforelse
-            </div>
-        </div>
 
+                    <div class="overflow-y-auto overscroll-contain">
+                        @foreach ($transaction->items as $item)
+                            @php
+                                $variant = $item->productVariant;
+                                $product = $variant?->product;
+                            @endphp
+                            <div class="border-b border-slate-100 p-4 last:border-b-0 sm:p-5">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <h3 class="text-sm font-semibold text-slate-900">
+                                            {{ $product?->name ?? 'Produk tidak tersedia' }}
+                                        </h3>
+                                        <div class="mt-2 space-y-1 text-xs text-slate-500">
+                                            @if ($variant?->size?->name)
+                                                <p>Ukuran: {{ $variant->size->name }}</p>
+                                            @endif
+                                            @if ($item->is_longsleeve)
+                                                <p>Lengan panjang</p>
+                                            @endif
+                                            @if ($item->custom_name)
+                                                <p>Nama jersey: {{ $item->custom_name }}</p>
+                                            @endif
+                                            @if ($item->custom_number)
+                                                <p>Nomor jersey: {{ $item->custom_number }}</p>
+                                            @endif
+                                        </div>
+                                        <p class="mt-3 text-xs text-slate-500">
+                                            {{ $item->qty }} x Rp{{ number_format((float) $item->price, 0, ',', '.') }}
+                                            @if ((float) $item->longsleeve_price > 0)
+                                                + Rp{{ number_format((float) $item->longsleeve_price, 0, ',', '.') }} lengan panjang
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <p class="shrink-0 text-sm font-bold text-slate-900">
+                                        Rp{{ number_format((float) $item->subtotal, 0, ',', '.') }}
+                                    </p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 border-t border-slate-200 p-4">
+                        <span class="text-sm text-slate-500">Total transaksi</span>
+                        <span class="font-bold text-slate-900">
+                            Rp{{ number_format((float) $transaction->total, 0, ',', '.') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 p-5">
+                    <h2 class="font-bold text-slate-900">Rincian Produk</h2>
+                    <p class="mt-1 text-sm text-slate-500">
+                        {{ $transaction->items->sum('qty') }} barang dalam transaksi ini
+                    </p>
+                </div>
+
+                <div class="divide-y divide-slate-100">
+                    @forelse($transaction->items as $item)
+                        @php
+                            $variant = $item->productVariant;
+                            $product = $variant?->product;
+                        @endphp
+                        <div class="p-5">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <h3 class="font-semibold text-slate-900">
+                                        {{ $product?->name ?? 'Produk tidak tersedia' }}
+                                    </h3>
+                                    <div class="mt-2 space-y-1 text-xs text-slate-500">
+                                        @if ($variant?->size?->name)
+                                            <p>Ukuran: {{ $variant->size->name }}</p>
+                                        @endif
+                                        @if ($item->custom_name)
+                                            <p>Nama jersey: {{ $item->custom_name }}</p>
+                                        @endif
+                                        @if ($item->custom_number)
+                                            <p>Nomor jersey: {{ $item->custom_number }}</p>
+                                        @endif
+                                    </div>
+                                    <p class="mt-3 text-sm text-slate-500">
+                                        {{ $item->qty }} x Rp{{ number_format((float) $item->price, 0, ',', '.') }}
+                                    </p>
+                                </div>
+                                <p class="shrink-0 text-sm font-bold text-slate-900">
+                                    Rp{{ number_format((float) $item->subtotal, 0, ',', '.') }}
+                                </p>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="p-8 text-center text-sm text-slate-500">
+                            Tidak ada rincian produk untuk transaksi ini.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        @endif
         {{-- Kolom kanan: Ringkasan Pembayaran --}}
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="h-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 class="font-bold text-slate-900">Ringkasan Pembayaran</h2>
             <p class="mt-1 text-sm text-slate-500">Rincian biaya transaksi</p>
 

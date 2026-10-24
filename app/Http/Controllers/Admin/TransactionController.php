@@ -747,6 +747,50 @@ class TransactionController extends Controller
         }
     }
 
+    public function processAllPaid()
+    {
+        $transactions = Transaction::query()
+            ->where('status', 'PAID')
+            ->where(function ($query) {
+                $query->whereNull('source')
+                    ->orWhere('source', '<>', 'Booth');
+            })
+            ->orderBy('id')
+            ->get(['id']);
+
+        $processed = 0;
+        $failed = 0;
+
+        foreach ($transactions as $transaction) {
+            try {
+                // Gunakan alur pemrosesan pesanan yang sudah ada.
+                $response = $this->process($transaction);
+                $result = $response->getData(true);
+
+                if (
+                    $response->getStatusCode() < 400
+                    && ($result['success'] ?? false)
+                ) {
+                    $processed++;
+                } else {
+                    $failed++;
+                }
+            } catch (\Throwable $e) {
+                report($e);
+                $failed++;
+            }
+        }
+
+        $message = "Selesai. {$processed} pesanan berhasil diproses.";
+
+        if ($failed > 0) {
+            $message .= " {$failed} pesanan gagal diproses atau perlu diperiksa.";
+        }
+
+        return redirect()
+            ->route('admin.transactions')
+            ->with('success', $message);
+    }
     public function ship(Request $request, Transaction $transaction, BiteshipService $biteshipService)
     {
         $validated = $request->validate([

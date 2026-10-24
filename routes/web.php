@@ -191,6 +191,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             '/transactions/{transaction}/shipments/{shipment}/shipping-address',
             [TransactionController::class, 'updateShipmentShippingAddress']
         )->name('transactions.shipments.shipping-address.update');
+        Route::post('/transactions/process-all', [
+            TransactionController::class,
+            'processAllPaid',
+        ])->name('transactions.process-all');
+
         Route::patch('/transactions/{transaction}/process', [TransactionController::class, 'process'])
             ->name('transactions.process');
         Route::patch('/transactions/{transaction}/ship', [TransactionController::class, 'ship'])

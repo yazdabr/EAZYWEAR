@@ -5,6 +5,14 @@
 
 @section('content')
 <div class="space-y-5 sm:space-y-8">
+    @if (session('success'))
+        <div
+            role="status"
+            class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"
+        >
+            {{ session('success') }}
+        </div>
+    @endif
     {{-- HEADER --}}
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -19,6 +27,15 @@
                 title="Ekspor data produksi ke Excel">
                 <x-heroicon-o-document-arrow-down class="h-5 w-5"/>
                 <span>Ekspor Excel</span>
+            </button>
+
+            <button
+                type="button"
+                @click="$dispatch('open-process-all-orders-modal')"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F] active:scale-95 sm:px-5"
+                title="Proses semua pesanan yang sudah dibayar">
+                <x-heroicon-o-cog-6-tooth class="h-5 w-5"/>
+                <span>Proses Semua Pesanan</span>
             </button>
             {{-- <a href="{{ route('admin.transactions.create') }}" class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex">
                 <x-heroicon-o-plus class="h-5 w-5"/>
@@ -438,6 +455,7 @@
 @include('admin.transactions.partials.delete-transaction')
 @include('admin.transactions.partials.hide-status-dialog')
 @include('admin.transactions.partials.production-export-dialog')
+@include('admin.transactions.partials.process-all-orders-dialog')
 
 @push('styles')
 <style>

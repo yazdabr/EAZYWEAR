@@ -8,6 +8,7 @@ use App\Models\FulfillmentHold;
 use App\Services\EmailArchiveService;
 use App\Services\FulfillmentHoldService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TransactionExpiryService
 {
@@ -62,6 +63,15 @@ class TransactionExpiryService
 
         if ($expired) {
             $expiredTransaction = Transaction::findOrFail($transaction->id);
+
+            Log::info('TRANSACTION EXPIRED', [
+                'transaction_id' => $expiredTransaction->id,
+                'invoice' => $expiredTransaction->invoice_number,
+                'payment_method' => $expiredTransaction->payment_method,
+                'expired_at' => $expiredTransaction->payment_method === 'QRIS'
+                    ? $expiredTransaction->qris_expired_at
+                    : $expiredTransaction->va_expired_at,
+            ]);
 
             if (
                 $expiredTransaction->fulfillmentHold()

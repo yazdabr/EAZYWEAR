@@ -215,6 +215,14 @@ class DokuQrisService
 
         $externalId = $this->generateExternalId();
 
+        Log::info('DOKU QRIS CREATE REQUEST', [
+            'invoice' => $partnerReferenceNo,
+            'external_id' => $externalId,
+            'endpoint' => $this->generateEndpoint,
+            'amount' => $payload['amount']['value'],
+            'currency' => $payload['amount']['currency'],
+        ]);
+
         $response = Http::timeout(30)
             ->acceptJson()
             ->withHeaders([
@@ -230,6 +238,15 @@ class DokuQrisService
             ->post(
                 $this->baseUrl . $this->generateEndpoint
             );
+
+        Log::info('DOKU QRIS CREATE RESPONSE', [
+            'invoice' => $partnerReferenceNo,
+            'external_id' => $externalId,
+            'http_status' => $response->status(),
+            'response_code' => $response->json('responseCode'),
+            'response_message' => $response->json('responseMessage'),
+            'reference_no' => $response->json('referenceNo'),
+        ]);
 
         $response->throw();
 

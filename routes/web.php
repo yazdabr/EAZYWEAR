@@ -255,6 +255,13 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
 
     Route::middleware('role:super_admin,management')->group(function () {
+        Route::get('/transactions/payment-alerts', [TransactionController::class, 'paymentAlerts'])->name('transactions.payment-alerts');
+        Route::get('/transactions/payment-sound-preference', function (\Illuminate\Http\Request $request) {
+            return response()->json([
+                'enabled' => (bool) $request->user()->payment_sound_enabled,
+            ])->header('Cache-Control', 'no-store, private');
+        })->name('transactions.payment-sound-preference');
+        Route::post('/transactions/payment-sound-preference', [TransactionController::class, 'updatePaymentSoundPreference'])->name('transactions.payment-sound-preference');
         Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions');
         Route::get('/transactions/production-export', [TransactionController::class, 'exportProductionOrders'])->name('transactions.production-export');
         Route::get('/transactions/{invoice}/print', [TransactionController::class, 'print'])->name('transactions.print');

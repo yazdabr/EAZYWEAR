@@ -260,6 +260,50 @@ class TransactionController extends Controller
         ]);
     }
 
+    public function paymentAlerts(Request $request)
+    {
+        $validated = $request->validate([
+            'since' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $since = Carbon::createFromTimestampUTC((int) $validated['since']);
+
+        $transactions = Transaction::query()
+            ->where('status', 'PAID')
+            ->whereNotNull('paid_at')
+            ->where('paid_at', '>', $since)
+            ->where(function ($query) {
+                $query->whereNull('source')
+                    ->orWhere('source', '<>', 'Booth');
+            })
+            ->orderBy('paid_at')
+            ->limit(50)
+            ->get(['id', 'invoice_number', 'paid_at']);
+
+        return response()->json([
+            'server_time' => now()->timestamp,
+            'transactions' => $transactions->map(fn ($transaction) => [
+                'id' => $transaction->id,
+                'invoice_number' => $transaction->invoice_number,
+                'paid_at' => $transaction->paid_at?->toIso8601String(),
+            ])->values(),
+        ])->header('Cache-Control', 'no-store, private');
+    }
+    public function updatePaymentSoundPreference(Request $request)
+    {
+        $validated = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        $request->user()->forceFill([
+            'payment_sound_enabled' => $validated['enabled'],
+        ])->save();
+
+        return response()->json([
+            'success' => true,
+            'enabled' => (bool) $request->user()->fresh()->payment_sound_enabled,
+        ]);
+    }
     public function exportProductionOrders(Request $request)
     {
         $validated = $request->validate([

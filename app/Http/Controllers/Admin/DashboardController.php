@@ -107,7 +107,7 @@ public function index()
                 'product_images.image'
             )
             ->orderByDesc('total_qty')
-            ->limit(5)
+            ->limit(10)
             ->get();
     }
 }

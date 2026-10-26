@@ -94,7 +94,10 @@ public function index()
                     ->where('product_images.is_thumbnail', true);
             })
             ->whereIn('transactions.status', Transaction::SALES_REPORT_STATUSES)
-            ->select(
+        ->whereNotIn('products.name', [
+            'TES',
+            'TES READY STOCK *JANGAN DI BELI',
+        ])            ->select(
                 'products.id',
                 'products.name',
                 'product_images.image',

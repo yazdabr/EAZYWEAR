@@ -29,7 +29,8 @@
                 <span>Ekspor Excel</span>
             </button>
 
-            <button
+            @if ($pendingWebOrdersCount > 0)
+<button
                 type="button"
                 @click="$dispatch('open-process-all-orders-modal')"
                 class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F] active:scale-95 sm:px-5"
@@ -37,6 +38,7 @@
                 <x-heroicon-o-cog-6-tooth class="h-5 w-5"/>
                 <span>Proses Semua Pesanan</span>
             </button>
+            @endif
             {{-- <a href="{{ route('admin.transactions.create') }}" class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex">
                 <x-heroicon-o-plus class="h-5 w-5"/>
                 Transaksi Baru

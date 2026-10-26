@@ -229,8 +229,16 @@ class TransactionController extends Controller
         $revenueGrowth = $calculateGrowth($currentRevenue, $previousRevenue);
         $completedGrowth = $calculateGrowth($currentCompleted, $previousCompleted);
 
+        $pendingWebOrdersCount = Transaction::query()
+            ->where('status', 'PAID')
+            ->where(function ($query) {
+                $query->whereNull('source')
+                    ->orWhere('source', '<>', 'Booth');
+            })
+            ->count();
         return view('admin.transactions.index', [
             'transactions' => $transactions,
+            'pendingWebOrdersCount' => $pendingWebOrdersCount,
             'exportProducts' => \App\Models\Product::query()
                 ->whereIn('id', TransactionItem::query()
                     ->whereHas('transaction', fn ($query) => $query->whereIn('status', ['PAID', 'ORDER_PROCESSING']))
@@ -747,23 +755,37 @@ class TransactionController extends Controller
         }
     }
 
-    public function processAllPaid()
+    public function processAllPaid(Request $request)
     {
+        $validated = $request->validate([
+            'skip_ids' => ['sometimes', 'array'],
+            'skip_ids.*' => ['integer', 'min:1'],
+        ]);
+
+        $skipIds = collect($validated['skip_ids'] ?? [])
+            ->unique()
+            ->values()
+            ->all();
+
         $transactions = Transaction::query()
             ->where('status', 'PAID')
             ->where(function ($query) {
                 $query->whereNull('source')
                     ->orWhere('source', '<>', 'Booth');
             })
+            ->when($skipIds !== [], function ($query) use ($skipIds) {
+                $query->whereNotIn('id', $skipIds);
+            })
             ->orderBy('id')
+            ->limit(10)
             ->get(['id']);
 
         $processed = 0;
         $failed = 0;
+        $failedIds = [];
 
         foreach ($transactions as $transaction) {
             try {
-                // Gunakan alur pemrosesan pesanan yang sudah ada.
                 $response = $this->process($transaction);
                 $result = $response->getData(true);
 
@@ -774,17 +796,51 @@ class TransactionController extends Controller
                     $processed++;
                 } else {
                     $failed++;
+                    $failedIds[] = $transaction->id;
                 }
             } catch (\Throwable $e) {
                 report($e);
                 $failed++;
+                $failedIds[] = $transaction->id;
             }
         }
 
-        $message = "Selesai. {$processed} pesanan berhasil diproses.";
+        $excludedIds = array_values(array_unique([
+            ...$skipIds,
+            ...$failedIds,
+        ]));
+
+        $remainingQuery = Transaction::query()
+            ->where('status', 'PAID')
+            ->where(function ($query) {
+                $query->whereNull('source')
+                    ->orWhere('source', '<>', 'Booth');
+            });
+
+        if ($excludedIds !== []) {
+            $remainingQuery->whereNotIn('id', $excludedIds);
+        }
+
+        $hasMore = $remainingQuery->exists();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'processed' => $processed,
+                'failed' => $failed,
+                'failed_ids' => $failedIds,
+                'has_more' => $hasMore,
+            ]);
+        }
+
+        $message = "Batch selesai: {$processed} pesanan berhasil diproses.";
 
         if ($failed > 0) {
-            $message .= " {$failed} pesanan gagal diproses atau perlu diperiksa.";
+            $message .= " {$failed} pesanan gagal dan perlu diperiksa.";
+        }
+
+        if ($hasMore) {
+            $message .= ' Masih ada pesanan lain yang perlu diproses.';
         }
 
         return redirect()

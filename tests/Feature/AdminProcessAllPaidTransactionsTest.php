@@ -60,11 +60,23 @@ class AdminProcessAllPaidTransactionsTest extends TestCase
             'shipping_email' => null,
         ]);
 
-        $response = $this->actingAs($admin)
-            ->post(route('admin.transactions.process-all'));
+        $skipIds = Transaction::query()
+            ->where('status', 'PAID')
+            ->where('id', '<', $paidWebOrder->id)
+            ->pluck('id')
+            ->all();
 
-        $response->assertRedirect(route('admin.transactions'))
-            ->assertSessionHas('success');
+        $response = $this->actingAs($admin)
+            ->postJson(route('admin.transactions.process-all'), [
+                'skip_ids' => $skipIds,
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'processed' => 1,
+                'failed' => 0,
+            ]);
 
         $this->assertSame(
             'ORDER_PROCESSING',
@@ -105,8 +117,20 @@ class AdminProcessAllPaidTransactionsTest extends TestCase
             'shipping_email' => 'bulk-email-test@example.com',
         ]);
 
+        $skipIds = Transaction::query()
+            ->where('status', 'PAID')
+            ->where('id', '<', $order->id)
+            ->where(function ($query) {
+                $query->whereNull('source')
+                    ->orWhere('source', '<>', 'Booth');
+            })
+            ->pluck('id')
+            ->all();
+
         $this->actingAs($admin)
-            ->post(route('admin.transactions.process-all'))
+            ->post(route('admin.transactions.process-all'), [
+                'skip_ids' => $skipIds,
+            ])
             ->assertRedirect(route('admin.transactions'))
             ->assertSessionHas('success');
 
@@ -127,5 +151,98 @@ class AdminProcessAllPaidTransactionsTest extends TestCase
             ->firstOrFail();
 
         $this->assertNotNull($notification->sent_at);
+    }
+
+    public function test_process_all_handles_only_ten_orders_per_request(): void
+    {
+        $admin = $this->superAdmin();
+
+        $orders = collect();
+
+        for ($i = 1; $i <= 11; $i++) {
+            $orders->push(Transaction::factory()->create([
+                'invoice_number' => 'TEST-BATCH-'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+                'status' => 'PAID',
+                'source' => 'Website',
+                'shipping_email' => null,
+                'biteship_order_id' => null,
+                'biteship_tracking_id' => null,
+                'biteship_waybill_id' => null,
+            ]));
+        }
+
+        $skipIds = Transaction::query()
+            ->where('status', 'PAID')
+            ->where('id', '<', $orders->first()->id)
+            ->where(function ($query) {
+                $query->whereNull('source')
+                    ->orWhere('source', '<>', 'Booth');
+            })
+            ->pluck('id')
+            ->all();
+
+        $response = $this->actingAs($admin)
+            ->postJson(route('admin.transactions.process-all'), [
+                'skip_ids' => $skipIds,
+            ]);
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'processed' => 10,
+                'failed' => 0,
+                'has_more' => true,
+            ]);
+
+        $this->assertSame(
+            10,
+            Transaction::query()
+                ->whereIn('id', $orders->pluck('id'))
+                ->where('status', 'ORDER_PROCESSING')
+                ->count()
+        );
+
+        $this->assertSame(
+            1,
+            Transaction::query()
+                ->whereIn('id', $orders->pluck('id'))
+                ->where('status', 'PAID')
+                ->count()
+        );
+
+        $response2 = $this->actingAs($admin)
+            ->postJson(route('admin.transactions.process-all'), [
+                'skip_ids' => $skipIds,
+            ]);
+
+        $response2->assertOk()
+            ->assertJson([
+                'success' => true,
+                'processed' => 1,
+                'failed' => 0,
+                'has_more' => false,
+            ]);
+
+        $this->assertSame(
+            11,
+            Transaction::query()
+                ->whereIn('id', $orders->pluck('id'))
+                ->where('status', 'ORDER_PROCESSING')
+                ->count()
+        );
+
+        foreach ($orders as $order) {
+            $this->assertDatabaseHas('order_status_histories', [
+                'transaction_id' => $order->id,
+                'status' => 'ORDER_PROCESSING',
+            ]);
+
+            $this->assertDatabaseHas('transactions', [
+                'id' => $order->id,
+                'biteship_order_id' => null,
+                'biteship_tracking_id' => null,
+                'biteship_waybill_id' => null,
+            ]);
+        }
     }
 }

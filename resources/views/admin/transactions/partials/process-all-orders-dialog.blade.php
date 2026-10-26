@@ -1,13 +1,15 @@
 <style>
-    [x-cloak] {
-        display: none !important;
-    }
+    [x-cloak] { display: none !important; }
 </style>
 
 <div
     x-data="{
         open: false,
         submitting: false,
+        completed: false,
+        processedTotal: 0,
+        failedTotal: 0,
+        message: '',
 
         toggleBodyScroll() {
             document.body.classList.toggle('overflow-hidden', this.open);
@@ -15,26 +17,92 @@
 
         close() {
             if (this.submitting) return;
+            if (this.completed) {
+                window.location.reload();
+                return;
+            }
             this.open = false;
             this.toggleBodyScroll();
+        },
+
+        async runBatch(event) {
+            const form = event.target;
+            const failedIds = new Set();
+
+            this.submitting = true;
+            this.completed = false;
+            this.processedTotal = 0;
+            this.failedTotal = 0;
+            this.message = 'Memulai pemrosesan...';
+
+            try {
+                let hasMore = true;
+
+                while (hasMore) {
+                    const body = new FormData(form);
+
+                    failedIds.forEach(id => {
+                        body.append('skip_ids[]', id);
+                    });
+
+                    this.message =
+                        'Memproses pesanan. Berhasil: ' +
+                        this.processedTotal +
+                        ', gagal: ' + this.failedTotal + '.';
+
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok || !data.success) {
+                        throw new Error(
+                            data.message || 'Server menolak permintaan.'
+                        );
+                    }
+
+                    this.processedTotal += Number(data.processed || 0);
+                    this.failedTotal += Number(data.failed || 0);
+
+                    (data.failed_ids || []).forEach(id => {
+                        failedIds.add(String(id));
+                    });
+
+                    hasMore = Boolean(data.has_more);
+                }
+
+                this.message =
+                    'Selesai. ' + this.processedTotal +
+                    ' pesanan berhasil diproses dan ' +
+                    this.failedTotal +
+                    ' gagal. Pesanan gagal tetap perlu diperiksa.';
+
+            } catch (error) {
+                this.message =
+                    'Proses terhenti atau koneksi mengalami timeout. ' +
+                    'Sebagian pesanan mungkin sudah berhasil diproses. ' +
+                    'Muat ulang halaman untuk memeriksa status terbaru, ' +
+                    'kemudian jalankan kembali jika masih ada pesanan PAID.';
+
+            } finally {
+                this.submitting = false;
+                this.completed = true;
+            }
         }
     }"
     x-cloak
-    x-on:open-process-all-orders-modal.window="
-        open = true;
-        toggleBodyScroll();
-    "
+    x-on:open-process-all-orders-modal.window="open = true; toggleBodyScroll()"
     @keydown.escape.window="close()"
 >
     <div
         x-show="open"
         x-cloak
-        x-transition:enter="transition-opacity duration-200 ease-out"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition-opacity duration-150 ease-in"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
         @click="close()"
         class="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm"
     ></div>
@@ -42,14 +110,8 @@
     <div
         x-show="open"
         x-cloak
-        x-transition:enter="transition duration-200 ease-out"
-        x-transition:enter-start="opacity-0 scale-95 translate-y-2"
-        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-        x-transition:leave="transition duration-150 ease-in"
-        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-        x-transition:leave-end="opacity-0 scale-95 translate-y-2"
-        @click="close()"
         class="fixed inset-0 z-[201] flex items-center justify-center p-4"
+        @click="close()"
     >
         <div
             @click.stop
@@ -65,24 +127,38 @@
                 </h3>
 
                 <p class="mt-3 text-sm leading-relaxed text-slate-600">
-                    Semua pesanan web yang masih berstatus
+                    Semua pesanan Website yang masih berstatus
                     <span class="font-bold text-slate-900">PAID</span>
                     akan diubah menjadi
                     <span class="font-bold text-amber-700">ORDER_PROCESSING</span>.
                 </p>
 
                 <p class="mt-2 text-sm leading-relaxed text-slate-500">
-                    Sistem akan menjalankan mekanisme pemberitahuan email
-                    pesanan diproses. Pesanan yang sudah tidak berstatus
-                    PAID tidak akan diproses ulang.
+                    Pemrosesan dilakukan maksimal 10 pesanan per request.
+                    Sistem mempertahankan riwayat status dan notifikasi email.
+                    Proses ini tidak membuat resi Biteship.
                 </p>
+
+                <div
+                    x-show="submitting || completed"
+                    x-cloak
+                    class="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-700"
+                    role="status"
+                    aria-live="polite"
+                >
+                    <p x-text="message"></p>
+                    <p x-show="submitting" class="mt-2 font-medium">
+                        Berhasil: <span x-text="processedTotal"></span>
+                        · Gagal: <span x-text="failedTotal"></span>
+                    </p>
+                </div>
             </div>
 
             <form
                 method="POST"
                 action="{{ route('admin.transactions.process-all') }}"
                 class="mt-6 flex flex-col-reverse gap-3 sm:flex-row"
-                @submit="submitting = true"
+                @submit.prevent="runBatch($event)"
             >
                 @csrf
 
@@ -90,6 +166,7 @@
                     type="button"
                     @click="close()"
                     :disabled="submitting"
+                    x-show="!completed"
                     class="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                 >
                     Batal
@@ -97,11 +174,21 @@
 
                 <button
                     type="submit"
-                    :disabled="submitting"
+                    :disabled="submitting || completed"
+                    x-show="!completed"
                     class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F] disabled:cursor-wait disabled:opacity-60"
                 >
                     <span x-show="!submitting">Ya, Proses Semua</span>
                     <span x-show="submitting" x-cloak>Sedang Memproses...</span>
+                </button>
+
+                <button
+                    type="button"
+                    x-show="completed"
+                    @click="window.location.reload()"
+                    class="inline-flex flex-1 items-center justify-center rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F]"
+                >
+                    Muat Ulang Halaman
                 </button>
             </form>
         </div>

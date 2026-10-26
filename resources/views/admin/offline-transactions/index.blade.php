@@ -216,39 +216,67 @@
 
                         <div class="mt-3 space-y-2 border-t border-slate-200 pt-2">
                             @if (str_starts_with($transaction->invoice_number ?? '', 'BOOTH-LEGACY-'))
-                            @php
-                                $legacyGroups = [
-                                    'Stadium Home, Away & Third' => ['qty' => 0, 'items' => 0],
-                                    'Supporter Home, Away & Third' => ['qty' => 0, 'items' => 0],
-                                ];
+    @php
+        $legacyGroups = [];
 
-                                foreach ($transaction->items as $item) {
-                                    $name = $item->productVariant?->product?->name ?? '';
-                                    $group = str_contains($name, 'Supporter')
-                                        ? 'Supporter Home, Away & Third'
-                                        : 'Stadium Home, Away & Third';
+        foreach ($transaction->items as $item) {
+            $name = $item->productVariant?->product?->name ?? '';
 
-                                    $legacyGroups[$group]['qty'] += (int) $item->qty;
-                                    $legacyGroups[$group]['items']++;
-                                }
-                            @endphp
+            preg_match('/\b(Supporter|Stadium)\b/i', $name, $versionMatch);
+            preg_match('/\b(Home|Away|Third)\b/i', $name, $kitMatch);
 
-                            @foreach ($legacyGroups as $groupName => $group)
-                                @if ($group['items'] > 0)
-                                    <div class="mb-2">
-                                        <p class="font-medium text-slate-700">{{ $groupName }}</p>
-                                        <p class="text-xs text-slate-500">
-                                            {{ $group['qty'] }} pcs | {{ $group['items'] }} jenis produk
-                                        </p>
-                                    </div>
-                                @endif
-                            @endforeach
+            $version = isset($versionMatch[1])
+                ? ucfirst(strtolower($versionMatch[1]))
+                : 'Produk';
 
-                            <p class="text-xs text-slate-500">
-                                Total {{ $transaction->items->count() }} jenis produk | {{ $transaction->items->sum('qty') }} pcs
-                            </p>
-                        @else
-                            @foreach ($transaction->items as $item)
+            $kit = isset($kitMatch[1])
+                ? ucfirst(strtolower($kitMatch[1]))
+                : $name;
+
+            $key = $version . '|' . $kit;
+
+            if (!isset($legacyGroups[$key])) {
+                $legacyGroups[$key] = [
+                    'version' => $version,
+                    'kit' => $kit,
+                    'qty' => 0,
+                ];
+            }
+
+            $legacyGroups[$key]['qty'] += (int) $item->qty;
+        }
+
+        $groupedOrders = collect($legacyGroups)->groupBy('version');
+        $totalUniqueProducts = count($legacyGroups);
+        $totalQty = $transaction->items->sum('qty');
+    @endphp
+
+    @foreach ($groupedOrders as $version => $products)
+        @php
+            $kits = $products->pluck('kit')->unique()->values();
+
+            $labels = $kits->count() > 1
+                ? $kits->slice(0, -1)->implode(', ') . ' & ' . $kits->last()
+                : $kits->first();
+
+            $groupLabel = $version === 'Produk'
+                ? $labels
+                : $version . ' ' . $labels;
+        @endphp
+
+        <div class="mb-2 last:mb-0">
+            <p class="font-medium text-slate-700">{{ $groupLabel }}</p>
+            <p class="text-xs text-slate-500">
+                {{ $products->sum('qty') }} pcs | {{ $products->count() }} jenis produk
+            </p>
+        </div>
+    @endforeach
+
+    <p class="text-xs text-slate-500">
+        Total {{ $totalUniqueProducts }} jenis produk | {{ $totalQty }} pcs
+    </p>
+@else
+@foreach ($transaction->items as $item)
                                 <div class="mb-2 last:mb-0">
                                     <p class="font-medium text-slate-700">
                                         {{ $item->productVariant?->product?->name ?? 'Produk' }}
@@ -332,38 +360,66 @@
                             <td class="min-w-48 px-5 py-4">
                                 @if (str_starts_with($transaction->invoice_number ?? '', 'BOOTH-LEGACY-'))
     @php
-        $legacyGroups = [
-            'Stadium Home, Away & Third' => ['qty' => 0, 'items' => 0],
-            'Supporter Home, Away & Third' => ['qty' => 0, 'items' => 0],
-        ];
+        $legacyGroups = [];
 
         foreach ($transaction->items as $item) {
             $name = $item->productVariant?->product?->name ?? '';
-            $group = str_contains($name, 'Supporter')
-                ? 'Supporter Home, Away & Third'
-                : 'Stadium Home, Away & Third';
 
-            $legacyGroups[$group]['qty'] += (int) $item->qty;
-            $legacyGroups[$group]['items']++;
+            preg_match('/\b(Supporter|Stadium)\b/i', $name, $versionMatch);
+            preg_match('/\b(Home|Away|Third)\b/i', $name, $kitMatch);
+
+            $version = isset($versionMatch[1])
+                ? ucfirst(strtolower($versionMatch[1]))
+                : 'Produk';
+
+            $kit = isset($kitMatch[1])
+                ? ucfirst(strtolower($kitMatch[1]))
+                : $name;
+
+            $key = $version . '|' . $kit;
+
+            if (!isset($legacyGroups[$key])) {
+                $legacyGroups[$key] = [
+                    'version' => $version,
+                    'kit' => $kit,
+                    'qty' => 0,
+                ];
+            }
+
+            $legacyGroups[$key]['qty'] += (int) $item->qty;
         }
+
+        $groupedOrders = collect($legacyGroups)->groupBy('version');
+        $totalUniqueProducts = count($legacyGroups);
+        $totalQty = $transaction->items->sum('qty');
     @endphp
 
-    @foreach ($legacyGroups as $groupName => $group)
-        @if ($group['items'] > 0)
-            <div class="mb-2">
-                <p class="font-medium text-slate-700">{{ $groupName }}</p>
-                <p class="text-xs text-slate-500">
-                    {{ $group['qty'] }} pcs | {{ $group['items'] }} jenis produk
-                </p>
-            </div>
-        @endif
+    @foreach ($groupedOrders as $version => $products)
+        @php
+            $kits = $products->pluck('kit')->unique()->values();
+
+            $labels = $kits->count() > 1
+                ? $kits->slice(0, -1)->implode(', ') . ' & ' . $kits->last()
+                : $kits->first();
+
+            $groupLabel = $version === 'Produk'
+                ? $labels
+                : $version . ' ' . $labels;
+        @endphp
+
+        <div class="mb-2 last:mb-0">
+            <p class="font-medium text-slate-700">{{ $groupLabel }}</p>
+            <p class="text-xs text-slate-500">
+                {{ $products->sum('qty') }} pcs | {{ $products->count() }} jenis produk
+            </p>
+        </div>
     @endforeach
 
     <p class="text-xs text-slate-500">
-        Total {{ $transaction->items->count() }} jenis produk | {{ $transaction->items->sum('qty') }} pcs
+        Total {{ $totalUniqueProducts }} jenis produk | {{ $totalQty }} pcs
     </p>
 @else
-    @foreach ($transaction->items as $item)
+@foreach ($transaction->items as $item)
         <div class="mb-2 last:mb-0">
             <p class="font-medium text-slate-700">
                 {{ $item->productVariant?->product?->name ?? 'Produk' }}

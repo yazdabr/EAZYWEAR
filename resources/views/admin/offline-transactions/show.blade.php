@@ -117,55 +117,101 @@
         {{-- Kolom kiri: Rincian Produk --}}
         @if (str_starts_with($transaction->invoice_number ?? '', 'BOOTH-LEGACY-'))
             @php
-                $legacyGroups = [
-                    'Stadium Home, Away & Third' => ['qty' => 0, 'items' => 0],
-                    'Supporter Home, Away & Third' => ['qty' => 0, 'items' => 0],
-                ];
+                $legacyProducts = [];
 
                 foreach ($transaction->items as $item) {
-                    $name = $item->productVariant?->product?->name ?? '';
-                    $group = str_contains($name, 'Supporter')
-                        ? 'Supporter Home, Away & Third'
-                        : 'Stadium Home, Away & Third';
+                    $product = $item->productVariant?->product;
+                    $variant = $item->productVariant;
+                    $name = $product?->name ?? 'Produk tidak tersedia';
+                    $size = $variant?->size?->name;
+                    $key = $name . '|' . ($size ?? '');
 
-                    $legacyGroups[$group]['qty'] += (int) $item->qty;
-                    $legacyGroups[$group]['items']++;
+                    if (!isset($legacyProducts[$key])) {
+                        $legacyProducts[$key] = [
+                            'name' => $name,
+                            'size' => $size,
+                            'qty' => 0,
+                        ];
+                    }
+
+                    $legacyProducts[$key]['qty'] += (int) $item->qty;
                 }
+
+                $legacyProducts = collect($legacyProducts)->values();
+                $uniqueProductCount = $legacyProducts->count();
             @endphp
 
             <div class="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 p-5">
                     <h2 class="font-bold text-slate-900">Rincian Produk</h2>
                     <p class="mt-1 text-sm text-slate-500">
-                        {{ $transaction->items->sum('qty') }} barang · {{ $transaction->items->count() }} jenis produk
+                        {{ $transaction->items->sum('qty') }} barang · {{ $uniqueProductCount }} jenis produk
                     </p>
                 </div>
 
                 <div class="flex flex-1 flex-col gap-4 p-5">
-                    @foreach ($legacyGroups as $groupName => $group)
-                        @if ($group['items'] > 0)
-                            <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-4">
-                                <div>
-                                    <h3 class="font-semibold text-slate-900">{{ $groupName }}</h3>
-                                    <p class="mt-1 text-sm text-slate-500">
-                                        {{ $group['items'] }} jenis produk · {{ $group['qty'] }} pcs
-                                    </p>
+                    @if ($uniqueProductCount <= 2)
+                        @foreach ($legacyProducts as $product)
+                            <div class="rounded-xl border border-slate-100 p-4">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="min-w-0">
+                                        <h3 class="font-semibold text-slate-900">{{ $product['name'] }}</h3>
+                                        <p class="mt-1 text-sm text-slate-500">
+                                            @if ($product['size'])
+                                                Ukuran {{ $product['size'] }} ·
+                                            @endif
+                                            {{ $product['qty'] }} pcs
+                                        </p>
+                                    </div>
+                                    <span class="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                                        {{ $product['qty'] }} pcs
+                                    </span>
                                 </div>
-                                <span class="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                                    {{ $group['qty'] }} pcs
-                                </span>
                             </div>
-                        @endif
-                    @endforeach
+                        @endforeach
+                    @else
+                        @php
+                            $legacyGroups = [
+                                'Stadium Home, Away & Third' => ['qty' => 0, 'items' => 0],
+                                'Supporter Home, Away & Third' => ['qty' => 0, 'items' => 0],
+                            ];
 
-                    <button
-                        type="button"
-                        onclick="const m=document.getElementById('legacy-product-modal'); m.classList.remove('hidden'); m.classList.add('flex'); document.body.classList.add('overflow-hidden'); requestAnimationFrame(()=>{m.classList.remove('opacity-0'); const p=m.querySelector('.legacy-modal-panel'); if(p){p.classList.remove('opacity-0','scale-95','translate-y-2'); p.classList.add('opacity-100','scale-100','translate-y-0')} })"
-                        class="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F]"
-                    >
-                        <x-heroicon-o-eye class="h-4 w-4"/>
-                        Lihat Detail Pesanan Produk
-                    </button>
+                            foreach ($transaction->items as $item) {
+                                $name = $item->productVariant?->product?->name ?? '';
+                                $group = str_contains($name, 'Supporter')
+                                    ? 'Supporter Home, Away & Third'
+                                    : 'Stadium Home, Away & Third';
+
+                                $legacyGroups[$group]['qty'] += (int) $item->qty;
+                                $legacyGroups[$group]['items']++;
+                            }
+                        @endphp
+
+                        @foreach ($legacyGroups as $groupName => $group)
+                            @if ($group['items'] > 0)
+                                <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-4">
+                                    <div>
+                                        <h3 class="font-semibold text-slate-900">{{ $groupName }}</h3>
+                                        <p class="mt-1 text-sm text-slate-500">
+                                            {{ $group['items'] }} jenis produk · {{ $group['qty'] }} pcs
+                                        </p>
+                                    </div>
+                                    <span class="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                                        {{ $group['qty'] }} pcs
+                                    </span>
+                                </div>
+                            @endif
+                        @endforeach
+
+                        <button
+                            type="button"
+                            onclick="const m=document.getElementById('legacy-product-modal'); m.classList.remove('hidden'); m.classList.add('flex'); document.body.classList.add('overflow-hidden'); requestAnimationFrame(()=>{m.classList.remove('opacity-0'); const p=m.querySelector('.legacy-modal-panel'); if(p){p.classList.remove('opacity-0','scale-95','translate-y-2'); p.classList.add('opacity-100','scale-100','translate-y-0')} })"
+                            class="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F]"
+                        >
+                            <x-heroicon-o-eye class="h-4 w-4"/>
+                            Lihat Detail Pesanan Produk
+                        </button>
+                    @endif
                 </div>
             </div>
 

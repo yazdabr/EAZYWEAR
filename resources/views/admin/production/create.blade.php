@@ -1,4 +1,4 @@
-
+﻿
 @extends('admin.layouts.app')
 
 @section('title', 'Tambah Produksi')
@@ -277,66 +277,65 @@
 
                 {{-- Tabel Ukuran --}}
                 <div class="overflow-hidden rounded-2xl border border-slate-200">
-
                     <div class="border-b border-slate-200 bg-slate-50 px-4 py-3">
                         <p class="text-xs font-bold uppercase tracking-wide text-slate-600 sm:text-sm">
                             Rincian Jumlah per Ukuran
                         </p>
                     </div>
 
-
                     <div class="divide-y divide-slate-100">
-
                         @forelse ($sizes as $size)
-                            <div class="flex items-center justify-between gap-4 px-4 py-4">
-
-                                <div class="min-w-0">
-                                    <p class="text-sm font-semibold text-slate-900">
+                            <div class="grid grid-cols-1 items-center gap-4 px-4 py-4 sm:grid-cols-[100px_minmax(0,1fr)]">
+                                <div>
+                                    <p class="text-sm font-bold text-slate-900">
                                         {{ $size->name }}
                                     </p>
-
                                     <p class="mt-0.5 text-xs text-slate-500">
-                                        Jumlah produksi ukuran {{ $size->name }}
+                                        Ukuran jersey
                                     </p>
                                 </div>
-
-
-                                <div class="w-28 shrink-0 sm:w-36">
-
-                                    <label
-                                        for="size_{{ $size->id }}"
-                                        class="sr-only"
-                                    >
-                                        Jumlah ukuran {{ $size->name }}
+                                <div class="ml-auto grid w-full max-w-[520px] grid-cols-1 gap-3 sm:grid-cols-2">
+                                    <div>
+                                    <label for="regular_size_{{ $size->id }}" class="mb-1.5 block text-xs font-semibold text-slate-600">
+                                        Jersey Reguler (pcs)
                                     </label>
-
                                     <input
-                                        id="size_{{ $size->id }}"
+                                        id="regular_size_{{ $size->id }}"
                                         type="number"
-                                        name="sizes[{{ $size->id }}]"
-                                        value="{{ old('sizes.' . $size->id, 0) }}"
+                                        name="regular_sizes[{{ $size->id }}]"
+                                        value="{{ old('regular_sizes.' . $size->id, 0) }}"
                                         min="0"
                                         step="1"
-                                        x-model.number="quantities[{{ $size->id }}]"
+                                        x-model.number="regularQuantities[{{ $size->id }}]"
                                         @input="calculateTotal()"
-                                        class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-center text-sm font-semibold text-slate-800 transition focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10"
+                                        class="w-full rounded-lg border border-slate-300 px-2 py-2 text-center text-sm font-semibold text-slate-800 focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10"
                                     >
-
                                 </div>
-
+                                    <div>
+                                    <label for="longsleeve_size_{{ $size->id }}" class="mb-1.5 block text-xs font-semibold text-slate-600">
+                                        L/S (Long Sleeve) (pcs)
+                                    </label>
+                                    <input
+                                        id="longsleeve_size_{{ $size->id }}"
+                                        type="number"
+                                        name="longsleeve_sizes[{{ $size->id }}]"
+                                        value="{{ old('longsleeve_sizes.' . $size->id, 0) }}"
+                                        min="0"
+                                        step="1"
+                                        x-model.number="longsleeveQuantities[{{ $size->id }}]"
+                                        @input="calculateTotal()"
+                                        class="w-full rounded-lg border border-slate-300 px-2 py-2 text-center text-sm font-semibold text-slate-800 focus:border-[#AE7C18] focus:outline-none focus:ring-4 focus:ring-[#AE7C18]/10"
+                                    >
+                                </div>
+                                </div>
                             </div>
                         @empty
-
                             <div class="px-4 py-8 text-center text-sm text-slate-400">
                                 Belum ada data ukuran yang tersedia.
                             </div>
-
                         @endforelse
-
                     </div>
-
                 </div>
-
 
                 {{-- Total Kuantitas --}}
                 <div class="flex items-center justify-between gap-4 rounded-2xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 px-4 py-4 sm:px-5">
@@ -526,14 +525,20 @@
         return {
             periodType: @js(old('period_type', '')),
 
-            quantities: @js(
-                collect($sizes ?? [])
-                    ->mapWithKeys(function ($size) {
-                        return [
-                            $size->id => (int) old('sizes.' . $size->id, 0)
-                        ];
-                    })
-                    ->toArray()
+            regularQuantities: @js(
+                collect($sizes ?? [])->mapWithKeys(function ($size) {
+                    return [
+                        $size->id => (int) old('regular_sizes.' . $size->id, 0)
+                    ];
+                })->toArray()
+            ),
+
+            longsleeveQuantities: @js(
+                collect($sizes ?? [])->mapWithKeys(function ($size) {
+                    return [
+                        $size->id => (int) old('longsleeve_sizes.' . $size->id, 0)
+                    ];
+                })->toArray()
             ),
 
             totalQuantity: 0,
@@ -543,10 +548,13 @@
             },
 
             calculateTotal() {
-                this.totalQuantity = Object.values(this.quantities)
-                    .reduce((total, quantity) => {
-                        return total + Math.max(0, Number(quantity) || 0);
-                    }, 0);
+                const regularTotal = Object.values(this.regularQuantities)
+                    .reduce((total, quantity) => total + Math.max(0, Number(quantity) || 0), 0);
+
+                const longsleeveTotal = Object.values(this.longsleeveQuantities)
+                    .reduce((total, quantity) => total + Math.max(0, Number(quantity) || 0), 0);
+
+                this.totalQuantity = regularTotal + longsleeveTotal;
             },
 
             prepareSubmit(event) {
@@ -560,8 +568,12 @@
             },
 
             resetForm() {
-                this.quantities = Object.fromEntries(
-                    Object.keys(this.quantities).map((id) => [id, 0])
+                this.regularQuantities = Object.fromEntries(
+                    Object.keys(this.regularQuantities).map((id) => [id, 0])
+                );
+
+                this.longsleeveQuantities = Object.fromEntries(
+                    Object.keys(this.longsleeveQuantities).map((id) => [id, 0])
                 );
 
                 this.totalQuantity = 0;
@@ -571,3 +583,5 @@
 </script>
 
 @endpush
+
+

@@ -16,15 +16,14 @@ class ProductionItem extends Model
         'production_record_id',
         'size_id',
         'quantity',
+        'is_longsleeve',
     ];
 
     protected $casts = [
         'quantity' => 'integer',
+        'is_longsleeve' => 'boolean',
     ];
 
-    /**
-     * Relasi ke produksi utama
-     */
     public function productionRecord(): BelongsTo
     {
         return $this->belongsTo(
@@ -33,14 +32,8 @@ class ProductionItem extends Model
         );
     }
 
-    /**
-     * Relasi ke ukuran
-     */
     public function size(): BelongsTo
     {
-        return $this->belongsTo(
-            Size::class,
-            'size_id'
-        );
+        return $this->belongsTo(Size::class, 'size_id');
     }
 }

@@ -140,7 +140,9 @@ class ProductionReportExport implements
     {
         $sizes = $production->items
             ->map(function ($item) {
-                return ($item->size?->name ?? '-') . ': ' .
+                $type = $item->is_longsleeve ? 'L/S' : 'Reguler';
+
+                return ($item->size?->name ?? '-') . ' ' . $type . ': ' .
                     number_format(
                         (int) $item->quantity,
                         0,

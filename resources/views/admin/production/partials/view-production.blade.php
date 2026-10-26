@@ -112,7 +112,7 @@
                         <div class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50/70 px-3 py-2.5">
                             <div class="min-w-0">
                                 <p class="text-sm font-semibold text-slate-900">Ukuran <span x-text="item.size?.name || '-'"></span></p>
-                                <p class="mt-0.5 text-xs text-slate-500">Jumlah produksi</p>
+                                <p class="mt-0.5 text-xs text-slate-500" x-text="item.is_longsleeve ? 'L/S (Long Sleeve)' : 'Jersey Reguler'"></p>
                             </div>
                             <div class="shrink-0 text-right">
                                 <p class="text-base font-bold text-[#AE7C18]" x-text="formatNumber(item.quantity)"></p>
@@ -139,8 +139,10 @@
                             <template x-for="(item, index) in production.items" :key="index">
                                 <tr>
                                     <td class="py-3 text-sm font-medium text-slate-900">
-                                        <span x-text="item.size?.name || '-'"></span>
-                                    </td>
+    <div x-text="item.size?.name || '-'"></div>
+    <div class="mt-1 text-xs font-normal text-slate-500"
+         x-text="item.is_longsleeve ? 'L/S (Long Sleeve)' : 'Jersey Reguler'"></div>
+</td>
                                     <td class="py-3 text-right text-sm font-bold text-slate-900" x-text="formatNumber(item.quantity) + ' pcs'"></td>
                                 </tr>
                             </template>

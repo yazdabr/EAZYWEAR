@@ -128,7 +128,7 @@
                 </p>
             </div>
 
-            </nav>
+            <nav class="mt-2 space-y-1">
 
                 <a
                     href="{{ route('admin.transactions') }}"

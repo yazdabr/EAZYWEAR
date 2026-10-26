@@ -1,4 +1,4 @@
-
+﻿
 @extends('admin.layouts.app')
 
 @section('title', 'Ubah Produksi')
@@ -314,38 +314,59 @@
                 </div>
 
                 <div class="px-5 py-5 sm:px-6">
-                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div class="divide-y divide-slate-100">
                         @foreach ($sizes as $size)
-                            <div class="rounded-xl border border-slate-200 p-4 transition focus-within:border-amber-300 focus-within:ring-2 focus-within:ring-amber-50">
-                                <div class="flex items-center justify-between gap-3">
-                                    <label
-                                        for="size_{{ $size->id }}"
-                                        class="text-sm font-bold text-slate-700"
-                                    >
-                                        {{ $size->name }}
-                                    </label>
+                            <div class="grid grid-cols-1 items-center gap-4 px-4 py-4 sm:grid-cols-[100px_minmax(0,1fr)]">
+                                <p class="mb-4 text-sm font-bold text-slate-900">
+                                    Ukuran {{ $size->name }}
+                                </p>
 
-                                    <span class="text-xs text-slate-400">
-                                        pcs
-                                    </span>
+                                <div class="ml-auto grid w-full max-w-[520px] grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label for="regular_size_{{ $size->id }}" class="mb-1.5 block text-xs font-semibold text-slate-600">
+                                            Jersey Reguler (pcs)
+                                        </label>
+                                        <input
+                                            id="regular_size_{{ $size->id }}"
+                                            type="number"
+                                            name="regular_sizes[{{ $size->id }}]"
+                                            min="0"
+                                            step="1"
+                                            value="{{ old('regular_sizes.' . $size->id, $existingRegularSizes[$size->id] ?? 0) }}"
+                                            x-model.number="regularQuantities[{{ $size->id }}]"
+                                            @input="calculateTotal()"
+                                            class="w-full rounded-lg border border-slate-200 px-2 py-2 text-center text-sm text-slate-700 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-amber-100"
+                                        >
+                                    </div>
+
+                                    <div>
+                                        <label for="longsleeve_size_{{ $size->id }}" class="mb-1.5 block text-xs font-semibold text-slate-600">
+                                            L/S (Long Sleeve) (pcs)
+                                        </label>
+                                        <input
+                                            id="longsleeve_size_{{ $size->id }}"
+                                            type="number"
+                                            name="longsleeve_sizes[{{ $size->id }}]"
+                                            min="0"
+                                            step="1"
+                                            value="{{ old('longsleeve_sizes.' . $size->id, $existingLongsleeveSizes[$size->id] ?? 0) }}"
+                                            x-model.number="longsleeveQuantities[{{ $size->id }}]"
+                                            @input="calculateTotal()"
+                                            class="w-full rounded-lg border border-slate-200 px-2 py-2 text-center text-sm text-slate-700 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-amber-100"
+                                        >
+                                    </div>
                                 </div>
-
-                                <input
-                                    id="size_{{ $size->id }}"
-                                    type="number"
-                                    name="sizes[{{ $size->id }}]"
-                                    min="0"
-                                    step="1"
-                                    value="{{ old('sizes.' . $size->id, $existingSizes[$size->id] ?? 0) }}"
-                                    x-model.number="quantities[{{ $size->id }}]"
-                                    @input="calculateTotal()"
-                                    class="mt-3 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#AE7C18] focus:ring-2 focus:ring-amber-100"
-                                />
                             </div>
                         @endforeach
                     </div>
 
-                    @error('sizes')
+                    @error('regular_sizes')
+                        <p class="mt-3 text-sm text-red-600">
+                            {{ $message }}
+                        </p>
+                    @enderror
+
+                    @error('longsleeve_sizes')
                         <p class="mt-3 text-sm text-red-600">
                             {{ $message }}
                         </p>
@@ -414,17 +435,26 @@
     <script>
         function productionEdit() {
             return {
-                quantities: @js(
-                    collect($sizes ?? [])
-                        ->mapWithKeys(function ($size) use ($existingSizes) {
-                            return [
-                                $size->id => (int) old(
-                                    'sizes.' . $size->id,
-                                    $existingSizes[$size->id] ?? 0
-                                ),
-                            ];
-                        })
-                        ->toArray()
+                regularQuantities: @js(
+                    collect($sizes ?? [])->mapWithKeys(function ($size) use ($existingRegularSizes) {
+                        return [
+                            $size->id => (int) old(
+                                'regular_sizes.' . $size->id,
+                                $existingRegularSizes[$size->id] ?? 0
+                            ),
+                        ];
+                    })->toArray()
+                ),
+
+                longsleeveQuantities: @js(
+                    collect($sizes ?? [])->mapWithKeys(function ($size) use ($existingLongsleeveSizes) {
+                        return [
+                            $size->id => (int) old(
+                                'longsleeve_sizes.' . $size->id,
+                                $existingLongsleeveSizes[$size->id] ?? 0
+                            ),
+                        ];
+                    })->toArray()
                 ),
 
                 totalQuantity: 0,
@@ -434,10 +464,13 @@
                 },
 
                 calculateTotal() {
-                    this.totalQuantity = Object.values(this.quantities)
-                        .reduce((total, quantity) => {
-                            return total + Math.max(0, Number(quantity) || 0);
-                        }, 0);
+                    const regularTotal = Object.values(this.regularQuantities)
+                        .reduce((total, quantity) => total + Math.max(0, Number(quantity) || 0), 0);
+
+                    const longsleeveTotal = Object.values(this.longsleeveQuantities)
+                        .reduce((total, quantity) => total + Math.max(0, Number(quantity) || 0), 0);
+
+                    this.totalQuantity = regularTotal + longsleeveTotal;
                 },
 
                 prepareSubmit(event) {
@@ -453,3 +486,5 @@
         }
     </script>
 @endsection
+
+

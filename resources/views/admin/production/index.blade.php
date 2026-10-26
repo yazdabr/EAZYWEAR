@@ -1,4 +1,4 @@
-
+﻿
 @extends('admin.layouts.app')
 
 @section('title', 'Produksi')
@@ -596,3 +596,4 @@
 @include('admin.production.partials.view-production')
 @include('admin.production.partials.delete-production-modal')
 @endsection
+

@@ -85,116 +85,81 @@ class ProductionController extends Controller
     /**
      * Menyimpan data produksi dan memperbarui stok produk
      */
+    /**
+     * Menyimpan laporan produksi tanpa mengubah produk atau stok.
+     */
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'product_mode' => [
-                'required',
-                'in:existing,new',
-            ],
-
+            'product_mode' => ['required', 'in:existing,new'],
             'product_id' => [
                 'nullable',
                 'required_if:product_mode,existing',
                 'integer',
                 'exists:products,id',
             ],
-
             'product_name' => [
                 'nullable',
                 'required_if:product_mode,new',
                 'string',
                 'max:150',
             ],
-
             'category_id' => [
                 'nullable',
                 'required_if:product_mode,new',
                 'integer',
                 'exists:categories,id',
             ],
-
-            'period_type' => [
-                'required',
-                'in:daily,weekly,monthly,yearly',
-            ],
-
-            'period_start' => [
-                'required',
-                'date',
-            ],
-
+            'period_type' => ['required', 'in:daily,weekly,monthly,yearly'],
+            'period_start' => ['required', 'date'],
             'period_end' => [
                 'required',
                 'date',
                 'after_or_equal:period_start',
             ],
-
-            'notes' => [
-                'nullable',
-                'string',
-            ],
-
-            'sizes' => [
-                'required',
-                'array',
-            ],
-
-            'sizes.*' => [
-                'nullable',
-                'integer',
-                'min:0',
-            ],
+            'notes' => ['nullable', 'string'],
+            'regular_sizes' => ['required', 'array'],
+            'regular_sizes.*' => ['nullable', 'integer', 'min:0'],
+            'longsleeve_sizes' => ['required', 'array'],
+            'longsleeve_sizes.*' => ['nullable', 'integer', 'min:0'],
         ], [
-            'product_mode.required' =>
-                'Jenis produk wajib dipilih.',
-
-            'product_mode.in' =>
-                'Jenis produk tidak valid.',
-
-            'product_id.required_if' =>
-                'Produk yang sudah ada wajib dipilih.',
-
-            'product_id.exists' =>
-                'Produk yang dipilih tidak ditemukan.',
-
-            'product_name.required_if' =>
-                'Nama produk baru wajib diisi.',
-
-            'product_name.max' =>
-                'Nama produk maksimal 150 karakter.',
-
-            'category_id.required_if' =>
-                'Kategori produk baru wajib dipilih.',
-
-            'category_id.exists' =>
-                'Kategori tidak ditemukan.',
-
-            'period_type.required' =>
-                'Jenis periode wajib dipilih.',
-
-            'period_start.required' =>
-                'Tanggal awal wajib diisi.',
-
-            'period_end.required' =>
-                'Tanggal akhir wajib diisi.',
-
+            'product_mode.required' => 'Jenis produk wajib dipilih.',
+            'product_id.required_if' => 'Produk yang sudah ada wajib dipilih.',
+            'product_id.exists' => 'Produk yang dipilih tidak ditemukan.',
+            'product_name.required_if' => 'Nama produk baru wajib diisi.',
+            'category_id.required_if' => 'Kategori produk baru wajib dipilih.',
+            'period_type.required' => 'Jenis periode wajib dipilih.',
+            'period_start.required' => 'Tanggal awal wajib diisi.',
+            'period_end.required' => 'Tanggal akhir wajib diisi.',
             'period_end.after_or_equal' =>
                 'Tanggal akhir harus sama atau setelah tanggal awal.',
-
-            'sizes.required' =>
-                'Data ukuran wajib diisi.',
         ]);
 
-        $sizes = $validated['sizes'];
+        $regularSizes = collect($validated['regular_sizes'])
+            ->mapWithKeys(fn ($quantity, $sizeId) => [
+                (int) $sizeId => (int) ($quantity ?? 0),
+            ]);
 
-        $totalQuantity = collect($sizes)
-            ->sum(fn ($quantity) => (int) ($quantity ?? 0));
+        $longsleeveSizes = collect($validated['longsleeve_sizes'])
+            ->mapWithKeys(fn ($quantity, $sizeId) => [
+                (int) $sizeId => (int) ($quantity ?? 0),
+            ]);
+
+        $sizeIds = $regularSizes->keys()
+            ->merge($longsleeveSizes->keys())
+            ->unique()
+            ->values();
+
+        $totalQuantity = $sizeIds->sum(
+            fn ($sizeId) =>
+                $regularSizes->get($sizeId, 0)
+                + $longsleeveSizes->get($sizeId, 0)
+        );
 
         if ($totalQuantity <= 0) {
             return back()
                 ->withErrors([
-                    'sizes' =>
+                    'regular_sizes' =>
                         'Minimal satu ukuran harus memiliki jumlah produksi lebih dari 0.',
                 ])
                 ->withInput();
@@ -203,134 +168,53 @@ class ProductionController extends Controller
         DB::beginTransaction();
 
         try {
-            /*
-            |--------------------------------------------------------------------------
-            | 1. Tentukan produk
-            |--------------------------------------------------------------------------
-            */
-
             if ($validated['product_mode'] === 'existing') {
                 $product = Product::query()
-                    ->lockForUpdate()
                     ->findOrFail($validated['product_id']);
 
+                $productId = $product->id;
                 $productName = $product->name;
                 $categoryId = $product->category_id;
             } else {
+                // Produk baru hanya dicatat di laporan.
+                // Tidak membuat data pada tabel products.
+                $productId = null;
                 $productName = $validated['product_name'];
                 $categoryId = $validated['category_id'];
-
-                $product = Product::create([
-                    'product_code' => $this->generateProductCode(),
-                    'category_id' => $categoryId,
-                    'name' => $productName,
-                    'slug' => $this->generateUniqueProductSlug($productName),
-                    'description' => null,
-                    'material' => null,
-
-                    // Produk baru tidak langsung aktif
-                    'status' => false,
-                ]);
             }
-
-            /*
-            |--------------------------------------------------------------------------
-            | 3. Simpan data produksi
-            |--------------------------------------------------------------------------
-            */
 
             $production = ProductionRecord::create([
                 'production_code' => $this->generateProductionCode(),
-
-                'product_id' => $product->id,
-
+                'product_id' => $productId,
                 'period_type' => $validated['period_type'],
-
                 'period_start' => $validated['period_start'],
-
                 'period_end' => $validated['period_end'],
-
                 'product_name' => $productName,
-
                 'category_id' => $categoryId,
-
                 'total_quantity' => $totalQuantity,
-
-                // Stok langsung diperbarui ketika disimpan
                 'status' => 'completed',
-
                 'notes' => $validated['notes'] ?? null,
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | 4. Perbarui stok setiap ukuran
-            |--------------------------------------------------------------------------
-            */
-
-            foreach ($sizes as $sizeId => $quantity) {
-                $quantity = (int) ($quantity ?? 0);
-
-                if ($quantity <= 0) {
-                    continue;
-                }
-
+            foreach ($sizeIds as $sizeId) {
                 $size = Size::query()->findOrFail($sizeId);
 
-                // Simpan detail produksi
-                $production->items()->create([
-                    'size_id' => $size->id,
-                    'quantity' => $quantity,
-                ]);
+                $regularQuantity = (int) $regularSizes->get($sizeId, 0);
+                $longsleeveQuantity = (int) $longsleeveSizes->get($sizeId, 0);
 
-                // Cari varian produk berdasarkan ukuran
-                $variant = ProductVariant::query()
-                    ->where('product_id', $product->id)
-                    ->where('size_id', $size->id)
-                    ->first();
-
-                /*
-                |--------------------------------------------------------------------------
-                | 5. Jika varian belum ada, buat varian baru
-                |--------------------------------------------------------------------------
-                */
-
-                if (!$variant) {
-                    $sku = $product->product_code
-                        . '-'
-                        . strtoupper(Str::slug($size->name));
-
-                    $variant = ProductVariant::create([
-                        'product_id' => $product->id,
+                if ($regularQuantity > 0) {
+                    $production->items()->create([
                         'size_id' => $size->id,
-
-                        // Warna tidak digunakan dalam proses produksi
-                        'color_id' => null,
-
-                        'sku' => $sku,
-
-                        // Harga awal produk baru
-                        'price' => 0,
+                        'quantity' => $regularQuantity,
+                        'is_longsleeve' => false,
                     ]);
                 }
 
-                /*
-                |--------------------------------------------------------------------------
-                | 6. Tambahkan stok Inventory
-                |--------------------------------------------------------------------------
-                */
-
-                $inventory = Inventory::query()
-                    ->where('product_variant_id', $variant->id)
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($inventory) {
-                    $inventory->increment('stock', $quantity);
-                } else {
-                    Inventory::create([
-                        'product_variant_id' => $variant->id,
-                        'stock' => $quantity,
+                if ($longsleeveQuantity > 0) {
+                    $production->items()->create([
+                        'size_id' => $size->id,
+                        'quantity' => $longsleeveQuantity,
+                        'is_longsleeve' => true,
                     ]);
                 }
             }
@@ -339,27 +223,19 @@ class ProductionController extends Controller
 
             return redirect()
                 ->route('admin.productions')
-                ->with(
-                    'success',
-                    'Produksi berhasil disimpan dan stok produk telah diperbarui.'
-                );
-
+                ->with('success', 'Laporan produksi berhasil disimpan.');
         } catch (Throwable $e) {
             DB::rollBack();
-
             report($e);
 
             return back()
                 ->withErrors([
-                    'error' => 'Terjadi kesalahan saat menyimpan produksi. Silakan coba lagi.',
+                    'error' =>
+                        'Terjadi kesalahan saat menyimpan laporan produksi. Silakan coba lagi.',
                 ])
                 ->withInput();
         }
     }
-
-    /**
-     * Menampilkan detail produksi
-     */
     public function show(ProductionRecord $production): View
     {
         $production->load([
@@ -383,15 +259,29 @@ class ProductionController extends Controller
 
         $production->load('items');
 
-        $existingSizes = $production->items
-            ->pluck('quantity', 'size_id')
-            ->toArray();
+        $existingRegularSizes = [];
+        $existingLongsleeveSizes = [];
+
+        foreach ($production->items as $item) {
+            $sizeId = (int) $item->size_id;
+
+            if ($item->is_longsleeve) {
+                $existingLongsleeveSizes[$sizeId] =
+                    ($existingLongsleeveSizes[$sizeId] ?? 0)
+                    + (int) $item->quantity;
+            } else {
+                $existingRegularSizes[$sizeId] =
+                    ($existingRegularSizes[$sizeId] ?? 0)
+                    + (int) $item->quantity;
+            }
+        }
 
         return view('admin.production.edit', compact(
             'production',
             'categories',
             'sizes',
-            'existingSizes'
+            'existingRegularSizes',
+            'existingLongsleeveSizes'
         ));
     }
 
@@ -399,70 +289,55 @@ class ProductionController extends Controller
     /**
      * Memperbarui data produksi dan menyesuaikan stok inventory
      */
+    /**
+     * Memperbarui laporan produksi tanpa mengubah stok.
+     */
     public function update(
         Request $request,
         ProductionRecord $production
     ): RedirectResponse {
         $validated = $request->validate([
-            'period_type' => [
-                'required',
-                'in:daily,weekly,monthly,yearly',
-            ],
-
-            'period_start' => [
-                'required',
-                'date',
-            ],
-
+            'period_type' => ['required', 'in:daily,weekly,monthly,yearly'],
+            'period_start' => ['required', 'date'],
             'period_end' => [
                 'required',
                 'date',
                 'after_or_equal:period_start',
             ],
-
-            'product_name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-
-            'category_id' => [
-                'required',
-                'integer',
-                'exists:categories,id',
-            ],
-
-            'notes' => [
-                'nullable',
-                'string',
-            ],
-
-            'sizes' => [
-                'required',
-                'array',
-            ],
-
-            'sizes.*' => [
-                'nullable',
-                'integer',
-                'min:0',
-            ],
+            'product_name' => ['required', 'string', 'max:255'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
+            'notes' => ['nullable', 'string'],
+            'regular_sizes' => ['required', 'array'],
+            'regular_sizes.*' => ['nullable', 'integer', 'min:0'],
+            'longsleeve_sizes' => ['required', 'array'],
+            'longsleeve_sizes.*' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $newSizes = collect($validated['sizes'])
-            ->mapWithKeys(function ($quantity, $sizeId) {
-                return [
-                    (int) $sizeId => (int) ($quantity ?? 0),
-                ];
-            })
-            ->toArray();
+        $regularSizes = collect($validated['regular_sizes'])
+            ->mapWithKeys(fn ($quantity, $sizeId) => [
+                (int) $sizeId => (int) ($quantity ?? 0),
+            ]);
 
-        $newTotalQuantity = collect($newSizes)->sum();
+        $longsleeveSizes = collect($validated['longsleeve_sizes'])
+            ->mapWithKeys(fn ($quantity, $sizeId) => [
+                (int) $sizeId => (int) ($quantity ?? 0),
+            ]);
+
+        $sizeIds = $regularSizes->keys()
+            ->merge($longsleeveSizes->keys())
+            ->unique()
+            ->values();
+
+        $newTotalQuantity = $sizeIds->sum(
+            fn ($sizeId) =>
+                $regularSizes->get($sizeId, 0)
+                + $longsleeveSizes->get($sizeId, 0)
+        );
 
         if ($newTotalQuantity <= 0) {
             return back()
                 ->withErrors([
-                    'sizes' =>
+                    'regular_sizes' =>
                         'Minimal satu ukuran harus memiliki jumlah produksi lebih dari 0.',
                 ])
                 ->withInput();
@@ -471,253 +346,65 @@ class ProductionController extends Controller
         DB::beginTransaction();
 
         try {
-            /*
-            |--------------------------------------------------------------------------
-            | 1. Kunci data produksi dan ambil detail lama
-            |--------------------------------------------------------------------------
-            */
-
             $production = ProductionRecord::query()
                 ->lockForUpdate()
-                ->with('items')
                 ->findOrFail($production->id);
 
-            $oldSizes = $production->items
-                ->pluck('quantity', 'size_id')
-                ->map(fn ($quantity) => (int) $quantity)
-                ->toArray();
-
-            /*
-            |--------------------------------------------------------------------------
-            | 2. Gabungkan seluruh ukuran lama dan ukuran baru
-            |--------------------------------------------------------------------------
-            */
-
-            $sizeIds = collect(array_keys($oldSizes))
-                ->merge(array_keys($newSizes))
-                ->unique()
-                ->values();
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | 3. Sesuaikan stok inventory berdasarkan selisih jumlah
-            |--------------------------------------------------------------------------
-            */
-
-            foreach ($sizeIds as $sizeId) {
-                $oldQuantity = (int) ($oldSizes[$sizeId] ?? 0);
-
-                $newQuantity = (int) ($newSizes[$sizeId] ?? 0);
-
-                $difference = $newQuantity - $oldQuantity;
-
-                /*
-                |--------------------------------------------------------------------------
-                | Tidak ada perubahan jumlah
-                |--------------------------------------------------------------------------
-                */
-
-                if ($difference === 0) {
-                    continue;
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Pastikan ukuran tersedia
-                |--------------------------------------------------------------------------
-                */
-
-                $size = Size::query()->findOrFail($sizeId);
-
-                /*
-                |--------------------------------------------------------------------------
-                | Cari varian produk
-                |--------------------------------------------------------------------------
-                */
-
-                $variant = ProductVariant::query()
-                    ->where('product_id', $production->product_id)
-                    ->where('size_id', $size->id)
-                    ->lockForUpdate()
-                    ->first();
-
-                /*
-                |--------------------------------------------------------------------------
-                | Jika varian belum ada, buat varian baru
-                |--------------------------------------------------------------------------
-                */
-
-                if (!$variant) {
-                    $product = Product::query()
-                        ->lockForUpdate()
-                        ->findOrFail($production->product_id);
-
-                    $sku = $product->product_code
-                        . '-'
-                        . strtoupper(Str::slug($size->name));
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Pastikan SKU tidak bentrok
-                    |--------------------------------------------------------------------------
-                    */
-
-                    $baseSku = $sku;
-                    $skuCounter = 1;
-
-                    while (
-                        ProductVariant::query()
-                            ->where('sku', $sku)
-                            ->exists()
-                    ) {
-                        $sku = $baseSku . '-' . $skuCounter;
-                        $skuCounter++;
-                    }
-
-                    $variant = ProductVariant::create([
-                        'product_id' => $product->id,
-                        'size_id' => $size->id,
-                        'color_id' => null,
-                        'sku' => $sku,
-                        'price' => 0,
-                    ]);
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Cari atau buat inventory
-                |--------------------------------------------------------------------------
-                */
-
-                $inventory = Inventory::query()
-                    ->where('product_variant_id', $variant->id)
-                    ->lockForUpdate()
-                    ->first();
-
-                /*
-                |--------------------------------------------------------------------------
-                | Jika jumlah bertambah
-                |--------------------------------------------------------------------------
-                */
-
-                if ($difference > 0) {
-                    if ($inventory) {
-                        $inventory->increment('stock', $difference);
-                    } else {
-                        Inventory::create([
-                            'product_variant_id' => $variant->id,
-                            'stock' => $difference,
-                        ]);
-                    }
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Jika jumlah berkurang
-                |--------------------------------------------------------------------------
-                */
-
-                if ($difference < 0) {
-                    $decreaseAmount = abs($difference);
-
-                    if (!$inventory) {
-                        throw new \Exception(
-                            'Data inventory untuk ukuran '
-                            . $size->name
-                            . ' tidak ditemukan.'
-                        );
-                    }
-
-                    $currentStock = (int) $inventory->stock;
-
-                    if ($currentStock < $decreaseAmount) {
-                        throw new \Exception(
-                            'Stok produk untuk ukuran '
-                            . $size->name
-                            . ' tidak mencukupi untuk mengurangi jumlah produksi.'
-                        );
-                    }
-
-                    $inventory->update([
-                        'stock' => $currentStock - $decreaseAmount,
-                    ]);
-                }
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | 4. Perbarui data utama produksi
-            |--------------------------------------------------------------------------
-            */
-
+            // Hanya memperbarui informasi laporan.
             $production->update([
                 'period_type' => $validated['period_type'],
-
                 'period_start' => $validated['period_start'],
-
                 'period_end' => $validated['period_end'],
-
                 'product_name' => $validated['product_name'],
-
                 'category_id' => $validated['category_id'],
-
                 'total_quantity' => $newTotalQuantity,
-
                 'notes' => $validated['notes'] ?? null,
             ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | 5. Hapus detail ukuran lama
-            |--------------------------------------------------------------------------
-            */
-
             $production->items()->delete();
 
-            /*
-            |--------------------------------------------------------------------------
-            | 6. Simpan detail ukuran terbaru
-            |--------------------------------------------------------------------------
-            */
+            foreach ($sizeIds as $sizeId) {
+                $size = Size::query()->findOrFail($sizeId);
 
-            foreach ($newSizes as $sizeId => $quantity) {
-                if ($quantity <= 0) {
-                    continue;
+                $regularQuantity = (int) $regularSizes->get($sizeId, 0);
+                $longsleeveQuantity = (int) $longsleeveSizes->get($sizeId, 0);
+
+                if ($regularQuantity > 0) {
+                    $production->items()->create([
+                        'size_id' => $size->id,
+                        'quantity' => $regularQuantity,
+                        'is_longsleeve' => false,
+                    ]);
                 }
 
-                $production->items()->create([
-                    'size_id' => $sizeId,
-
-                    'quantity' => $quantity,
-                ]);
+                if ($longsleeveQuantity > 0) {
+                    $production->items()->create([
+                        'size_id' => $size->id,
+                        'quantity' => $longsleeveQuantity,
+                        'is_longsleeve' => true,
+                    ]);
+                }
             }
 
             DB::commit();
 
             return redirect()
                 ->route('admin.productions')
-                ->with(
-                    'success',
-                    'Data produksi dan stok produk berhasil diperbarui.'
-                );
-
+                ->with('success', 'Laporan produksi berhasil diperbarui.');
         } catch (Throwable $e) {
             DB::rollBack();
-
             report($e);
 
             return back()
                 ->withErrors([
-                    'error' => 'Terjadi kesalahan saat memperbarui data produksi. Silakan coba lagi.',
+                    'error' =>
+                        'Terjadi kesalahan saat memperbarui laporan produksi. Silakan coba lagi.',
                 ])
                 ->withInput();
         }
     }
-
-
     /**
-     * Menghapus data produksi dan mengurangi stok produk
+     * Menghapus laporan produksi tanpa mengubah stok.
      */
     public function destroy(
         Request $request,
@@ -726,132 +413,16 @@ class ProductionController extends Controller
         DB::beginTransaction();
 
         try {
-            /*
-            |--------------------------------------------------------------------------
-            | 1. Ambil data produksi beserta detail ukuran
-            |--------------------------------------------------------------------------
-            */
-
             $production = ProductionRecord::query()
                 ->lockForUpdate()
-                ->with('items')
                 ->findOrFail($production->id);
 
-            if (!$production->product_id) {
-                throw new \Exception(
-                    'Produksi tidak memiliki produk yang terhubung.'
-                );
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | 2. Kunci data produk
-            |--------------------------------------------------------------------------
-            */
-
-            $product = Product::query()
-                ->lockForUpdate()
-                ->findOrFail($production->product_id);
-
-            /*
-            |--------------------------------------------------------------------------
-            | 3. Kurangi stok berdasarkan detail produksi
-            |--------------------------------------------------------------------------
-            */
-
-            foreach ($production->items as $item) {
-                $quantity = (int) $item->quantity;
-
-                if ($quantity <= 0) {
-                    continue;
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Cari varian berdasarkan produk dan ukuran
-                |--------------------------------------------------------------------------
-                */
-
-                $variant = ProductVariant::query()
-                    ->where('product_id', $product->id)
-                    ->where('size_id', $item->size_id)
-                    ->lockForUpdate()
-                    ->first();
-
-                if (!$variant) {
-                    throw new \Exception(
-                        'Varian produk untuk ukuran ID '
-                        . $item->size_id
-                        . ' tidak ditemukan.'
-                    );
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Cari inventory
-                |--------------------------------------------------------------------------
-                */
-
-                $inventory = Inventory::query()
-                    ->where('product_variant_id', $variant->id)
-                    ->lockForUpdate()
-                    ->first();
-
-                if (!$inventory) {
-                    throw new \Exception(
-                        'Data inventory untuk ukuran ID '
-                        . $item->size_id
-                        . ' tidak ditemukan.'
-                    );
-                }
-
-                $currentStock = (int) $inventory->stock;
-
-                /*
-                |--------------------------------------------------------------------------
-                | Validasi stok
-                |--------------------------------------------------------------------------
-                */
-
-                if ($currentStock < $quantity) {
-                    throw new \Exception(
-                        'Stok produk '
-                        . $product->name
-                        . ' untuk ukuran ID '
-                        . $item->size_id
-                        . ' tidak mencukupi untuk menghapus produksi.'
-                    );
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Kurangi stok
-                |--------------------------------------------------------------------------
-                */
-
-                $inventory->update([
-                    'stock' => $currentStock - $quantity,
-                ]);
-            }
-
-            /*
-            |--------------------------------------------------------------------------
-            | 4. Hapus data produksi
-            |--------------------------------------------------------------------------
-            */
-
+            $production->items()->delete();
             $production->delete();
 
             DB::commit();
 
-            $successMessage =
-                'Data produksi berhasil dihapus dan stok produk telah diperbarui.';
-
-            /*
-            |--------------------------------------------------------------------------
-            | 5. Respons JSON untuk fetch / AJAX
-            |--------------------------------------------------------------------------
-            */
+            $successMessage = 'Laporan produksi berhasil dihapus.';
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -860,31 +431,15 @@ class ProductionController extends Controller
                 ]);
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | 6. Respons normal untuk form biasa
-            |--------------------------------------------------------------------------
-            */
-
             return redirect()
                 ->route('admin.productions')
-                ->with(
-                    'success',
-                    $successMessage
-                );
-
+                ->with('success', $successMessage);
         } catch (Throwable $e) {
             DB::rollBack();
-
             report($e);
 
-            $errorMessage = 'Terjadi kesalahan saat menghapus produksi. Silakan coba lagi.';
-
-            /*
-            |--------------------------------------------------------------------------
-            | Respons error JSON
-            |--------------------------------------------------------------------------
-            */
+            $errorMessage =
+                'Terjadi kesalahan saat menghapus laporan produksi. Silakan coba lagi.';
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -893,19 +448,11 @@ class ProductionController extends Controller
                 ], 422);
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Respons error normal
-            |--------------------------------------------------------------------------
-            */
-
-            return back()
-                ->withErrors([
-                    'error' => $errorMessage,
-                ]);
+            return back()->withErrors([
+                'error' => $errorMessage,
+            ]);
         }
     }
-
     /**
      * Generate kode produksi otomatis
      */

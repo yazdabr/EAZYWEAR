@@ -94,7 +94,7 @@ class TransactionInvoiceExport implements FromArray, WithStyles, WithColumnWidth
             $addons = [];
 
             if ($item->custom_name) {
-                $addons[] = 'Nama: ' . $item->custom_name;
+                $addons[] = 'Nama: ' . mb_strtoupper($item->custom_name, 'UTF-8');
             }
 
             if ($item->custom_number) {

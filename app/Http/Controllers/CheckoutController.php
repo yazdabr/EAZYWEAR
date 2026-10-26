@@ -57,14 +57,14 @@ class CheckoutController extends Controller
                         ], 422);
                     }
 
-                    $customName = trim((string) ($cartItem['custom_name'] ?? ''));
+                    $customName = mb_strtoupper(trim((string) ($cartItem['custom_name'] ?? '')), 'UTF-8');
                     $customNumber = trim((string) ($cartItem['custom_number'] ?? ''));
 
                     if ($customName !== '') {
-                        if (mb_strlen($customName) > 20) {
+                        if (mb_strlen($customName) > 12) {
                             return response()->json([
                                 'success' => false,
-                                'message' => 'Nama jersey maksimal 20 karakter.',
+                                'message' => 'Nama jersey maksimal 12 karakter.',
                             ], 422);
                         }
 
@@ -450,7 +450,7 @@ class CheckoutController extends Controller
                 foreach ($cart as $cartItem) {
                     $variantId = (int) ($cartItem['variant_id'] ?? 0);
                     $qty = (int) ($cartItem['qty'] ?? 0);
-                    $customName = trim((string) ($cartItem['custom_name'] ?? ''));
+                    $customName = mb_strtoupper(trim((string) ($cartItem['custom_name'] ?? '')), 'UTF-8');
                     $customNumber = trim((string) ($cartItem['custom_number'] ?? ''));
 
                     if ($variantId <= 0 || $qty <= 0) {
@@ -464,9 +464,9 @@ class CheckoutController extends Controller
                     * Tetapi jika diisi, formatnya tetap harus valid.
                     */
                     if ($customName !== '') {
-                        if (mb_strlen($customName) > 20) {
+                        if (mb_strlen($customName) > 12) {
                             throw ValidationException::withMessages([
-                                'cart' => 'Nama jersey maksimal 20 karakter.',
+                                'cart' => 'Nama jersey maksimal 12 karakter.',
                             ]);
                         }
 

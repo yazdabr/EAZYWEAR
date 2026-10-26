@@ -258,7 +258,7 @@
                                                 <p>Lengan panjang</p>
                                             @endif
                                             @if ($item->custom_name)
-                                                <p>Nama jersey: {{ $item->custom_name }}</p>
+                                                <p>Nama jersey: {{ mb_strtoupper($item->custom_name, 'UTF-8') }}</p>
                                             @endif
                                             @if ($item->custom_number)
                                                 <p>Nomor jersey: {{ $item->custom_number }}</p>
@@ -313,7 +313,7 @@
                                             <p>Ukuran: {{ $variant->size->name }}</p>
                                         @endif
                                         @if ($item->custom_name)
-                                            <p>Nama jersey: {{ $item->custom_name }}</p>
+                                            <p>Nama jersey: {{ mb_strtoupper($item->custom_name, 'UTF-8') }}</p>
                                         @endif
                                         @if ($item->custom_number)
                                             <p>Nomor jersey: {{ $item->custom_number }}</p>

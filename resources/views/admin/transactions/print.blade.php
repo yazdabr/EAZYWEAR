@@ -235,7 +235,7 @@
                                     </p>
                                     <div class="flex flex-wrap gap-x-2 text-[9.5px] text-slate-700 font-medium">
                                         @if($item->custom_name)
-                                            <span class="text-slate-900 font-semibold">Nama: {{ $item->custom_name }}</span>
+                                            <span class="text-slate-900 font-semibold">Nama: {{ mb_strtoupper($item->custom_name, 'UTF-8') }}</span>
                                         @endif
                                         @if($item->custom_number)
                                             <span class="text-slate-900 font-semibold">No: {{ $item->custom_number }}</span>

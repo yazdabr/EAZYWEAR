@@ -24,18 +24,18 @@ class CartController extends Controller
         $validated = $request->validate([
             'variant_id' => ['required', 'integer', 'exists:product_variants,id'],
             'qty' => ['required', 'integer', 'min:1'],
-            'custom_name' => ['nullable', 'string', 'max:20', 'regex:/^[\pL\s]+$/u'],
+            'custom_name' => ['nullable', 'string', 'max:12', 'regex:/^[\pL\s]+$/u'],
             'custom_number' => ['nullable', 'string', 'max:2', 'regex:/^[0-9]{1,2}$/'],
             'is_longsleeve' => ['sometimes', 'boolean'],
             'is_patch' => ['sometimes', 'boolean'],
         ], [
-            'custom_name.max' => 'Nama jersey maksimal 20 karakter.',
+            'custom_name.max' => 'Nama jersey maksimal 12 karakter.',
             'custom_name.regex' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
             'custom_number.max' => 'Nomor punggung maksimal 2 digit.',
             'custom_number.regex' => 'Nomor punggung hanya boleh berisi angka.',
         ]);
 
-        $customName = trim((string) ($validated['custom_name'] ?? ''));
+        $customName = mb_strtoupper(trim((string) ($validated['custom_name'] ?? '')), 'UTF-8');
         $customNumber = trim((string) ($validated['custom_number'] ?? ''));
 
         $variant = ProductVariant::with([

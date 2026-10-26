@@ -283,9 +283,9 @@
                 <div class="mt-2">
                     <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Nama Jersey</label>
                     <input
-                        x-model="item.custom_name"
+                        x-model="item.custom_name" @input="item.custom_name = item.custom_name.toLocaleUpperCase()"
                         type="text"
-                        maxlength="20"
+                        maxlength="12"
                         pattern="[A-Za-zÀ-ÿ\s]+"
                         placeholder="Masukkan nama jersey"
                         required
@@ -370,9 +370,9 @@
                                     </label>
 
                                     <input
-                                        x-model="item.custom_name"
+                                        x-model="item.custom_name" @input="item.custom_name = item.custom_name.toLocaleUpperCase()"
                                         type="text"
-                                        maxlength="20"
+                                        maxlength="12"
                                         pattern="[A-Za-zÀ-ÿ\s]+"
                                         placeholder="Masukkan nama jersey"
                                         required
@@ -796,7 +796,7 @@ function transactionCreate() {
               items: this.cart.map((item) => ({
                   product_variant_id: item.variant_id,
                   qty: Number(item.qty),
-                  custom_name: item.custom_name.trim(),
+                  custom_name: item.custom_name.trim().toLocaleUpperCase(),
                   custom_number: String(item.custom_number).trim()
               }))
           })

@@ -574,7 +574,7 @@
                             ?? $item->productVariant?->size?->label
                             ?? '';
 
-                        $customName = trim((string) ($item->custom_name ?? ''));
+                        $customName = mb_strtoupper(trim((string) ($item->custom_name ?? '')), 'UTF-8');
                         $customNumber = trim((string) ($item->custom_number ?? ''));
                         $isPatch = (bool) ($item->is_patch ?? false);
                         $isLongsleeve = (bool) ($item->is_longsleeve ?? false);

@@ -1,4 +1,4 @@
-﻿<div x-data="transactionView()"
+<div x-data="transactionView()"
      x-effect="document.body.classList.toggle('overflow-hidden', open)"
      @keydown.escape.window="open = false"
      x-on:open-view-transaction.window="openDrawer($event.detail)"
@@ -122,7 +122,7 @@
                                         <span class="rounded bg-slate-200/80 px-1.5 py-0.5 text-[10px] font-medium uppercase text-slate-600" x-text="'Ukuran: ' + (item.size || '-')"></span>
 
                                         <template x-if="item.custom_name">
-                                            <span class="rounded bg-[#AE7C18]/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[#AE7C18]" x-text="'Nama: ' + item.custom_name"></span>
+                                            <span class="rounded bg-[#AE7C18]/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[#AE7C18]" x-text="'Nama: ' + item.custom_name.toLocaleUpperCase()"></span>
                                         </template>
 
                                         <template x-if="item.custom_number">
@@ -181,7 +181,7 @@
                                                 <div class="mt-0.5 flex flex-wrap gap-1">
                                                     <template x-if="item.custom_name">
                                                         <span class="inline-block text-[10px] font-semibold uppercase text-[#AE7C18]"
-                                                            x-text="'Nama: ' + item.custom_name"></span>
+                                                            x-text="'Nama: ' + item.custom_name.toLocaleUpperCase()"></span>
                                                     </template>
 
                                                     <template x-if="item.custom_number">

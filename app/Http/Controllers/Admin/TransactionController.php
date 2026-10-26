@@ -178,7 +178,7 @@ class TransactionController extends Controller
                         'name' => $product?->name ?? '-',
                         'image' => $image?->image ? asset('storage/' . $image->image) : null,
                         'size' => $variant?->size?->name ?? '-',
-                        'custom_name' => $item->custom_name ?? '',
+                        'custom_name' => mb_strtoupper($item->custom_name ?? '', 'UTF-8'),
                         'custom_number' => $item->custom_number ?? '',
                         'is_longsleeve' => (bool) $item->is_longsleeve,
                         'longsleeve_price' => (int) $item->longsleeve_price,
@@ -378,7 +378,7 @@ class TransactionController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_variant_id' => ['required', 'integer', 'exists:product_variants,id'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
-            'items.*.custom_name' => ['required', 'string', 'max:20', 'regex:/^[\pL\s]+$/u'],
+            'items.*.custom_name' => ['required', 'string', 'max:12', 'regex:/^[\pL\s]+$/u'],
             'items.*.custom_number' => ['required', 'string', 'max:2', 'regex:/^[0-9]{1,2}$/'],
         ], [
             'customer.name.required' => 'Nama pelanggan wajib diisi.',
@@ -392,7 +392,7 @@ class TransactionController extends Controller
             'items.required' => 'Minimal satu produk harus dipilih.',
             'items.min' => 'Minimal satu produk harus dipilih.',
             'items.*.custom_name.required' => 'Nama jersey wajib diisi.',
-            'items.*.custom_name.max' => 'Nama jersey maksimal 20 karakter.',
+            'items.*.custom_name.max' => 'Nama jersey maksimal 12 karakter.',
             'items.*.custom_name.regex' => 'Nama jersey hanya boleh berisi huruf dan spasi.',
             'items.*.custom_number.required' => 'Nomor punggung wajib diisi.',
             'items.*.custom_number.max' => 'Nomor punggung maksimal 2 digit.',
@@ -439,7 +439,7 @@ class TransactionController extends Controller
                         throw ValidationException::withMessages(['items' => "Stok {$variant->sku} tidak mencukupi. Stok tersedia: {$stock}."]);
                     }
 
-                    $customName = trim($item['custom_name']);
+                    $customName = mb_strtoupper(trim($item['custom_name']), 'UTF-8');
                     $customNumber = trim($item['custom_number']);
 
                     if ($customName === '') throw ValidationException::withMessages(['items' => 'Nama jersey wajib diisi.']);

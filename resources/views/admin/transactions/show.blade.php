@@ -918,7 +918,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 @if($item->custom_name)
                                     <p class="mt-0.5 text-xs sm:text-sm">
                                         <span class="font-semibold text-slate-900">Nama:</span>
-                                        <span class="font-bold uppercase text-[#AE7C18]">{{ $item->custom_name }}</span>
+                                        <span class="font-bold uppercase text-[#AE7C18]">{{ mb_strtoupper($item->custom_name, 'UTF-8') }}</span>
                                     </p>
                                 @endif
 

@@ -139,7 +139,7 @@ class ProductionOrderExport extends DefaultValueBinder implements FromArray, Wit
                     $product?->name ?? '-',
                     $variant?->size?->name ?? '-',
                     (int) $item->qty,
-                    $item->custom_name ?: '-',
+                    (->custom_name ? mb_strtoupper($item->custom_name, 'UTF-8') : '-'),
                     $item->custom_number ?: '-',
                     $item->is_longsleeve ? 'Ya' : 'Tidak',
                     $item->is_patch ? 'Ya' : 'Tidak',

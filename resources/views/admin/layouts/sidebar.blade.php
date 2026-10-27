@@ -149,7 +149,7 @@
                         : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
                 >
                     <x-heroicon-o-clipboard-document-list class="h-5 w-5 shrink-0"/>
-                    <span>Data Transaksi Offline</span>
+                    <span>Data Transaksi WhatsApp</span>
                 </a>
 
             </nav>
@@ -318,7 +318,7 @@
                         : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
                 >
                     <x-heroicon-o-building-storefront class="h-5 w-5 shrink-0"/>
-                    <span>Penjualan Offline</span>
+                    <span>Penjualan WhatsApp</span>
                 </a>
 
             </nav>

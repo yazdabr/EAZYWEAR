@@ -1,7 +1,7 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 
-@section('title','Laporan Penjualan Offline')
-@section('page-title','Laporan Penjualan Offline')
+@section('title','Laporan WA')
+@section('page-title','Laporan WA')
 
 @section('content')
 <div class="space-y-4 sm:space-y-6">
@@ -14,10 +14,10 @@
 
             <div>
                 <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl md:text-3xl">
-                    Laporan Penjualan Offline
+                    Laporan Penjualan WA
                 </h1>
                 <p class="mt-0.5 text-xs text-slate-500 sm:mt-1 sm:text-sm">
-                    Analisis kinerja penjualan dan pendapatan berdasarkan transaksi kasir Booth.
+                    Analisis kinerja penjualan dan pendapatan dari transaksi WA.
                 </p>
             </div>
 
@@ -534,3 +534,4 @@
 
 </div>
 @endsection
+

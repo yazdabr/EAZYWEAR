@@ -1,7 +1,7 @@
-@extends('admin.layouts.app')
+﻿@extends('admin.layouts.app')
 
-@section('title', 'Transaksi Offline')
-@section('page-title', 'Transaksi Offline')
+@section('title', 'WA')
+@section('page-title', 'Transaksi WhatsApp')
 
 @section('content')
 
@@ -10,10 +10,10 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
             <h2 class="text-xl font-bold text-slate-900 sm:text-3xl">
-                Transaksi Offline
+                Transaksi WhatsApp
             </h2>
             <p class="mt-1 text-xs text-slate-500 sm:text-sm">
-                Kelola semua transaksi offline dan pembayaran pelanggan.
+                Kelola transaksi WA dan pembayaran pelanggan.
             </p>
         </div>
 
@@ -318,8 +318,8 @@
             @empty
                 <div class="px-4 py-10 text-center">
                     <x-heroicon-o-receipt-percent class="mx-auto h-9 w-9 text-slate-300"/>
-                    <p class="mt-3 text-sm font-semibold text-slate-600">Belum ada transaksi offline</p>
-                    <p class="mt-1 text-xs text-slate-400">Transaksi kasir booth akan muncul di sini.</p>
+                    <p class="mt-3 text-sm font-semibold text-slate-600">Belum ada transaksi WA</p>
+                    <p class="mt-1 text-xs text-slate-400">Transaksi WA akan muncul di sini.</p>
                 </div>
             @endforelse
         </div>
@@ -470,7 +470,7 @@
                         <tr>
                             <td colspan="7" class="px-5 py-14 text-center">
                                 <x-heroicon-o-receipt-percent class="mx-auto h-10 w-10 text-slate-300"/>
-                                <p class="mt-3 font-semibold text-slate-600">Belum ada transaksi offline</p>
+                                <p class="mt-3 font-semibold text-slate-600">Belum ada transaksi WA</p>
                                 <p class="mt-1 text-sm text-slate-400">
                                     Transaksi dari kasir booth akan muncul di halaman ini.
                                 </p>
@@ -497,3 +497,4 @@
     </div>
 </div>
 @endsection
+

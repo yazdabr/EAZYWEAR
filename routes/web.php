@@ -242,12 +242,12 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'paymentStatus',
         ])->name('kasir.payment-status');
 
-        Route::get('/offline-transactions', [
+        Route::get('/whatsapp', [
             \App\Http\Controllers\Admin\OfflineTransactionController::class,
             'index',
         ])->name('offline-transactions.index');
 
-        Route::get('/offline-transactions/{transaction}', [
+        Route::get('/whatsapp/{transaction}', [
             \App\Http\Controllers\Admin\OfflineTransactionController::class,
             'show',
         ])->name('offline-transactions.show');
@@ -274,9 +274,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/sales-reports', [SalesReportController::class, 'index'])->name('sales-reports');
         Route::get('/sales-reports/print', [SalesReportController::class, 'print'])->name('sales-reports.print');
         Route::get('/sales-reports/export', [SalesReportController::class, 'export'])->name('sales-reports.export');
-        Route::get('/offline-sales-reports', [OfflineSalesReportController::class, 'index'])->name('offline-sales-reports');
-        Route::get('/offline-sales-reports/print', [OfflineSalesReportController::class, 'print'])->name('offline-sales-reports.print');
-        Route::get('/offline-sales-reports/export', [OfflineSalesReportController::class, 'export'])->name('offline-sales-reports.export');
+
+        Route::get('/whatsapp-reports', [OfflineSalesReportController::class, 'index'])->name('offline-sales-reports');
+        Route::get('/whatsapp-reports/print', [OfflineSalesReportController::class, 'print'])->name('offline-sales-reports.print');
+        Route::get('/whatsapp-reports/export', [OfflineSalesReportController::class, 'export'])->name('offline-sales-reports.export');
     });
     Route::middleware('role:super_admin,management,production')->group(function () {
         Route::get('/productions', [ProductionController::class, 'index'])->name('productions');

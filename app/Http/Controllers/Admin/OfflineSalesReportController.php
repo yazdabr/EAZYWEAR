@@ -341,7 +341,7 @@ class OfflineSalesReportController extends Controller
 
     public function export(Request $request)
     {
-        $filename = 'laporan-penjualan-offline-' . now()->format('Y-m-d-His') . '.xlsx';
+        $filename = 'Laporan_Penjualan_WA_' . now()->format('Y-m-d-His') . '.xlsx';
 
         return Excel::download(
             new OfflineSalesReportExport($request),

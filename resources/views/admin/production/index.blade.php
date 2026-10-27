@@ -303,7 +303,7 @@
                         <th class="px-6 py-4">Periode</th>
                         <th class="px-6 py-4">Produk</th>
                         <th class="px-6 py-4">Kategori</th>
-                        <th class="px-6 py-4 text-center">Ukuran</th>
+                        <th class="px-6 py-4 text-left">Ukuran</th>
                         <th class="px-6 py-4 text-center">Total</th>
                         <th class="px-6 py-4 text-center">Status</th>
                         <th class="px-6 py-4 text-center">Aksi</th>

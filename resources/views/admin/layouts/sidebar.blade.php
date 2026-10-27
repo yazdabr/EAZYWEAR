@@ -152,6 +152,17 @@
                     <span>Data Transaksi WhatsApp</span>
                 </a>
 
+                <a
+                    href="{{ route('admin.stadium-transactions.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.stadium-transactions.*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-trophy class="h-5 w-5 shrink-0"/>
+                    <span>Data Transaksi Stadion</span>
+                </a>
+
             </nav>
 
 
@@ -249,7 +260,18 @@
                         : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
                 >
                     <x-heroicon-o-clipboard-document-list class="h-5 w-5 shrink-0"/>
-                    <span>Transaksi Offline</span>
+                    <span>Transaksi WhatsApp</span>
+                </a>
+
+                <a
+                    href="{{ route('admin.stadium-transactions.index') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.stadium-transactions.*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-trophy class="h-5 w-5 shrink-0"/>
+                    <span>Transaksi Stadion</span>
                 </a>
 
             </nav>
@@ -319,6 +341,17 @@
                 >
                     <x-heroicon-o-building-storefront class="h-5 w-5 shrink-0"/>
                     <span>Penjualan WhatsApp</span>
+                </a>
+
+                <a
+                    href="{{ route('admin.stadium-sales-reports') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.stadium-sales-reports*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-trophy class="h-5 w-5 shrink-0"/>
+                    <span>Penjualan Stadion</span>
                 </a>
 
             </nav>

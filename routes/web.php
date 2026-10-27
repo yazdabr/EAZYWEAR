@@ -294,4 +294,20 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/production-reports/print', [ProductionReportController::class, 'print'])->name('production-reports.print');
         Route::get('/production-reports/export', [ProductionReportController::class, 'export'])->name('production-reports.export');
     });
+
+    // TRANSAKSI STADION
+    Route::middleware('role:super_admin,management')->group(function () {
+        Route::get('/stadium-transactions', [
+            \App\Http\Controllers\Admin\StadiumTransactionController::class,
+            'index',
+        ])->name('stadium-transactions.index');
+    });
+
+    // LAPORAN PENJUALAN STADION
+    Route::middleware('role:super_admin,management,production,reports')->group(function () {
+        Route::get('/stadium-sales-reports', [
+            \App\Http\Controllers\Admin\StadiumSalesReportController::class,
+            'index',
+        ])->name('stadium-sales-reports');
+    });
 });

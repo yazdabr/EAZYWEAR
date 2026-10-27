@@ -149,7 +149,7 @@
                         : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
                 >
                     <x-heroicon-o-clipboard-document-list class="h-5 w-5 shrink-0"/>
-                    <span>Data Transaksi WhatsApp</span>
+                    <span>Data Transaksi WA</span>
                 </a>
 
                 <a

@@ -1,4 +1,4 @@
-<section class="bg-white py-12 sm:py-20 lg:py-28">
+﻿<section class="bg-white py-12 sm:py-20 lg:py-28">
     <x-ui.container>
 
         {{-- Heading --}}
@@ -33,7 +33,7 @@
                         <source media="(min-width: 640px)" srcset="{{ asset('images/hero/jersey1.webp') }}">
                         {{-- Gambar Mobile --}}
                         <img
-                            src="{{ asset('images/hero/jersey1-mobile.webp') }}"
+                            src="{{ asset('images/hero/jersey1-mobile-800.webp') }}"
                             alt="Jersey Collection 01"
                             class="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
                         >
@@ -73,7 +73,7 @@
                     <picture>
                         <source media="(min-width: 640px)" srcset="{{ asset('images/hero/jersey2.webp') }}">
                         <img
-                            src="{{ asset('images/hero/jersey2-mobile.webp') }}"
+                            src="{{ asset('images/hero/jersey2-mobile-800.webp') }}"
                             alt="Jersey Collection 02"
                             class="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
                         >
@@ -113,7 +113,7 @@
                     <picture>
                         <source media="(min-width: 640px)" srcset="{{ asset('images/hero/jersey3.webp') }}">
                         <img
-                            src="{{ asset('images/hero/jersey3-mobile.webp') }}"
+                            src="{{ asset('images/hero/jersey3-mobile-800.webp') }}"
                             alt="Jersey Collection 03"
                             class="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
                         >

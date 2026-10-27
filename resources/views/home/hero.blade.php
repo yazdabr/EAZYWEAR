@@ -3,10 +3,13 @@
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
         <picture class="relative z-0 block h-full w-full">
             {{-- Mobile: 900x600, 60.53 KB --}}
-            <source media="(max-width: 639px)" srcset="{{ asset('images/front/fixbglagi-mobile.webp') }}">
+            <source
+                media="(max-width: 639px)"
+                srcset="{{ asset('images/front/fixbglagi-mobile.webp') }}"
+            >
             {{-- Desktop: 2160x1440, 449 KB --}}
-            <img 
-                src="{{ asset('images/front/fixbglagi.webp') }}" 
+            <img
+                src="{{ asset('images/front/fixbglagi-optimized.webp') }}"
                 alt="" 
                 fetchpriority="high" 
                 loading="eager" 

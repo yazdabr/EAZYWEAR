@@ -40,7 +40,7 @@
     </a>
 
     {{-- ================= STATISTICS ================= --}}
-    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
 
         {{-- TOTAL PRODUKSI --}}
         <x-admin.stat-card
@@ -78,19 +78,6 @@
         >
             <x-slot:icon>
                 <x-heroicon-o-check-badge class="h-6 w-6 sm:h-7 sm:w-7"/>
-            </x-slot:icon>
-        </x-admin.stat-card>
-
-        {{-- PRODUKSI BERJALAN --}}
-        <x-admin.stat-card
-            title="Sedang Diproses"
-            value="{{ number_format($inProgressProductions, 0, ',', '.') }}"
-            growth="Status in progress"
-            :positive="false"
-            :neutral="true"
-        >
-            <x-slot:icon>
-                <x-heroicon-o-clock class="h-6 w-6 sm:h-7 sm:w-7"/>
             </x-slot:icon>
         </x-admin.stat-card>
 
@@ -135,7 +122,7 @@
                     {{-- BARIS 1: KODE DAN STATUS --}}
                     <div class="flex items-start justify-between gap-2">
                         <div class="min-w-0">
-                            <p class="truncate text-sm font-bold text-slate-900">
+                            <p class="whitespace-normal break-words text-sm font-bold text-slate-900">
                                 {{ $production->production_code }}
                             </p>
 
@@ -160,7 +147,7 @@
                                     Nama Produk
                                 </p>
 
-                                <p class="mt-0.5 truncate text-sm font-semibold text-slate-800">
+                                <p class="mt-0.5 whitespace-normal break-words text-sm font-semibold text-slate-800">
                                     {{ $production->product_name }}
                                 </p>
                             </div>
@@ -208,13 +195,30 @@
                                 Jumlah Per Ukuran
                             </p>
 
-                            <div class="flex flex-wrap gap-1.5">
-                                @foreach($production->items as $item)
-                                    <span class="rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700">
-                                        {{ $item->size->name ?? '-' }}:
-                                        {{ number_format($item->quantity, 0, ',', '.') }}
-                                    </span>
-                                @endforeach
+                            <div class="flex max-w-[280px] flex-wrap justify-start gap-x-1.5 gap-y-2">
+                                @php
+    $sizeOrder = [
+        'S' => 1, 'M' => 2, 'L' => 3, 'XL' => 4,
+        'XXL' => 5, '2XL' => 5,
+        '3XL' => 6, '4XL' => 7, '5XL' => 8,
+    ];
+
+    $sizeBreakdown = $production->items
+        ->groupBy(fn ($item) => strtoupper(trim($item->size?->name ?? '-')))
+        ->map(fn ($items) => [
+            'regular' => (int) $items->where('is_longsleeve', false)->sum('quantity'),
+            'ls' => (int) $items->where('is_longsleeve', true)->sum('quantity'),
+        ])
+        ->sortBy(fn ($value, $size) => $sizeOrder[$size] ?? 99);
+@endphp
+@foreach($sizeBreakdown as $size => $quantity)
+    @if($quantity['regular'] > 0)
+        <span class="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-semibold text-slate-700">{{ $size }} : {{ number_format($quantity['regular'], 0, ',', '.') }}</span>
+    @endif
+    @if($quantity['ls'] > 0)
+        <span class="rounded-md border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-semibold text-slate-700">{{ $size }} - LS : {{ number_format($quantity['ls'], 0, ',', '.') }}</span>
+    @endif
+@endforeach
                             </div>
                         </div>
                     @endif
@@ -364,7 +368,7 @@
 
                             {{-- PRODUK --}}
                             <td class="max-w-[180px] px-6 py-4">
-                                <p class="truncate text-sm font-semibold text-slate-800">
+                                <p class="whitespace-normal break-words text-sm font-semibold text-slate-800">
                                     {{ $production->product_name }}
                                 </p>
                             </td>
@@ -378,17 +382,32 @@
 
                             {{-- UKURAN --}}
                             <td class="min-w-[180px] px-6 py-4">
-                                <div class="flex flex-wrap justify-center gap-1">
-                                    @forelse($production->items as $item)
-                                        <span class="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
-                                            {{ $item->size->name ?? '-' }}:
-                                            {{ number_format($item->quantity, 0, ',', '.') }}
-                                        </span>
-                                    @empty
-                                        <span class="text-xs text-slate-400">
-                                            -
-                                        </span>
-                                    @endforelse
+                                <div class="flex max-w-[280px] flex-wrap justify-start gap-x-2 gap-y-3">
+                                    @php
+    $sizeOrder = [
+        'S' => 1, 'M' => 2, 'L' => 3, 'XL' => 4,
+        'XXL' => 5, '2XL' => 5,
+        '3XL' => 6, '4XL' => 7, '5XL' => 8,
+    ];
+
+    $sizeBreakdown = $production->items
+        ->groupBy(fn ($item) => strtoupper(trim($item->size?->name ?? '-')))
+        ->map(fn ($items) => [
+            'regular' => (int) $items->where('is_longsleeve', false)->sum('quantity'),
+            'ls' => (int) $items->where('is_longsleeve', true)->sum('quantity'),
+        ])
+        ->sortBy(fn ($value, $size) => $sizeOrder[$size] ?? 99);
+@endphp
+@forelse($sizeBreakdown as $size => $quantity)
+    @if($quantity['regular'] > 0)
+        <span class="rounded-md bg-slate-100 px-2 py-1.5 text-[11px] font-semibold text-slate-700">{{ $size }} : {{ number_format($quantity['regular'], 0, ',', '.') }}</span>
+    @endif
+    @if($quantity['ls'] > 0)
+        <span class="rounded-md bg-slate-100 px-2 py-1.5 text-[11px] font-semibold text-slate-700">{{ $size }} - LS : {{ number_format($quantity['ls'], 0, ',', '.') }}</span>
+    @endif
+@empty
+    <span class="text-xs text-slate-400">-</span>
+@endforelse
                                 </div>
                             </td>
 

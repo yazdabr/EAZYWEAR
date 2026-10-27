@@ -1,4 +1,4 @@
-
+﻿
 @extends('admin.layouts.app')
 
 @section('title', 'Laporan Produksi')
@@ -31,7 +31,7 @@
             >
                 <x-heroicon-o-printer class="h-4 w-4 shrink-0 sm:h-5 sm:w-5"/>
 
-                <span class="truncate">
+                <span class="whitespace-normal break-words">
                     Cetak Laporan
                 </span>
             </a>
@@ -44,7 +44,7 @@
             >
                 <x-heroicon-o-document-arrow-down class="h-4 w-4 shrink-0 sm:h-5 sm:w-5"/>
 
-                <span class="truncate">
+                <span class="whitespace-normal break-words">
                     Export Excel
                 </span>
             </a>
@@ -242,7 +242,7 @@
                         Total Produksi
                     </p>
 
-                    <h3 class="mt-1 truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                    <h3 class="mt-1 whitespace-normal break-words text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                         {{ number_format($totalProductions, 0, ',', '.') }}
                     </h3>
 
@@ -272,7 +272,7 @@
                         Total Kuantitas
                     </p>
 
-                    <h3 class="mt-1 truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                    <h3 class="mt-1 whitespace-normal break-words text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                         {{ number_format($totalQuantity, 0, ',', '.') }}
                     </h3>
 
@@ -302,7 +302,7 @@
                         Produksi Selesai
                     </p>
 
-                    <h3 class="mt-1 truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                    <h3 class="mt-1 whitespace-normal break-words text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                         {{ number_format($completedProductions, 0, ',', '.') }}
                     </h3>
 
@@ -332,7 +332,7 @@
                         Dalam Proses
                     </p>
 
-                    <h3 class="mt-1 truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                    <h3 class="mt-1 whitespace-normal break-words text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                         {{ number_format($inProgressProductions, 0, ',', '.') }}
                     </h3>
 
@@ -412,7 +412,7 @@
                                 {{ $production->production_code }}
                             </p>
 
-                            <h4 class="mt-1 truncate text-sm font-bold text-slate-900">
+                            <h4 class="mt-1 whitespace-normal break-words text-sm font-bold text-slate-900">
                                 {{ $production->product_name ?? '-' }}
                             </h4>
 
@@ -451,22 +451,36 @@
                                 Ukuran
                             </span>
 
-                            <div class="text-right font-medium text-slate-700">
+                            <div class="text-right font-medium text-slate-700 space-y-2">
 
-                                @forelse($production->items as $item)
+                                @php
+    $sizeOrder = [
+        'S' => 1, 'M' => 2, 'L' => 3, 'XL' => 4,
+        'XXL' => 5, '2XL' => 5,
+        '3XL' => 6, '4XL' => 7, '5XL' => 8,
+    ];
 
-                                    <span class="inline-block">
-                                        {{ $item->size?->name ?? '-' }}:
-                                        {{ number_format((int) $item->quantity, 0, ',', '.') }} pcs
-                                    </span>
-
-                                    @if(!$loop->last)
-                                        <span class="text-slate-400">, </span>
-                                    @endif
-
-                                @empty
-                                    -
-                                @endforelse
+    $sizeBreakdown = $production->items
+        ->groupBy(fn ($item) => strtoupper(trim($item->size?->name ?? '-')))
+        ->map(fn ($items) => [
+            'regular' => (int) $items->where('is_longsleeve', false)->sum('quantity'),
+            'ls' => (int) $items->where('is_longsleeve', true)->sum('quantity'),
+        ])
+        ->sortBy(fn ($value, $size) => $sizeOrder[$size] ?? 99);
+@endphp
+@forelse($sizeBreakdown as $size => $quantity)
+    @if($quantity['regular'] > 0)
+        <span class="inline-flex rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 my-1">{{ $size }} : {{ number_format($quantity['regular'], 0, ',', '.') }}</span>
+    @endif
+    @if($quantity['regular'] > 0 && $quantity['ls'] > 0)
+        <span class="text-slate-400"> | </span>
+    @endif
+    @if($quantity['ls'] > 0)
+        <span class="inline-flex rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 my-1">{{ $size }} - LS : {{ number_format($quantity['ls'], 0, ',', '.') }}</span>
+    @endif
+@empty
+    -
+@endforelse
 
                             </div>
 
@@ -600,7 +614,7 @@
 
                             <td class="px-6 py-4">
 
-                                <p class="max-w-[180px] truncate text-xs font-semibold text-slate-900">
+                                <p class="max-w-[180px] whitespace-normal break-words text-xs font-semibold text-slate-900">
                                     {{ $production->product_name ?? '-' }}
                                 </p>
 
@@ -614,20 +628,34 @@
 
                             <td class="max-w-[230px] px-6 py-4 text-xs text-slate-600">
 
-                                @forelse($production->items as $item)
+                                @php
+    $sizeOrder = [
+        'S' => 1, 'M' => 2, 'L' => 3, 'XL' => 4,
+        'XXL' => 5, '2XL' => 5,
+        '3XL' => 6, '4XL' => 7, '5XL' => 8,
+    ];
 
-                                    <span class="inline-block">
-                                        {{ $item->size?->name ?? '-' }}:
-                                        {{ number_format((int) $item->quantity, 0, ',', '.') }}
-                                    </span>
-
-                                    @if(!$loop->last)
-                                        <span class="text-slate-400">, </span>
-                                    @endif
-
-                                @empty
-                                    -
-                                @endforelse
+    $sizeBreakdown = $production->items
+        ->groupBy(fn ($item) => strtoupper(trim($item->size?->name ?? '-')))
+        ->map(fn ($items) => [
+            'regular' => (int) $items->where('is_longsleeve', false)->sum('quantity'),
+            'ls' => (int) $items->where('is_longsleeve', true)->sum('quantity'),
+        ])
+        ->sortBy(fn ($value, $size) => $sizeOrder[$size] ?? 99);
+@endphp
+@forelse($sizeBreakdown as $size => $quantity)
+    @if($quantity['regular'] > 0)
+        <span class="inline-flex rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 my-1">{{ $size }} : {{ number_format($quantity['regular'], 0, ',', '.') }}</span>
+    @endif
+    @if($quantity['regular'] > 0 && $quantity['ls'] > 0)
+        <span class="text-slate-400"> | </span>
+    @endif
+    @if($quantity['ls'] > 0)
+        <span class="inline-flex rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 my-1">{{ $size }} - LS : {{ number_format($quantity['ls'], 0, ',', '.') }}</span>
+    @endif
+@empty
+    -
+@endforelse
 
                             </td>
 

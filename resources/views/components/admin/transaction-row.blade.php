@@ -52,13 +52,20 @@
                         @if (!empty($item['size']) && $item['size'] !== '-')
                             Ukuran {{ $item['size'] }}
                         @endif
+
                         @if (!empty($item['custom_name']) || !empty($item['custom_number']))
                             · {{ trim(($item['custom_name'] ?? '') . ' ' . ($item['custom_number'] ?? '')) }}
                         @endif
-                        · {{ (int) ($item['qty'] ?? 0) }} pcs
-                        @if (!empty($item['is_longsleeve']))
-                            · Lengan panjang
+
+                        @if (!empty($item['is_patch']))
+                            · PATCH
                         @endif
+
+                        @if (!empty($item['is_longsleeve']))
+                            · LONGSLEEVE
+                        @endif
+
+                        · {{ (int) ($item['qty'] ?? 0) }} pcs
                     </p>
                 </div>
             @empty

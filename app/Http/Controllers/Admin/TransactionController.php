@@ -181,6 +181,7 @@ class TransactionController extends Controller
                         'custom_name' => mb_strtoupper($item->custom_name ?? '', 'UTF-8'),
                         'custom_number' => $item->custom_number ?? '',
                         'is_longsleeve' => (bool) $item->is_longsleeve,
+                        'is_patch' => (bool) ($item->is_patch ?? false),
                         'longsleeve_price' => (int) $item->longsleeve_price,
                         'qty' => (int) $item->qty,
                         'price' => (float) $item->price,

@@ -391,16 +391,31 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                                                 <span class="font-medium text-slate-500">| {{ $shipmentItem->qty }} pcs</span>
                                                             </p>
                                                             @if($shipmentItem->custom_name)
-                                                                <p class="mt-1 text-xs font-bold uppercase text-[#AE7C18]">Nama: <span>{{ $shipmentItem->custom_name }}</span></p>
+                                                                <p class="mt-1 text-sm font-semibold">
+                                                                    <span class="text-slate-700">Nama:</span>
+                                                                    <span class="font-bold uppercase text-[#AE7C18]">{{ mb_strtoupper($shipmentItem->custom_name, 'UTF-8') }}</span>
+                                                                </p>
                                                             @endif
+
                                                             @if($shipmentItem->custom_number)
-                                                                <p class="mt-1 text-xs text-slate-600">Nomor: <span class="font-semibold">{{ $shipmentItem->custom_number }}</span></p>
+                                                                <p class="mt-1 text-sm font-semibold">
+                                                                    <span class="text-slate-700">Nomor:</span>
+                                                                    <span class="font-bold text-[#AE7C18]">{{ $shipmentItem->custom_number }}</span>
+                                                                </p>
                                                             @endif
                                                             @if($shipmentItem->is_longsleeve || $shipmentItem->is_patch)
-                                                                <p class="mt-1 text-xs font-bold text-[#AE7C18]">
-                                                                    @if($shipmentItem->is_longsleeve) Longsleeve @endif
-                                                                    @if($shipmentItem->is_longsleeve && $shipmentItem->is_patch) | @endif
-                                                                    @if($shipmentItem->is_patch) Patch @endif
+                                                                <p class="mt-1 text-sm font-semibold">
+                                                                    @if($shipmentItem->is_longsleeve)
+                                                                        <span class="font-bold uppercase text-[#AE7C18]">LONGSLEEVE</span>
+                                                                    @endif
+
+                                                                    @if($shipmentItem->is_longsleeve && $shipmentItem->is_patch)
+                                                                        <span class="text-slate-700">|</span>
+                                                                    @endif
+
+                                                                    @if($shipmentItem->is_patch)
+                                                                        <span class="font-bold uppercase text-[#AE7C18]">PATCH</span>
+                                                                    @endif
                                                                 </p>
                                                             @endif
                                                         </div>
@@ -621,7 +636,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                                                 @if($fulfillmentItem->custom_name)
                                                     <p class="mt-1.5 text-sm">
-                                                        <span class="font-bold uppercase text-[#AE7C18]">Nama:</span>
+                                                        <span class="font-semibold text-slate-700">Nama:</span>
                                                         <span class="font-bold uppercase text-[#AE7C18]">{{ $fulfillmentItem->custom_name }}</span>
                                                     </p>
                                                 @endif
@@ -634,7 +649,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                                 @endif
                                                 @if($fulfillmentItem->is_longsleeve)
                                                     <p class="mt-1 text-sm">
-                                                        <span class="font-semibold text-slate-700">Longsleeve</span>
+                                                        <span class="font-bold uppercase text-[#AE7C18]">Longsleeve</span>
                                                         <span class="font-semibold text-[#AE7C18]">
                                                             (+ Rp {{ number_format((int) $fulfillmentItem->longsleeve_price, 0, ',', '.') }})
                                                         </span>
@@ -643,7 +658,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
 
                                                 @if($fulfillmentItem->is_patch)
                                                     <p class="mt-1 text-sm">
-                                                        <span class="font-semibold text-slate-700">Patch</span>
+                                                        <span class="font-bold uppercase text-[#AE7C18]">Patch</span>
                                                         <span class="font-semibold text-[#AE7C18]">
                                                             (+ Rp {{ number_format((int) $fulfillmentItem->patch_price, 0, ',', '.') }})
                                                         </span>

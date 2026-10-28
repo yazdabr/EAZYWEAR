@@ -301,6 +301,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             \App\Http\Controllers\Admin\StadiumTransactionController::class,
             'index',
         ])->name('stadium-transactions.index');
+
+        Route::get('/stadium-transactions/{transaction}', [
+            \App\Http\Controllers\Admin\StadiumTransactionController::class,
+            'show',
+        ])->name('stadium-transactions.show');
     });
 
     // LAPORAN PENJUALAN STADION
@@ -309,5 +314,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             \App\Http\Controllers\Admin\StadiumSalesReportController::class,
             'index',
         ])->name('stadium-sales-reports');
+
+        Route::get('/stadium-sales-reports/print', [
+            \App\Http\Controllers\Admin\StadiumSalesReportController::class,
+            'print',
+        ])->name('stadium-sales-reports.print');
     });
+
 });

@@ -40,7 +40,7 @@ class SalesReportController extends Controller
             'items.productVariant.color',
         ])->whereIn('status', Transaction::SALES_REPORT_STATUSES)
         ->where(function ($q) {
-            $q->whereNull('source')->orWhere('source', '<>', 'Booth');
+            $q->whereNull('source')->orWhere('source', 'Website');
         })
         ->whereNotIn('invoice_number', [
             'INV-20261008-OHJ6PG',
@@ -83,6 +83,13 @@ class SalesReportController extends Controller
 
             $previousTransactions = Transaction::whereIn('status', Transaction::SALES_REPORT_STATUSES)
                 ->whereBetween('transaction_date', [$previousStart, $previousEnd])
+                ->where(function ($q) {
+                    $q->whereNull('source')->orWhere('source', 'Website');
+                })
+                ->whereNotIn('invoice_number', [
+                    'INV-20261008-OHJ6PG',
+                    'INV-20261013-MBXNU0',
+                ])
                 ->with('items')
                 ->get();
 
@@ -115,6 +122,9 @@ class SalesReportController extends Controller
         $years = Transaction::query()
             ->selectRaw('YEAR(transaction_date) as year')
             ->whereIn('status', Transaction::SALES_REPORT_STATUSES)
+            ->where(function ($q) {
+                $q->whereNull('source')->orWhere('source', 'Website');
+            })
             ->whereNotNull('transaction_date')
             ->distinct()
             ->orderByDesc('year')
@@ -385,7 +395,7 @@ class SalesReportController extends Controller
             'items.productVariant.product',
         ])->whereIn('status', Transaction::SALES_REPORT_STATUSES)
             ->where(function ($q) {
-                $q->whereNull('source')->orWhere('source', '<>', 'Booth');
+                $q->whereNull('source')->orWhere('source', 'Website');
             })
             ->whereNotIn('invoice_number', [
                 'INV-20261008-OHJ6PG',

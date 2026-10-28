@@ -49,7 +49,7 @@ class TransactionController extends Controller
 
         $query = Transaction::with(['customer', 'items.productVariant.product.images', 'items.productVariant.size', 'items.productVariant.color']);
         $query->where(function ($q) {
-            $q->whereNull('source')->orWhere('source', '<>', 'Booth');
+            $q->whereNull('source')->orWhere('source', 'Website');
         });
 
         if ($hiddenStatuses !== []) {
@@ -201,12 +201,12 @@ class TransactionController extends Controller
         $currentMonth = Carbon::now()->startOfMonth();
         $previousMonth = Carbon::now()->subMonth()->startOfMonth();
 
-        $currentTransactions = Transaction::whereBetween('transaction_date', [$currentMonth->copy()->startOfMonth(), $currentMonth->copy()->endOfMonth()])->where('status', 'PAID')->count();
-        $previousTransactions = Transaction::whereBetween('transaction_date', [$previousMonth->copy()->startOfMonth(), $previousMonth->copy()->endOfMonth()])->where('status', 'PAID')->count();
-        $currentRevenue = Transaction::whereBetween('transaction_date', [$currentMonth->copy()->startOfMonth(), $currentMonth->copy()->endOfMonth()])->where('status', 'PAID')->sum('total');
-        $previousRevenue = Transaction::whereBetween('transaction_date', [$previousMonth->copy()->startOfMonth(), $previousMonth->copy()->endOfMonth()])->where('status', 'PAID')->sum('total');
-        $currentCompleted = Transaction::whereBetween('transaction_date', [$currentMonth->copy()->startOfMonth(), $currentMonth->copy()->endOfMonth()])->where('status', Transaction::ORDER_COMPLETED)->count();
-        $previousCompleted = Transaction::whereBetween('transaction_date', [$previousMonth->copy()->startOfMonth(), $previousMonth->copy()->endOfMonth()])->where('status', Transaction::ORDER_COMPLETED)->count();
+        $currentTransactions = Transaction::where(function ($q) { $q->whereNull('source')->orWhere('source', 'Website'); })->whereBetween('transaction_date', [$currentMonth->copy()->startOfMonth(), $currentMonth->copy()->endOfMonth()])->where('status', 'PAID')->count();
+        $previousTransactions = Transaction::where(function ($q) { $q->whereNull('source')->orWhere('source', 'Website'); })->whereBetween('transaction_date', [$previousMonth->copy()->startOfMonth(), $previousMonth->copy()->endOfMonth()])->where('status', 'PAID')->count();
+        $currentRevenue = Transaction::where(function ($q) { $q->whereNull('source')->orWhere('source', 'Website'); })->whereBetween('transaction_date', [$currentMonth->copy()->startOfMonth(), $currentMonth->copy()->endOfMonth()])->where('status', 'PAID')->sum('total');
+        $previousRevenue = Transaction::where(function ($q) { $q->whereNull('source')->orWhere('source', 'Website'); })->whereBetween('transaction_date', [$previousMonth->copy()->startOfMonth(), $previousMonth->copy()->endOfMonth()])->where('status', 'PAID')->sum('total');
+        $currentCompleted = Transaction::where(function ($q) { $q->whereNull('source')->orWhere('source', 'Website'); })->whereBetween('transaction_date', [$currentMonth->copy()->startOfMonth(), $currentMonth->copy()->endOfMonth()])->where('status', Transaction::ORDER_COMPLETED)->count();
+        $previousCompleted = Transaction::where(function ($q) { $q->whereNull('source')->orWhere('source', 'Website'); })->whereBetween('transaction_date', [$previousMonth->copy()->startOfMonth(), $previousMonth->copy()->endOfMonth()])->where('status', Transaction::ORDER_COMPLETED)->count();
 
         $calculateGrowth = function ($current, $previous) {
             if ((float) $previous === 0.0) {
@@ -234,7 +234,7 @@ class TransactionController extends Controller
             ->where('status', 'PAID')
             ->where(function ($query) {
                 $query->whereNull('source')
-                    ->orWhere('source', '<>', 'Booth');
+                    ->orWhere('source', 'Website');
             })
             ->count();
         return view('admin.transactions.index', [
@@ -275,7 +275,7 @@ class TransactionController extends Controller
             ->where('paid_at', '>', $since)
             ->where(function ($query) {
                 $query->whereNull('source')
-                    ->orWhere('source', '<>', 'Booth');
+                    ->orWhere('source', 'Website');
             })
             ->orderBy('paid_at')
             ->limit(50)
@@ -816,7 +816,7 @@ class TransactionController extends Controller
             ->where('status', 'PAID')
             ->where(function ($query) {
                 $query->whereNull('source')
-                    ->orWhere('source', '<>', 'Booth');
+                    ->orWhere('source', 'Website');
             })
             ->when($skipIds !== [], function ($query) use ($skipIds) {
                 $query->whereNotIn('id', $skipIds);
@@ -859,7 +859,7 @@ class TransactionController extends Controller
             ->where('status', 'PAID')
             ->where(function ($query) {
                 $query->whereNull('source')
-                    ->orWhere('source', '<>', 'Booth');
+                    ->orWhere('source', 'Website');
             });
 
         if ($excludedIds !== []) {

@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('title', 'WA')
-@section('page-title', 'Data Transaksi Stadion')
+@section('page-title', 'Transaksi Stadion')
 
 @section('content')
 
@@ -10,10 +10,10 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
             <h2 class="text-xl font-bold text-slate-900 sm:text-3xl">
-                Data Transaksi Stadion
+                Transaksi Stadion
             </h2>
             <p class="mt-1 text-xs text-slate-500 sm:text-sm">
-                Kelola transaksi WA dan pembayaran pelanggan.
+                Kelola transaksi stadion dan pembayaran pelanggan.
             </p>
         </div>
 

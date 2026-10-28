@@ -114,6 +114,14 @@
         {!! json_encode($localBusinessSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
     </script>
 
+    <link
+        rel="preload"
+        as="image"
+        href="{{ asset('images/front/fixbglagi-mobile.webp') }}"
+        media="(max-width: 639px)"
+        fetchpriority="high"
+    >
+
     {{-- Schema tambahan dari masing-masing halaman --}}
     @stack('schema')
     <link rel="preconnect" href="https://fonts.googleapis.com">

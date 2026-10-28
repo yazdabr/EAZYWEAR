@@ -23,7 +23,6 @@
 
 <div
     x-data="{ show: false }"
-    x-cloak
     x-intersect.once="
         setTimeout(() => {
             show = true

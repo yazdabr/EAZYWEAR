@@ -16,7 +16,8 @@ class SendPreOrderShippingScheduleEmails extends Command
 {
     protected $signature = 'emails:pre-order-shipping-schedule
                             {--send : Kirim email setelah daftar penerima diperiksa}
-                            {--include-legacy : Sertakan item legacy yang semua variannya cocok dengan PO terkonfirmasi}';
+                            {--include-legacy : Sertakan item legacy PO}
+                            {--limit=0 : Batasi jumlah invoice per eksekusi (0 = tanpa batas)}';
 
     protected $description = 'Preview atau kirim email jadwal pengiriman PO mulai 3 November 2026';
 
@@ -199,11 +200,21 @@ class SendPreOrderShippingScheduleEmails extends Command
             ];
         }
 
+        $totalRecipients = count($recipients);
+        $limit = max(0, (int) $this->option('limit'));
+
+        // Penerima sudah diurutkan berdasarkan ID transaksi.
+        // Invoice yang berhasil dikirim akan dikeluarkan pada eksekusi berikutnya.
+        if ($limit > 0) {
+            $recipients = array_slice($recipients, 0, $limit);
+        }
+
         $this->newLine();
         $this->info('Jadwal pengiriman PO: mulai 3 November 2026');
         $this->info('Mode: ' . ($this->option('send') ? 'KIRIM EMAIL' : 'PREVIEW'));
         $this->info('Filter kecocokan produk + varian legacy aktif: ' . ($this->option('include-legacy') ? 'YA' : 'TIDAK'));
-        $this->info('Jumlah invoice dalam daftar: ' . count($recipients));
+        $this->info('Jumlah invoice eligible: ' . $totalRecipients);
+        $this->info('Jumlah invoice batch ini: ' . count($recipients));
 
         $this->table(
             [

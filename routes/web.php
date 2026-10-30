@@ -295,6 +295,17 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/production-reports/export', [ProductionReportController::class, 'export'])->name('production-reports.export');
     });
 
+    // DATA TRANSAKSI NNS
+    Route::middleware('role:super_admin,management')->group(function () {
+        Route::get('/nns-transactions', function () {
+            return view('admin.nns-transactions.index');
+        })->name('nns-transactions.index');
+
+        Route::get('/nns-transactions/detail', function () {
+            return view('admin.nns-transactions.show');
+        })->name('nns-transactions.show');
+    });
+
     // TRANSAKSI STADION
     Route::middleware('role:super_admin,management')->group(function () {
         Route::get('/stadium-transactions', [

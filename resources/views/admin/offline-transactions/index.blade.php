@@ -359,83 +359,80 @@
                             </td>
                             <td class="min-w-48 px-5 py-4">
                                 @if (str_starts_with($transaction->invoice_number ?? '', 'BOOTH-LEGACY-'))
-    @php
-        $legacyGroups = [];
+                                    @php
+                                        $legacyGroups = [];
 
-        foreach ($transaction->items as $item) {
-            $name = $item->productVariant?->product?->name ?? '';
+                                        foreach ($transaction->items as $item) {
+                                            $name = $item->productVariant?->product?->name ?? '';
 
-            preg_match('/\b(Supporter|Stadium)\b/i', $name, $versionMatch);
-            preg_match('/\b(Home|Away|Third)\b/i', $name, $kitMatch);
+                                            preg_match('/\b(Supporter|Stadium)\b/i', $name, $versionMatch);
+                                            preg_match('/\b(Home|Away|Third)\b/i', $name, $kitMatch);
 
-            $version = isset($versionMatch[1])
-                ? ucfirst(strtolower($versionMatch[1]))
-                : 'Produk';
+                                            $version = isset($versionMatch[1])
+                                                ? ucfirst(strtolower($versionMatch[1]))
+                                                : 'Produk';
 
-            $kit = isset($kitMatch[1])
-                ? ucfirst(strtolower($kitMatch[1]))
-                : $name;
+                                            $kit = isset($kitMatch[1])
+                                                ? ucfirst(strtolower($kitMatch[1]))
+                                                : $name;
 
-            $key = $version . '|' . $kit;
+                                            $key = $version . '|' . $kit;
 
-            if (!isset($legacyGroups[$key])) {
-                $legacyGroups[$key] = [
-                    'version' => $version,
-                    'kit' => $kit,
-                    'qty' => 0,
-                ];
-            }
+                                            if (!isset($legacyGroups[$key])) {
+                                                $legacyGroups[$key] = [
+                                                    'version' => $version,
+                                                    'kit' => $kit,
+                                                    'qty' => 0,
+                                                ];
+                                            }
 
-            $legacyGroups[$key]['qty'] += (int) $item->qty;
-        }
+                                            $legacyGroups[$key]['qty'] += (int) $item->qty;
+                                        }
 
-        $groupedOrders = collect($legacyGroups)->groupBy('version');
-        $totalUniqueProducts = count($legacyGroups);
-        $totalQty = $transaction->items->sum('qty');
-    @endphp
+                                        $groupedOrders = collect($legacyGroups)->groupBy('version');
+                                        $totalUniqueProducts = count($legacyGroups);
+                                        $totalQty = $transaction->items->sum('qty');
+                                    @endphp
 
-    @foreach ($groupedOrders as $version => $products)
-        @php
-            $kits = $products->pluck('kit')->unique()->values();
+                                    @foreach ($groupedOrders as $version => $products)
+                                        @php
+                                            $kits = $products->pluck('kit')->unique()->values();
 
-            $labels = $kits->count() > 1
-                ? $kits->slice(0, -1)->implode(', ') . ' & ' . $kits->last()
-                : $kits->first();
+                                            $labels = $kits->count() > 1
+                                                ? $kits->slice(0, -1)->implode(', ') . ' & ' . $kits->last()
+                                                : $kits->first();
 
-            $groupLabel = $version === 'Produk'
-                ? $labels
-                : $version . ' ' . $labels;
-        @endphp
+                                            $groupLabel = $version === 'Produk'
+                                                ? $labels
+                                                : $version . ' ' . $labels;
+                                        @endphp
 
-        <div class="mb-2 last:mb-0">
-            <p class="font-medium text-slate-700">{{ $groupLabel }}</p>
-            <p class="text-xs text-slate-500">
-                {{ $products->sum('qty') }} pcs | {{ $products->count() }} jenis produk
-            </p>
-        </div>
-    @endforeach
+                                        <div class="mb-2 last:mb-0">
+                                            <p class="font-medium text-slate-700">{{ $groupLabel }}</p>
+                                            <p class="text-xs text-slate-500">
+                                                {{ $products->sum('qty') }} pcs | {{ $products->count() }} jenis produk
+                                            </p>
+                                        </div>
+                                    @endforeach
 
-    <p class="text-xs text-slate-500">
-        Total {{ $totalUniqueProducts }} jenis produk | {{ $totalQty }} pcs
-    </p>
-@else
-@foreach ($transaction->items as $item)
-        <div class="mb-2 last:mb-0">
-            <p class="font-medium text-slate-700">
-                {{ $item->productVariant?->product?->name ?? 'Produk' }}
-                @if ($item->productVariant?->size?->name)
-                    ({{ $item->productVariant->size->name }})
-                @endif
-            </p>
-            <p class="text-xs text-slate-500">
-                {{ $item->qty }} x Rp {{ number_format((float) $item->price, 0, ',', '.') }}
-            </p>
-        </div>
-    @endforeach
-@endif
-                            </td>
-                            <td class="whitespace-nowrap px-5 py-4 text-center text-slate-600">
-                                {{ $transaction->payment_method ?? '-' }}
+                                    <p class="text-xs text-slate-500">
+                                        Total {{ $totalUniqueProducts }} jenis produk | {{ $totalQty }} pcs
+                                    </p>
+                                @else
+                                @foreach ($transaction->items as $item)
+                                        <div class="mb-2 last:mb-0">
+                                            <p class="font-medium text-slate-700">
+                                                {{ $item->productVariant?->product?->name ?? 'Produk' }}
+                                                @if ($item->productVariant?->size?->name)
+                                                    ({{ $item->productVariant->size->name }})
+                                                @endif
+                                            </p>
+                                            <p class="text-xs text-slate-500">
+                                                {{ $item->qty }} x Rp {{ number_format((float) $item->price, 0, ',', '.') }}
+                                            </p>
+                                        </div>
+                                    @endforeach
+                                @endif
                             </td>
                             <td class="whitespace-nowrap px-5 py-4 text-center font-bold text-slate-900">
                                 Rp {{ number_format((float) $transaction->total, 0, ',', '.') }}
@@ -444,6 +441,9 @@
                                         Diskon Rp {{ number_format((float) $transaction->discount, 0, ',', '.') }}
                                     </p>
                                 @endif
+                            </td>
+                            <td class="whitespace-nowrap px-5 py-4 text-center text-slate-600">
+                                {{ $transaction->payment_method ?? '-' }}
                             </td>
                             <td class="whitespace-nowrap px-5 py-4 text-center">
                                 @php

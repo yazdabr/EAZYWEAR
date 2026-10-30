@@ -304,6 +304,39 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::get('/nns-transactions/detail', function () {
             return view('admin.nns-transactions.show');
         })->name('nns-transactions.show');
+
+        Route::get('/nns-sales-reports', function () {
+            return view('admin.nns-sales-reports.index');
+        })->name('nns-sales-reports');
+
+        // Laporan Penjualan NNS
+        Route::get('/nns-sales-reports', function () {
+            return view('admin.nns-sales-reports.index', [
+                'years' => [2026, 2025],
+                'totalTransactions' => 0,
+                'transactionGrowth' => 0,
+                'totalProductsSold' => 0,
+                'productGrowth' => 0,
+                'topProducts' => collect(),
+                'salesCategories' => collect(),
+                'transactions' => collect(),
+                'paginatedTransactions' => new \Illuminate\Pagination\LengthAwarePaginator(
+                    [],
+                    0,
+                    10,
+                    1,
+                    [
+                        'path' => request()->url(),
+                        'query' => request()->query(),
+                    ]
+                ),
+            ]);
+        })->name('nns-sales-reports');
+
+        // Print Laporan NNS (sementara)
+        Route::get('/nns-sales-reports/print', function () {
+            return redirect()->route('admin.nns-sales-reports');
+        })->name('nns-sales-reports.print');
     });
 
     // TRANSAKSI STADION

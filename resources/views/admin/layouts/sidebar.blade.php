@@ -376,6 +376,18 @@
                     <span>Penjualan Stadion</span>
                 </a>
 
+                {{-- Laporan Penjualan NNS --}}
+                <a
+                    href="{{ route('admin.nns-sales-reports') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.nns-sales-reports*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-chart-bar class="h-5 w-5 shrink-0"/>
+                    <span>Penjualan NNS</span>
+                </a>
+
             </nav>
 
             <div class="mt-6 px-2">

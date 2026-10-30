@@ -1,3 +1,4 @@
+
 @php
     $role = auth()->user()->role;
 @endphp
@@ -28,7 +29,7 @@
 
 
     {{-- MENU CONTENT --}}
-    <div class="flex-1 overflow-y-auto px-4 py-2">
+    <div class="sidebar-menu-scroll flex-1 overflow-y-auto px-4 py-2">
 
         {{-- ========================================================= --}}
         {{-- SUPER ADMIN --}}
@@ -52,13 +53,29 @@
 
 
             {{-- DATA UTAMA --}}
-            <div class="mt-6 px-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    DATA UTAMA
-                </p>
+            <div class="mt-3 px-2">
+                <button
+                    type="button"
+                    class="sidebar-section-toggle flex w-full items-center justify-between py-1 text-left"
+                    data-sidebar-toggle="data-utama"
+                    aria-expanded="true"
+                    aria-controls="sidebar-data-utama"
+                >
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                        DATA UTAMA
+                    </span>
+
+                    <x-heroicon-o-chevron-down
+                        class="sidebar-chevron h-4 w-4 text-gray-500 transition-transform duration-300"
+                    />
+                </button>
             </div>
 
-            <nav class="mt-2 space-y-1">
+            <nav
+                id="sidebar-data-utama"
+                class="mt-1 space-y-0.5 sidebar-section-panel"
+                data-sidebar-panel
+            >
 
                 {{-- Produk --}}
                 <a
@@ -99,36 +116,30 @@
             </nav>
 
 
-            {{-- TRANSAKSI
-            <div class="mt-6 px-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    TRANSAKSI
-                </p>
-            </div>
-
-            <nav class="mt-2 space-y-1">
-
-                <a
-                    href="{{ route('admin.kasir') }}"
-                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
-                    {{ request()->routeIs('admin.kasir*')
-                        ? 'bg-[#C99322] text-white shadow-lg'
-                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
-                >
-                    <x-heroicon-o-shopping-cart class="h-5 w-5 shrink-0"/>
-                    <span>Kasir Booth</span>
-                </a>
-            
-            <nav class="mt-2 space-y-1"> --}}
-
             {{-- TRANSAKSI --}}
-            <div class="mt-6 px-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    TRANSAKSI
-                </p>
+            <div class="mt-3 px-2">
+                <button
+                    type="button"
+                    class="sidebar-section-toggle flex w-full items-center justify-between py-1 text-left"
+                    data-sidebar-toggle="transaksi"
+                    aria-expanded="true"
+                    aria-controls="sidebar-transaksi"
+                >
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                        TRANSAKSI
+                    </span>
+
+                    <x-heroicon-o-chevron-down
+                        class="sidebar-chevron h-4 w-4 text-gray-500 transition-transform duration-300"
+                    />
+                </button>
             </div>
 
-            <nav class="mt-2 space-y-1">
+            <nav
+                id="sidebar-transaksi"
+                class="mt-1 space-y-0.5 sidebar-section-panel"
+                data-sidebar-panel
+            >
 
                 <a
                     href="{{ route('admin.transactions') }}"
@@ -162,7 +173,7 @@
                     <x-heroicon-o-trophy class="h-5 w-5 shrink-0"/>
                     <span>Data Transaksi Stadion</span>
                 </a>
-                
+
                 <a
                     href="{{ route('admin.nns-transactions.index') }}"
                     class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
@@ -178,13 +189,29 @@
 
 
             {{-- PRODUKSI --}}
-            <div class="mt-6 px-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    PRODUKSI
-                </p>
+            <div class="mt-3 px-2">
+                <button
+                    type="button"
+                    class="sidebar-section-toggle flex w-full items-center justify-between py-1 text-left"
+                    data-sidebar-toggle="produksi"
+                    aria-expanded="true"
+                    aria-controls="sidebar-produksi"
+                >
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                        PRODUKSI
+                    </span>
+
+                    <x-heroicon-o-chevron-down
+                        class="sidebar-chevron h-4 w-4 text-gray-500 transition-transform duration-300"
+                    />
+                </button>
             </div>
 
-            <nav class="mt-2 space-y-1">
+            <nav
+                id="sidebar-produksi"
+                class="mt-1 space-y-0.5 sidebar-section-panel"
+                data-sidebar-panel
+            >
 
                 <a
                     href="{{ route('admin.productions') }}"
@@ -207,6 +234,7 @@
         {{-- ========================================================= --}}
 
         @if ($role === 'management')
+
             {{-- DASHBOARD MANAGEMENT --}}
             <nav class="space-y-1">
                 <a
@@ -221,36 +249,31 @@
                 </a>
             </nav>
 
-            {{-- TRANSAKSI
-            <div class="mt-2 px-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    Kasir
-                </p>
-            </div>
-
-            <nav class="mt-2 space-y-1">
-
-                <a
-                    href="{{ route('admin.kasir') }}"
-                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
-                    {{ request()->routeIs('admin.kasir*')
-                        ? 'bg-[#C99322] text-white shadow-lg'
-                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
-                >
-                    <x-heroicon-o-shopping-cart class="h-5 w-5 shrink-0"/>
-                    <span>Kasir Booth</span>
-                </a>
-
-            </nav> --}}
 
             {{-- TRANSAKSI --}}
-            <div class="mt-6 px-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    TRANSAKSI
-                </p>
+            <div class="mt-3 px-2">
+                <button
+                    type="button"
+                    class="sidebar-section-toggle flex w-full items-center justify-between py-1 text-left"
+                    data-sidebar-toggle="transaksi"
+                    aria-expanded="true"
+                    aria-controls="sidebar-transaksi"
+                >
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                        TRANSAKSI
+                    </span>
+
+                    <x-heroicon-o-chevron-down
+                        class="sidebar-chevron h-4 w-4 text-gray-500 transition-transform duration-300"
+                    />
+                </button>
             </div>
 
-            <nav class="mt-2 space-y-1">
+            <nav
+                id="sidebar-transaksi"
+                class="mt-1 space-y-0.5 sidebar-section-panel"
+                data-sidebar-panel
+            >
 
                 <a
                     href="{{ route('admin.transactions') }}"
@@ -300,13 +323,29 @@
 
 
             {{-- PRODUKSI --}}
-            <div class="mt-6 px-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    PRODUKSI
-                </p>
+            <div class="mt-3 px-2">
+                <button
+                    type="button"
+                    class="sidebar-section-toggle flex w-full items-center justify-between py-1 text-left"
+                    data-sidebar-toggle="produksi"
+                    aria-expanded="true"
+                    aria-controls="sidebar-produksi"
+                >
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                        PRODUKSI
+                    </span>
+
+                    <x-heroicon-o-chevron-down
+                        class="sidebar-chevron h-4 w-4 text-gray-500 transition-transform duration-300"
+                    />
+                </button>
             </div>
 
-            <nav class="mt-2 space-y-1">
+            <nav
+                id="sidebar-produksi"
+                class="mt-1 space-y-0.5 sidebar-section-panel"
+                data-sidebar-panel
+            >
 
                 <a
                     href="{{ route('admin.productions') }}"
@@ -323,35 +362,49 @@
 
         @endif
 
+
         {{-- ========================================================= --}}
         {{-- LAPORAN --}}
         {{-- ========================================================= --}}
 
         @if (in_array($role, ['super_admin', 'management', 'production', 'reports']))
 
-            <div class="mt-6 px-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    LAPORAN PENJUALAN
-                </p>
+            {{-- LAPORAN PENJUALAN --}}
+            <div class="mt-3 px-2">
+                <button
+                    type="button"
+                    class="sidebar-section-toggle flex w-full items-center justify-between py-1 text-left"
+                    data-sidebar-toggle="laporan-penjualan"
+                    aria-expanded="true"
+                    aria-controls="sidebar-laporan-penjualan"
+                >
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                        LAPORAN PENJUALAN
+                    </span>
+
+                    <x-heroicon-o-chevron-down
+                        class="sidebar-chevron h-4 w-4 text-gray-500 transition-transform duration-300"
+                    />
+                </button>
             </div>
 
-            <nav class="mt-2 space-y-1">
+            <nav
+                id="sidebar-laporan-penjualan"
+                class="mt-1 space-y-0.5 sidebar-section-panel"
+                data-sidebar-panel
+            >
 
-                {{-- Laporan Penjualan --}}
-                @if (in_array($role, ['super_admin', 'management', 'production', 'reports']))
-
-                    <a
-                        href="{{ route('admin.sales-reports') }}"
-                        class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
-                        {{ request()->routeIs('admin.sales-reports*')
-                            ? 'bg-[#C99322] text-white shadow-lg'
-                            : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
-                    >
-                        <x-heroicon-o-chart-bar class="h-5 w-5 shrink-0"/>
-                        <span>Penjualan Web</span>
-                    </a>
-
-                @endif
+                {{-- Laporan Penjualan Web --}}
+                <a
+                    href="{{ route('admin.sales-reports') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.sales-reports*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-chart-bar class="h-5 w-5 shrink-0"/>
+                    <span>Penjualan Web</span>
+                </a>
 
                 {{-- Laporan Penjualan Offline --}}
                 <a
@@ -365,6 +418,7 @@
                     <span>Penjualan WhatsApp</span>
                 </a>
 
+                {{-- Laporan Penjualan Stadion --}}
                 <a
                     href="{{ route('admin.stadium-sales-reports') }}"
                     class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
@@ -390,14 +444,32 @@
 
             </nav>
 
-            <div class="mt-6 px-2">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    LAPORAN PRODUKSI
-                </p>
+
+            {{-- LAPORAN PRODUKSI --}}
+            <div class="mt-3 px-2">
+                <button
+                    type="button"
+                    class="sidebar-section-toggle flex w-full items-center justify-between py-1 text-left"
+                    data-sidebar-toggle="laporan-produksi"
+                    aria-expanded="true"
+                    aria-controls="sidebar-laporan-produksi"
+                >
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                        LAPORAN PRODUKSI
+                    </span>
+
+                    <x-heroicon-o-chevron-down
+                        class="sidebar-chevron h-4 w-4 text-gray-500 transition-transform duration-300"
+                    />
+                </button>
             </div>
 
-            <nav class="mt-2 space-y-1">
-                {{-- Laporan Produksi --}}
+            <nav
+                id="sidebar-laporan-produksi"
+                class="mt-1 space-y-0.5 sidebar-section-panel"
+                data-sidebar-panel
+            >
+
                 <a
                     href="{{ route('admin.production-reports') }}"
                     class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
@@ -408,6 +480,7 @@
                     <x-heroicon-o-clipboard-document-list class="h-5 w-5 shrink-0"/>
                     <span>Laporan Produksi</span>
                 </a>
+
             </nav>
 
         @endif
@@ -415,3 +488,183 @@
     </div>
 
 </div>
+
+
+{{-- ========================================================= --}}
+{{-- SIDEBAR DROPDOWN SCRIPT --}}
+{{-- ========================================================= --}}
+
+<style>
+    .sidebar-section-panel {
+        overflow: hidden;
+        max-height: 2000px;
+        opacity: 1;
+        transition:
+            max-height 280ms ease-in-out,
+            opacity 220ms ease-in-out;
+        will-change: max-height, opacity;
+    }
+
+    .sidebar-section-panel.is-collapsed {
+        max-height: 0 !important;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .sidebar-chevron {
+        transition: transform 250ms ease-in-out;
+    }
+
+    .sidebar-section-toggle:hover .sidebar-chevron {
+        color: #C4902C;
+    }
+
+    .sidebar-section-toggle:focus-visible {
+        outline: 2px solid #C4902C;
+        outline-offset: 4px;
+        border-radius: 4px;
+    }
+    /* Sembunyikan scrollbar sidebar */
+    .sidebar-menu-scroll {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .sidebar-menu-scroll::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+</style>
+
+<script>
+(function () {
+    function initializeSidebarDropdowns() {
+        const role = @json($role);
+        const storageKey = 'eazywear-sidebar-sections-' + role;
+
+        const toggles = document.querySelectorAll(
+            '[data-sidebar-toggle]'
+        );
+
+        let savedStates = {};
+
+        try {
+            savedStates = JSON.parse(
+                localStorage.getItem(storageKey)
+            ) || {};
+        } catch (error) {
+            savedStates = {};
+        }
+
+        function setPanelState(toggle, isOpen, animate = false) {
+            const panelId = toggle.getAttribute('aria-controls');
+            const panel = document.getElementById(panelId);
+            const chevron = toggle.querySelector('.sidebar-chevron');
+
+            if (!panel) return;
+
+            if (animate) {
+                panel.style.transition =
+                    'max-height 280ms ease-in-out, opacity 220ms ease-in-out';
+            } else {
+                panel.style.transition = 'none';
+            }
+
+            if (isOpen) {
+                panel.classList.remove('is-collapsed');
+                panel.style.maxHeight = panel.scrollHeight + 'px';
+                panel.style.opacity = '1';
+                panel.style.pointerEvents = 'auto';
+            } else {
+                panel.style.maxHeight = panel.scrollHeight + 'px';
+
+                if (animate) {
+                    panel.offsetHeight;
+                }
+
+                panel.classList.add('is-collapsed');
+                panel.style.maxHeight = '0px';
+                panel.style.opacity = '0';
+                panel.style.pointerEvents = 'none';
+            }
+
+            toggle.setAttribute(
+                'aria-expanded',
+                isOpen ? 'true' : 'false'
+            );
+
+            if (chevron) {
+                chevron.style.transform = isOpen
+                    ? 'rotate(0deg)'
+                    : 'rotate(-90deg)';
+            }
+        }
+
+        toggles.forEach(function (toggle) {
+            const section = toggle.dataset.sidebarToggle;
+
+            // Semua kelompok terbuka secara default.
+            const isOpen = Object.prototype.hasOwnProperty.call(
+                savedStates,
+                section
+            )
+                ? savedStates[section]
+                : true;
+
+            setPanelState(toggle, isOpen);
+
+            toggle.addEventListener('click', function () {
+                const currentlyOpen =
+                    toggle.getAttribute('aria-expanded') === 'true';
+
+                const nextState = !currentlyOpen;
+
+                setPanelState(toggle, nextState, true);
+
+                savedStates[section] = nextState;
+
+                try {
+                    localStorage.setItem(
+                        storageKey,
+                        JSON.stringify(savedStates)
+                    );
+                } catch (error) {
+                    console.warn(
+                        'Sidebar preference could not be saved.',
+                        error
+                    );
+                }
+            });
+        });
+
+        // Sesuaikan tinggi panel ketika ukuran konten berubah.
+        window.addEventListener('resize', function () {
+            toggles.forEach(function (toggle) {
+                const isOpen =
+                    toggle.getAttribute('aria-expanded') === 'true';
+
+                if (isOpen) {
+                    const panel = document.getElementById(
+                        toggle.getAttribute('aria-controls')
+                    );
+
+                    if (panel) {
+                        panel.style.maxHeight =
+                            panel.scrollHeight + 'px';
+                    }
+                }
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener(
+            'DOMContentLoaded',
+            initializeSidebarDropdowns
+        );
+    } else {
+        initializeSidebarDropdowns();
+    }
+})();
+</script>

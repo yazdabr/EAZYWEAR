@@ -45,8 +45,10 @@ public function index()
 
     private function getSalesChart(): array
     {
-        $start = Carbon::now()->subMonths(11)->startOfMonth();
-        $end = Carbon::now()->endOfMonth();
+        $now = Carbon::now()->startOfMonth();
+
+        $start = $now->copy()->subMonths(11);
+        $end = $now->copy()->endOfMonth();
 
         $sales = Transaction::select(
                 DB::raw('YEAR(transaction_date) as year'),
@@ -69,11 +71,11 @@ public function index()
         $months = [];
 
         for ($i = 11; $i >= 0; $i--) {
-            $date = Carbon::now()->subMonths($i);
+            $date = $now->copy()->subMonths($i);
             $key = $date->format('Y-m');
 
             $months[] = [
-                'label' => $date->translatedFormat('M'),
+                'label' => $date->locale('id')->translatedFormat('M Y'),
                 'month' => $date->month,
                 'year' => $date->year,
                 'total' => (float) ($sales[$key]->total ?? 0),

@@ -51,7 +51,7 @@
                 </a>
             </nav>
 
-            {{-- <nav class="mt-2 space-y-1">
+            <nav class="mt-2 space-y-1">
                 <a href="{{ route('admin.giveaway-picker') }}"
                     class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
                     {{ request()->routeIs('admin.giveaway-picker')
@@ -60,7 +60,7 @@
                     <x-heroicon-o-gift class="h-5 w-5 shrink-0"/>
                     <span>Giveaway Picker</span>
                 </a>
-            </nav> --}}
+            </nav>
 
 
             {{-- DATA UTAMA --}}

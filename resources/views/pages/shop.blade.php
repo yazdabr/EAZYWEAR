@@ -65,6 +65,7 @@ document.addEventListener('alpine:init', () => {
         price: '',
         description: '',
         preOrderClosed: false,
+        readyStockClosed: false,
         isDragging: false,
         offsetY: 0,
         startY: 0,
@@ -78,6 +79,7 @@ document.addEventListener('alpine:init', () => {
             this.price = product.price ?? '';
             this.description = product.description ?? '';
             this.preOrderClosed = product.preOrderClosed === true || product.preOrderClosed === 1 || product.preOrderClosed === '1';
+            this.readyStockClosed = product.readyStockClosed === true || product.readyStockClosed === 1 || product.readyStockClosed === '1';
             this.offsetY = 0;
             this.isDragging = false;
             this.open = true;

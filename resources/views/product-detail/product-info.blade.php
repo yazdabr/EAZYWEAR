@@ -93,9 +93,9 @@
                     <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs sm:tracking-[0.3em]">{{ $product->category?->name ?? 'PRODUCT' }}</p>
                     <h1 class="mt-3 text-2xl font-bold leading-none tracking-tight text-slate-900 sm:mt-4 sm:text-4xl sm:leading-tight lg:text-5xl">{{ $product->name }}</h1>
                     <h2 class="mt-1 text-xl font-bold leading-none text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}</h2>
-                    @if ($product->availability === 'pre_order' && $product->pre_order_closed)
+                    @if (($product->availability === 'pre_order' && $product->pre_order_closed) || ($product->availability === 'ready' && $product->ready_stock_closed))
                         <p class="mt-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold leading-relaxed text-red-800 sm:mt-4">
-                            Pemesanan tidak tersedia.
+                            {{ $product->availability === 'ready' ? 'Mohon maaf, pemesanan produk ini sedang ditutup. Silakan pantau kembali informasi pembukaan penjualan.' : 'Periode pre-order produk ini telah ditutup.' }}
                         </p>
                     @endif
 
@@ -118,6 +118,7 @@
                 <div class="mt-4 sm:mt-7" x-data="{
                     availability: @js($product->availability),
                     preOrderClosed: @js((bool) $product->pre_order_closed),
+                    readyStockClosed: @js((bool) $product->ready_stock_closed),
                     selectedVariant: @js($defaultSize['id']),
                     selectedPrice: @js((float) $defaultSize['price']),
                     selectedStock: @js((int) $defaultSize['stock']),
@@ -127,7 +128,7 @@
                             && Number(this.selectedStock) <= 0;
                     },
                     get isPurchaseDisabled() {
-                        return this.preOrderClosed || this.isOutOfStock;
+                        return this.preOrderClosed || this.readyStockClosed || this.isOutOfStock;
                     },
                         customName: '',
                         customNumber: '',
@@ -203,9 +204,9 @@
                             </h3>
 
                             @if ($product->availability === 'pre_order' && $product->pre_order_closed)
-                                <span class="text-xs font-semibold text-red-700 sm:text-sm">
-                                    PO Ditutup
-                                </span>
+                                <span class="text-xs font-semibold text-red-700 sm:text-sm">PO Ditutup</span>
+                            @elseif ($product->availability === 'ready' && $product->ready_stock_closed)
+                                <span class="text-xs font-semibold text-red-700 sm:text-sm">Penjualan Ditutup</span>
                             @elseif ($product->availability === 'pre_order')
                                 <span class="text-xs font-semibold text-[#AE7C18] sm:text-sm">
                                     Pre-Order
@@ -226,15 +227,15 @@
                                 <button
                                     type="button"
                                     @click="
-                                        if (!preOrderClosed && (availability !== 'ready' || {{ (int) ($size['stock'] ?? 0) }} > 0)) {
+                                        if (!preOrderClosed && !readyStockClosed && (availability !== 'ready' || {{ (int) ($size['stock'] ?? 0) }} > 0)) {
                                             selectedVariant = {{ $size['id'] }};
                                             selectedPrice = {{ (float) $size['price'] }};
                                             selectedStock = {{ (int) ($size['stock'] ?? 0) }};
                                         }
                                     "
-                                    :disabled="preOrderClosed || (availability === 'ready' && {{ (int) ($size['stock'] ?? 0) }} <= 0)"
+                                    :disabled="preOrderClosed || readyStockClosed || (availability === 'ready' && {{ (int) ($size['stock'] ?? 0) }} <= 0)"
                                     class="relative inline-flex h-10 min-w-[50px] items-center justify-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition duration-200"
-                                    :class="preOrderClosed
+                                    :class="(preOrderClosed || readyStockClosed)
                                         ? 'cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400 opacity-70'
                                         : (
                                             Number(selectedVariant) === {{ $size['id'] }}
@@ -255,7 +256,7 @@
                         {{-- *JERSEY CUSTOMIZATION* --}}
                         <div x-show="customizationEnabled" x-cloak class="mt-5 sm:mt-6">
                             {{-- *CUSTOMIZATION NOTICE* --}}
-                            <div class="mb-4 rounded-2xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-3.5 transition-opacity duration-200 sm:p-4" :class="preOrderClosed ? 'border-gray-200 bg-gray-100 opacity-60' : ''">
+                            <div class="mb-4 rounded-2xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-3.5 transition-opacity duration-200 sm:p-4" :class="(preOrderClosed || readyStockClosed) ? 'border-gray-200 bg-gray-100 opacity-60' : ''">
                                 <div class="flex items-start gap-2.5">
                                     <div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#AE7C18]/10 text-[#AE7C18]">
                                         <x-heroicon-o-information-circle class="h-4 w-4"/>
@@ -275,7 +276,7 @@
                             {{-- PILIH PEMAIN BARITO PUTERA & RESET --}}
                             <div class="relative z-30 mb-4">
                                 <div class="flex gap-2">
-                                    <button type="button" :disabled="preOrderClosed" @click="if (!preOrderClosed) showPlayerList = !showPlayerList" class="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-xl border border-[#AE7C18]/40 bg-[#AE7C18]/5 px-3 py-3 text-left transition hover:bg-[#AE7C18]/10 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:opacity-60 sm:rounded-2xl sm:px-4">
+                                    <button type="button" :disabled="preOrderClosed || readyStockClosed" @click="if (!preOrderClosed && !readyStockClosed) showPlayerList = !showPlayerList" class="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-xl border border-[#AE7C18]/40 bg-[#AE7C18]/5 px-3 py-3 text-left transition hover:bg-[#AE7C18]/10 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:opacity-60 sm:rounded-2xl sm:px-4">
                                         <span class="flex min-w-0 items-center gap-2">
                                             <x-heroicon-o-users class="h-5 w-5 shrink-0 text-[#AE7C18]"/>
                                             <span class="min-w-0">
@@ -285,7 +286,7 @@
                                         </span>
                                         <x-heroicon-o-chevron-down class="h-4 w-4 shrink-0 text-[#AE7C18] transition" x-bind:class="showPlayerList ? 'rotate-180' : ''"/>
                                     </button>
-                                    <button type="button" @click="resetCustomization()" :disabled="preOrderClosed || (!customName && !customNumber)" class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-100 sm:rounded-2xl sm:px-4 sm:text-sm">
+                                    <button type="button" @click="resetCustomization()" :disabled="preOrderClosed || readyStockClosed || (!customName && !customNumber)" class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-100 sm:rounded-2xl sm:px-4 sm:text-sm">
                                         <x-heroicon-o-arrow-path class="h-4 w-4"/>
                                         Reset
                                     </button>
@@ -296,7 +297,7 @@
                                     </div>
                                     <div class="grid max-h-64 grid-cols-1 gap-1 overflow-y-auto p-2 sm:grid-cols-2">
                                         <template x-for="player in baritoPlayers" :key="player.number">
-                                            <button type="button" :disabled="preOrderClosed" @click="if (!preOrderClosed) selectBaritoPlayer(player)" class="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[#AE7C18]/10" :class="customName === player.name && customNumber === player.number ? 'bg-[#AE7C18]/10 ring-1 ring-inset ring-[#AE7C18]/40' : ''">
+                                            <button type="button" :disabled="preOrderClosed" @click="if (!preOrderClosed && !readyStockClosed) selectBaritoPlayer(player)" class="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[#AE7C18]/10" :class="customName === player.name && customNumber === player.number ? 'bg-[#AE7C18]/10 ring-1 ring-inset ring-[#AE7C18]/40' : ''">
                                                 <span class="truncate text-xs font-semibold text-slate-800 sm:text-sm" x-text="player.name"></span>
                                                 <span class="flex h-8 min-w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 px-2 text-xs font-bold text-white" x-text="player.number"></span>
                                             </button>
@@ -393,7 +394,8 @@
 
                                 <span x-show="!isPurchaseDisabled">Add to Cart</span>
                                 <span x-show="preOrderClosed" x-cloak>PO Ditutup</span>
-                                <span x-show="!preOrderClosed && isOutOfStock" x-cloak>Out of Stock</span>
+                                <span x-show="readyStockClosed" x-cloak>Penjualan Ditutup</span>
+                                <span x-show="!preOrderClosed && !readyStockClosed && isOutOfStock" x-cloak>Out of Stock</span>
                             </button>
                         </form>
                         <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98] sm:mt-5 sm:gap-3 sm:px-6 sm:py-3.5 sm:text-base">
@@ -416,6 +418,8 @@
                         <div class="rounded-xl bg-[#AE7C18] p-3.5 text-white sm:rounded-2xl sm:p-4">
                             @if ($product->availability === 'pre_order' && $product->pre_order_closed)
                                 <h4 class="text-xs font-semibold sm:text-base">PO Ditutup</h4>
+                            @elseif ($product->availability === 'ready' && $product->ready_stock_closed)
+                                <h4 class="text-xs font-semibold sm:text-base">Penjualan Ditutup</h4>
                                 <p class="mt-1 text-[10px] leading-4 text-white sm:mt-1.5 sm:text-sm sm:leading-5">
                                     Pemesanan tidak tersedia.
                                 </p>

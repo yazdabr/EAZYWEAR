@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\ApiLogController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\GiveawayPickerController;
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\ProductionReportController;
 use App\Http\Controllers\Admin\ProductController;
@@ -118,6 +119,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     Route::middleware('role:super_admin')->group(function () {
         Route::view('/giveaway-picker', 'admin.giveaway-picker')->name('giveaway-picker');
+        Route::post('/giveaway-picker/comments', [GiveawayPickerController::class, 'comments'])
+            ->middleware('throttle:10,1')
+            ->name('giveaway-picker.comments');
     });
 
     // DATA UTAMA - SUPER ADMIN & MANAGEMENT

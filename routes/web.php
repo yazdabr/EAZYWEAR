@@ -120,8 +120,13 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::view('/giveaway-picker', 'admin.giveaway-picker')->name('giveaway-picker');
     });
 
-    Route::middleware('role:super_admin')->group(function () {
-        Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
+    // DATA UTAMA - SUPER ADMIN & MANAGEMENT
+    Route::middleware('role:super_admin,management')->group(function () {
+
+        // PRODUK
+        Route::get('/products/search', [ProductController::class, 'search'])
+            ->name('products.search');
+
         Route::resource('products', ProductController::class)->names([
             'index' => 'products',
             'create' => 'products.create',
@@ -131,7 +136,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'update' => 'products.update',
             'destroy' => 'products.destroy',
         ]);
-        Route::get('/categories/search', [CategoryController::class, 'search'])->name('categories.search');
+
+        // KATEGORI
+        Route::get('/categories/search', [CategoryController::class, 'search'])
+            ->name('categories.search');
+
         Route::resource('categories', CategoryController::class)->names([
             'index' => 'categories',
             'create' => 'categories.create',
@@ -141,6 +150,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'update' => 'categories.update',
             'destroy' => 'categories.destroy',
         ]);
+
+        // UKURAN
         Route::resource('sizes', SizeController::class)->names([
             'index' => 'sizes',
             'create' => 'sizes.create',

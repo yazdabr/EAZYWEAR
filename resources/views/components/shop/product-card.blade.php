@@ -18,6 +18,8 @@
 
     $category = $product->category?->name ?? 'Product';
     $preOrderClosed = ($product->availability ?? 'pre_order') === 'pre_order' && (bool) $product->pre_order_closed;
+    $readyStockClosed = ($product->availability ?? 'pre_order') === 'ready' && (bool) $product->ready_stock_closed;
+    $salesClosed = $preOrderClosed || $readyStockClosed;
 
     $detailUrl = route('product.detail', [
         'product' => $product->slug,
@@ -37,15 +39,16 @@
             image: @js($image),
             price: @js('Rp ' . number_format($price, 0, ',', '.')),
             description: @js($product->description),
-            preOrderClosed: @js($preOrderClosed)
+            preOrderClosed: @js($preOrderClosed),
+            readyStockClosed: @js($readyStockClosed)
         })"
     >
 
         {{-- Product Availability Badge --}}
-        @if (($product->availability ?? 'pre_order') === 'ready')
-            <div class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-emerald-600 px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]">
-                Ready Stock
-            </div>
+        @if ($readyStockClosed)
+            <div class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-red-700 px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]">Penjualan Ditutup</div>
+        @elseif (($product->availability ?? 'pre_order') === 'ready')
+            <div class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-emerald-600 px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]">Ready Stock</div>
         @elseif ($preOrderClosed)
             <div class="pointer-events-none absolute left-0 top-0 z-10 rounded-br-xl rounded-tl-xl bg-red-700 px-3 py-1.5 text-[8px] font-bold tracking-[0.08em] text-white shadow-md sm:px-3.5 sm:py-1.5 sm:text-[10px] sm:tracking-[0.14em]">
                 PO Ditutup
@@ -89,9 +92,9 @@
         </h3>
 
         {{-- Product Description --}}
-        @if ($preOrderClosed)
+        @if ($salesClosed)
             <p class="mt-1.5 text-[10px] font-semibold leading-4 text-red-700 sm:text-[11px] lg:mt-2 lg:text-xs lg:leading-5">
-                Pemesanan tidak tersedia.
+                {{ $readyStockClosed ? 'Penjualan produk ini sedang ditutup.' : 'Periode pre-order telah ditutup.' }}
             </p>
         @elseif (filled($product->description))
             <p class="mt-1.5 line-clamp-3 text-[10px] leading-4 text-gray-500 sm:text-[11px] sm:leading-[1.125rem] lg:mt-2 lg:text-xs lg:leading-5">

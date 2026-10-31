@@ -117,6 +117,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     });
 
     Route::middleware('role:super_admin')->group(function () {
+        Route::view('/giveaway-picker', 'admin.giveaway-picker')->name('giveaway-picker');
+    });
+
+    Route::middleware('role:super_admin')->group(function () {
         Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
         Route::resource('products', ProductController::class)->names([
             'index' => 'products',

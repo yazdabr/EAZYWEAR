@@ -12,6 +12,7 @@
         material:'',
         availability:'pre_order',
         pre_order_closed:'0',
+        ready_stock_closed:'0',
         customization_enabled:false,
         customization_price:0,
         longsleeve_enabled:false,
@@ -183,6 +184,7 @@
             material:'',
             availability:'pre_order',
         pre_order_closed:'0',
+            ready_stock_closed:'0',
             customization_enabled:false,
             customization_price:0,
             longsleeve_enabled:false,
@@ -216,6 +218,7 @@
             material:product?.material||'',
             availability:product?.availability||'pre_order',
             pre_order_closed:(product?.pre_order_closed === true || product?.pre_order_closed === 1 || product?.pre_order_closed === '1') ? '1' : '0',
+            ready_stock_closed:(product?.ready_stock_closed === true || product?.ready_stock_closed === 1 || product?.ready_stock_closed === '1') ? '1' : '0',
             customization_enabled:product?.customization_enabled===true||product?.customization_enabled===1||product?.customization_enabled==='1',
             customization_price:product?.customization_price!==''&&product?.customization_price!==null&&product?.customization_price!==undefined
                 ? parseInt(product.customization_price)
@@ -340,6 +343,16 @@
                     <p class="mt-1.5 text-xs text-slate-400 sm:mt-2">
                         Pilihan ini menentukan badge pada kartu produk di katalog.
                     </p>
+                    <template x-if="form.availability === 'ready'">
+                        <div class="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-4">
+                            <label for="ready_stock_closed" class="mb-2 block text-sm font-semibold text-slate-800">Status Penjualan Ready Stock</label>
+                            <select id="ready_stock_closed" name="ready_stock_closed" x-model="form.ready_stock_closed" class="w-full rounded-xl border border-sky-200 bg-white px-3 py-2.5 text-sm text-slate-700">
+                                <option value="0">Penjualan Dibuka</option>
+                                <option value="1">Penjualan Ditutup</option>
+                            </select>
+                            <p class="mt-2 text-xs leading-relaxed text-slate-500">Jika ditutup, pelanggan tidak dapat memesan produk ini sampai penjualan dibuka kembali.</p>
+                        </div>
+                    </template>
                     <template x-if="form.availability === 'pre_order'">
                         <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
                             <label for="pre_order_closed" class="mb-2 block text-sm font-semibold text-slate-800">

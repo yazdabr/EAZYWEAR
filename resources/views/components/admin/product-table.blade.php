@@ -21,7 +21,7 @@
                 <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Harga</th>
                 <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Stok</th>
                 <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Status</th>
-                <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Status PO</th>
+                <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Status Penjualan</th>
                 <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Diperbarui</th>
                 <th class="px-4 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">Aksi</th>
             </tr>
@@ -120,7 +120,8 @@
                 'description'=>$product->description,
                 'material'=>$product->material,
                 'availability' => $product->availability ?? 'pre_order',
-    'pre_order_closed' => (bool) $product->pre_order_closed,
+                'pre_order_closed' => (bool) $product->pre_order_closed,
+                'ready_stock_closed' => (bool) $product->ready_stock_closed,
                 'customization_enabled'=>(bool)$product->customization_enabled,
                 'customization_price'=>(int)$product->customization_price,
                 'longsleeve_enabled' => (bool) $product->longsleeve_enabled,

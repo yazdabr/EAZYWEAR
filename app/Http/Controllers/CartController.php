@@ -51,7 +51,7 @@ class CartController extends Controller
         if ($variant->product->availability === 'ready' && $variant->product->ready_stock_closed) {
             return back()->with(
                 'error',
-                'Mohon maaf, penjualan produk ini sedang ditutup. Silakan pantau kembali informasi pembukaan penjualan.'
+                'Mohon maaf, penjualan produk ini sedang ditutup.'
             );
         }
 

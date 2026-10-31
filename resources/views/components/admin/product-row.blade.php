@@ -72,6 +72,7 @@ $editData=[
     'material'=>$product->material,
     'availability' => $product->availability ?? 'pre_order',
     'pre_order_closed' => (bool) $product->pre_order_closed,
+    'ready_stock_closed' => (bool) $product->ready_stock_closed,
     'customization_enabled'=>(bool)$product->customization_enabled,
     'customization_price'=>(int)$product->customization_price,
     'longsleeve_enabled' => (bool) $product->longsleeve_enabled,
@@ -142,16 +143,28 @@ $viewData=[
         <x-admin.badge-status status="{{ $status }}" />
     </td>
     <td class="px-6 py-5 text-center">
-    @if (($product->availability ?? 'pre_order') === 'pre_order')
-        @if ($product->pre_order_closed)
-            <span class="inline-flex whitespace-nowrap rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-200">PO Ditutup</span>
+        @if (($product->availability ?? 'pre_order') === 'ready')
+            @if ($product->ready_stock_closed)
+                <span class="inline-flex whitespace-nowrap rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-200">
+                    Penjualan Ditutup
+                </span>
+            @else
+                <span class="inline-flex whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                    Penjualan Dibuka
+                </span>
+            @endif
         @else
-            <span class="inline-flex whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">PO Dibuka</span>
+            @if ($product->pre_order_closed)
+                <span class="inline-flex whitespace-nowrap rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-200">
+                    PO Ditutup
+                </span>
+            @else
+                <span class="inline-flex whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+                    PO Dibuka
+                </span>
+            @endif
         @endif
-    @else
-        <span class="text-xs text-slate-400">—</span>
-    @endif
-</td>
+    </td>
 
     <td class="px-6 py-5 text-center">
         <span class="text-sm text-slate-500">{{ $updated }}</span>
@@ -178,6 +191,9 @@ $viewData=[
                     product_code:@js($product->product_code),
                     description:@js($product->description),
                     material:@js($product->material),
+                    availability: @js($product->availability ?? 'pre_order'),
+                    pre_order_closed: @js((bool) $product->pre_order_closed),
+                    ready_stock_closed: @js((bool) $product->ready_stock_closed),
                     customization_enabled:@js((bool)$product->customization_enabled),
                     customization_price:@js((int)$product->customization_price),
                     longsleeve_enabled: @js((bool) $product->longsleeve_enabled),

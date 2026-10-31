@@ -87,7 +87,7 @@
                         <p x-show="preOrderClosed || readyStockClosed" class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium leading-relaxed text-red-800">
                             <span x-show="preOrderClosed">PO Ditutup — Pemesanan tidak tersedia.</span><span x-show="readyStockClosed">Penjualan Ditutup — Mohon maaf, pemesanan produk ini sedang ditutup.</span>
                         </p>
-                        <p x-show="!preOrderClosed" class="mt-4 whitespace-pre-line text-sm leading-relaxed text-slate-500" x-text="description || 'Tidak ada deskripsi.'"></p>
+                        <p x-show="!preOrderClosed && !readyStockClosed" class="mt-4 whitespace-pre-line text-sm leading-relaxed text-slate-500" x-text="description || 'Tidak ada deskripsi.'"></p>
 
                     </div>
 
@@ -204,8 +204,10 @@
                 <p x-show="preOrderClosed" class="mt-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium leading-relaxed text-red-800">
                     PO Ditutup — Pemesanan tidak tersedia.
                 </p>
-                <p x-show="!preOrderClosed" class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600" x-text="description || 'Tidak ada deskripsi.'"></p>
-
+                <p x-show="!preOrderClosed && !readyStockClosed" class="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-600" x-text="description || 'Tidak ada deskripsi.'"></p>
+                <p x-show="readyStockClosed" class="mt-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium leading-relaxed text-red-800">
+                    Penjualan Ditutup — Mohon maaf, pemesanan produk ini sedang ditutup.
+                </p>
             </div>
 
         </div>

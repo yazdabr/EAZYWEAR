@@ -95,11 +95,17 @@
                     <h2 class="mt-1 text-xl font-bold leading-none text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}</h2>
                     @if (($product->availability === 'pre_order' && $product->pre_order_closed) || ($product->availability === 'ready' && $product->ready_stock_closed))
                         <p class="mt-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold leading-relaxed text-red-800 sm:mt-4">
-                            {{ $product->availability === 'ready' ? 'Mohon maaf, pemesanan produk ini sedang ditutup. Silakan pantau kembali informasi pembukaan penjualan.' : 'Periode pre-order produk ini telah ditutup.' }}
+                            {{ $product->availability === 'ready' ? 'Mohon maaf, pemesanan produk ini sedang ditutup.' : 'Periode pre-order produk ini telah ditutup.' }}
                         </p>
                     @endif
 
-                    @if($product->description)
+                    @if(
+                        $product->description &&
+                        !(
+                            ($product->availability === 'pre_order' && $product->pre_order_closed) ||
+                            ($product->availability === 'ready' && $product->ready_stock_closed)
+                        )
+                    )
                         @php
                             $description = $product->description;
                             $notice = 'Pre-order now, ready from Oct 30 - 3 Nov 2026.';
@@ -297,7 +303,7 @@
                                     </div>
                                     <div class="grid max-h-64 grid-cols-1 gap-1 overflow-y-auto p-2 sm:grid-cols-2">
                                         <template x-for="player in baritoPlayers" :key="player.number">
-                                            <button type="button" :disabled="preOrderClosed" @click="if (!preOrderClosed && !readyStockClosed) selectBaritoPlayer(player)" class="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[#AE7C18]/10" :class="customName === player.name && customNumber === player.number ? 'bg-[#AE7C18]/10 ring-1 ring-inset ring-[#AE7C18]/40' : ''">
+                                            <button type="button" :disabled="isPurchaseDisabled" @click="if (!isPurchaseDisabled) selectBaritoPlayer(player)" class="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[#AE7C18]/10" :class="customName === player.name && customNumber === player.number ? 'bg-[#AE7C18]/10 ring-1 ring-inset ring-[#AE7C18]/40' : ''">
                                                 <span class="truncate text-xs font-semibold text-slate-800 sm:text-sm" x-text="player.name"></span>
                                                 <span class="flex h-8 min-w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 px-2 text-xs font-bold text-white" x-text="player.number"></span>
                                             </button>
@@ -310,21 +316,21 @@
                                 <div>
                                     <div class="mb-2 flex items-end justify-between">
                                         <div>
-                                            <label for="custom_name" class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm" :class="preOrderClosed ? 'text-gray-400 opacity-60' : ''">Name on Jersey</label>
+                                            <label for="custom_name" class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm" :class="isPurchaseDisabled ? 'text-gray-400 opacity-60' : ''">Name on Jersey</label>
                                             <p class="text-[10px] text-gray-400 sm:text-xs">Optional</p>
                                         </div>
                                         <span class="text-[10px] tabular-nums text-gray-400 sm:text-xs"><span x-text="customName.length"></span>/12</span>
                                     </div>
-                                    <input id="custom_name" type="text" name="custom_name" x-model="customName" :disabled="preOrderClosed" form="add-to-cart-form" maxlength="12" autocomplete="off" placeholder="e.g. BARITO PUTERA" pattern="[A-Za-zÀ-ÿ\s]+" title="Jersey name may only contain letters and spaces." class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold uppercase tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:placeholder:text-gray-400">
+                                    <input id="custom_name" type="text" name="custom_name" x-model="customName" :disabled="isPurchaseDisabled" form="add-to-cart-form" maxlength="12" autocomplete="off" placeholder="e.g. BARITO PUTERA" pattern="[A-Za-zÀ-ÿ\s]+" title="Jersey name may only contain letters and spaces." class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold uppercase tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:placeholder:text-gray-400">
                                     <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">Optional - Letters and spaces only</p>
                                 </div>
                                 {{-- *BACK NUMBER* --}}
                                 <div>
                                     <div class="mb-2">
-                                        <label for="custom_number" class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm" :class="preOrderClosed ? 'text-gray-400 opacity-60' : ''">Back Number</label>
+                                        <label for="custom_number" class="text-xs font-bold uppercase tracking-wide text-slate-900 sm:text-sm" :class="isPurchaseDisabled ? 'text-gray-400 opacity-60' : ''">Back Number</label>
                                         <p class="text-[10px] text-gray-400 sm:text-xs">Optional</p>
                                     </div>
-                                    <input id="custom_number" type="text" name="custom_number" x-model="customNumber" :disabled="preOrderClosed" form="add-to-cart-form" maxlength="2" inputmode="numeric" autocomplete="off" placeholder="e.g. 10" pattern="[0-9]{1,2}" title="Back number may only contain 1-2 digits." class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:placeholder:text-gray-400">
+                                    <input id="custom_number" type="text" name="custom_number" x-model="customNumber" :disabled="isPurchaseDisabled" form="add-to-cart-form" maxlength="2" inputmode="numeric" autocomplete="off" placeholder="e.g. 10" pattern="[0-9]{1,2}" title="Back number may only contain 1-2 digits." class="w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-sm font-semibold tracking-wide text-slate-900 outline-none transition placeholder:font-normal placeholder:tracking-normal placeholder:text-gray-400 hover:border-gray-400 focus:border-[#AE7C18] focus:ring-2 focus:ring-[#AE7C18]/10 sm:rounded-2xl sm:px-4 sm:py-3.5 sm:text-base disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:placeholder:text-gray-400">
                                     <p class="mt-1.5 text-[10px] text-gray-400 sm:text-xs">Optional - Numbers only - Maximum 2 digits</p>
                                 </div>
                             </div>
@@ -332,22 +338,22 @@
                         {{-- LONGSLEEVE & PATCH OPTIONS --}}
                         <div x-show="longsleeveEnabled || patchEnabled" x-cloak class="mt-5 grid items-stretch gap-3 sm:mt-6 sm:gap-4" :class="longsleeveEnabled && patchEnabled ? 'grid-cols-2' : 'grid-cols-1'">
                             {{-- LONGSLEEVE: KOLOM KIRI --}}
-                            <div x-show="longsleeveEnabled" x-cloak class="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-[#AE7C18]/50 sm:p-4" :class="preOrderClosed ? 'border-gray-200 bg-gray-100 opacity-60' : (isLongsleeve ? 'border-[#AE7C18] bg-[#AE7C18]/5 ring-1 ring-[#AE7C18]/20' : '')">
+                            <div x-show="longsleeveEnabled" x-cloak class="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-[#AE7C18]/50 sm:p-4" :class="isPurchaseDisabled ? 'cursor-not-allowed border-gray-300 bg-gray-100 opacity-60' : (isLongsleeve ? 'border-[#AE7C18] bg-[#AE7C18]/5 ring-1 ring-[#AE7C18]/20' : '')">
                                 <label class="flex h-full cursor-pointer flex-col">
                                     <span class="flex items-start justify-between gap-2">
                                         <span class="text-xs font-bold text-slate-900 sm:text-sm">Longsleeve (Lengan Panjang)</span>
-                                        <input type="checkbox" x-model="isLongsleeve" :disabled="preOrderClosed" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]">
+                                        <input type="checkbox" x-model="isLongsleeve" :disabled="isPurchaseDisabled" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]">
                                     </span>
                                     <span class="mt-2 text-xs font-bold leading-relaxed text-[#AE7C18] sm:text-sm">+ Rp <span x-text="Number(longsleevePrice).toLocaleString('id-ID')"></span></span>
                                     <span class="mt-2 text-[10px] leading-relaxed text-slate-500 sm:text-xs">Jersey dengan lengan panjang.</span>
                                 </label>
                             </div>
                             {{-- PATCH: KOLOM KANAN --}}
-                            <div x-show="patchEnabled" x-cloak class="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-[#AE7C18]/50 sm:p-4" :class="preOrderClosed ? 'border-gray-200 bg-gray-100 opacity-60' : (isPatch ? 'border-[#AE7C18] bg-[#AE7C18]/5 ring-1 ring-[#AE7C18]/20' : '')">
+                            <div x-show="patchEnabled" x-cloak class="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 transition hover:border-[#AE7C18]/50 sm:p-4" :class="isPurchaseDisabled ? 'cursor-not-allowed border-gray-300 bg-gray-100 opacity-60' : (isPatch ? 'border-[#AE7C18] bg-[#AE7C18]/5 ring-1 ring-[#AE7C18]/20' : '')">
                                 <label class="flex h-full cursor-pointer flex-col">
                                     <span class="flex items-start justify-between gap-2">
                                         <span class="text-xs font-bold text-slate-900 sm:text-sm">Patch Pegadaian Liga 2</span>
-                                        <input type="checkbox" x-model="isPatch" :disabled="preOrderClosed" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]">
+                                        <input type="checkbox" x-model="isPatch" :disabled="isPurchaseDisabled" class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-[#AE7C18] focus:ring-[#AE7C18]">
                                     </span>
                                     <span class="mt-2 text-xs font-bold leading-relaxed text-[#AE7C18] sm:text-sm">+ Rp <span x-text="Number(patchPrice).toLocaleString('id-ID')"></span></span>
                                     <span class="mt-2 text-[10px] leading-relaxed text-slate-500 sm:text-xs">Tambahkan patch pada jersey.</span>

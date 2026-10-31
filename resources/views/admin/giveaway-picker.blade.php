@@ -4,7 +4,7 @@
 <div class="mx-auto max-w-7xl space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><p class="text-xs font-bold uppercase tracking-[.2em] text-[#C4902C]">Eazywear tools</p><h1 class="mt-1 text-2xl font-bold text-slate-900">Instagram Giveaway Picker</h1><p class="mt-1 text-sm text-slate-500">Filter komentar dan undi pemenang secara acak.</p></div>
-        <span class="inline-flex w-fit items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700"><span class="h-2 w-2 rounded-full bg-amber-500"></span> API Instagram belum terhubung</span>
+        <span class="inline-flex w-fit items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Integrasi API siap diuji</span>
     </div>
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <section class="space-y-6">
@@ -49,11 +49,11 @@
                     </div>
                 </div>
                 <div class="mt-5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-4">
-                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p class="text-sm font-bold text-slate-800">Mode persiapan API</p><p class="text-xs text-slate-500">Untuk mencoba sekarang, tempel data komentar dengan format username|komentar, satu komentar per baris.</p></div><button id="load-demo" type="button" class="shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-bold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100">Muat data contoh</button></div>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p class="text-sm font-bold text-slate-800">Ambil komentar Instagram</p><p class="text-xs text-slate-500">Ambil komentar asli dari postingan akun Instagram yang terhubung.</p></div><button id="fetch-instagram" type="button" class="rounded-lg bg-[#C4902C] px-3 py-2 text-xs font-bold text-white hover:bg-[#AD7D20]">Ambil Komentar Instagram</button><button id="load-demo" type="button" class="shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-bold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100">Muat data contoh</button></div>
                     <textarea id="comments-input" rows="5" placeholder="@username|Prediksi saya 2-1&#10;@username2|Skor 1-0" class="mt-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 font-mono text-xs outline-none focus:border-[#C4902C] focus:ring-2 focus:ring-amber-100"></textarea>
                     <div class="mt-3 flex flex-wrap items-center justify-between gap-3"><p id="import-status" class="text-xs text-slate-500">Belum ada komentar dimuat.</p><button id="apply-filter" type="button" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">Terapkan Filter</button></div>
                 </div>
-                <p class="mt-3 text-xs text-slate-400">Pengambilan komentar otomatis akan diaktifkan setelah kredensial dan izin Instagram API dipasang. Data contoh bukan komentar Instagram asli.</p>
+                <p class="mt-3 text-xs text-slate-400">Jika gagal, periksa token, ID akun Instagram, akses aset System User, dan versi Graph API. Data contoh bukan komentar Instagram asli.</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-bold text-slate-900">Peserta Undian</h2><p class="text-xs text-slate-500">Daftar komentar yang memenuhi filter.</p></div><div class="flex gap-2"><div class="rounded-xl bg-slate-50 px-3 py-2 text-center"><strong id="total-comments" class="block text-lg text-slate-900">0</strong><span class="text-[10px] text-slate-500">Komentar</span></div><div class="rounded-xl bg-amber-50 px-3 py-2 text-center"><strong id="eligible-count" class="block text-lg text-amber-700">0</strong><span class="text-[10px] text-amber-700">Peserta lolos</span></div></div></div>
@@ -82,6 +82,8 @@
 <script>
 (() => {
     const $ = id => document.getElementById(id);
+    const commentsEndpoint = @json(route('admin.giveaway-picker.comments'));
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
     const demo = [
         ['fajar_12','Prediksi 2-1, Eazywear juara!'],['nisaaa','2-1 semoga beruntung'],['andika.store','Skor akhir 1-0'],
         ['raka_awan','Saya pilih 2-1'],['putri.ram','2-1'],['bima_pratama','Prediksi saya 2-1'],
@@ -137,6 +139,43 @@
         $('winner-result').classList.add('hidden');
         renderHistory();
     }
+    $('fetch-instagram').addEventListener('click', async () => {
+        const postUrl = $('ig-post-url').value.trim();
+        if (!postUrl) {
+            $('import-status').textContent = 'Masukkan link postingan Instagram terlebih dahulu.';
+            return;
+        }
+        const button = $('fetch-instagram');
+        button.disabled = true;
+        button.textContent = 'Mengambil komentar...';
+        $('import-status').textContent = 'Menghubungi Instagram Graph API...';
+        try {
+            const response = await fetch(commentsEndpoint, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ post_url: postUrl })
+            });
+            const payload = await response.json();
+            if (!response.ok) throw new Error(payload.message || 'Gagal mengambil komentar Instagram.');
+            allComments = (payload.comments || []).map(item => ({
+                username: item.username,
+                text: item.text
+            }));
+            $('comments-input').value = allComments.map(item => '@' + item.username + '|' + item.text).join('\n');
+            applyFilter();
+            $('import-status').textContent = payload.total + ' komentar berhasil diambil dari Instagram.';
+        } catch (error) {
+            $('import-status').textContent = error.message;
+        } finally {
+            button.disabled = false;
+            button.textContent = 'Ambil Komentar Instagram';
+        }
+    });
     $('load-demo').addEventListener('click', () => {
         allComments = demo.map(row => ({username:row[0],text:row[1]}));
         $('comments-input').value = demo.map(row => '@' + row[0] + '|' + row[1]).join('\n');

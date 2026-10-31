@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Http\\Controllers\\Admin;
+namespace App\Http\Controllers\Admin;
 
-use App\\Http\\Controllers\\Controller;
-use App\\Services\\InstagramGiveawayService;
-use Illuminate\\Http\\Request;
-use Illuminate\\Validation\\ValidationException;
+use App\Http\Controllers\Controller;
+use App\Services\InstagramGiveawayService;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class GiveawayPickerController extends Controller

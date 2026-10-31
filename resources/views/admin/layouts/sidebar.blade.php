@@ -51,6 +51,17 @@
                 </a>
             </nav>
 
+            <nav class="mt-2 space-y-1">
+                <a href="{{ route('admin.giveaway-picker') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
+                    {{ request()->routeIs('admin.giveaway-picker')
+                        ? 'bg-[#C4902C] text-white shadow-md'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                    <x-heroicon-o-gift class="h-5 w-5 shrink-0"/>
+                    <span>Giveaway Picker</span>
+                </a>
+            </nav>
+
 
             {{-- DATA UTAMA --}}
             <div class="mt-3 px-2">

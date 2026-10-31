@@ -21,18 +21,23 @@ class InstagramGiveawayService
         $userId = config('services.instagram.user_id');
 
         if (!$token || !$userId) {
-            throw new RuntimeException('Konfigurasi INSTAGRAM_ACCESS_TOKEN atau INSTAGRAM_USER_ID belum lengkap di .env.');
+            throw new RuntimeException(
+                'Konfigurasi Instagram belum lengkap.'
+            );
         }
 
         $target = $this->normalizePermalink($permalink);
         $mediaId = $this->findMediaId($userId, $token, $target);
 
         if (!$mediaId) {
-            throw new RuntimeException('Postingan tidak ditemukan pada daftar media akun Instagram yang terhubung. Pastikan link berasal dari akun tersebut dan akun System User memiliki akses aset.');
+            throw new RuntimeException(
+                'Postingan tidak ditemukan pada akun Instagram yang terhubung.'
+            );
         }
 
         $comments = [];
         $url = $this->baseUrl . '/' . $mediaId . '/comments';
+
         $params = [
             'fields' => 'id,text,username',
             'limit' => 100,
@@ -41,9 +46,14 @@ class InstagramGiveawayService
 
         do {
             $response = $this->request($url, $params);
+
             foreach ($response['data'] ?? [] as $comment) {
-                $username = $comment['username'] ?? $comment['from']['username'] ?? null;
+                $username = $comment['username']
+                    ?? $comment['from']['username']
+                    ?? null;
+
                 $text = trim((string) ($comment['text'] ?? ''));
+
                 if ($username && $text !== '') {
                     $comments[] = [
                         'username' => ltrim($username, '@'),
@@ -53,9 +63,22 @@ class InstagramGiveawayService
                 }
             }
 
-            $url = $response['paging']['next'] ?? null;
-            $params = [];
-        } while ($url && count($comments) < 50000);
+            $after = $response['paging']['cursors']['after'] ?? null;
+            $hasNext = !empty($response['paging']['next']);
+
+            $params = [
+                'fields' => 'id,text,username',
+                'limit' => 100,
+                'access_token' => $token,
+            ];
+
+            if ($hasNext && $after) {
+                $params['after'] = $after;
+            } else {
+                $hasNext = false;
+            }
+
+        } while ($hasNext && count($comments) < 50000);
 
         return [
             'media_id' => $mediaId,

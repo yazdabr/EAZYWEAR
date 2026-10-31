@@ -127,6 +127,12 @@
             hour12: false
         }).format(date) + ' WITA';
     }
+    function normalizeScore(value) {
+        return String(value).toLocaleLowerCase().replace(
+            /(\d+)\s*[-–—−:]\s*(\d+)/g,
+            '$1-$2'
+        );
+    }
     function parseComments() {
         const previousComments = new Map(
             allComments.map(item => [
@@ -175,8 +181,11 @@
         updateDrawButton();
     }
     function applyFilter() {
-        const term = $('comment-filter').value.trim().toLocaleLowerCase();
-        const filtered = allComments.filter(item => !term || item.text.toLocaleLowerCase().includes(term));
+        const term = normalizeScore($('comment-filter').value.trim());
+
+        const filtered = allComments.filter(item =>
+            !term || normalizeScore(item.text).includes(term)
+        );
         if ($('unique-user').checked) {
             const seen = new Set();
             eligible = filtered.filter(item => {

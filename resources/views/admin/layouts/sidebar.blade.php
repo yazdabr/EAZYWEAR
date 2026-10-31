@@ -51,7 +51,7 @@
                 </a>
             </nav>
 
-            <nav class="mt-2 space-y-1">
+            {{-- <nav class="mt-2 space-y-1">
                 <a href="{{ route('admin.giveaway-picker') }}"
                     class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
                     {{ request()->routeIs('admin.giveaway-picker')
@@ -60,7 +60,7 @@
                     <x-heroicon-o-gift class="h-5 w-5 shrink-0"/>
                     <span>Giveaway Picker</span>
                 </a>
-            </nav>
+            </nav> --}}
 
 
             {{-- DATA UTAMA --}}
@@ -258,6 +258,69 @@
                     <x-heroicon-o-squares-2x2 class="h-5 w-5 shrink-0"/>
                     <span>Dashboard</span>
                 </a>
+            </nav>
+
+            {{-- DATA UTAMA --}}
+            <div class="mt-3 px-2">
+                <button
+                    type="button"
+                    class="sidebar-section-toggle flex w-full items-center justify-between py-1 text-left"
+                    data-sidebar-toggle="data-utama"
+                    aria-expanded="true"
+                    aria-controls="sidebar-data-utama"
+                >
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                        DATA UTAMA
+                    </span>
+
+                    <x-heroicon-o-chevron-down
+                        class="sidebar-chevron h-4 w-4 text-gray-500 transition-transform duration-300"
+                    />
+                </button>
+            </div>
+
+            <nav
+                id="sidebar-data-utama"
+                class="mt-1 space-y-0.5 sidebar-section-panel"
+                data-sidebar-panel
+            >
+
+                {{-- Produk --}}
+                <a
+                    href="{{ route('admin.products') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.products*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-archive-box class="h-5 w-5 shrink-0"/>
+                    <span>Produk</span>
+                </a>
+
+                {{-- Kategori --}}
+                <a
+                    href="{{ route('admin.categories') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.categories*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-squares-2x2 class="h-5 w-5 shrink-0"/>
+                    <span>Kategori</span>
+                </a>
+
+                {{-- Ukuran --}}
+                <a
+                    href="{{ route('admin.sizes') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.sizes*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-scale class="h-5 w-5 shrink-0"/>
+                    <span>Ukuran</span>
+                </a>
+
             </nav>
 
 

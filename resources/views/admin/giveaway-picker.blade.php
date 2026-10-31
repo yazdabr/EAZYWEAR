@@ -57,7 +57,19 @@
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-bold text-slate-900">Peserta Undian</h2><p class="text-xs text-slate-500">Daftar komentar yang memenuhi filter.</p></div><div class="flex gap-2"><div class="rounded-xl bg-slate-50 px-3 py-2 text-center"><strong id="total-comments" class="block text-lg text-slate-900">0</strong><span class="text-[10px] text-slate-500">Komentar</span></div><div class="rounded-xl bg-amber-50 px-3 py-2 text-center"><strong id="eligible-count" class="block text-lg text-amber-700">0</strong><span class="text-[10px] text-amber-700">Peserta lolos</span></div></div></div>
-                <div class="mt-4 overflow-hidden rounded-xl border border-slate-100"><div class="grid grid-cols-[minmax(100px,.7fr)_minmax(0,1.5fr)] bg-slate-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500"><span>Username</span><span>Komentar</span></div><div id="participants-list" class="max-h-72 divide-y divide-slate-100 overflow-y-auto"><div class="px-4 py-8 text-center text-sm text-slate-400">Belum ada peserta. Muat data contoh atau masukkan komentar.</div></div></div>
+                <div class="mt-4 overflow-hidden rounded-xl border border-slate-100">
+                    <div class="grid grid-cols-[minmax(90px,.7fr)_minmax(0,1.5fr)_minmax(130px,1fr)] gap-3 bg-slate-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                        <span>Username</span>
+                        <span>Komentar</span>
+                        <span>Tanggal & Jam</span>
+                    </div>
+
+                    <div id="participants-list" class="max-h-72 divide-y divide-slate-100 overflow-y-auto">
+                        <div class="px-4 py-8 text-center text-sm text-slate-400">
+                            Belum ada peserta. Muat data contoh atau masukkan komentar.
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
         <aside class="space-y-6">
@@ -94,13 +106,50 @@
     function escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
     }
+    function formatCommentDate(value) {
+        if (!value) return 'Waktu tidak tersedia';
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            return 'Waktu tidak tersedia';
+        }
+
+        return new Intl.DateTimeFormat('id-ID', {
+            timeZone: 'Asia/Makassar',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).format(date) + ' WITA';
+    }
     function parseComments() {
+        const previousComments = new Map(
+            allComments.map(item => [
+                `${item.username.toLowerCase()}|${item.text}`,
+                item.created_at || null
+            ])
+        );
+
         return $('comments-input').value.split(/\r?\n/).map(line => {
             const separator = line.indexOf('|');
             if (separator < 1) return null;
+
             const username = line.slice(0, separator).trim().replace(/^@/, '');
             const text = line.slice(separator + 1).trim();
-            return username && text ? {username, text} : null;
+
+            return username && text
+                ? {
+                    username,
+                    text,
+                    created_at: previousComments.get(
+                        `${username.toLowerCase()}|${text}`
+                    ) || null
+                }
+                : null;
         }).filter(Boolean);
     }
     function updateDrawButton() {
@@ -133,7 +182,21 @@
         $('eligible-count').textContent = eligible.length;
         $('import-status').textContent = allComments.length + ' komentar dimuat · ' + eligible.length + ' peserta memenuhi filter';
         $('participants-list').innerHTML = eligible.length
-            ? eligible.slice(0,100).map(item => '<div class="grid grid-cols-[minmax(100px,.7fr)_minmax(0,1.5fr)] gap-3 px-4 py-3 text-sm"><strong class="truncate text-slate-800">@' + escapeHtml(item.username) + '</strong><span class="break-words text-slate-500">' + escapeHtml(item.text) + '</span></div>').join('') + (eligible.length > 100 ? '<p class="bg-slate-50 px-4 py-2 text-center text-xs text-slate-400">Menampilkan 100 dari ' + eligible.length + ' peserta.</p>' : '')
+            ? eligible.slice(0, 100).map(item => `
+                <div class="grid grid-cols-[minmax(90px,.7fr)_minmax(0,1.5fr)_minmax(130px,1fr)] gap-3 px-4 py-3 text-sm">
+                    <strong class="truncate text-slate-800">
+                        @${escapeHtml(item.username)}
+                    </strong>
+
+                    <span class="break-words text-slate-500">
+                        ${escapeHtml(item.text)}
+                    </span>
+
+                    <span class="text-xs text-slate-500">
+                        ${escapeHtml(formatCommentDate(item.created_at))}
+                    </span>
+                </div>
+            `).join('') + (eligible.length > 100 ? '<p class="bg-slate-50 px-4 py-2 text-center text-xs text-slate-400">Menampilkan 100 dari ' + eligible.length + ' peserta.</p>' : '')
             : '<div class="px-4 py-8 text-center text-sm text-slate-400">Tidak ada komentar yang memenuhi filter.</div>';
         $('draw-placeholder').classList.remove('hidden');
         $('winner-result').classList.add('hidden');
@@ -164,7 +227,8 @@
             if (!response.ok) throw new Error(payload.message || 'Gagal mengambil komentar Instagram.');
             allComments = (payload.comments || []).map(item => ({
                 username: item.username,
-                text: item.text
+                text: item.text,
+                created_at: item.created_at || null
             }));
             $('comments-input').value = allComments.map(item => '@' + item.username + '|' + item.text).join('\n');
             applyFilter();

@@ -39,7 +39,7 @@ class InstagramGiveawayService
         $url = $this->baseUrl . '/' . $mediaId . '/comments';
 
         $params = [
-            'fields' => 'id,text,username',
+            'fields' => 'id,text,username,timestamp',
             'limit' => 100,
             'access_token' => $token,
         ];
@@ -59,6 +59,7 @@ class InstagramGiveawayService
                         'username' => ltrim($username, '@'),
                         'text' => $text,
                         'id' => $comment['id'] ?? null,
+                        'created_at' => $comment['timestamp'] ?? null,
                     ];
                 }
             }
@@ -67,7 +68,7 @@ class InstagramGiveawayService
             $hasNext = !empty($response['paging']['next']);
 
             $params = [
-                'fields' => 'id,text,username',
+                'fields' => 'id,text,username,timestamp',
                 'limit' => 100,
                 'access_token' => $token,
             ];

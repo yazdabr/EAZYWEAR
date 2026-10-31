@@ -34,7 +34,7 @@ class InstagramGiveawayService
         $comments = [];
         $url = $this->baseUrl . '/' . $mediaId . '/comments';
         $params = [
-            'fields' => 'id,text,username,from,timestamp',
+            'fields' => 'id,text,username',
             'limit' => 100,
             'access_token' => $token,
         ];

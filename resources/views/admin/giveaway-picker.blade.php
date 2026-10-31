@@ -3,8 +3,8 @@
 @section('content')
 <div class="mx-auto max-w-7xl space-y-6">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div><p class="text-xs font-bold uppercase tracking-[.2em] text-[#C4902C]">Eazywear tools</p><h1 class="mt-1 text-2xl font-bold text-slate-900">Instagram Giveaway Picker</h1><p class="mt-1 text-sm text-slate-500">Filter komentar dan undi pemenang secara acak.</p></div>
-        <span class="inline-flex w-fit items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Integrasi API siap diuji</span>
+        <div><p class="text-xs font-bold uppercase tracking-[.2em] text-[#C4902C]">Eazywear</p><h1 class="mt-1 text-2xl font-bold text-slate-900">Instagram Giveaway Picker</h1><p class="mt-1 text-sm text-slate-500">Filter komentar dan undi pemenang secara acak.</p></div>
+        {{-- <span class="inline-flex w-fit items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Integrasi API siap diuji</span> --}}
     </div>
     <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <section class="space-y-6">

@@ -79,7 +79,8 @@
                     <div class="my-5 flex min-h-48 flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[.04] px-4 py-6 text-center">
                         <div id="draw-placeholder"><div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-[#D6A84D]"><x-heroicon-o-gift class="h-7 w-7"/></div><p class="mt-4 text-sm font-semibold text-white/80">Siap menentukan pemenang?</p><p class="mt-1 text-xs text-white/40">Pemenang akan muncul di sini.</p></div>
                         <div id="rolling-name" class="hidden text-2xl font-black tracking-wide text-[#E7BD68]"></div>
-                        <div id="winner-result" class="hidden w-full"><p id="winner-number" class="text-[10px] font-bold uppercase tracking-[.2em] text-[#D6A84D]"></p><p id="winner-username" class="mt-3 break-all text-2xl font-black text-white"></p><div class="mt-4 rounded-xl bg-black/30 p-3 text-left"><p class="text-[10px] font-bold uppercase tracking-wider text-white/40">Komentar terpilih</p><p id="winner-comment" class="mt-1 break-words text-sm leading-relaxed text-white/90"></p></div></div>
+                        <div id="winner-result" class="hidden w-full"><p id="winner-number" class="text-[10px] font-bold uppercase tracking-[.2em] text-[#D6A84D]"></p><p id="winner-username" class="mt-3 break-all text-2xl font-black text-white"></p><div class="mt-4 rounded-xl bg-black/30 p-3 text-left"><p class="text-[10px] font-bold uppercase tracking-wider text-white/40">Komentar terpilih</p><p id="winner-comment" class="mt-1 break-words text-sm leading-relaxed text-white/90"></p>
+                        <p id="winner-date" class="mt-2 text-xs text-white/50"></p></div></div>
                     </div>
                     <button id="draw-button" type="button" disabled class="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C4902C] px-4 py-3.5 text-sm font-extrabold text-white shadow-lg transition hover:bg-[#AD7D20] disabled:cursor-not-allowed disabled:opacity-40">UNDI PEMENANG</button>
                     <p id="draw-hint" class="mt-3 text-center text-[11px] leading-relaxed text-white/40">Terapkan filter dan pastikan peserta tersedia untuk memulai undian.</p>
@@ -160,9 +161,17 @@
         $('draw-hint').textContent = winners.length >= 3 ? 'Tiga pemenang sudah terpilih.' : remaining.length ? remaining.length + ' peserta masih tersedia.' : 'Peserta belum tersedia.';
     }
     function renderHistory() {
-        $('winner-history').innerHTML = winners.length ? winners.map((winner,index) =>
-            '<div class="flex gap-3 rounded-xl bg-slate-50 p-3"><div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-xs font-black text-amber-800">' + (index+1) + '</div><div class="min-w-0"><p class="truncate text-sm font-bold text-slate-800">@' + escapeHtml(winner.username) + '</p><p class="mt-0.5 text-xs text-slate-500">' + escapeHtml(winner.text) + '</p></div></div>'
+        $('winner-history').innerHTML = winners.length ? winners.map((winner, index) =>
+            `<div class="flex gap-3 rounded-xl bg-slate-50 p-3">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-xs font-black text-amber-800">${index + 1}</div>
+                <div class="min-w-0">
+                    <p class="truncate text-sm font-bold text-slate-800">@${escapeHtml(winner.username)}</p>
+                    <p class="mt-0.5 text-xs text-slate-500">${escapeHtml(winner.text)}</p>
+                    <p class="mt-2 text-[11px] text-slate-400">${escapeHtml(formatCommentDate(winner.created_at))}</p>
+                </div>
+            </div>`
         ).join('') : '<p class="text-sm text-slate-400">Belum ada pemenang.</p>';
+
         updateDrawButton();
     }
     function applyFilter() {
@@ -266,6 +275,7 @@
                 $('winner-number').textContent = 'PEMENANG ' + winners.length;
                 $('winner-username').textContent = '@' + winner.username;
                 $('winner-comment').textContent = winner.text;
+                $('winner-date').textContent = formatCommentDate(winner.created_at);
                 drawing = false; renderHistory();
             }
         },75);

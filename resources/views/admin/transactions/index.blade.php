@@ -128,7 +128,7 @@
                 <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-end sm:justify-end sm:gap-4">
 
                     {{-- METODE PENGIRIMAN --}}
-                    <div class="col-span-1 w-full sm:w-52">
+                    <div class="col-span-1 w-full sm:w-40">
                         <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
                             Pengiriman
                         </label>
@@ -137,14 +137,14 @@
                             onchange="this.form.submit()"
                             class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
                         >
-                            <option value="">Semua Pengiriman</option>
+                            <option value="">Pengiriman</option>
                             <option value="pickup" @selected(request('shipping_type') === 'pickup')>Ambil di Tempat</option>
                             <option value="courier" @selected(request('shipping_type') === 'courier')>Dikirim (Kurir)</option>
                         </select>
                     </div>
 
                     {{-- JENIS PRODUK --}}
-                    <div class="col-span-1 w-full sm:w-52">
+                    <div class="col-span-1 w-full sm:w-40">
                         <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
                             Jenis Produk
                         </label>
@@ -154,14 +154,40 @@
                             onchange="this.form.submit()"
                             class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
                         >
-                            <option value="" @selected(request('availability', '') === '')>Semua Produk</option>
+                            <option value="" @selected(request('availability', '') === '')>Produk</option>
                             <option value="ready" @selected(request('availability') === 'ready')>Ready Stock</option>
                             <option value="pre_order" @selected(request('availability') === 'pre_order')>PO</option>
                             <option value="mixed" @selected(request('availability') === 'mixed')>Ready Stock + PO</option>
                         </select>
                     </div>
+
+                    {{-- VERSI JERSEY --}}
+                    <div class="col-span-1 w-full sm:w-40">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
+                            Versi Jersey
+                        </label>
+
+                        <select
+                            name="jersey_version"
+                            onchange="this.form.submit()"
+                            class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
+                        >
+                            <option value="" @selected(request('jersey_version', '') === '')>
+                                Versi
+                            </option>
+                            <option value="Home" @selected(request('jersey_version') === 'Home')>
+                                Home
+                            </option>
+                            <option value="Away" @selected(request('jersey_version') === 'Away')>
+                                Away
+                            </option>
+                            <option value="Third" @selected(request('jersey_version') === 'Third')>
+                                Third
+                            </option>
+                        </select>
+                    </div>
                     {{-- STATUS --}}
-                    <div class="col-span-1 w-full sm:w-52">
+                    <div class="col-span-1 w-full sm:w-40">
                         <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
                             Status
                         </label>
@@ -171,7 +197,7 @@
                             onchange="this.form.submit()"
                             class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
                         >
-                            <option value="">Semua Status</option>
+                            <option value="">Status</option>
 
                             <option value="EXPIRED" @selected(request('status') === 'EXPIRED')>
                                 Expired
@@ -204,7 +230,7 @@
                     </div>
 
                     {{-- BULAN --}}
-                    <div class="col-span-1 w-full sm:w-52">
+                    <div class="col-span-1 w-full sm:w-40">
                         <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
                             Bulan
                         </label>
@@ -214,7 +240,7 @@
                             onchange="this.form.submit()"
                             class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
                         >
-                            <option value="">Semua Bulan</option>
+                            <option value="">Bulan</option>
                             <option value="1" @selected(request('month') == '1')>Januari</option>
                             <option value="2" @selected(request('month') == '2')>Februari</option>
                             <option value="3" @selected(request('month') == '3')>Maret</option>
@@ -241,7 +267,7 @@
                             onchange="this.form.submit()"
                             class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
                         >
-                            <option value="">Semua Tahun</option>
+                            <option value="">Tahun</option>
 
                             @for($year = now()->year; $year >= now()->year - 5; $year--)
                                 <option value="{{ $year }}" @selected(request('year') == $year)>
@@ -279,8 +305,16 @@
 
     {{-- ================= STATISTICS ================= --}}
     <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <x-admin.stat-card title="Total Transaksi" value="{{ number_format($totalTransactions, 0, ',', '.') }}" growth="{{ $transactionGrowth['value'] }}" :positive="$transactionGrowth['positive']" :neutral="$transactionGrowth['neutral']">
-            <x-slot:icon><x-heroicon-o-receipt-percent class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
+        <x-admin.stat-card
+            title="{{ $jerseyVersion ? 'Total Jersey ' . $jerseyVersion . ' Dipesan' : 'Total Transaksi' }}"
+            value="{{ number_format($jerseyVersion ? $jerseyQuantity : $totalTransactions, 0, ',', '.') }}"
+            growth="{{ $transactionGrowth['value'] }}"
+            :positive="$transactionGrowth['positive']"
+            :neutral="$transactionGrowth['neutral']"
+        >
+            <x-slot:icon>
+                <x-heroicon-o-receipt-percent class="h-6 w-6 sm:h-7 sm:w-7"/>
+            </x-slot:icon>
         </x-admin.stat-card>
         <x-admin.stat-card title="Transaksi Pending" value="{{ number_format($pendingTransactions, 0, ',', '.') }}" growth="Belum dibayar" :positive="false" :neutral="true">
             <x-slot:icon><x-heroicon-o-clock class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>

@@ -120,6 +120,14 @@ class TransactionController extends Controller
                     fn ($product) => $product->where('availability', 'pre_order')
                 );
         }
+        // Filter berdasarkan versi jersey Home, Away, atau Third.
+        $jerseyVersion = $request->input('jersey_version');
+
+        if (in_array($jerseyVersion, ['Home', 'Away', 'Third'], true)) {
+            $query->whereHas('items.productVariant.product', function ($product) use ($jerseyVersion) {
+                $product->where('name', 'like', '%' . $jerseyVersion . '%');
+            });
+        }
         $summaryQuery = clone $query;
         $transactions = $query->latest('transaction_date')->paginate(10)->withQueryString();
 
@@ -193,6 +201,19 @@ class TransactionController extends Controller
         });
 
         $totalTransactions = (clone $summaryQuery)->count();
+        $jerseyQuantity = 0;
+
+        if (in_array($jerseyVersion, ['Home', 'Away', 'Third'], true)) {
+            $jerseyQuantity = TransactionItem::query()
+                ->whereIn(
+                    'transaction_id',
+                    (clone $summaryQuery)->select('transactions.id')
+                )
+                ->whereHas('productVariant.product', function ($product) use ($jerseyVersion) {
+                    $product->where('name', 'like', '%' . $jerseyVersion . '%');
+                })
+                ->sum('qty');
+        }
         $totalRevenue = (clone $summaryQuery)
             ->whereIn('status', Transaction::SALES_REPORT_STATUSES)
             ->sum('total');
@@ -258,6 +279,8 @@ class TransactionController extends Controller
             'transactionGrowth' => $transactionGrowth,
             'revenueGrowth' => $revenueGrowth,
             'completedGrowth' => $completedGrowth,
+            'jerseyVersion' => $jerseyVersion,
+            'jerseyQuantity' => $jerseyQuantity,
         ]);
     }
 

@@ -304,7 +304,7 @@
     </form>
 
     {{-- ================= STATISTICS ================= --}}
-    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-5">
         <x-admin.stat-card
             title="{{ $jerseyVersion ? 'Total Jersey ' . $jerseyVersion . ' Dipesan' : 'Total Transaksi' }}"
             value="{{ number_format($jerseyVersion ? $jerseyQuantity : $totalTransactions, 0, ',', '.') }}"
@@ -312,7 +312,7 @@
             :positive="$transactionGrowth['positive']"
             :neutral="$transactionGrowth['neutral']"
         >
-            <x-slot:icon>
+            <x-slot:icon>0
                 <x-heroicon-o-receipt-percent class="h-6 w-6 sm:h-7 sm:w-7"/>
             </x-slot:icon>
         </x-admin.stat-card>
@@ -324,6 +324,17 @@
         </x-admin.stat-card>
         <x-admin.stat-card title="Pesanan Selesai" value="{{ number_format($completedOrders, 0, ',', '.') }}" growth="{{ $completedGrowth['value'] }}" :positive="$completedGrowth['positive']" :neutral="$completedGrowth['neutral']">
             <x-slot:icon><x-heroicon-o-check-badge class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
+        </x-admin.stat-card>
+        <x-admin.stat-card
+            title="Total Ongkir Yang Perlu Dibayar"
+            value="Rp {{ number_format($totalShippingToPay, 0, ',', '.') }}"
+            growth="Pesanan tanpa resi"
+            :positive="false"
+            :neutral="true"
+        >
+            <x-slot:icon>
+                <x-heroicon-o-truck class="h-6 w-6 sm:h-7 sm:w-7"/>
+            </x-slot:icon>
         </x-admin.stat-card>
     </div>
 

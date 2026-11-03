@@ -219,6 +219,28 @@ class TransactionController extends Controller
             ->sum('total');
         $completedOrders = (clone $summaryQuery)->where('status', Transaction::ORDER_COMPLETED)->count();
         $pendingTransactions = (clone $summaryQuery)->where('status', 'PENDING')->count();
+        $totalShippingToPay = Transaction::query()
+            ->whereIn('status', ['PAID', 'ORDER_PROCESSING'])
+            ->where('shipping_method', 'Kurir')
+            ->where(function ($query) {
+                $query->whereNull('tracking_number')
+                    ->orWhere('tracking_number', '');
+            })
+            ->whereDoesntHave('shipments', function ($query) {
+                $query->where(function ($shipment) {
+                    $shipment->whereNotNull('tracking_number')
+                        ->orWhereNotNull('biteship_waybill_id')
+                        ->orWhereNotNull('biteship_tracking_id');
+                });
+            })
+            ->whereDoesntHave('fulfillments', function ($query) {
+                $query->where(function ($fulfillment) {
+                    $fulfillment->whereNotNull('tracking_number')
+                        ->orWhereNotNull('biteship_waybill_id')
+                        ->orWhereNotNull('biteship_tracking_id');
+                });
+            })
+            ->sum('shipping');
         $currentMonth = Carbon::now()->startOfMonth();
         $previousMonth = Carbon::now()->subMonth()->startOfMonth();
 
@@ -276,6 +298,7 @@ class TransactionController extends Controller
             'totalRevenue' => $totalRevenue,
             'completedOrders' => $completedOrders,
             'pendingTransactions' => $pendingTransactions,
+            'totalShippingToPay' => $totalShippingToPay,
             'transactionGrowth' => $transactionGrowth,
             'revenueGrowth' => $revenueGrowth,
             'completedGrowth' => $completedGrowth,

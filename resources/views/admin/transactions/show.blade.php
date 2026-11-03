@@ -234,13 +234,14 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                         @if($transaction->shipping_method === 'Kurir' && $transaction->fulfillments->isEmpty() && $transaction->shipments->isEmpty())
                             <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                                 <a
-                                    href="{{ route('admin.transactions.legacy-label', $transaction) }}"
+                                    href="{{ route('admin.transactions.legacy-label', $transaction) }}" data-label-count="{{ $transaction->label_print_count ?? 0 }}" onclick="updateLabelPrintCount(this)"
                                     target="_blank"
                                     rel="noopener"
                                     class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-700"
                                 >
                                     <x-heroicon-o-printer class="h-4 w-4" />
-                                    Cetak Label Pengiriman
+                                    <span>Cetak Label Pengiriman</span>
+                                    <span class="label-print-count">@if(($transaction->label_print_count ?? 0) > 0)(Sudah {{ $transaction->label_print_count }}x)@endif</span>
                                 </a>
 
                                 @if($transaction->biteship_order_id && $transaction->biteship_tracking_id)
@@ -516,12 +517,13 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                     <div class="mt-3 grid grid-cols-2 gap-2">
 @if($shipment->shipping_method === 'Kurir')
                                         <a
-                                            href="{{ route('admin.transactions.shipments.label', ['transaction' => $transaction, 'shipment' => $shipment]) }}"
+                                            href="{{ route('admin.transactions.shipments.label', ['transaction' => $transaction, 'shipment' => $shipment]) }}" data-label-count="{{ $shipment->label_print_count ?? 0 }}" onclick="updateLabelPrintCount(this)"
                                             target="_blank"
                                             rel="noopener"
                                             class="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-slate-700">
                                             <x-heroicon-o-printer class="h-4 w-4 shrink-0" />
                                             <span>Cetak Label Resi</span>
+                                            <span class="label-print-count">@if(($shipment->label_print_count ?? 0) > 0)(Sudah {{ $shipment->label_print_count }}x)@endif</span>
                                         </a>
                                     @endif
                                     @if($shipment->biteship_order_id && $shipment->biteship_tracking_id)
@@ -774,13 +776,14 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 @if($fulfillment->shipping_method === 'Kurir' && $transaction->shipments->isEmpty())
                                     <div class="mt-3 grid grid-cols-2 gap-2">
                                         <a
-                                            href="{{ route('admin.transactions.fulfillments.label', ['transaction' => $transaction, 'fulfillment' => $fulfillment]) }}"
+                                            href="{{ route('admin.transactions.fulfillments.label', ['transaction' => $transaction, 'fulfillment' => $fulfillment]) }}" data-label-count="{{ $fulfillment->label_print_count ?? 0 }}" onclick="updateLabelPrintCount(this)"
                                             target="_blank"
                                             rel="noopener"
                                             class="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-2 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-slate-700"
                                         >
                                             <x-heroicon-o-printer class="h-4 w-4 shrink-0" />
                                             <span>Cetak Label Resi</span>
+                                            <span class="label-print-count">@if(($fulfillment->label_print_count ?? 0) > 0)(Sudah {{ $fulfillment->label_print_count }}x)@endif</span>
                                         </a>
 
                                         @if($fulfillment->biteship_order_id && $fulfillment->biteship_tracking_id)
@@ -1545,5 +1548,15 @@ document.querySelectorAll('.fulfillment-complete-form').forEach(form => {
         openFulfillmentActionConfirmation(this, 'complete');
     });
 });
+function updateLabelPrintCount(button) {
+    const count = Number(button.dataset.labelCount || 0) + 1;
+    button.dataset.labelCount = count;
+
+    const countLabel = button.querySelector('.label-print-count');
+
+    if (countLabel) {
+        countLabel.textContent = `(Sudah ${count}x)`;
+    }
+}
 </script>
 @endsection

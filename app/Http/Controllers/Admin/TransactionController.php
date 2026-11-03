@@ -1968,6 +1968,7 @@ class TransactionController extends Controller
         if ($transaction->shipments()->exists()) {
             abort(404, 'Transaksi ini sudah memiliki shipment. Gunakan label shipment.');
         }
+        $transaction->increment('label_print_count');
 
         $transaction->loadMissing([
             'items.productVariant.product',
@@ -2018,6 +2019,7 @@ class TransactionController extends Controller
         if ($fulfillment->shipping_method !== 'Kurir') {
             abort(404, 'Label pengiriman hanya tersedia untuk fulfillment kurir.');
         }
+        $fulfillment->increment('label_print_count');
 
         $transaction->loadMissing('items');
         $fulfillment->load([
@@ -2071,6 +2073,7 @@ class TransactionController extends Controller
         if ($shipment->shipping_method !== 'Kurir') {
             abort(404, 'Label pengiriman hanya tersedia untuk shipment kurir.');
         }
+        $shipment->increment('label_print_count');
 
         $origin = config('biteship.origin', []);
 

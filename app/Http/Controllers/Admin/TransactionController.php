@@ -96,6 +96,28 @@ class TransactionController extends Controller
             }
         }
 
+        // Filter berdasarkan kurir pengiriman.
+        $courierFilter = $request->input('courier');
+
+        if (in_array($courierFilter, ['jnt', 'lion'], true)) {
+            $courierKeyword = $courierFilter === 'jnt' ? '%jnt%' : '%lion%';
+
+            $query->where(function ($courierQuery) use ($courierKeyword) {
+                $courierQuery
+                    ->where('courier', 'like', $courierKeyword)
+                    ->orWhere('courier_code', 'like', $courierKeyword)
+                    ->orWhereHas('fulfillments', function ($fulfillment) use ($courierKeyword) {
+                        $fulfillment
+                            ->where('courier', 'like', $courierKeyword)
+                            ->orWhere('courier_code', 'like', $courierKeyword);
+                    })
+                    ->orWhereHas('shipments', function ($shipment) use ($courierKeyword) {
+                        $shipment
+                            ->where('courier', 'like', $courierKeyword)
+                            ->orWhere('courier_code', 'like', $courierKeyword);
+                    });
+            });
+        }
         // Filter berdasarkan ketersediaan produk dalam transaksi.
         $availability = $request->input('availability');
 

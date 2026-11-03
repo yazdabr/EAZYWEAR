@@ -30,7 +30,7 @@
             </button>
 
             @if ($pendingWebOrdersCount > 0)
-<button
+            <button
                 type="button"
                 @click="$dispatch('open-process-all-orders-modal')"
                 class="inline-flex items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F] active:scale-95 sm:px-5"
@@ -128,7 +128,7 @@
                 <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:items-end sm:justify-end sm:gap-4">
 
                     {{-- METODE PENGIRIMAN --}}
-                    <div class="col-span-1 w-full sm:w-40">
+                    <div class="col-span-1 w-full sm:w-52">
                         <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
                             Pengiriman
                         </label>
@@ -143,6 +143,28 @@
                         </select>
                     </div>
 
+                    {{-- FILTER KURIR --}}
+                    <div class="col-span-1 w-full sm:w-40">
+                        <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
+                            Kurir
+                        </label>
+
+                        <select
+                            name="courier"
+                            onchange="this.form.submit()"
+                            class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
+                        >
+                            <option value="" @selected(request('courier', '') === '')>
+                                Kurir
+                            </option>
+                            <option value="jnt" @selected(request('courier') === 'jnt')>
+                                J&T
+                            </option>
+                            <option value="lion" @selected(request('courier') === 'lion')>
+                                Lion Parcel
+                            </option>
+                        </select>
+                    </div>
                     {{-- JENIS PRODUK --}}
                     <div class="col-span-1 w-full sm:w-40">
                         <label class="mb-1 block text-xs font-medium text-slate-600 sm:mb-1.5">
@@ -312,7 +334,7 @@
             :positive="$transactionGrowth['positive']"
             :neutral="$transactionGrowth['neutral']"
         >
-            <x-slot:icon>0
+            <x-slot:icon>
                 <x-heroicon-o-receipt-percent class="h-6 w-6 sm:h-7 sm:w-7"/>
             </x-slot:icon>
         </x-admin.stat-card>

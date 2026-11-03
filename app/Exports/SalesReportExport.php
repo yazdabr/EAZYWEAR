@@ -13,13 +13,16 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Maatwebsite\Excel\Events\AfterSheet;
+use Maatwebsite\Excel\Concerns\WithEvents;
 
 class SalesReportExport implements
     FromCollection,
     WithHeadings,
     WithMapping,
     WithStyles,
-    WithColumnFormatting
+    WithColumnFormatting,
+    WithEvents
 {
     protected Request $request;
 
@@ -236,6 +239,52 @@ class SalesReportExport implements
         }
 
         return $rows;
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $lastRow = $sheet->getHighestRow();
+
+                $startRow = 2;
+
+                while ($startRow <= $lastRow) {
+                    $invoice = $sheet->getCell("B{$startRow}")->getValue();
+
+                    $endRow = $startRow;
+
+                    while (
+                        $endRow < $lastRow &&
+                        $sheet->getCell('B' . ($endRow + 1))->getValue() === $invoice
+                    ) {
+                        $endRow++;
+                    }
+
+                    if ($endRow > $startRow) {
+                        // Gabungkan informasi transaksi.
+                        foreach (['A', 'B', 'C', 'D', 'E', 'F', 'N'] as $column) {
+                            $sheet->mergeCells(
+                                "{$column}{$startRow}:{$column}{$endRow}"
+                            );
+                        }
+
+                        // Ratakan isi sel hasil penggabungan.
+                        foreach (['A', 'B', 'C', 'D', 'E', 'F', 'N'] as $column) {
+                            $sheet->getStyle(
+                                "{$column}{$startRow}:{$column}{$endRow}"
+                            )->getAlignment()
+                                ->setHorizontal('center')
+                                ->setVertical('center')
+                                ->setWrapText(true);
+                        }
+                    }
+
+                    $startRow = $endRow + 1;
+                }
+            },
+        ];
     }
 
     private function paymentLabel($method): string

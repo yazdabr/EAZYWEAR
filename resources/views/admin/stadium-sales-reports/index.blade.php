@@ -30,13 +30,13 @@
                     <x-heroicon-o-printer class="h-4 w-4 shrink-0 sm:h-5 sm:w-5"/>
                     <span class="truncate">Cetak Laporan</span>
                 </a>
-                <button
-                    type="button"
+                <a
+                    href="{{ route('admin.stadium-sales-reports.export', request()->query()) }}"
                     class="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-[#AE7C18] px-3 text-xs font-semibold text-white shadow-md shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-[0.98] sm:h-[50px] sm:w-auto sm:gap-2 sm:px-6 sm:text-sm"
                 >
                     <x-heroicon-o-arrow-down-tray class="h-4 w-4 shrink-0 sm:h-5 sm:w-5"/>
                     <span class="truncate">Ekspor Laporan</span>
-                </button>
+                </a>
             </div>
 
         </div>

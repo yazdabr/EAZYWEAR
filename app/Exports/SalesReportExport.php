@@ -182,6 +182,7 @@ class SalesReportExport implements
         $number = 1;
 
         foreach ($transactions as $transaction) {
+            $transactionNumber = $number++;
             $items = $transaction->items;
 
             // Tetap tampilkan transaksi meskipun tidak memiliki detail item.
@@ -196,7 +197,7 @@ class SalesReportExport implements
                 $product = $variant?->product;
 
                 $rows->push([
-                    'no' => $number++,
+                    'no' => $transactionNumber,
                     'invoice' => $transaction->invoice_number ?? '-',
                     'date' => $transaction->transaction_date
                         ? Carbon::parse($transaction->transaction_date)

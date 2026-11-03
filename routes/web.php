@@ -378,6 +378,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'index',
         ])->name('stadium-sales-reports');
 
+        Route::get('/stadium-sales-reports/export', [
+            \App\Http\Controllers\Admin\StadiumSalesReportController::class,
+            'export',
+        ])->name('stadium-sales-reports.export');
+
         Route::get('/stadium-sales-reports/print', [
             \App\Http\Controllers\Admin\StadiumSalesReportController::class,
             'print',

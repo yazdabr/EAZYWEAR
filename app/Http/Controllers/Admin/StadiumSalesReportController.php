@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Exports\StadiumSalesReportExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -136,6 +138,16 @@ class StadiumSalesReportController extends Controller
         ));
     }
 
+
+    public function export(Request $request)
+    {
+        $filename = 'Laporan_Penjualan_Stadion_' . now()->format('Y-m-d-His') . '.xlsx';
+
+        return Excel::download(
+            new StadiumSalesReportExport($request),
+            $filename
+        );
+    }
     public function print(Request $request): View
     {
         $startDate = $request->filled('start_date')

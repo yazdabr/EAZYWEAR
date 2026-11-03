@@ -169,6 +169,7 @@
                                     data-fulfillment-group
                                     data-group-type="{{ $groupType }}"
                                     data-group-label="{{ $groupLabel }}"
+                                    data-has-custom="{{ !empty($group['has_custom']) ? '1' : '0' }}"
                                     data-group-subtotal="{{ $group['subtotal'] }}"
                                     data-combined-item-count="{{ collect($fulfillmentGroups)->sum('item_count') }}"
                                     data-combined-subtotal="{{ collect($fulfillmentGroups)->sum('subtotal') }}"
@@ -209,12 +210,19 @@
                                     <div data-pickup-section class="mt-4 hidden">
                                         <div class="rounded-xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-3.5 sm:p-4">
                                             <div class="mb-3">
-                                                <p class="text-xs font-semibold text-slate-900 sm:text-sm">Jadwal Pengambilan {{ $groupLabel }}</p>
+                                                <p class="text-xs font-semibold text-slate-900 sm:text-sm">
+                                                    Jadwal Pengambilan {{ $groupLabel }}
+                                                </p>
+
                                                 <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">
                                                     @if($groupType === 'pre_order')
                                                         Pilih jadwal pengambilan sesuai jadwal Pre-order yang tersedia.
+                                                    @elseif(!empty($group['has_custom']))
+                                                        Pesanan dengan custom nama dan nomor membutuhkan waktu pengerjaan.
+                                                        Pickup paling cepat dapat dijadwalkan besok, terlepas dari waktu checkout.
                                                     @else
-                                                        Pickup Ready Stock sebelum pukul 14.00 dapat dijadwalkan hari ini. pukul 14.00 atau setelahnya mulai besok.
+                                                        Pickup Ready Stock sebelum pukul 14.00 dapat dijadwalkan hari ini.
+                                                        Pukul 14.00 atau setelahnya mulai besok.
                                                     @endif
                                                 </p>
                                             </div>

@@ -1152,6 +1152,50 @@ class CheckoutControllerTest extends TestCase
         return $variant->fresh(['product']);
     }
 
+    private function readyPickupCheckout(
+        ProductVariant $variant,
+        string $email,
+        string $pickupDate,
+        string $customName = '',
+        string $customNumber = '',
+        bool $expectPayment = true
+    ) {
+        Session::put('cart', [[
+            'variant_id' => $variant->id,
+            'price' => (float) $variant->price,
+            'qty' => 1,
+            'custom_name' => $customName,
+            'custom_number' => $customNumber,
+        ]]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')->never();
+        });
+
+        if ($expectPayment) {
+            $this->mockDokuSuccess();
+        }
+
+        return $this->post(route('checkout.store'), [
+            'name' => 'Ready Pickup Test',
+            'email' => $email,
+            'phone' => '08123456789',
+            'shipping_address' => 'Alamat Test',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+
+            'ready_shipping_method' => 'Ambil di Tempat',
+            'ready_pickup_date' => $pickupDate,
+            'ready_pickup_time_start' => '10:00',
+            'ready_pickup_time_end' => '11:00',
+
+            'payment_method' => 'VA',
+            'va_bank' => 'MANDIRI',
+        ]);
+    }
+
     private function customizationCheckout(
         ProductVariant $variant,
         string $email,
@@ -2718,6 +2762,193 @@ class CheckoutControllerTest extends TestCase
                     ->count(),
                 'Event Hold hanya boleh dibuat untuk jadwal pre-order dalam transaksi gabungan.'
             );
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+    
+    public function test_ready_stock_custom_rejects_same_day_pickup(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-03 10:00:00'));
+
+        try {
+            $variant = $this->customizationVariant(true, 15000);
+            $variant->product->update(['availability' => 'ready']);
+
+            $response = $this->readyPickupCheckout(
+                $variant,
+                'custom-same-day@test.com',
+                '2026-11-03',
+                'ANGGA',
+                '10',
+                false
+            );
+
+            $response->assertSessionHasErrors('ready_pickup_date');
+
+            $this->assertDatabaseMissing('transactions', [
+                'shipping_email' => 'custom-same-day@test.com',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_ready_stock_custom_accepts_next_day_pickup(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-03 10:00:00'));
+
+        try {
+            $variant = $this->customizationVariant(true, 15000);
+            $variant->product->update(['availability' => 'ready']);
+
+            $response = $this->readyPickupCheckout(
+                $variant,
+                'custom-next-day@test.com',
+                '2026-11-04',
+                'ANGGA',
+                '10'
+            );
+
+            $response->assertRedirect(route('checkout.success'));
+
+            $transaction = Transaction::query()
+                ->where('shipping_email', 'custom-next-day@test.com')
+                ->firstOrFail();
+
+            $this->assertSame(
+                '2026-11-04',
+                $transaction->pickup_date->toDateString()
+            );
+
+            $this->assertDatabaseHas('transaction_fulfillments', [
+                'transaction_id' => $transaction->id,
+                'group_type' => 'ready',
+                'pickup_date' => '2026-11-04',
+                'shipping_method' => 'Ambil di Tempat',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_ready_stock_without_custom_still_allows_same_day_pickup_before_cutoff(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-03 10:00:00'));
+
+        try {
+            $variant = $this->customizationVariant(false, 0);
+            $variant->product->update(['availability' => 'ready']);
+
+            $response = $this->readyPickupCheckout(
+                $variant,
+                'ready-same-day@test.com',
+                '2026-11-03'
+            );
+
+            $response->assertRedirect(route('checkout.success'));
+
+            $transaction = Transaction::query()
+                ->where('shipping_email', 'ready-same-day@test.com')
+                ->firstOrFail();
+
+            $this->assertSame(
+                '2026-11-03',
+                $transaction->pickup_date->toDateString()
+            );
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_combined_checkout_rejects_same_day_when_ready_item_has_customization(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-03 10:00:00'));
+
+        try {
+            $readyVariant = $this->customizationVariant(true, 15000);
+            $readyVariant->product->update(['availability' => 'ready']);
+
+            $preOrderProduct = \App\Models\Product::create([
+                'product_code' => 'TEST-PREORDER-CUSTOM-' . uniqid(),
+                'category_id' => 6,
+                'name' => 'Test Pre-order Custom Combined',
+                'slug' => 'test-preorder-custom-' . uniqid(),
+                'description' => 'Temporary product for automated test',
+                'material' => 'Mesh',
+                'availability' => 'pre_order',
+                'status' => true,
+                'customization_enabled' => false,
+                'customization_price' => 0,
+                'longsleeve_enabled' => false,
+                'longsleeve_price' => 0,
+                'patch_enabled' => false,
+                'patch_price' => 0,
+            ]);
+
+            $preOrderVariant = ProductVariant::create([
+                'product_id' => $preOrderProduct->id,
+                'size_id' => 1,
+                'color_id' => 1,
+                'sku' => 'TEST-PREORDER-CUSTOM-' . uniqid(),
+                'price' => 200000,
+                'weight' => 250,
+            ]);
+
+            Inventory::create([
+                'product_variant_id' => $preOrderVariant->id,
+                'stock' => 10,
+            ]);
+
+            Session::put('cart', [
+                [
+                    'variant_id' => $readyVariant->id,
+                    'price' => (float) $readyVariant->price,
+                    'qty' => 1,
+                    'custom_name' => 'ANGGA',
+                    'custom_number' => '10',
+                ],
+                [
+                    'variant_id' => $preOrderVariant->id,
+                    'price' => (float) $preOrderVariant->price,
+                    'qty' => 1,
+                    'custom_name' => '',
+                    'custom_number' => '',
+                ],
+            ]);
+
+            $this->mock(BiteshipService::class, function ($mock) {
+                $mock->shouldReceive('getCourierRates')->never();
+            });
+
+            $response = $this->post(route('checkout.store'), [
+                'name' => 'Combined Custom Test',
+                'email' => 'combined-custom@test.com',
+                'phone' => '08123456789',
+                'shipping_address' => 'Alamat Combined',
+                'shipping_district' => 'District',
+                'shipping_city' => 'Banjarmasin',
+                'shipping_province' => 'Kalimantan Selatan',
+                'shipping_postal_code' => '70111',
+
+                'fulfillment_mode' => 'combined',
+
+                'ready_shipping_method' => 'Ambil di Tempat',
+                'pre_order_shipping_method' => 'Ambil di Tempat',
+
+                'pre_order_pickup_date' => '2026-11-03',
+                'pre_order_pickup_time_start' => '10:00',
+                'pre_order_pickup_time_end' => '11:00',
+
+                'payment_method' => 'VA',
+                'va_bank' => 'MANDIRI',
+            ]);
+
+            $response->assertSessionHasErrors('pre_order_pickup_date');
+
+            $this->assertDatabaseMissing('transactions', [
+                'shipping_email' => 'combined-custom@test.com',
+            ]);
         } finally {
             Carbon::setTestNow();
         }

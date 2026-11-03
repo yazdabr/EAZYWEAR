@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
         element,
         type: element.dataset.groupType,
         label: element.dataset.groupLabel,
+        hasCustom: element.dataset.hasCustom === '1',
         subtotal: Number(element.dataset.groupSubtotal || 0),
         combinedItemCount: Number(element.dataset.combinedItemCount || 0),
         combinedSubtotal: Number(element.dataset.combinedSubtotal || 0),
@@ -293,16 +294,35 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getMinimumPickupDate(group) {
+        let minimumDate;
+
         if (isSpecialBatchCheckout(group)) {
-            return config.checkoutDate > config.specialBatchStart
+            minimumDate = config.checkoutDate > config.specialBatchStart
                 ? config.checkoutDate
                 : config.specialBatchStart;
+        } else {
+            // Ready Stock biasa tetap mengikuti cutoff pickup normal.
+            minimumDate = config.checkoutTime < config.pickupSameDayCutoff
+                ? config.checkoutDate
+                : addDays(config.checkoutDate, 1);
         }
 
-        // Ready Stock selalu memakai aturan pickup normal, bukan jadwal Event Hold.
-        return config.checkoutTime < config.pickupSameDayCutoff
-            ? config.checkoutDate
-            : addDays(config.checkoutDate, 1);
+        // Custom nama dan nomor wajib pickup paling cepat besok.
+        // Pada mode Combined, periksa kedua grup karena jadwalnya bersama.
+        const hasCustom = group.hasCustom || (
+            getFulfillmentMode() === 'combined'
+            && groups.some((item) => item.hasCustom)
+        );
+
+        if (hasCustom) {
+            const tomorrow = addDays(config.checkoutDate, 1);
+
+            if (minimumDate < tomorrow) {
+                minimumDate = tomorrow;
+            }
+        }
+
+        return minimumDate;
     }
 
     function clearRatesError(group) {

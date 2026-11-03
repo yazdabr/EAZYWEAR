@@ -304,6 +304,10 @@ class CheckoutController extends Controller
                 $fulfillmentGroups[] = [
                     'type' => $groupType,
                     'label' => $groupLabel,
+                    'has_custom' => $groupItems->contains(function ($item) {
+                        return trim((string) ($item['custom_name'] ?? '')) !== ''
+                            && trim((string) ($item['custom_number'] ?? '')) !== '';
+                    }),
                     'item_count' => (int) $groupItems->sum('qty'),
                     'subtotal' => (float) $groupItems->sum(
                         fn ($item) => (float) $item['price'] * (int) $item['qty']
@@ -710,6 +714,32 @@ class CheckoutController extends Controller
                         $pickupDate = $validated[$inputPrefix . '_pickup_date'] ?? null;
                         $pickupTimeStart = $validated[$inputPrefix . '_pickup_time_start'] ?? null;
                         $pickupTimeEnd = $validated[$inputPrefix . '_pickup_time_end'] ?? null;
+                        // Custom nama dan nomor wajib pickup paling cepat besok.
+                        $hasCustomInGroup = $itemsByGroup[$groupType]->contains(function ($item) {
+                            return trim((string) ($item['custom_name'] ?? '')) !== ''
+                                && trim((string) ($item['custom_number'] ?? '')) !== '';
+                        });
+
+                        // Pada mode Combined, kedua grup menggunakan satu jadwal pickup.
+                        $hasCustomInCombined = $fulfillmentMode === 'combined'
+                            && collect($items)->contains(function ($item) {
+                                return trim((string) ($item['custom_name'] ?? '')) !== ''
+                                    && trim((string) ($item['custom_number'] ?? '')) !== '';
+                            });
+
+                        if ($hasCustomInGroup || $hasCustomInCombined) {
+                            $minimumCustomPickupDate = $checkoutAt->copy()
+                                ->startOfDay()
+                                ->addDay()
+                                ->toDateString();
+
+                            if ($pickupDate < $minimumCustomPickupDate) {
+                                throw ValidationException::withMessages([
+                                    $inputPrefix . '_pickup_date' => 'Produk dengan custom nama dan nomor paling cepat dapat diambil besok, yaitu '
+                                        . $checkoutAt->copy()->addDay()->format('d-m-Y') . '.',
+                                ]);
+                            }
+                        }
 
                         if ($pickupTimeStart >= $pickupTimeEnd) {
                             throw ValidationException::withMessages([

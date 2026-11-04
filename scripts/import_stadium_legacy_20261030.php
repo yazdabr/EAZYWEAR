@@ -122,19 +122,14 @@ foreach ($rows as [
         throw new RuntimeException("Patch tidak aktif: {$productName}");
     }
 
-    if ($longsleeve && !$product->longsleeve_enabled) {
-        throw new RuntimeException("L/S tidak aktif: {$productName}");
-    }
-
     $basePrice = (int) $variant->price;
 
     $customizationFee = $nns
         ? (int) $product->customization_price
         : 0;
 
-    $longsleevePrice = $longsleeve
-        ? (int) $product->longsleeve_price
-        : 0;
+    // Tarif longsleeve historis per 30 Oktober 2026.
+    $longsleevePrice = $longsleeve ? 100000 : 0;
 
     $patchPrice = $patch
         ? (int) $product->patch_price

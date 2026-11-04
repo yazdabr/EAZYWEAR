@@ -138,9 +138,12 @@ class TransactionControllerTest extends TestCase
             ]);
 
             foreach ($variantIds as $variantId) {
+                $variant = ProductVariant::with('product')->findOrFail($variantId);
+
                 TransactionItem::query()->create([
                     'transaction_id' => $transaction->id,
                     'product_variant_id' => $variantId,
+                    'availability' => $variant->product->availability,
                     'qty' => 1,
                     'price' => 100000,
                     'subtotal' => 100000,

@@ -118,29 +118,17 @@ class TransactionController extends Controller
                     });
             });
         }
-        // Filter berdasarkan ketersediaan produk dalam transaksi.
+        // Filter berdasarkan snapshot ketersediaan saat transaksi dibuat.
         $availability = $request->input('availability');
 
         if ($availability === 'ready') {
-            $query->whereHas(
-                'items.productVariant.product',
-                fn ($product) => $product->where('availability', 'ready')
-            );
+            $query->whereHas('items', fn ($item) => $item->where('availability', 'ready'));
         } elseif ($availability === 'pre_order') {
-            $query->whereHas(
-                'items.productVariant.product',
-                fn ($product) => $product->where('availability', 'pre_order')
-            );
+            $query->whereHas('items', fn ($item) => $item->where('availability', 'pre_order'));
         } elseif ($availability === 'mixed') {
             $query
-                ->whereHas(
-                    'items.productVariant.product',
-                    fn ($product) => $product->where('availability', 'ready')
-                )
-                ->whereHas(
-                    'items.productVariant.product',
-                    fn ($product) => $product->where('availability', 'pre_order')
-                );
+                ->whereHas('items', fn ($item) => $item->where('availability', 'ready'))
+                ->whereHas('items', fn ($item) => $item->where('availability', 'pre_order'));
         }
         // Filter berdasarkan versi jersey Home, Away, atau Third.
         $jerseyVersion = $request->input('jersey_version');
@@ -155,11 +143,11 @@ class TransactionController extends Controller
 
         $transactions->through(function ($transaction) {
             $hasReady = $transaction->items->contains(
-                fn ($item) => $item->productVariant?->product?->availability === 'ready'
+                fn ($item) => $item->availability === 'ready'
             );
 
             $hasPreOrder = $transaction->items->contains(
-                fn ($item) => $item->productVariant?->product?->availability === 'pre_order'
+                fn ($item) => $item->availability === 'pre_order'
             );
 
             $availabilityLabel = match (true) {
@@ -613,6 +601,7 @@ class TransactionController extends Controller
                     TransactionItem::create([
                         'transaction_id' => $transaction->id,
                         'product_variant_id' => $item['variant']->id,
+                        'availability' => $item['variant']->product->availability,
                         'custom_name' => $item['custom_name'],
                         'custom_number' => $item['custom_number'],
                         'qty' => $item['qty'],

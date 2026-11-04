@@ -988,6 +988,7 @@ class CheckoutController extends Controller
                         'transaction_id' => $transaction->id,
                         'transaction_fulfillment_id' => $fulfillmentIds[$item['group_type']] ?? null,
                         'product_variant_id' => $item['variant']->id,
+                        'availability' => $item['group_type'],
                         'custom_name' => $item['custom_name'],
                         'custom_number' => $item['custom_number'],
                         'is_longsleeve' => $item['is_longsleeve'],

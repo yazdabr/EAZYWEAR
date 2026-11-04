@@ -342,6 +342,10 @@ class BiteshipWebhookController extends Controller
                 $transaction = $this->completionService->completeFromBiteship($transaction);
             }
 
+            if (in_array($status, ['picked', 'in_transit', 'dropping_off'], true)) {
+                $transaction = $this->markTransactionShippedAndNotify($transaction, true);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Webhook diterima.',
@@ -355,7 +359,10 @@ class BiteshipWebhookController extends Controller
         }
     }
 
-    private function markTransactionShippedAndNotify(Transaction $transaction): Transaction
+    private function markTransactionShippedAndNotify(
+        Transaction $transaction,
+        bool $allowLegacyWithoutFulfillments = false
+    ): Transaction
     {
         $lock = Cache::lock('transaction:shipped-email:' . $transaction->id, 30);
 
@@ -364,7 +371,7 @@ class BiteshipWebhookController extends Controller
         }
 
         try {
-            $transaction = DB::transaction(function () use ($transaction) {
+            $transaction = DB::transaction(function () use ($transaction, $allowLegacyWithoutFulfillments) {
                 $locked = Transaction::query()
                     ->whereKey($transaction->id)
                     ->lockForUpdate()
@@ -386,7 +393,10 @@ class BiteshipWebhookController extends Controller
                     ));
 
                 if (
-                    $allFulfillmentsShipped
+                    (
+                        $allFulfillmentsShipped
+                        || ($allowLegacyWithoutFulfillments && $fulfillments->isEmpty())
+                    )
                     && in_array($locked->status, [
                         'PAID',
                         Transaction::ORDER_PROCESSING,

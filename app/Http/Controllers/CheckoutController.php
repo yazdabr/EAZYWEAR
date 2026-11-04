@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\OrderCreatedMail;
+use App\Jobs\SendOrderCreatedEmail;
 use App\Models\Customer;
 use App\Models\Inventory;
 use App\Models\ProductVariant;
 use App\Models\Transaction;
+use App\Models\OrderEmailOutbox;
 use App\Models\TransactionItem;
 use App\Services\BiteshipService;
 use App\Services\DokuService;
@@ -18,7 +19,7 @@ use App\Services\QrisQrCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Services\EmailArchiveService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -1121,10 +1122,50 @@ class CheckoutController extends Controller
 
                 $transaction->load(['items.productVariant.product']);
 
+                OrderEmailOutbox::create([
+                    'transaction_id' => $transaction->id,
+                    'status' => OrderEmailOutbox::STATUS_PENDING,
+                    'available_at' => now(),
+                ]);
+
                 return $transaction;
             });
 
-            app(EmailArchiveService::class)->send($transaction->shipping_email, new OrderCreatedMail($transaction));
+            $outbox = null;
+
+            try {
+                $outbox = OrderEmailOutbox::query()
+                    ->where('transaction_id', $transaction->id)
+                    ->first();
+
+                if (! $outbox) {
+                    throw new \RuntimeException(
+                        'Order email outbox record not found.'
+                    );
+                }
+
+                $outbox->update([
+                    'status' => OrderEmailOutbox::STATUS_QUEUED,
+                    'available_at' => null,
+                    'last_error' => null,
+                ]);
+
+                SendOrderCreatedEmail::dispatch((int) $outbox->id);
+            } catch (\Throwable $e) {
+                if ($outbox) {
+                    $outbox->update([
+                        'status' => OrderEmailOutbox::STATUS_PENDING,
+                        'available_at' => now(),
+                        'last_error' => mb_substr($e->getMessage(), 0, 65000),
+                    ]);
+                }
+
+                Log::error('Failed to dispatch order created email job.', [
+                    'transaction_id' => $transaction->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             $request->session()->put('checkout_success_invoice', $transaction->invoice_number);
             $request->session()->forget('cart');
 

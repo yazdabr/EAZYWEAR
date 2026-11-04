@@ -12,8 +12,14 @@ use App\Models\FulfillmentSlot;
 use App\Models\FulfillmentHold;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use App\Models\OrderEmailOutbox;
 use Illuminate\Support\Facades\Session;
 use Tests\TestCase;
+use Mockery;
+use App\Jobs\SendOrderCreatedEmail;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Contracts\Bus\Dispatcher;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutControllerTest extends TestCase
 {
@@ -1373,6 +1379,8 @@ class CheckoutControllerTest extends TestCase
 
     public function test_checkout_patch_on_uses_database_fee_once(): void
     {
+        Queue::fake();
+
         $variant = $this->customizationVariant(false, 0);
 
         $variant->product->update([
@@ -1438,6 +1446,17 @@ class CheckoutControllerTest extends TestCase
             ->where('shipping_email', 'patch-checkout@test.com')
             ->latest('id')
             ->firstOrFail();
+
+            $outbox = OrderEmailOutbox::query()
+                ->where('transaction_id', $transaction->id)
+                ->firstOrFail();
+
+            Queue::assertPushedOn(
+                'emails',
+                SendOrderCreatedEmail::class,
+                fn (SendOrderCreatedEmail $job) =>
+                    $job->outboxId === (int) $outbox->id
+            );
 
         $item = $transaction->items()->firstOrFail();
         $expectedPrice = (float) $variant->price + 25000;
@@ -2952,5 +2971,48 @@ class CheckoutControllerTest extends TestCase
         } finally {
             Carbon::setTestNow();
         }
+    }
+    public function test_checkout_succeeds_when_email_job_dispatch_fails(): void
+    {
+        $variant = $this->customizationVariant(false, 0);
+
+        Log::spy();
+
+        $this->mock(Dispatcher::class, function ($mock) {
+            $mock->shouldReceive('dispatch')
+                ->once()
+                ->with(Mockery::type(SendOrderCreatedEmail::class))
+                ->andThrow(new \RuntimeException('Queue connection unavailable.'));
+        });
+
+        $response = $this->customizationCheckout(
+            $variant,
+            'queue-failure@test.com'
+        );
+
+        $response->assertRedirect(route('checkout.success'));
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('transactions', [
+            'shipping_email' => 'queue-failure@test.com',
+        ]);
+
+        $this->assertDatabaseHas('order_email_outboxes', [
+            'transaction_id' => Transaction::query()
+                ->where('shipping_email', 'queue-failure@test.com')
+                ->value('id'),
+            'status' => OrderEmailOutbox::STATUS_PENDING,
+            'recovery_attempts' => 0,
+        ]);
+
+        $this->assertFalse(Session::has('cart'));
+
+        Log::shouldHaveReceived('error')
+            ->once()
+            ->withArgs(function ($message, $context) {
+                return $message === 'Failed to dispatch order created email job.'
+                    && isset($context['transaction_id'])
+                    && $context['error'] === 'Queue connection unavailable.';
+            });
     }
 }

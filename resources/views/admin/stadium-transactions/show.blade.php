@@ -269,10 +269,23 @@
 
                     <div class="overflow-y-auto overscroll-contain">
                         @foreach ($transaction->items as $item)
-                            @php
-                                $variant = $item->productVariant;
-                                $product = $variant?->product;
-                            @endphp
+                        @php
+                            $variant = $item->productVariant;
+                            $product = $variant?->product;
+
+                            $basePrice = (float) ($variant?->price ?? 0);
+
+                            $nnsPrice = max(
+                                0,
+                                (float) $item->price
+                                    - $basePrice
+                                    - (float) $item->longsleeve_price
+                                    - (float) $item->patch_price
+                            );
+
+                            $customName = mb_strtoupper(trim((string) $item->custom_name), 'UTF-8');
+                            $isNnsLabel = in_array($customName, ['NNS', 'NNS HISTORIS'], true);
+                        @endphp
                             <div class="border-b border-slate-100 p-4 last:border-b-0 sm:p-5">
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0">
@@ -323,53 +336,314 @@
                 </div>
             </div>
         @else
-            <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            @php
+                $versionOrder = [
+                    'Stadium' => 0,
+                    'Supporter' => 1,
+                    'Produk' => 2,
+                ];
+
+                $kitOrder = [
+                    'Home' => 0,
+                    'Away' => 1,
+                    'Third' => 2,
+                ];
+
+                $summaryGroups = [];
+
+                foreach ($transaction->items as $item) {
+                    $name = $item->productVariant?->product?->name ?? '';
+
+                    preg_match('/\b(Supporter|Stadium)\b/i', $name, $versionMatch);
+                    preg_match('/\b(Home|Away|Third)\b/i', $name, $kitMatch);
+
+                    $version = isset($versionMatch[1])
+                        ? ucfirst(strtolower($versionMatch[1]))
+                        : 'Produk';
+
+                    $kit = isset($kitMatch[1])
+                        ? ucfirst(strtolower($kitMatch[1]))
+                        : $name;
+
+                    $key = $version . '|' . $kit;
+
+                    if (!isset($summaryGroups[$key])) {
+                        $summaryGroups[$key] = [
+                            'version' => $version,
+                            'kit' => $kit,
+                            'qty' => 0,
+                        ];
+                    }
+
+                    $summaryGroups[$key]['qty'] += (int) $item->qty;
+                }
+
+                $summaryGroups = collect($summaryGroups)
+                    ->sortBy(function ($group) use ($versionOrder, $kitOrder) {
+                        return sprintf(
+                            '%03d|%03d|%s',
+                            $versionOrder[$group['version']] ?? 99,
+                            $kitOrder[$group['kit']] ?? 99,
+                            $group['kit']
+                        );
+                    });
+
+                $groupedOrders = $summaryGroups
+                    ->groupBy('version')
+                    ->sortBy(fn ($products, $version) => $versionOrder[$version] ?? 99);
+
+                $totalQty = $transaction->items->sum('qty');
+                $totalUniqueProducts = $summaryGroups->count();
+                $showProductSummary = $totalQty > 2;
+            @endphp
+
+            <div class="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 p-5">
                     <h2 class="font-bold text-slate-900">Rincian Produk</h2>
                     <p class="mt-1 text-sm text-slate-500">
-                        {{ $transaction->items->sum('qty') }} barang dalam transaksi ini
+                        {{ $totalQty }} barang
+                        @if ($showProductSummary)
+                            · {{ $totalUniqueProducts }} jenis produk
+                        @else
+                            dalam transaksi ini
+                        @endif
                     </p>
                 </div>
 
-                <div class="divide-y divide-slate-100">
-                    @forelse($transaction->items as $item)
-                        @php
-                            $variant = $item->productVariant;
-                            $product = $variant?->product;
-                        @endphp
-                        <div class="p-5">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0">
-                                    <h3 class="font-semibold text-slate-900">
-                                        {{ $product?->name ?? 'Produk tidak tersedia' }}
-                                    </h3>
-                                    <div class="mt-2 space-y-1 text-xs text-slate-500">
-                                        @if ($variant?->size?->name)
-                                            <p>Ukuran: {{ $variant->size->name }}</p>
-                                        @endif
-                                        @if ($item->custom_name)
-                                            <p>Nama jersey: {{ mb_strtoupper($item->custom_name, 'UTF-8') }}</p>
-                                        @endif
-                                        @if ($item->custom_number)
-                                            <p>Nomor jersey: {{ $item->custom_number }}</p>
-                                        @endif
+                <div class="flex flex-1 flex-col gap-4 p-5">
+                    @if (!$showProductSummary)
+                        <div class="divide-y divide-slate-100">
+                            @forelse($transaction->items as $item)
+                                @php
+                                    $variant = $item->productVariant;
+                                    $product = $variant?->product;
+
+                                    $basePrice = (float) ($variant?->price ?? 0);
+
+                                    $nnsPrice = max(
+                                        0,
+                                        (float) $item->price
+                                            - $basePrice
+                                            - (float) $item->longsleeve_price
+                                            - (float) $item->patch_price
+                                    );
+                                @endphp
+
+                                <div class="py-4 first:pt-0 last:pb-0">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <h3 class="font-semibold text-slate-900">
+                                                {{ $product?->name ?? 'Produk tidak tersedia' }}
+                                            </h3>
+
+                                            <div class="mt-2 space-y-1 text-xs text-slate-500">
+                                                @if ($variant?->size?->name)
+                                                    <p>Ukuran: {{ $variant->size->name }}</p>
+                                                @endif
+
+                                                @if ($item->custom_name)
+                                                    <p>
+                                                        {{ in_array(mb_strtoupper(trim($item->custom_name), 'UTF-8'), ['NNS', 'NNS HISTORIS'], true) ? 'NNS' : 'Nama jersey: ' . mb_strtoupper($item->custom_name, 'UTF-8') }}
+                                                    </p>
+                                                @endif
+
+                                                @if ($item->custom_number && !in_array(mb_strtoupper(trim((string) $item->custom_name), 'UTF-8'), ['NNS', 'NNS HISTORIS'], true))
+                                                    <p>Nomor jersey: {{ $item->custom_number }}</p>
+                                                @endif
+                                            </div>
+
+                                            <p class="mt-3 text-sm text-slate-500">
+                                                {{ $item->qty }} x Rp{{ number_format($basePrice, 0, ',', '.') }}
+
+                                                @if ($item->is_longsleeve && (float) $item->longsleeve_price > 0)
+                                                    + Rp{{ number_format((float) $item->longsleeve_price, 0, ',', '.') }} Longsleeve
+                                                @endif
+
+                                                @if ($item->is_patch && (float) $item->patch_price > 0)
+                                                    + Rp{{ number_format((float) $item->patch_price, 0, ',', '.') }} Patch
+                                                @endif
+
+                                                @if ($nnsPrice > 0)
+                                                    + Rp{{ number_format($nnsPrice, 0, ',', '.') }} NNS
+                                                @endif
+                                            </p>
+                                        </div>
+
+                                        <p class="shrink-0 text-sm font-bold text-slate-900">
+                                            Rp{{ number_format((float) $item->subtotal, 0, ',', '.') }}
+                                        </p>
                                     </div>
-                                    <p class="mt-3 text-sm text-slate-500">
-                                        {{ $item->qty }} x Rp{{ number_format((float) $item->price, 0, ',', '.') }}
+                                </div>
+                            @empty
+                                <div class="py-8 text-center text-sm text-slate-500">
+                                    Tidak ada rincian produk untuk transaksi ini.
+                                </div>
+                            @endforelse
+                        </div>
+                    @else
+                        @foreach ($groupedOrders as $version => $products)
+                            @php
+                                $kits = $products->pluck('kit')->unique()->values();
+
+                                $labels = $kits->count() > 1
+                                    ? $kits->slice(0, -1)->implode(', ') . ' & ' . $kits->last()
+                                    : $kits->first();
+
+                                $groupLabel = $version === 'Produk'
+                                    ? $labels
+                                    : $version . ' ' . $labels;
+
+                                $groupQty = $products->sum('qty');
+                                $groupProductCount = $products->count();
+                            @endphp
+
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 p-4">
+                                <div>
+                                    <h3 class="font-semibold text-slate-900">{{ $groupLabel }}</h3>
+                                    <p class="mt-1 text-sm text-slate-500">
+                                        {{ $groupProductCount }} jenis produk · {{ $groupQty }} pcs
                                     </p>
                                 </div>
-                                <p class="shrink-0 text-sm font-bold text-slate-900">
-                                    Rp{{ number_format((float) $item->subtotal, 0, ',', '.') }}
-                                </p>
+                                <span class="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                                    {{ $groupQty }} pcs
+                                </span>
                             </div>
-                        </div>
-                    @empty
-                        <div class="p-8 text-center text-sm text-slate-500">
-                            Tidak ada rincian produk untuk transaksi ini.
-                        </div>
-                    @endforelse
+                        @endforeach
+
+                        <button
+                            type="button"
+                            onclick="const m=document.getElementById('stadium-product-modal'); m.classList.remove('hidden'); m.classList.add('flex'); document.body.classList.add('overflow-hidden'); requestAnimationFrame(()=>{m.classList.remove('opacity-0'); const p=m.querySelector('.stadium-modal-panel'); if(p){p.classList.remove('opacity-0','scale-95','translate-y-2'); p.classList.add('opacity-100','scale-100','translate-y-0')} })"
+                            class="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#96690F]"
+                        >
+                            <x-heroicon-o-eye class="h-4 w-4"/>
+                            Lihat Detail Pesanan Produk
+                        </button>
+                    @endif
                 </div>
             </div>
+
+            @if ($showProductSummary)
+                <div
+                    id="stadium-product-modal"
+                    class="fixed inset-0 z-[9999] hidden items-center justify-center overflow-y-auto bg-slate-950/50 p-3 opacity-0 backdrop-blur-sm transition-opacity duration-200 sm:p-6"
+                    onclick="if (event.target === this) { this.classList.add('hidden'); this.classList.remove('flex'); document.body.classList.remove('overflow-hidden') }"
+                >
+                    <div class="stadium-modal-panel my-auto flex max-h-[85vh] w-full max-w-3xl scale-95 translate-y-2 flex-col overflow-hidden rounded-2xl bg-white opacity-0 shadow-2xl transition-all duration-200 ease-out">
+                        <div class="flex items-center justify-between border-b border-slate-200 p-4 sm:p-5">
+                            <div>
+                                <h2 class="font-bold text-slate-900">Detail Pesanan Produk</h2>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{ $totalQty }} pcs · {{ $totalUniqueProducts }} jenis produk
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onclick="const m=document.getElementById('stadium-product-modal'); m.classList.add('hidden'); m.classList.remove('flex','opacity-0'); const p=m.querySelector('.stadium-modal-panel'); if(p){p.classList.add('opacity-0','scale-95','translate-y-2');p.classList.remove('opacity-100','scale-100','translate-y-0')} document.body.classList.remove('overflow-hidden')"
+                                class="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                                aria-label="Tutup detail produk"
+                            >
+                                <x-heroicon-o-x-mark class="h-5 w-5"/>
+                            </button>
+                        </div>
+
+                        <div class="overflow-y-auto overscroll-contain">
+                            @foreach ($transaction->items as $item)
+                                @php
+                                    $variant = $item->productVariant;
+                                    $product = $variant?->product;
+                                    $productName = $product?->name ?? '';
+
+                                    preg_match('/\b(Supporter|Stadium)\b/i', $productName, $versionMatch);
+                                    preg_match('/\b(Home|Away|Third)\b/i', $productName, $kitMatch);
+
+                                    $itemVersion = isset($versionMatch[1])
+                                        ? ucfirst(strtolower($versionMatch[1]))
+                                        : null;
+                                    $itemKit = isset($kitMatch[1])
+                                        ? ucfirst(strtolower($kitMatch[1]))
+                                        : null;
+
+                                    $basePrice = (float) ($variant?->price ?? 0);
+                                    $nnsPrice = max(
+                                        0,
+                                        (float) $item->price
+                                            - $basePrice
+                                            - (float) $item->longsleeve_price
+                                            - (float) $item->patch_price
+                                    );
+
+                                    $customName = mb_strtoupper(trim((string) $item->custom_name), 'UTF-8');
+                                    $isNnsLabel = in_array($customName, ['NNS', 'NNS HISTORIS'], true);
+                                @endphp
+                                <div class="border-b border-slate-100 p-4 last:border-b-0 sm:p-5">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <h3 class="text-sm font-semibold text-slate-900">
+                                                {{ $product?->name ?? 'Produk tidak tersedia' }}
+                                            </h3>
+                                            <div class="mt-2 space-y-1 text-xs text-slate-500">
+                                                @if ($itemVersion || $itemKit)
+                                                    <p>
+                                                        @if ($itemVersion)
+                                                            Versi: {{ $itemVersion }}
+                                                        @endif
+                                                        @if ($itemVersion && $itemKit)
+                                                            ·
+                                                        @endif
+                                                        @if ($itemKit)
+                                                            Kit: {{ $itemKit }}
+                                                        @endif
+                                                    </p>
+                                                @endif
+                                                @if ($variant?->size?->name)
+                                                    <p>Ukuran: {{ $variant->size->name }}</p>
+                                                @endif
+                                                @if ($item->is_longsleeve)
+                                                    <p>Lengan panjang</p>
+                                                @endif
+                                                @if ($item->is_patch)
+                                                    <p>Patch</p>
+                                                @endif
+                                                @if ($item->custom_name)
+                                                    <p>{{ $isNnsLabel ? 'NNS' : 'Nama jersey: ' . $customName }}</p>
+                                                @endif
+                                                @if ($item->custom_number && !$isNnsLabel)
+                                                    <p>Nomor jersey: {{ $item->custom_number }}</p>
+                                                @endif
+                                            </div>
+                                            <p class="mt-3 text-xs text-slate-500">
+                                                {{ $item->qty }} x Rp{{ number_format($basePrice, 0, ',', '.') }}
+
+                                                @if ($item->is_longsleeve && (float) $item->longsleeve_price > 0)
+                                                    + Rp{{ number_format((float) $item->longsleeve_price, 0, ',', '.') }} Longsleeve
+                                                @endif
+
+                                                @if ($item->is_patch && (float) $item->patch_price > 0)
+                                                    + Rp{{ number_format((float) $item->patch_price, 0, ',', '.') }} Patch
+                                                @endif
+
+                                                @if ($nnsPrice > 0)
+                                                    + Rp{{ number_format($nnsPrice, 0, ',', '.') }} NNS
+                                                @endif
+                                            </p>
+                                        </div>
+                                        <p class="shrink-0 text-sm font-bold text-slate-900">
+                                            Rp{{ number_format((float) $item->subtotal, 0, ',', '.') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3 border-t border-slate-200 p-4">
+                            <span class="text-sm text-slate-500">Total transaksi</span>
+                            <span class="font-bold text-slate-900">
+                                Rp{{ number_format((float) $transaction->total, 0, ',', '.') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            @endif
         @endif
         {{-- Kolom kanan: Ringkasan Pembayaran --}}
         <div class="h-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

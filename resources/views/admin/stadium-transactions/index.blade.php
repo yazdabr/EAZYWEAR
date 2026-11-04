@@ -5,6 +5,10 @@
 
 @section('content')
 
+@php
+    $isSuperAdmin = auth()->user()?->role === 'super_admin';
+@endphp
+
 <div class="space-y-5 sm:space-y-8">
 
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -17,14 +21,15 @@
             </p>
         </div>
 
-        {{-- <div class="grid w-full grid-cols-1 gap-2 lg:w-auto lg:min-w-0">
+        <div class="grid w-full grid-cols-1 gap-2 lg:w-auto lg:min-w-0">
             <a
-                href="{{ route('admin.kasir') }}"
+                href="{{ route('admin.stadium-transactions.create') }}"
                 class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex"
             >
-                Kembali ke Kasir
+            <x-heroicon-o-plus class="h-5 w-5"/>
+                Tambah Data Transaksi
             </a>
-        </div> --}}
+        </div>
     </div>
 
     {{-- FILTER FORM --}}
@@ -276,20 +281,10 @@
         Total {{ $totalUniqueProducts }} jenis produk | {{ $totalQty }} pcs
     </p>
 @else
-@foreach ($transaction->items as $item)
-                                <div class="mb-2 last:mb-0">
-                                    <p class="font-medium text-slate-700">
-                                        {{ $item->productVariant?->product?->name ?? 'Produk' }}
-                                        @if ($item->productVariant?->size?->name)
-                                            ({{ $item->productVariant->size->name }})
-                                        @endif
-                                    </p>
-                                    <p class="text-xs text-slate-500">
-                                        {{ $item->qty }} x Rp {{ number_format((float) $item->price, 0, ',', '.') }}
-                                    </p>
-                                </div>
-                            @endforeach
-                        @endif
+                                @include('admin.stadium-transactions.partials.order-summary', [
+                                    'transaction' => $transaction,
+                                ])
+                            @endif
                         </div>
                     </div>
 
@@ -308,11 +303,38 @@
                             @endif
                         </div>
 
-                        <a href="{{ route('admin.stadium-transactions.show', $transaction->id) }}"
-                           class="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-amber-400 hover:text-amber-700">
-                            <x-heroicon-o-eye class="h-4 w-4"/>
-                            Lihat
-                        </a>
+                        <div class="flex items-center gap-2">
+                            <a href="{{ route('admin.stadium-transactions.show', $transaction->id) }}"
+                               class="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-amber-400 hover:text-amber-700">
+                                <x-heroicon-o-eye class="h-4 w-4"/>
+                                Lihat
+                            </a>
+
+                            @if ($isSuperAdmin)
+                                <a href="{{ route('admin.stadium-transactions.edit', $transaction->id) }}"
+                                   class="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-100">
+                                    <x-heroicon-o-pencil-square class="h-4 w-4"/>
+                                    Edit
+                                </a>
+
+                                <button
+                                    type="button"
+                                    @click="window.dispatchEvent(new CustomEvent('open-delete-stadium-transaction',{
+                                        detail:{
+                                            id:@js($transaction->id),
+                                            invoice:@js($transaction->invoice_number),
+                                            customer:@js($transaction->customer?->name ?? $transaction->shipping_name ?? 'Pelanggan Stadion'),
+                                            total:@js((float) $transaction->total),
+                                            status:@js($transaction->status ?? '')
+                                        }
+                                    }))"
+                                    class="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100"
+                                    aria-label="Hapus Transaksi"
+                                >
+                                    <x-heroicon-o-trash class="h-4 w-4"/>
+                                </button>
+                            @endif
+                        </div>
                     </div>
                 </div>
             @empty
@@ -335,7 +357,7 @@
                         <th class="px-5 py-4 text-center">Total</th>
                         <th class="px-5 py-4 text-center">Pembayaran</th>
                         <th class="px-5 py-4 text-center">Status</th>
-                        <th class="px-5 py-4 text-center">Detail</th>
+                        <th class="px-5 py-4 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -419,19 +441,9 @@
                                         Total {{ $totalUniqueProducts }} jenis produk | {{ $totalQty }} pcs
                                     </p>
                                 @else
-                                @foreach ($transaction->items as $item)
-                                        <div class="mb-2 last:mb-0">
-                                            <p class="font-medium text-slate-700">
-                                                {{ $item->productVariant?->product?->name ?? 'Produk' }}
-                                                @if ($item->productVariant?->size?->name)
-                                                    ({{ $item->productVariant->size->name }})
-                                                @endif
-                                            </p>
-                                            <p class="text-xs text-slate-500">
-                                                {{ $item->qty }} x Rp {{ number_format((float) $item->price, 0, ',', '.') }}
-                                            </p>
-                                        </div>
-                                    @endforeach
+                                    @include('admin.stadium-transactions.partials.order-summary', [
+                                        'transaction' => $transaction,
+                                    ])
                                 @endif
                             </td>
                             <td class="whitespace-nowrap px-5 py-4 text-center font-bold text-slate-900">
@@ -458,12 +470,104 @@
                                     {{ $transaction->status ?? 'PENDING' }}
                                 </span>
                             </td>
-                            <td class="whitespace-nowrap px-5 py-4 text-center">
-                                <a href="{{ route('admin.stadium-transactions.show', $transaction->id) }}"
-                                   class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-amber-400 hover:text-amber-700">
-                                    <x-heroicon-o-eye class="h-4 w-4"/>
-                                    Lihat
-                                </a>
+                            <td
+                                class="whitespace-nowrap px-5 py-4 text-center"
+                                x-data="{
+                                    open:false,
+                                    dropUp:false,
+                                    top:0,
+                                    left:0,
+                                    width:176,
+                                    toggleDropdown(event){
+                                        const rect=event.currentTarget.getBoundingClientRect();
+                                        this.open=!this.open;
+
+                                        if(this.open){
+                                            const menuHeight=150;
+                                            this.dropUp=(window.innerHeight-rect.bottom)<menuHeight+20;
+                                            this.width=176;
+                                            this.left=rect.right-this.width;
+                                            this.top=this.dropUp
+                                                ? rect.top-menuHeight-8
+                                                : rect.bottom+8;
+                                        }
+                                    },
+                                    close(){
+                                        this.open=false;
+                                    }
+                                }"
+                                @resize.window="close()"
+                                @scroll.window="close()"
+                            >
+                                <button
+                                    type="button"
+                                    @click="toggleDropdown($event)"
+                                    title="Aksi"
+                                    class="rounded-lg p-2 transition-all duration-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+                                    :class="open?'bg-slate-100':''"
+                                >
+                                    <x-heroicon-o-ellipsis-horizontal class="h-5 w-5 text-slate-500"/>
+                                </button>
+
+                                <template x-teleport="body">
+                                    <div
+                                        x-show="open"
+                                        x-cloak
+                                        @click.outside="open=false"
+                                        x-transition:enter="transition ease-out duration-150"
+                                        x-transition:enter-start="opacity-0 scale-95"
+                                        x-transition:enter-end="opacity-100 scale-100"
+                                        x-transition:leave="transition ease-in duration-100"
+                                        x-transition:leave-start="opacity-100 scale-100"
+                                        x-transition:leave-end="opacity-0 scale-95"
+                                        :style="`
+                                            position:fixed;
+                                            top:${top}px;
+                                            left:${left}px;
+                                            width:${width}px;
+                                        `"
+                                        class="z-[999999] overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-2xl shadow-slate-900/20"
+                                        style="display:none;"
+                                    >
+                                        <a
+                                            href="{{ route('admin.stadium-transactions.show', $transaction->id) }}"
+                                            class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                        >
+                                            <x-heroicon-o-eye class="h-4 w-4 shrink-0 text-slate-500"/>
+                                            <span>Lihat</span>
+                                        </a>
+
+                                        @if ($isSuperAdmin)
+                                            <a
+                                                href="{{ route('admin.stadium-transactions.edit', $transaction->id) }}"
+                                                class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                            >
+                                                <x-heroicon-o-pencil-square class="h-4 w-4 shrink-0 text-slate-500"/>
+                                                <span>Edit Transaksi</span>
+                                            </a>
+
+                                            <button
+                                                type="button"
+                                                @click="
+                                                    open=false;
+                                                    window.dispatchEvent(new CustomEvent('open-delete-stadium-transaction',{
+                                                        detail:{
+                                                            id:@js($transaction->id),
+                                                            invoice:@js($transaction->invoice_number),
+                                                            customer:@js($transaction->customer?->name ?? $transaction->shipping_name ?? 'Pelanggan Stadion'),
+                                                            total:@js((float) $transaction->total),
+                                                            status:@js($transaction->status ?? '')
+                                                        }
+                                                    }));
+                                                "
+                                                class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                                            >
+                                                <x-heroicon-o-trash class="h-4 w-4 shrink-0"/>
+                                                <span>Hapus Transaksi</span>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </template>
                             </td>
                         </tr>
                     @empty
@@ -497,3 +601,5 @@
     </div>
 </div>
 @endsection
+
+@include('admin.stadium-transactions.partials.delete-transaction')

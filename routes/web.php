@@ -365,10 +365,38 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'index',
         ])->name('stadium-transactions.index');
 
+        Route::get('/stadium-transactions/create', [
+            \App\Http\Controllers\Admin\StadiumTransactionController::class,
+            'create',
+        ])->name('stadium-transactions.create');
+
+        Route::post('/stadium-transactions', [
+            \App\Http\Controllers\Admin\StadiumTransactionController::class,
+            'store',
+        ])->name('stadium-transactions.store');
+
         Route::get('/stadium-transactions/{transaction}', [
             \App\Http\Controllers\Admin\StadiumTransactionController::class,
             'show',
         ])->name('stadium-transactions.show');
+
+        // EDIT & HAPUS TRANSAKSI STADION - KHUSUS SUPER ADMIN
+        Route::middleware('role:super_admin')->group(function () {
+            Route::get('/stadium-transactions/{transaction}/edit', [
+                \App\Http\Controllers\Admin\StadiumTransactionController::class,
+                'edit',
+            ])->name('stadium-transactions.edit');
+
+            Route::put('/stadium-transactions/{transaction}', [
+                \App\Http\Controllers\Admin\StadiumTransactionController::class,
+                'update',
+            ])->name('stadium-transactions.update');
+
+            Route::delete('/stadium-transactions/{transaction}', [
+                \App\Http\Controllers\Admin\StadiumTransactionController::class,
+                'destroy',
+            ])->name('stadium-transactions.destroy');
+        });
     });
 
     // LAPORAN PENJUALAN STADION

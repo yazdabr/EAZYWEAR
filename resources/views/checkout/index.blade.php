@@ -214,7 +214,7 @@
                                                     Jadwal Pengambilan {{ $groupLabel }}
                                                 </p>
 
-                                                <p class="mt-0.5 text-[10px] leading-4 text-gray-500 sm:text-xs">
+                                                <p class="mt-0.5 text-[10px] leading-4 font-semibold text-red-600 sm:text-xs">
                                                     @if($groupType === 'pre_order')
                                                         Pilih jadwal pengambilan sesuai jadwal Pre-order yang tersedia.
                                                     @elseif(!empty($group['has_custom']))

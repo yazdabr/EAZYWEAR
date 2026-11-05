@@ -481,29 +481,73 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                 </div>
                             </div>
 
-
                             @if($shipment->shipping_method === 'Ambil di Tempat')
                                 @foreach($shipment->fulfillments as $pickupFulfillment)
-                                    @if(
-                                        in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED'], true)
-                                        && !in_array($pickupFulfillment->status, [\App\Models\TransactionFulfillment::STATUS_COMPLETED, 'CANCELLED'], true)
-                                    )
-                                        <form class="fulfillment-complete-form mt-4"
-                                            data-action-title="Konfirmasi pengambilan {{ $pickupFulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY ? 'Ready Stock' : 'Pre-Order' }}"
-                                            data-action-message="Pastikan pesanan benar-benar sudah diambil pelanggan sebelum melanjutkan."
-                                            data-action-confirm-text="Ya, Konfirmasi Pengambilan"
-                                            action="{{ route('admin.transactions.fulfillments.complete', ['transaction' => $transaction, 'fulfillment' => $pickupFulfillment]) }}"
-                                            method="POST">
-                                            @csrf
-                                            @method('PATCH')
-                                            <p class="fulfillment-action-error hidden mb-2 text-xs text-red-600"></p>
-                                            <button type="submit"
-                                                class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700">
+                                    @php
+                                        $pickupStatus = $pickupFulfillment->status;
+                                        $isReadyForPickup = $pickupStatus === \App\Models\TransactionFulfillment::STATUS_READY_FOR_PICKUP;
+                                        $isPickupCompleted = $pickupStatus === \App\Models\TransactionFulfillment::STATUS_COMPLETED;
+                                        $isPickupCancelled = $pickupStatus === \App\Models\TransactionFulfillment::STATUS_CANCELLED;
+                                        $canUpdatePickup = in_array($transaction->status, ['ORDER_PROCESSING', 'ORDER_SHIPPED'], true);
+                                    @endphp
+
+                                    <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+                                        {{-- TAHAP 1: PESANAN SIAP DIAMBIL --}}
+                                        @if(!$isReadyForPickup && !$isPickupCompleted && !$isPickupCancelled && $canUpdatePickup)
+                                            <form class="fulfillment-complete-form"
+                                                data-action-title="Konfirmasi pesanan siap diambil"
+                                                data-action-message="Pastikan {{ $pickupFulfillment->group_type === \App\Models\TransactionFulfillment::GROUP_READY ? 'Ready Stock' : 'Pre-Order' }} sudah selesai diproses dan siap diserahkan kepada pelanggan."
+                                                data-action-confirm-text="Ya, Pesanan Siap Diambil"
+                                                action="{{ route('admin.transactions.fulfillments.ready-for-pickup', ['transaction' => $transaction, 'fulfillment' => $pickupFulfillment]) }}"
+                                                method="POST">
+                                                @csrf
+                                                @method('PATCH')
+
+                                                <p class="fulfillment-action-error hidden mb-2 text-xs text-red-600"></p>
+
+                                                <button type="submit"
+                                                    class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-amber-600">
+                                                    <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
+                                                    Konfirmasi Pesanan Selesai, Siap Diambil Pelanggan
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button type="button" disabled
+                                                class="w-full cursor-not-allowed rounded-xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-500">
                                                 <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
-                                                Konfirmasi Pesanan Selesai, Siap Diambil Pelanggan
+                                                {{ $isPickupCompleted || $isReadyForPickup ? 'Sudah Siap Diambil' : 'Tidak Tersedia' }}
                                             </button>
-                                        </form>
-                                    @endif
+                                        @endif
+
+                                        {{-- TAHAP 2: PELANGGAN TELAH MENGAMBIL PESANAN --}}
+                                        @if($isReadyForPickup && !$isPickupCompleted && !$isPickupCancelled && $canUpdatePickup)
+                                            <form class="fulfillment-complete-form"
+                                                data-action-title="Konfirmasi pesanan telah diambil pelanggan"
+                                                data-action-message="Pastikan pelanggan benar-benar sudah menerima pesanan ini sebelum melanjutkan."
+                                                data-action-confirm-text="Ya, Pesanan Telah Diambil"
+                                                action="{{ route('admin.transactions.fulfillments.complete', ['transaction' => $transaction, 'fulfillment' => $pickupFulfillment]) }}"
+                                                method="POST">
+                                                @csrf
+                                                @method('PATCH')
+
+                                                <p class="fulfillment-action-error hidden mb-2 text-xs text-red-600"></p>
+
+                                                <button type="submit"
+                                                    class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700">
+                                                    <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
+                                                    Pesanan Telah Diambil
+                                                </button>
+                                            </form>
+                                        @else
+                                            <button type="button" disabled
+                                                class="w-full cursor-not-allowed rounded-xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-500">
+                                                <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
+                                                {{ $isPickupCompleted ? 'Sudah Diambil' : 'Menunggu Konfirmasi Kesiapan' }}
+                                            </button>
+                                        @endif
+
+                                    </div>
                                 @endforeach
                             @endif
 
@@ -515,7 +559,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                         <p class="mt-1 text-xs text-slate-500">Status kurir: {{ $shipment->biteship_status }}</p>
                                     @endif
                                     <div class="mt-3 grid grid-cols-2 gap-2">
-@if($shipment->shipping_method === 'Kurir')
+                                    @if($shipment->shipping_method === 'Kurir')
                                         <a
                                             href="{{ route('admin.transactions.shipments.label', ['transaction' => $transaction, 'shipment' => $shipment]) }}" data-label-count="{{ $shipment->label_print_count ?? 0 }}" onclick="updateLabelPrintCount(this)"
                                             target="_blank"

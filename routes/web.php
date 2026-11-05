@@ -180,6 +180,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
         Route::patch('/transactions/{transaction}/fulfillments/{fulfillment}/ship', [TransactionController::class, 'shipFulfillment'])->name('transactions.fulfillments.ship');
         Route::patch('/transactions/{transaction}/fulfillments/{fulfillment}/shipping-address', [TransactionController::class, 'updateFulfillmentShippingAddress'])->name('transactions.fulfillments.shipping-address.update');
         Route::patch('/transactions/{transaction}/fulfillments/{fulfillment}/complete', [TransactionController::class, 'completeFulfillment'])->name('transactions.fulfillments.complete');
+        Route::patch('/transactions/{transaction}/fulfillments/{fulfillment}/ready-for-pickup', [TransactionController::class, 'readyForPickupFulfillment'])->name('transactions.fulfillments.ready-for-pickup');
         Route::get('/transactions/{transaction}/fulfillments/{fulfillment}/tracking', [TransactionController::class, 'trackingFulfillment'])->name('transactions.fulfillments.tracking');
         Route::get('/transactions/{transaction}/fulfillments/{fulfillment}/label', [TransactionController::class, 'printFulfillmentLabel'])->name('transactions.fulfillments.label');
 

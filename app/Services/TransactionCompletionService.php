@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
-use App\Mail\OrderCompletedMail;
 use App\Models\Transaction;
 use App\Models\TransactionFulfillment;
 use App\Models\TransactionNotification;
+use App\Jobs\SendOrderCompletedEmail;
+use App\Jobs\SendPickupCompletedEmail;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -74,6 +77,76 @@ class TransactionCompletionService
             return $transaction->fresh();
         });
     }
+    public function markFulfillmentReadyForPickup(
+        TransactionFulfillment $fulfillment
+    ): Transaction {
+        $transaction = DB::transaction(function () use ($fulfillment) {
+            $lockedTransaction = Transaction::query()
+                ->whereKey($fulfillment->transaction_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $group = TransactionFulfillment::query()
+                ->whereKey($fulfillment->id)
+                ->where('transaction_id', $lockedTransaction->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($group->shipping_method !== 'Ambil di Tempat') {
+                throw ValidationException::withMessages([
+                    'fulfillment' => 'Aksi ini hanya berlaku untuk pesanan ambil di tempat.',
+                ]);
+            }
+
+            if (! in_array($lockedTransaction->status, [
+                Transaction::ORDER_PROCESSING,
+                Transaction::ORDER_SHIPPED,
+            ], true)) {
+                throw ValidationException::withMessages([
+                    'transaction' => 'Transaksi belum berada pada tahap pemenuhan pesanan.',
+                ]);
+            }
+
+            if (in_array($group->status, [
+                TransactionFulfillment::STATUS_COMPLETED,
+                TransactionFulfillment::STATUS_CANCELLED,
+            ], true)) {
+                throw ValidationException::withMessages([
+                    'fulfillment' => 'Kelompok pesanan ini sudah tidak dapat disiapkan.',
+                ]);
+            }
+
+            if (
+                $group->status !== TransactionFulfillment::STATUS_READY_FOR_PICKUP
+            ) {
+                $group->update([
+                    'status' => TransactionFulfillment::STATUS_READY_FOR_PICKUP,
+                ]);
+            }
+
+            $pickupGroups = TransactionFulfillment::query()
+                ->where('transaction_id', $lockedTransaction->id)
+                ->where('shipping_method', 'Ambil di Tempat');
+
+            $allPickupGroupsReady = ! $pickupGroups
+                ->whereNotIn('status', [
+                    TransactionFulfillment::STATUS_READY_FOR_PICKUP,
+                    TransactionFulfillment::STATUS_COMPLETED,
+                ])
+                ->exists();
+
+            return [
+                'transaction' => $lockedTransaction->fresh(),
+                'all_pickup_groups_ready' => $allPickupGroupsReady,
+            ];
+        });
+
+        if ($transaction['all_pickup_groups_ready']) {
+            $this->sendCompletionEmailIfNeeded($transaction['transaction']);
+        }
+
+        return $transaction['transaction'];
+    }
     public function completeFulfillmentManually(
         TransactionFulfillment $fulfillment
     ): Transaction {
@@ -103,7 +176,13 @@ class TransactionCompletionService
             }
 
             if ($group->shipping_method === 'Ambil di Tempat') {
-                // Pickup boleh diselesaikan setelah transaksi diproses.
+                if (
+                    $group->status !== TransactionFulfillment::STATUS_READY_FOR_PICKUP
+                ) {
+                    throw ValidationException::withMessages([
+                        'fulfillment' => 'Pesanan harus dikonfirmasi siap diambil sebelum dikonfirmasi telah diambil pelanggan.',
+                    ]);
+                }
             } elseif ($group->shipping_method === 'Kurir') {
                 if ($group->status !== TransactionFulfillment::STATUS_SHIPPED) {
                     throw ValidationException::withMessages([
@@ -139,7 +218,11 @@ class TransactionCompletionService
         });
 
         if ($transaction->status === Transaction::ORDER_COMPLETED) {
-            $this->sendCompletionEmailIfNeeded($transaction);
+            if ($fulfillment->shipping_method === 'Ambil di Tempat') {
+                $this->sendPickupCompletedEmailIfNeeded($transaction);
+            } else {
+                $this->sendCompletionEmailIfNeeded($transaction);
+            }
         }
 
         return $transaction;
@@ -183,21 +266,143 @@ class TransactionCompletionService
 
     private function sendCompletionEmailIfNeeded(Transaction $transaction): void
     {
-        $notification = TransactionNotification::firstOrCreate([
-            'transaction_id' => $transaction->id,
-            'type' => 'ORDER_COMPLETED_EMAIL',
+        $notification = TransactionNotification::query()
+            ->where('transaction_id', $transaction->id)
+            ->where('type', 'ORDER_COMPLETED_EMAIL')
+            ->lockForUpdate()
+            ->first();
+
+        if (! $notification) {
+            $notification = TransactionNotification::create([
+                'transaction_id' => $transaction->id,
+                'type' => 'ORDER_COMPLETED_EMAIL',
+                'status' => 'pending',
+                'available_at' => now(),
+            ]);
+        }
+
+        if ($notification->sent_at !== null) {
+            return;
+        }
+
+        // Jangan membuat antrean baru jika email sudah diantrekan
+        // atau sedang diproses oleh worker.
+        if (in_array($notification->status, [
+            'queued',
+            'processing',
+            'failed',
+        ], true)) {
+            return;
+        }
+
+        // Hormati jadwal retry setelah kegagalan SMTP.
+        if (
+            $notification->status === 'pending'
+            && $notification->available_at?->isFuture()
+        ) {
+            return;
+        }
+
+        $notification->update([
+            'status' => 'queued',
+            'available_at' => null,
+            'locked_until' => null,
         ]);
 
-        if ($notification->sent_at !== null) return;
+        $notificationId = (int) $notification->id;
 
-        try {
-            app(EmailArchiveService::class)->send(
-                $transaction->shipping_email,
-                new OrderCompletedMail($transaction->fresh())
-            );
-            $notification->update(['sent_at' => now()]);
-        } catch (\Throwable $e) {
-            report($e);
+        DB::afterCommit(function () use ($notificationId) {
+            try {
+                SendOrderCompletedEmail::dispatch($notificationId);
+            } catch (Throwable $exception) {
+                TransactionNotification::query()
+                    ->whereKey($notificationId)
+                    ->whereNull('sent_at')
+                    ->update([
+                        'status' => 'pending',
+                        'available_at' => now(),
+                        'last_error' => mb_substr(
+                            $exception->getMessage(),
+                            0,
+                            65000
+                        ),
+                        'updated_at' => now(),
+                    ]);
+
+                Log::error('Failed to dispatch order completed email.', [
+                    'notification_id' => $notificationId,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+        });
+    }
+    private function sendPickupCompletedEmailIfNeeded(Transaction $transaction): void
+    {
+        $notification = TransactionNotification::query()
+            ->where('transaction_id', $transaction->id)
+            ->where('type', 'PICKUP_COMPLETED_EMAIL')
+            ->lockForUpdate()
+            ->first();
+
+        if (! $notification) {
+            $notification = TransactionNotification::create([
+                'transaction_id' => $transaction->id,
+                'type' => 'PICKUP_COMPLETED_EMAIL',
+                'status' => 'pending',
+                'available_at' => now(),
+            ]);
         }
+
+        if ($notification->sent_at !== null) {
+            return;
+        }
+
+        if (in_array($notification->status, [
+            'queued',
+            'processing',
+            'failed',
+        ], true)) {
+            return;
+        }
+
+        if (
+            $notification->status === 'pending'
+            && $notification->available_at?->isFuture()
+        ) {
+            return;
+        }
+
+        $notification->update([
+            'status' => 'queued',
+            'available_at' => null,
+            'locked_until' => null,
+        ]);
+
+        $notificationId = (int) $notification->id;
+
+        DB::afterCommit(function () use ($notificationId) {
+            try {
+                SendPickupCompletedEmail::dispatch($notificationId);
+            } catch (Throwable $exception) {
+                TransactionNotification::query()
+                    ->whereKey($notificationId)
+                    ->whereNull('sent_at')
+                    ->update([
+                        'status' => 'pending',
+                        'available_at' => now(),
+                        'last_error' => mb_substr(
+                            $exception->getMessage(),
+                            0,
+                            65000
+                        ),
+                        'updated_at' => now(),
+                    ]);
+
+                Log::error('Failed to dispatch pickup completed email.', [
+                    'notification_id' => $notificationId,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
+        });
     }
 }

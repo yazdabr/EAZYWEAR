@@ -18,6 +18,7 @@ class TransactionFulfillment extends Model
     public const STATUS_PENDING = 'PENDING';
     public const STATUS_PROCESSING = 'PROCESSING';
     public const STATUS_SHIPPED = 'SHIPPED';
+    public const STATUS_READY_FOR_PICKUP = 'READY_FOR_PICKUP';
     public const STATUS_COMPLETED = 'COMPLETED';
     public const STATUS_CANCELLED = 'CANCELLED';
 

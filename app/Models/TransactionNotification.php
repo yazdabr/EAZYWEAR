@@ -11,10 +11,18 @@ class TransactionNotification extends Model
         'transaction_id',
         'type',
         'sent_at',
+        'status',
+        'attempts',
+        'recovery_attempts',
+        'available_at',
+        'locked_until',
+        'last_error',
     ];
 
     protected $casts = [
         'sent_at' => 'datetime',
+        'available_at' => 'datetime',
+        'locked_until' => 'datetime',
     ];
 
     public function transaction(): BelongsTo

@@ -12,3 +12,8 @@ Artisan::command('inspire', function () {
 Schedule::command('emails:recover-orders')
     ->everyMinute()
     ->withoutOverlapping();
+
+// Recovery email penyelesaian pesanan.
+Schedule::command('emails:recover-completed')
+    ->everyMinute()
+    ->withoutOverlapping();

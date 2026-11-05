@@ -2255,6 +2255,25 @@ class TransactionController extends Controller
 
 
 
+    public function readyForPickupFulfillment(
+        Transaction $transaction,
+        TransactionFulfillment $fulfillment
+    ) {
+        if ((int) $fulfillment->transaction_id !== (int) $transaction->id) {
+            abort(404);
+        }
+
+        $readyTransaction = $this->transactionCompletionService
+            ->markFulfillmentReadyForPickup($fulfillment);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pesanan berhasil dikonfirmasi siap diambil pelanggan.',
+            'transaction_status' => $readyTransaction->status,
+            'fulfillment_id' => $fulfillment->id,
+        ]);
+    }
+
     public function destroy(Transaction $transaction)
     {
         if (in_array($transaction->status, ['PAID', 'COMPLETED'], true)) {

@@ -2,14 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Mail\OrderCompletedMail;
 use App\Models\Transaction;
-use App\Services\TransactionCompletionService;
 use App\Models\TransactionNotification;
-use Illuminate\Support\Facades\DB;
 use App\Models\TransactionFulfillment;
+use App\Services\TransactionCompletionService;
+use App\Jobs\SendOrderCompletedEmail;
+use App\Mail\OrderCompletedMail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
+use App\Jobs\SendPickupCompletedEmail;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -19,7 +21,7 @@ class TransactionCompletionServiceTest extends TestCase
 
     public function test_service_can_complete_pickup_order(): void
     {
-        Mail::fake();
+        Queue::fake();
 
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_PROCESSING,
@@ -40,7 +42,10 @@ class TransactionCompletionServiceTest extends TestCase
             'status' => Transaction::ORDER_COMPLETED,
         ]);
 
-        Mail::assertSent(OrderCompletedMail::class, 1);
+        Queue::assertPushedOn(
+            'emails',
+            SendOrderCompletedEmail::class
+        );
 
         $this->assertDatabaseHas('transaction_notifications', [
             'transaction_id' => $transaction->id,
@@ -50,8 +55,6 @@ class TransactionCompletionServiceTest extends TestCase
 
     public function test_pickup_completion_email_contains_pickup_schedule(): void
     {
-        Mail::fake();
-
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_PROCESSING,
             'shipping_method' => 'Ambil di Tempat',
@@ -61,31 +64,25 @@ class TransactionCompletionServiceTest extends TestCase
             'pickup_time_end' => '11:00:00',
         ]);
 
-        app(TransactionCompletionService::class)
-            ->completeManually($transaction);
+        $mail = new OrderCompletedMail($transaction);
 
-        Mail::assertSent(
-            OrderCompletedMail::class,
-            function (OrderCompletedMail $mail) {
-                $html = $mail->render();
+        $html = $mail->render();
 
-                return str_contains($html, 'Pesanan Siap Diambil')
-                    && str_contains($html, 'Ambil di Tempat')
-                    && str_contains($html, '30 Oktober 2026')
-                    && str_contains($html, '09:00')
-                    && str_contains($html, '11:00')
-                    && str_contains($html, 'WITA')
-                    && str_contains(
-                        $html,
-                        'Silakan ambil pesanan Anda sesuai dengan jadwal pengambilan'
-                    );
-            }
+        $this->assertStringContainsString('Pesanan Siap Diambil', $html);
+        $this->assertStringContainsString('Ambil di Tempat', $html);
+        $this->assertStringContainsString('30 Oktober 2026', $html);
+        $this->assertStringContainsString('09:00', $html);
+        $this->assertStringContainsString('11:00', $html);
+        $this->assertStringContainsString('WITA', $html);
+        $this->assertStringContainsString(
+            'Silakan ambil pesanan Anda sesuai dengan jadwal pengambilan',
+            $html
         );
     }
 
     public function test_service_can_complete_courier_order(): void
     {
-        Mail::fake();
+        Queue::fake();
 
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_SHIPPED,
@@ -106,12 +103,15 @@ class TransactionCompletionServiceTest extends TestCase
             'status' => Transaction::ORDER_COMPLETED,
         ]);
 
-        Mail::assertSent(OrderCompletedMail::class, 1);
+        Queue::assertPushedOn(
+            'emails',
+            SendOrderCompletedEmail::class
+        );
     }
 
     public function test_manual_completion_rejects_invalid_status(): void
     {
-        Mail::fake();
+        Queue::fake();
 
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_PROCESSING,
@@ -124,12 +124,12 @@ class TransactionCompletionServiceTest extends TestCase
         app(TransactionCompletionService::class)
             ->completeManually($transaction);
 
-        Mail::assertNothingSent();
+        Queue::assertNothingPushed();
     }
 
     public function test_biteship_completion_is_idempotent(): void
     {
-        Mail::fake();
+        Queue::fake();
 
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_SHIPPED,
@@ -150,11 +150,14 @@ class TransactionCompletionServiceTest extends TestCase
             $transaction->status
         );
 
-        Mail::assertSent(OrderCompletedMail::class, 1);
-
         $service->completeFromBiteship($transaction->fresh());
 
-        Mail::assertSent(OrderCompletedMail::class, 1);
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_COMPLETED_EMAIL',
+            'status' => 'queued',
+            'sent_at' => null,
+        ]);
 
         $this->assertSame(
             1,
@@ -178,7 +181,7 @@ class TransactionCompletionServiceTest extends TestCase
         );
     }
 
-    public function test_biteship_completion_retries_failed_completion_email(): void
+    public function test_biteship_completion_creates_only_one_completion_notification(): void
     {
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_SHIPPED,
@@ -190,65 +193,35 @@ class TransactionCompletionServiceTest extends TestCase
 
         $service = app(TransactionCompletionService::class);
 
-        /*
-        * Percobaan pertama: email gagal.
-        */
-        Mail::shouldReceive('to')
-            ->once()
-            ->with('customer@example.com')
-            ->andThrow(new \RuntimeException('SMTP test failure'));
-
-        $completed = $service->completeFromBiteship($transaction);
-
-        $this->assertSame(
-            Transaction::ORDER_COMPLETED,
-            $completed->status
-        );
-
-        $notification = \App\Models\TransactionNotification::query()
-            ->where('transaction_id', $transaction->id)
-            ->where('type', 'ORDER_COMPLETED_EMAIL')
-            ->first();
-
-        $this->assertNotNull($notification);
-        $this->assertNull($notification->sent_at);
-
-        /*
-        * Percobaan kedua: email berhasil.
-        *
-        * Karena Mail sudah menjadi Mockery mock, kita tidak
-        * memanggil Mail::fake() lagi.
-        */
-        $mailer = \Mockery::mock();
-
-        $mailer
-            ->shouldReceive('send')
-            ->once()
-            ->with(\Mockery::type(OrderCompletedMail::class));
-
-        Mail::shouldReceive('to')
-            ->once()
-            ->with('customer@example.com')
-            ->andReturn($mailer);
-
+        $service->completeFromBiteship($transaction);
         $service->completeFromBiteship($transaction->fresh());
-
-        $notification->refresh();
-
-        $this->assertNotNull($notification->sent_at);
 
         $this->assertSame(
             1,
-            \Illuminate\Support\Facades\DB::table('order_status_histories')
+            TransactionNotification::query()
                 ->where('transaction_id', $transaction->id)
-                ->where('status', Transaction::ORDER_COMPLETED)
+                ->where('type', 'ORDER_COMPLETED_EMAIL')
                 ->count()
+        );
+
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_COMPLETED_EMAIL',
+            'status' => 'sent',
+        ]);
+
+        $this->assertNotNull(
+            TransactionNotification::query()
+                ->where('transaction_id', $transaction->id)
+                ->where('type', 'ORDER_COMPLETED_EMAIL')
+                ->first()
+                ->sent_at
         );
     }
 
     public function test_biteship_completion_does_not_complete_pickup_order(): void
     {
-        Mail::fake();
+        Queue::fake();
 
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_PROCESSING,
@@ -263,7 +236,7 @@ class TransactionCompletionServiceTest extends TestCase
         app(TransactionCompletionService::class)
             ->completeFromBiteship($transaction);
 
-        Mail::assertNothingSent();
+        Queue::assertNothingPushed();
 
         $this->assertDatabaseHas('transactions', [
             'id' => $transaction->id,
@@ -273,9 +246,6 @@ class TransactionCompletionServiceTest extends TestCase
 
     public function test_completion_email_failure_does_not_rollback_completed_status(): void
     {
-        Mail::shouldReceive('to')
-            ->once()
-            ->andThrow(new \RuntimeException('SMTP test failure'));
 
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_SHIPPED,
@@ -299,16 +269,17 @@ class TransactionCompletionServiceTest extends TestCase
             ->first();
 
         $this->assertNotNull($notification);
-        $this->assertNull($notification->sent_at);
+        $this->assertSame('sent', $notification->status);
+        $this->assertNotNull($notification->sent_at);
     }
 
     public function test_manual_completion_of_ready_fulfillment_does_not_complete_transaction_while_pre_order_is_pending(): void
     {
-        Mail::fake();
+        Queue::fake();
 
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_PROCESSING,
-            'shipping_method' => 'Kurir',
+            'shipping_method' => 'Ambil di Tempat',
             'shipping_email' => 'customer@example.com',
         ]);
 
@@ -328,34 +299,39 @@ class TransactionCompletionServiceTest extends TestCase
             'status' => TransactionFulfillment::STATUS_PENDING,
         ]);
 
-        $completed = app(TransactionCompletionService::class)
-            ->completeFulfillmentManually($ready);
+        $result = app(TransactionCompletionService::class)
+            ->markFulfillmentReadyForPickup($ready);
 
         $this->assertSame(
-            TransactionFulfillment::STATUS_COMPLETED,
+            TransactionFulfillment::STATUS_READY_FOR_PICKUP,
             $ready->fresh()->status
         );
 
         $this->assertSame(
             Transaction::ORDER_PROCESSING,
-            $completed->status
+            $result->status
         );
 
-        Mail::assertNothingSent();
+        Queue::assertNothingPushed();
 
-        $this->assertDatabaseMissing('order_status_histories', [
+        $this->assertDatabaseMissing('transaction_notifications', [
             'transaction_id' => $transaction->id,
-            'status' => Transaction::ORDER_COMPLETED,
+            'type' => 'ORDER_COMPLETED_EMAIL',
+        ]);
+
+        $this->assertDatabaseMissing('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'PICKUP_COMPLETED_EMAIL',
         ]);
     }
 
     public function test_transaction_is_completed_only_after_last_fulfillment_is_completed(): void
     {
-        Mail::fake();
+        Queue::fake();
 
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_PROCESSING,
-            'shipping_method' => 'Kurir',
+            'shipping_method' => 'Ambil di Tempat',
             'shipping_email' => 'customer@example.com',
         ]);
 
@@ -375,8 +351,33 @@ class TransactionCompletionServiceTest extends TestCase
             'status' => TransactionFulfillment::STATUS_PENDING,
         ]);
 
-        $completed = app(TransactionCompletionService::class)
-            ->completeFulfillmentManually($preOrder);
+        $service = app(TransactionCompletionService::class);
+
+        // Tahap 1: kelompok terakhir dinyatakan siap diambil.
+        $readyTransaction = $service->markFulfillmentReadyForPickup($preOrder);
+
+        $this->assertSame(
+            TransactionFulfillment::STATUS_READY_FOR_PICKUP,
+            $preOrder->fresh()->status
+        );
+
+        $this->assertSame(
+            Transaction::ORDER_PROCESSING,
+            $readyTransaction->status
+        );
+
+        // Email pertama: pemberitahuan pesanan siap diambil.
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'ORDER_COMPLETED_EMAIL',
+            'status' => 'queued',
+            'sent_at' => null,
+        ]);
+
+        Queue::assertPushedOn('emails', SendOrderCompletedEmail::class);
+
+        // Tahap 2: pelanggan benar-benar mengambil kelompok terakhir.
+        $completed = $service->completeFulfillmentManually($preOrder);
 
         $this->assertSame(
             TransactionFulfillment::STATUS_COMPLETED,
@@ -393,17 +394,25 @@ class TransactionCompletionServiceTest extends TestCase
             $completed->status
         );
 
+        // Email kedua: ucapan terima kasih setelah pesanan diambil.
+        $this->assertDatabaseHas('transaction_notifications', [
+            'transaction_id' => $transaction->id,
+            'type' => 'PICKUP_COMPLETED_EMAIL',
+            'status' => 'queued',
+            'sent_at' => null,
+        ]);
+
+        Queue::assertPushedOn('emails', SendPickupCompletedEmail::class);
+
         $this->assertDatabaseHas('order_status_histories', [
             'transaction_id' => $transaction->id,
             'status' => Transaction::ORDER_COMPLETED,
         ]);
-
-        Mail::assertSent(OrderCompletedMail::class, 1);
     }
 
     public function test_fulfillment_courier_cannot_be_completed_manually_before_shipped(): void
     {
-        Mail::fake();
+        Queue::fake();
 
         $transaction = Transaction::factory()->create([
             'status' => Transaction::ORDER_PROCESSING,
@@ -441,6 +450,6 @@ class TransactionCompletionServiceTest extends TestCase
             $transaction->fresh()->status
         );
 
-        Mail::assertNothingSent();
+        Queue::assertNothingPushed();
     }
 }

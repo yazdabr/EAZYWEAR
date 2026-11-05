@@ -113,14 +113,14 @@
             </p>
         </div>
 
-        {{-- View Detail Button --}}
+        {{-- Pilih & Pesan Button --}}
         <div class="pt-2.5 sm:pt-3 lg:pt-4">
             <x-ui.button
                 :href="$detailUrl"
                 variant="outline"
                 class="h-9 w-full rounded-lg px-3 text-[10px] font-semibold sm:h-9 sm:text-[11px] lg:h-10 lg:text-xs"
             >
-                {{ $preOrderClosed ? 'View Detail' : 'View Detail' }}
+                {{ $preOrderClosed ? 'Pilih & Pesan' : 'Pilih & Pesan' }}
             </x-ui.button>
         </div>
 

@@ -507,16 +507,16 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                                 <p class="fulfillment-action-error hidden mb-2 text-xs text-red-600"></p>
 
                                                 <button type="submit"
-                                                    class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-amber-600">
-                                                    <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
-                                                    Konfirmasi Pesanan Selesai, Siap Diambil Pelanggan
+                                                    class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700">
+                                                    <x-heroicon-o-check-circle class="h-4 w-4 shrink-0" />
+                                                    <span>Siap Diambil Pelanggan</span>
                                                 </button>
                                             </form>
                                         @else
                                             <button type="button" disabled
-                                                class="w-full cursor-not-allowed rounded-xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-500">
-                                                <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
-                                                {{ $isPickupCompleted || $isReadyForPickup ? 'Sudah Siap Diambil' : 'Tidak Tersedia' }}
+                                                class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
+                                                <x-heroicon-o-check-circle class="h-4 w-4 shrink-0" />
+                                                <span>{{ $isPickupCompleted || $isReadyForPickup ? 'Sudah Siap Diambil' : 'Tidak Tersedia' }}</span>
                                             </button>
                                         @endif
 
@@ -534,16 +534,16 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                                 <p class="fulfillment-action-error hidden mb-2 text-xs text-red-600"></p>
 
                                                 <button type="submit"
-                                                    class="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700">
-                                                    <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
-                                                    Pesanan Telah Diambil
+                                                    class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-emerald-700">
+                                                    <x-heroicon-o-check-circle class="h-4 w-4 shrink-0" />
+                                                    <span>Pesanan Telah Diambil</span>
                                                 </button>
                                             </form>
                                         @else
                                             <button type="button" disabled
-                                                class="w-full cursor-not-allowed rounded-xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-500">
-                                                <x-heroicon-o-check-circle class="mr-1 inline h-4 w-4" />
-                                                {{ $isPickupCompleted ? 'Sudah Diambil' : 'Menunggu Konfirmasi Kesiapan' }}
+                                                class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-200 px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
+                                                <x-heroicon-o-check-circle class="h-4 w-4 shrink-0" />
+                                                <span>{{ $isPickupCompleted ? 'Sudah Diambil' : 'Menunggu Konfirmasi Kesiapan' }}</span>
                                             </button>
                                         @endif
 

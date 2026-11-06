@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +42,47 @@ class Product extends Model
         'patch_enabled' => 'boolean',
         'patch_price' => 'integer',
     ];
+    public function scopeOrderedForShop(Builder $query): Builder
+    {
+        return $query
+            ->orderByRaw(
+                "CASE
+                    WHEN LOWER(name) LIKE ? THEN 1
+                    WHEN category_id IN (
+                        SELECT id FROM categories WHERE LOWER(name) LIKE ?
+                    ) THEN 1
+                    WHEN LOWER(name) LIKE ? THEN 2
+                    WHEN category_id IN (
+                        SELECT id FROM categories WHERE LOWER(name) LIKE ?
+                    ) THEN 2
+                    WHEN LOWER(name) LIKE ? THEN 3
+                    WHEN category_id IN (
+                        SELECT id FROM categories WHERE LOWER(name) = ?
+                    ) THEN 3
+                    ELSE 4
+                END",
+                [
+                    '%stadium%',
+                    '%stadium%',
+                    '%supporter%',
+                    '%supporter%',
+                    '%polo%',
+                    'polo',
+                ]
+            )
+            ->orderByRaw(
+                "CASE
+                    WHEN LOWER(name) LIKE ? THEN 1
+                    WHEN LOWER(name) LIKE ? THEN 2
+                    WHEN LOWER(name) LIKE ? THEN 3
+                    ELSE 4
+                END",
+                ['%home%', '%away%', '%third%']
+            )
+            ->orderByDesc('created_at')
+            ->orderByDesc('id');
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

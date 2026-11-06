@@ -670,7 +670,7 @@ class ProductController extends Controller
             ->when($request->category, function ($query, $category) {
                 $query->where('category_id', $category);
             })
-            ->latest()
+            ->orderedForShop()
             ->paginate(12)
             ->withQueryString();
 

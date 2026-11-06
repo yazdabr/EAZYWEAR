@@ -1101,7 +1101,14 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                         </div>
                     </div>
 
-                    @if($transaction->status === 'ORDER_PROCESSING' && $transaction->shipping_method === 'Kurir')
+                    @if(
+                        $transaction->status === 'ORDER_PROCESSING' &&
+                        $transaction->shipping_method === 'Kurir' &&
+                        !$transaction->biteship_order_id &&
+                        !$transaction->biteship_tracking_id &&
+                        !$transaction->biteship_waybill_id &&
+                        !$transaction->tracking_number
+                    )
 
                         {{-- BELUM ADA PENGIRIMAN --}}
                         <div class="rounded-2xl border border-[#AE7C18]/20 bg-[#AE7C18]/5 p-5 sm:p-6">

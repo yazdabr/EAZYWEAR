@@ -465,7 +465,11 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                             @endforeach
                         @else
                             {{-- Fallback untuk transaksi lama yang belum memiliki data shipment --}}
-                            @if(in_array($transaction->status, ['ORDER_SHIPPED', 'ORDER_COMPLETED'], true))
+                            @if(
+                                in_array($transaction->status, ['ORDER_SHIPPED', 'ORDER_COMPLETED'], true) ||
+                                $transaction->tracking_number ||
+                                $transaction->biteship_waybill_id
+                            )
                                 <div class="rounded-xl bg-slate-50 p-3.5 space-y-2 text-xs sm:text-sm border border-slate-200/60">
                                     <div class="flex justify-between items-center">
                                         <span class="text-slate-500">Kurir Express</span>
@@ -473,7 +477,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                     </div>
                                     <div class="flex justify-between items-center border-t border-slate-200/60 pt-2">
                                         <span class="text-slate-500">Nomor Resi</span>
-                                        <span class="font-mono font-semibold text-slate-900 break-all">{{ $transaction->tracking_number ?? '-' }}</span>
+                                        <span class="font-mono font-semibold text-slate-900 break-all">{{ $transaction->tracking_number ?? $transaction->biteship_waybill_id ?? '-' }}</span>
                                     </div>
                                 </div>
                             @endif

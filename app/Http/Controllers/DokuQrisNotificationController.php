@@ -381,7 +381,7 @@ class DokuQrisNotificationController extends Controller
                         ->lockForUpdate()
                         ->firstOrFail();
 
-                    if ($lockedTransaction->status === 'PAID') {
+                    if (in_array($lockedTransaction->status, ['PAID', Transaction::ORDER_COMPLETED], true)) {
                         return;
                     }
 
@@ -395,6 +395,17 @@ class DokuQrisNotificationController extends Controller
                     $lockedTransaction->update([
                         'qris_response' => $payload,
                     ]);
+
+                    // Transaksi POS Kasir tidak memiliki alur pengiriman;
+                    // pembayaran QRIS yang berhasil langsung menyelesaikan pesanan.
+                    $lockedTransaction->refresh();
+
+                    if (in_array($lockedTransaction->source, Transaction::POS_SOURCES, true)) {
+                        $lockedTransaction->updateStatus(
+                            Transaction::ORDER_COMPLETED,
+                            'Pembayaran QRIS Kasir POS berhasil.'
+                        );
+                    }
                 }
             );
         } catch (\Illuminate\Validation\ValidationException $e) {

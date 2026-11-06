@@ -42,6 +42,7 @@ class ReportsRoleAccessTest extends TestCase
         $this->actingAs($this->reportsUser());
 
         $this->get(route('admin.transactions'))->assertForbidden();
+        $this->get(route('admin.kasir-transactions.index'))->assertForbidden();
         $this->get(route('admin.productions'))->assertForbidden();
     }
 

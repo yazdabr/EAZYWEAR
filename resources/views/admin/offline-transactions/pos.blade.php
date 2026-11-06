@@ -24,7 +24,7 @@
                 </button>
 
                 <a
-                    href="{{ route('admin.offline-transactions.index') }}"
+                    href="{{ route('admin.kasir-transactions.index') }}"
                     class="inline-flex min-h-10 items-center justify-center rounded-xl bg-amber-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-amber-700 sm:text-sm"
                 >
                     Riwayat Transaksi
@@ -362,6 +362,7 @@
                             class="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 outline-none focus:border-amber-500"
                         >
                             <option value="CASH">Tunai (Cash)</option>
+                            <option value="TRANSFER">Transfer</option>
                             <option value="QRIS">QRIS DOKU</option>
                         </select>
                     </div>
@@ -396,7 +397,7 @@
 
                 <button
                     type="button"
-                    @click="checkout()"
+                    @click="openPaymentConfirmation()"
                     :disabled="isSubmitting || cart.length === 0"
                     class="flex h-12 w-full items-center justify-center rounded-xl bg-amber-600 px-4 text-xs font-bold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
                 >
@@ -548,6 +549,86 @@
             </button>
         </div>
     </div>
+    {{-- Popup konfirmasi sebelum pembayaran diproses --}}
+    <div
+        x-cloak
+        x-show="paymentConfirmOpen"
+        x-transition.opacity.duration.200ms
+        class="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/70 px-4 py-6 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="payment-confirm-title"
+        @keydown.escape.window="cancelPaymentConfirmation()"
+        @click.self="cancelPaymentConfirmation()"
+    >
+        <div
+            x-show="paymentConfirmOpen"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="translate-y-5 scale-95 opacity-0"
+            x-transition:enter-end="translate-y-0 scale-100 opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="translate-y-0 scale-100 opacity-100"
+            x-transition:leave-end="translate-y-5 scale-95 opacity-0"
+            @click.stop
+            class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
+        >
+            <div class="px-6 py-7 text-center sm:px-8 sm:py-8">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#AE7C18]/10 text-[#AE7C18] ring-8 ring-[#AE7C18]/5 sm:h-20 sm:w-20">
+                    <x-heroicon-o-banknotes class="h-8 w-8 sm:h-10 sm:w-10"/>
+                </div>
+
+                <h2 id="payment-confirm-title" class="mt-5 text-xl font-extrabold text-slate-900 sm:text-2xl">
+                    Konfirmasi Pembayaran
+                </h2>
+
+                <p class="mt-2 text-sm leading-6 text-slate-500">
+                    Apakah Anda yakin ingin memproses pembayaran transaksi ini?
+                </p>
+
+                <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left text-sm">
+                    <div class="flex items-center justify-between gap-4">
+                        <span class="font-medium text-slate-500">Total Pembayaran</span>
+                        <span class="text-base font-extrabold text-[#AE7C18]" x-text="money(total)"></span>
+                    </div>
+                    <div class="mt-2 flex items-center justify-between gap-4 border-t border-dashed border-slate-300 pt-2">
+                        <span class="font-medium text-slate-500">Metode Pembayaran</span>
+                        <span class="font-bold text-slate-900" x-text="paymentMethodLabel"></span>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
+                    <button
+                        type="button"
+                        @click="cancelPaymentConfirmation()"
+                        :disabled="isSubmitting"
+                        class="inline-flex h-12 flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        Tidak, Batalkan
+                    </button>
+
+                    <button
+                        type="button"
+                        @click="confirmPayment()"
+                        :disabled="isSubmitting"
+                        class="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 text-sm font-bold text-white shadow-lg shadow-amber-900/10 transition hover:bg-[#8F6514] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        <svg
+                            x-show="isSubmitting"
+                            class="h-4 w-4 animate-spin text-white"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            aria-hidden="true"
+                        >
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span x-text="isSubmitting ? 'Memproses Pembayaran...' : 'Ya, Proses Pembayaran'"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Popup sukses pembayaran Booth --}}
     <div
         x-cloak
@@ -557,15 +638,35 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="booth-success-title"
-        @keydown.escape.prevent
+        @keydown.escape.window="closeCheckoutModal()"
+        @click.self="closeCheckoutModal()"
     >
         <div
             x-show="checkoutModalOpen"
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="translate-y-5 scale-95 opacity-0"
             x-transition:enter-end="translate-y-0 scale-100 opacity-100"
-            class="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="translate-y-0 scale-100 opacity-100"
+            x-transition:leave-end="translate-y-5 scale-95 opacity-0"
+            @click.stop
+            class="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
         >
+            <button
+                type="button"
+                @click="closeCheckoutModal()"
+                class="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30 sm:right-4 sm:top-4"
+                aria-label="Tutup popup pembayaran"
+                title="Tutup"
+            >
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round"
+                     aria-hidden="true">
+                    <path d="M6 6l12 12M18 6 6 18"/>
+                </svg>
+            </button>
+
             <div class="px-6 py-8 text-center sm:px-9">
                 <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 ring-8 ring-emerald-50/60">
                     <svg class="h-11 w-11 text-emerald-600 booth-success-check"
@@ -576,11 +677,11 @@
                     </svg>
                 </div>
 
-                <p class="mt-6 text-xs font-extrabold uppercase tracking-[0.2em]" :class="paymentStatus === 'PAID' ? 'text-emerald-600' : 'text-amber-600'" x-text="paymentStatus === 'PAID' ? 'Pembayaran Berhasil' : 'Menunggu Pembayaran'"></p>
+                <p class="mt-6 text-xs font-extrabold uppercase tracking-[0.2em]" :class="isPaid ? 'text-emerald-600' : 'text-amber-600'" x-text="isPaid ? 'Pembayaran Berhasil' : 'Menunggu Pembayaran'"></p>
 
-                <h2 id="booth-success-title" class="mt-2 text-2xl font-extrabold text-slate-900" x-text="paymentStatus === 'PAID' ? 'Transaksi Berhasil!' : 'Selesaikan Pembayaran QRIS'"></h2>
+                <h2 id="booth-success-title" class="mt-2 text-2xl font-extrabold text-slate-900" x-text="isPaid ? 'Transaksi Berhasil!' : 'Selesaikan Pembayaran QRIS'"></h2>
 
-                <p class="mt-2 text-sm leading-6 text-slate-500" x-text="paymentStatus === 'PAID' ? 'Pembayaran telah dikonfirmasi. Transaksi sudah lunas.' : 'Silakan pindai QRIS. Stok diperbarui setelah pembayaran dikonfirmasi DOKU.'"></p>
+                <p class="mt-2 text-sm leading-6 text-slate-500" x-text="isPaid ? 'Pembayaran telah dikonfirmasi. Transaksi sudah lunas.' : 'Silakan pindai QRIS. Stok diperbarui setelah pembayaran dikonfirmasi DOKU.'"></p>
 
                 <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left">
                     <p class="text-xs font-medium text-slate-500">Nomor Invoice</p>
@@ -593,8 +694,8 @@
                     <p class="mt-1 text-2xl font-extrabold text-emerald-700"
                        x-text="money(successTotal)"></p>
 
-                    <p class="mt-1 text-xs font-semibold" :class="paymentStatus === 'PAID' ? 'text-emerald-700' : 'text-amber-700'" x-text="paymentStatus === 'PAID' ? (successPaymentMethod === 'CASH' ? 'Tunai - Lunas' : 'QRIS - Lunas') : 'QRIS - Menunggu Pembayaran'"></p>
-                    <div x-show="successPaymentMethod === 'QRIS' && paymentStatus !== 'PAID'" class="mt-4 rounded-xl border border-slate-200 bg-white p-3 text-center">
+                    <p class="mt-1 text-xs font-semibold" :class="isPaid ? 'text-emerald-700' : 'text-amber-700'" x-text="isPaid ? (successPaymentMethod === 'CASH' ? 'Tunai - Lunas' : (successPaymentMethod === 'TRANSFER' ? 'Transfer - Lunas' : 'QRIS - Lunas')) : 'QRIS - Menunggu Pembayaran'"></p>
+                    <div x-show="successPaymentMethod === 'QRIS' && !isPaid" class="mt-4 rounded-xl border border-slate-200 bg-white p-3 text-center">
                         <div class="mx-auto flex min-h-48 items-center justify-center [&_svg]:h-auto [&_svg]:max-w-full" x-show="qrisSvg" x-html="qrisSvg"></div>
                         <p class="mt-2 text-xs font-medium text-slate-500">Pindai QRIS menggunakan aplikasi pembayaran.</p>
                         <p class="mt-2 break-all text-xs text-slate-500" x-text="'Referensi: ' + qrisReferenceNo"></p>
@@ -616,7 +717,7 @@
                 </button>
 
                 <p class="mt-3 text-xs text-slate-400">
-                    Klik tombol di atas untuk membuka riwayat transaksi offline.
+                    Klik tombol di atas untuk membuka Data Transaksi Kasir.
                 </p>
             </div>
         </div>
@@ -658,6 +759,7 @@
             checkoutMessage: '',
             checkoutSuccess: false,
 
+            paymentConfirmOpen: false,
             checkoutModalOpen: false,
             successInvoice: '',
             successTotal: 0,
@@ -669,7 +771,7 @@
             paymentStatusMessage: 'Menunggu konfirmasi pembayaran dari DOKU...',
             paymentPollTimer: null,
             paymentSoundPlayed: false,
-            historyUrl: @js(route('admin.offline-transactions.index')),
+            historyUrl: @js(route('admin.kasir-transactions.index')),
             paymentStatusUrlTemplate: @js(route('admin.kasir.payment-status', ['invoice' => '__INVOICE__'])),
             csrfToken: @js(csrf_token()),
             checkoutUrl: @js(route('admin.kasir.checkout')),
@@ -737,6 +839,17 @@
 
             get itemCount() {
                 return this.cart.reduce((sum, item) => sum + item.qty, 0);
+            },
+
+            get isPaid() {
+                return ['PAID', 'ORDER_COMPLETED'].includes(this.paymentStatus);
+            },
+
+            get paymentMethodLabel() {
+                if (this.paymentMethod === 'TRANSFER') return 'Transfer';
+                if (this.paymentMethod === 'QRIS') return 'QRIS DOKU';
+
+                return 'Tunai (Cash)';
             },
 
             matchesProduct(name, code) {
@@ -857,15 +970,21 @@
                 this.cart = this.cart.filter(item => item.id !== id);
             },
 
-            async checkout() {
+            openPaymentConfirmation() {
                 if (this.isSubmitting) return;
 
                 this.checkoutMessage = '';
                 this.checkoutSuccess = false;
 
+                if (!this.validateCheckout()) return;
+
+                this.paymentConfirmOpen = true;
+            },
+
+            validateCheckout() {
                 if (this.cart.length === 0) {
                     this.checkoutMessage = 'Keranjang masih kosong.';
-                    return;
+                    return false;
                 }
 
                 if (
@@ -873,6 +992,36 @@
                     Number(this.discount) < 0
                 ) {
                     this.checkoutMessage = 'Nominal diskon tidak valid.';
+                    return false;
+                }
+
+                return true;
+            },
+
+            confirmPayment() {
+                if (this.isSubmitting || !this.paymentConfirmOpen) return;
+
+                this.checkout();
+            },
+
+            cancelPaymentConfirmation() {
+                if (this.isSubmitting) return;
+
+                this.paymentConfirmOpen = false;
+            },
+
+            closeCheckoutModal() {
+                this.checkoutModalOpen = false;
+            },
+
+            async checkout() {
+                if (this.isSubmitting) return;
+
+                this.checkoutMessage = '';
+                this.checkoutSuccess = false;
+
+                if (!this.validateCheckout()) {
+                    this.paymentConfirmOpen = false;
                     return;
                 }
 
@@ -916,7 +1065,7 @@
                     this.successInvoice = data.invoice_number;
                     this.successTotal = Number(data.total) || 0;
                     this.successPaymentMethod = data.payment_method || this.paymentMethod;
-                    this.paymentStatus = data.status || (this.successPaymentMethod === 'CASH' ? 'PAID' : 'PENDING');
+                    this.paymentStatus = data.status || (['CASH', 'TRANSFER'].includes(this.successPaymentMethod) ? 'ORDER_COMPLETED' : 'PENDING');
                     this.qrisSvg = data.qris_qr_code || '';
                     this.qrisReferenceNo = data.qris_reference_no || '';
                     this.qrisExpiredAt = data.qris_expired_at || null;
@@ -925,9 +1074,10 @@
                     this.cart = [];
                     this.discount = 0;
                     this.cartOpen = false;
+                    this.paymentConfirmOpen = false;
                     this.checkoutModalOpen = true;
 
-                    if (this.paymentStatus === 'PAID') {
+                    if (this.isPaid) {
                         this.paymentSoundPlayed = true;
                         this.playSuccessSound();
                     } else if (this.successPaymentMethod === 'QRIS') {
@@ -935,6 +1085,7 @@
                     }
 
                 } catch (error) {
+                    this.paymentConfirmOpen = false;
                     this.checkoutSuccess = false;
                     this.checkoutMessage =
                         error.message || 'Terjadi kesalahan saat memproses pembayaran.';
@@ -949,7 +1100,7 @@
             },
 
             async pollPaymentStatus() {
-                if (!this.successInvoice || this.paymentStatus === 'PAID') return;
+                if (!this.successInvoice || this.isPaid) return;
 
                 try {
                     const url = this.paymentStatusUrlTemplate.replace(
@@ -961,8 +1112,8 @@
                     });
                     const data = await response.json().catch(() => ({}));
 
-                    if (response.ok && data.status === 'PAID') {
-                        this.paymentStatus = 'PAID';
+                    if (response.ok && ['PAID', 'ORDER_COMPLETED'].includes(data.status)) {
+                        this.paymentStatus = data.status;
                         this.paymentStatusMessage = 'Pembayaran berhasil dikonfirmasi.';
                         this.qrisSvg = '';
                         if (!this.paymentSoundPlayed) {

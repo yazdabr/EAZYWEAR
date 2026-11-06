@@ -184,6 +184,7 @@ class DokuQrisNotificationControllerTest extends TestCase
         string $invoice = 'INV-TEST-QRIS-001',
         int $stock = 10,
         int $qty = 1,
+        ?string $source = null,
     ): Transaction {
         $product = Product::create([
             'product_code' => 'TEST-QRIS-' . uniqid(),
@@ -228,6 +229,7 @@ class DokuQrisNotificationControllerTest extends TestCase
             'shipping_postal_code' => '70111',
             'shipping_method' => 'Ambil di Tempat',
             'qris_reference_no' => 'DOKU-REFERENCE-001',
+            'source' => $source,
         ]);
 
         TransactionItem::create([
@@ -423,6 +425,57 @@ class DokuQrisNotificationControllerTest extends TestCase
                 'product_variant_id',
                 $variantId
             )->value('stock')
+        );
+    }
+
+    public function test_pos_qris_success_marks_transaction_order_completed(): void
+    {
+        $transaction = $this->createPayableTransaction(
+            'INV-POS-QRIS-001',
+            10,
+            1,
+            Transaction::SOURCE_POS
+        );
+
+        $response = $this->postNotification(
+            $this->payload(
+                $transaction->invoice_number,
+                150000
+            )
+        );
+
+        $response->assertStatus(200);
+
+        $transaction->refresh();
+
+        $this->assertSame(
+            Transaction::ORDER_COMPLETED,
+            $transaction->status
+        );
+
+        $this->assertSame(
+            Transaction::SOURCE_POS,
+            $transaction->source
+        );
+
+        $this->assertDatabaseHas('order_status_histories', [
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::ORDER_COMPLETED,
+        ]);
+
+        $duplicateResponse = $this->postNotification(
+            $this->payload(
+                $transaction->invoice_number,
+                150000
+            )
+        );
+
+        $duplicateResponse->assertStatus(200);
+        $transaction->refresh();
+
+        $this->assertSame(
+            Transaction::ORDER_COMPLETED,
+            $transaction->status
         );
     }
 

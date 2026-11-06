@@ -57,7 +57,7 @@ class BoothPosController extends Controller
         QrisQrCodeService $qrisQrCodeService
     ): JsonResponse {
         $validated = $request->validate([
-            'payment_method' => ['required', 'in:CASH,QRIS'],
+            'payment_method' => ['required', 'in:CASH,TRANSFER,QRIS'],
             'discount' => ['nullable', 'numeric', 'min:0'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.id' => [
@@ -175,18 +175,33 @@ class BoothPosController extends Controller
                 'shipping' => 0,
                 'total' => round($subtotal - $discount, 2),
                 'status' => 'PENDING',
-                'source' => 'Booth',
+                'source' => Transaction::SOURCE_POS,
             ]);
 
             foreach ($itemsToCreate as $item) {
                 $transaction->items()->create($item);
             }
 
-            if ($validated['payment_method'] === 'CASH') {
-                // Tunai tetap langsung lunas dan stok berkurang.
+            if (in_array($validated['payment_method'], ['CASH', 'TRANSFER'], true)) {
+                $paymentLabel = $validated['payment_method'] === 'TRANSFER'
+                    ? 'transfer'
+                    : 'tunai';
+
+                // Tunai dan transfer langsung lunas serta stok berkurang.
                 $stockService->decreaseForTransaction(
                     $transaction,
-                    "Penjualan tunai Kasir Booth {$invoiceNumber}"
+                    "Penjualan {$paymentLabel} Kasir POS {$invoiceNumber}"
+                );
+
+                // Pembayaran langsung selesai di kasir.
+                $transaction->addStatusHistory(
+                    Transaction::PAYMENT_CONFIRMED,
+                    "Pembayaran {$paymentLabel} diterima di Kasir POS."
+                );
+
+                $transaction->updateStatus(
+                    Transaction::ORDER_COMPLETED,
+                    'Transaksi POS Kasir selesai.'
                 );
             } else {
                 // QRIS belum dibayar: jangan kurangi stok sekarang.
@@ -222,10 +237,14 @@ class BoothPosController extends Controller
 
         $isQris = $transaction->payment_method === 'QRIS';
 
+        $message = match ($transaction->payment_method) {
+            'QRIS' => 'QRIS berhasil dibuat. Menunggu pembayaran.',
+            'TRANSFER' => 'Pembayaran transfer berhasil disimpan.',
+            default => 'Pembayaran tunai berhasil disimpan.',
+        };
+
         return response()->json([
-            'message' => $isQris
-                ? 'QRIS berhasil dibuat. Menunggu pembayaran.'
-                : 'Pembayaran tunai berhasil disimpan.',
+            'message' => $message,
             'invoice_number' => $transaction->invoice_number,
             'total' => (float) $transaction->total,
             'payment_method' => $transaction->payment_method,
@@ -235,7 +254,7 @@ class BoothPosController extends Controller
                 ? $qrisQrCodeService->generateSvg($transaction->qris_content)
                 : null,
             'qris_expired_at' => $transaction->qris_expired_at?->toIso8601String(),
-            'redirect' => route('admin.offline-transactions.index'),
+            'redirect' => route('admin.kasir-transactions.index'),
         ]);
     }
 
@@ -284,7 +303,7 @@ class BoothPosController extends Controller
     {
         $transaction = Transaction::query()
             ->where('invoice_number', $invoice)
-            ->where('source', 'Booth')
+            ->fromPosKasir()
             ->where('payment_method', 'QRIS')
             ->first();
 
@@ -303,7 +322,7 @@ class BoothPosController extends Controller
     private function generateInvoiceNumber(): string
     {
         do {
-            $invoice = 'BOOTH-' . now()->format('Ymd') . '-' .
+            $invoice = 'KASIR-' . now()->format('Ymd') . '-' .
                 Str::upper(Str::random(6));
         } while (
             Transaction::where('invoice_number', $invoice)->exists()

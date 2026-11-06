@@ -1,0 +1,200 @@
+@php
+    $paymentColor = match(strtoupper($transaction['payment'] ?? '')){
+        'QRIS' => 'bg-violet-100 text-violet-700',
+        'CASH' => 'bg-emerald-100 text-emerald-700',
+        'TRANSFER' => 'bg-sky-100 text-sky-700',
+        'EDC' => 'bg-orange-100 text-orange-700',
+        default => 'bg-slate-100 text-slate-700'
+    };
+
+    $total = (float) ($transaction['total'] ?? 0);
+@endphp
+
+<tr class="hidden transition duration-200 hover:bg-slate-50 md:table-row">
+    <td class="px-6 py-5">
+        <p class="font-semibold text-slate-900">
+            {{ $transaction['invoice'] ?? '-' }}
+        </p>
+        <p class="mt-1 text-xs text-slate-500">
+            {{ $transaction['date'] ?? '-' }}
+        </p>
+    </td>
+
+    <td class="px-6 py-5">
+        <div>
+            <p class="font-medium text-slate-900">
+                {{ $transaction['customer'] ?? '-' }}
+            </p>
+
+            @if(!empty($transaction['email']))
+                <p class="mt-1 text-xs text-slate-400">
+                    {{ $transaction['email'] }}
+                </p>
+            @endif
+        </div>
+    </td>
+
+    <td class="px-6 py-5">
+        @php
+            $orderItems = $transaction['items'] ?? [];
+        @endphp
+
+        <div class="min-w-[190px] max-w-[280px] space-y-2">
+            @forelse (array_slice($orderItems, 0, 3) as $item)
+                <div class="text-sm">
+                    <p class="font-semibold text-slate-800">{{ $item['name'] ?? 'Produk' }}</p>
+                    <p class="mt-0.5 text-xs text-slate-500">
+                        @if (!empty($item['size']) && $item['size'] !== '-')
+                            Ukuran {{ $item['size'] }}
+                        @endif
+
+                        @if (!empty($item['custom_name']) || !empty($item['custom_number']))
+                            · {{ trim(($item['custom_name'] ?? '') . ' ' . ($item['custom_number'] ?? '')) }}
+                        @endif
+
+                        @if (!empty($item['is_patch']))
+                            · PATCH
+                        @endif
+
+                        @if (!empty($item['is_longsleeve']))
+                            · LONGSLEEVE
+                        @endif
+
+                        · {{ (int) ($item['qty'] ?? 0) }} pcs
+                    </p>
+                </div>
+            @empty
+                <span class="text-xs text-slate-400">Tidak ada item</span>
+            @endforelse
+
+            @if (count($orderItems) > 3)
+                <p class="text-xs font-medium text-slate-500">
+                    +{{ count($orderItems) - 3 }} produk lainnya
+                </p>
+            @endif
+        </div>
+    </td>
+
+    <td class="px-6 py-5 text-center">
+        @php
+            $availabilityLabel = $transaction['availability_label'] ?? '-';
+            $availabilityColor = match ($availabilityLabel) {
+                'READY' => 'bg-emerald-100 text-emerald-700',
+                'PO' => 'bg-sky-100 text-sky-700',
+                'READY + PO' => 'bg-amber-100 text-amber-800',
+                default => 'bg-slate-100 text-slate-600',
+            };
+        @endphp
+        <span class="inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold {{ $availabilityColor }}">
+            {{ $availabilityLabel }}
+        </span>
+    </td>
+
+    <td class="px-6 py-5 text-center">
+        <span class="font-bold text-[#AE7C18]">
+            Rp {{ number_format($total, 0, ',', '.') }}
+        </span>
+    </td>
+
+    <td class="px-6 py-5 text-center">
+        <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold {{ $paymentColor }}">
+            {{ $transaction['payment'] ?? '-' }}
+        </span>
+    </td>
+
+    <td class="px-6 py-5 text-center">
+        <x-admin.badge-status status="{{ $transaction['status'] ?? '-' }}" />
+    </td>
+
+    <td
+        class="px-6 py-5 text-center"
+        x-data="{
+            open:false,
+            dropUp:false,
+            top:0,
+            left:0,
+            width:176,
+            toggleDropdown(event){
+                const rect=event.currentTarget.getBoundingClientRect();
+                this.open=!this.open;
+
+                if(this.open){
+                    const menuHeight=100;
+                    this.dropUp=(window.innerHeight-rect.bottom)<menuHeight+20;
+                    this.width=176;
+                    this.left=rect.right-this.width;
+                    this.top=this.dropUp
+                        ? rect.top-menuHeight-8
+                        : rect.bottom+8;
+                }
+            },
+            close(){
+                this.open=false;
+            }
+        }"
+        @resize.window="close()"
+        @scroll.window="close()"
+    >
+        <button
+            type="button"
+            @click="toggleDropdown($event)"
+            title="Aksi"
+            class="rounded-lg p-2 transition-all duration-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20"
+            :class="open?'bg-slate-100':''"
+        >
+            <x-heroicon-o-ellipsis-horizontal class="h-5 w-5 text-slate-500"/>
+        </button>
+
+        <template x-teleport="body">
+            <div
+                x-show="open"
+                x-cloak
+                @click.outside="open=false"
+                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-100"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                :style="`
+                    position:fixed;
+                    top:${top}px;
+                    left:${left}px;
+                    width:${width}px;
+                `"
+                class="z-[999999] overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-2xl shadow-slate-900/20"
+                style="display:none;"
+            >
+                <a
+                    href="{{ route('admin.kasir-transactions.show', $transaction['id']) }}"
+                    class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                >
+                    <x-heroicon-o-eye class="h-4 w-4 shrink-0 text-slate-500"/>
+                    <span>Lihat</span>
+                </a>
+
+                @if (in_array($transaction['status'] ?? '', ['PENDING', 'CANCELLED'], true))
+                    <button
+                        type="button"
+                        @click="
+                            open=false;
+                            window.dispatchEvent(new CustomEvent('open-delete-transaction',{
+                                detail:{
+                                    id:@js($transaction['id'] ?? null),
+                                    invoice:@js($transaction['invoice'] ?? ''),
+                                    customer:@js($transaction['customer'] ?? ''),
+                                    total:@js($total),
+                                    status:@js($transaction['status'] ?? '')
+                                }
+                            }));
+                        "
+                        class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                    >
+                        <x-heroicon-o-x-circle class="h-4 w-4 shrink-0"/>
+                        <span>{{ ($transaction['status'] ?? '') === 'CANCELLED' ? 'Hapus' : 'Batalkan' }}</span>
+                    </button>
+                @endif
+            </div>
+        </template>
+    </td>
+</tr>

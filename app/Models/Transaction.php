@@ -15,6 +15,25 @@ class Transaction extends Model
     public const FULFILLMENT_MODE_SEPARATE = 'separate';
     public const FULFILLMENT_MODE_COMBINED = 'combined';
 
+    /*
+    |--------------------------------------------------------------------------
+    | Transaction Sources
+    |--------------------------------------------------------------------------
+    | "Website" (and NULL for legacy website rows) belongs to the online store.
+    | "Booth" is the legacy POS source and remains on the offline transaction
+    | page. "POS" marks transactions created by the current Kasir POS and is
+    | the only source used by the Data Transaksi Kasir page.
+    */
+    public const SOURCE_WEBSITE = 'Website';
+    public const SOURCE_BOOTH = 'Booth';
+    public const SOURCE_POS = 'POS';
+    public const SOURCE_STADIUM = 'Stadium';
+
+    public const POS_SOURCES = [
+        self::SOURCE_BOOTH,
+        self::SOURCE_POS,
+    ];
+
     protected $fillable = [
         'customer_id',
         'invoice_number',
@@ -114,6 +133,27 @@ class Transaction extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * All POS-era sources (current POS and legacy Booth).
+     *
+     * Used by features that must keep recognising legacy Booth transactions,
+     * such as QRIS payment-status polling.
+     */
+    public function scopeFromPosKasir($query)
+    {
+        return $query->whereIn('source', self::POS_SOURCES);
+    }
+
+    /**
+     * Transactions created by the current Kasir POS only.
+     *
+     * The Data Transaksi Kasir page must never include legacy Booth rows.
+     */
+    public function scopeFromKasirPos($query)
+    {
+        return $query->where('source', self::SOURCE_POS);
     }
 
     public function items(): HasMany

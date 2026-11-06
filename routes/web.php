@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ApiLogController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GiveawayPickerController;
+use App\Http\Controllers\Admin\KasirTransactionController;
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\ProductionReportController;
 use App\Http\Controllers\Admin\ProductController;
@@ -261,6 +262,22 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             \App\Http\Controllers\Admin\BoothPosController::class,
             'paymentStatus',
         ])->name('kasir.payment-status');
+
+        // Data transaksi yang berasal dari POS Kasir.
+        Route::get('/kasir-transactions', [
+            KasirTransactionController::class,
+            'index',
+        ])->name('kasir-transactions.index');
+
+        Route::get('/kasir-transactions/{invoice}/print', [
+            KasirTransactionController::class,
+            'print',
+        ])->name('kasir-transactions.print');
+
+        Route::get('/kasir-transactions/{transaction}', [
+            KasirTransactionController::class,
+            'show',
+        ])->name('kasir-transactions.show');
 
         Route::get('/whatsapp', [
             \App\Http\Controllers\Admin\OfflineTransactionController::class,

@@ -1164,7 +1164,9 @@ class CheckoutControllerTest extends TestCase
         string $pickupDate,
         string $customName = '',
         string $customNumber = '',
-        bool $expectPayment = true
+        bool $expectPayment = true,
+        ?string $pickupTimeStart = null,
+        ?string $pickupTimeEnd = null
     ) {
         Session::put('cart', [[
             'variant_id' => $variant->id,
@@ -1194,12 +1196,48 @@ class CheckoutControllerTest extends TestCase
 
             'ready_shipping_method' => 'Ambil di Tempat',
             'ready_pickup_date' => $pickupDate,
-            'ready_pickup_time_start' => '10:00',
-            'ready_pickup_time_end' => '11:00',
+            'ready_pickup_time_start' => $pickupTimeStart ?? '10:00',
+            'ready_pickup_time_end' => $pickupTimeEnd ?? '11:00',
 
             'payment_method' => 'VA',
             'va_bank' => 'MANDIRI',
         ]);
+    }
+
+    private function createPreOrderVariantForCustomPickupTest(): ProductVariant
+    {
+        $preOrderProduct = \App\Models\Product::create([
+            'product_code' => 'TEST-PREORDER-CUSTOM-24H-' . uniqid(),
+            'category_id' => 6,
+            'name' => 'Test Pre-order Custom 24H',
+            'slug' => 'test-preorder-custom-24h-' . uniqid(),
+            'description' => 'Temporary product for automated test',
+            'material' => 'Mesh',
+            'availability' => 'pre_order',
+            'status' => true,
+            'customization_enabled' => false,
+            'customization_price' => 0,
+            'longsleeve_enabled' => false,
+            'longsleeve_price' => 0,
+            'patch_enabled' => false,
+            'patch_price' => 0,
+        ]);
+
+        $preOrderVariant = ProductVariant::create([
+            'product_id' => $preOrderProduct->id,
+            'size_id' => 1,
+            'color_id' => 1,
+            'sku' => 'TEST-PREORDER-CUSTOM-24H-' . uniqid(),
+            'price' => 200000,
+            'weight' => 250,
+        ]);
+
+        Inventory::create([
+            'product_variant_id' => $preOrderVariant->id,
+            'stock' => 10,
+        ]);
+
+        return $preOrderVariant;
     }
 
     private function customizationCheckout(
@@ -2851,6 +2889,195 @@ class CheckoutControllerTest extends TestCase
         }
     }
 
+    public function test_ready_stock_custom_rejects_pickup_before_24_hours_after_morning_checkout(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-03 08:00:00'));
+
+        try {
+            $variant = $this->customizationVariant(true, 15000);
+            $variant->product->update(['availability' => 'ready']);
+
+            $response = $this->readyPickupCheckout(
+                $variant,
+                'custom-before-24h-morning@test.com',
+                '2026-11-04',
+                'ANGGA',
+                '10',
+                false,
+                '07:59',
+                '08:59'
+            );
+
+            $response->assertSessionHasErrors('ready_pickup_date');
+
+            $this->assertDatabaseMissing('transactions', [
+                'shipping_email' => 'custom-before-24h-morning@test.com',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_ready_stock_custom_accepts_pickup_exactly_24_hours_after_morning_checkout(): void
+    {
+        // Jendela pickup diperlebar khusus test ini agar batas 24 jam dapat
+        // diuji tanpa terpotong jam operasional default 09:00-17:00.
+        config([
+            'fulfillment.pickup.start_time' => '07:00',
+            'fulfillment.pickup.end_time' => '21:00',
+        ]);
+
+        Carbon::setTestNow(Carbon::parse('2026-11-03 08:00:00'));
+
+        try {
+            $variant = $this->customizationVariant(true, 15000);
+            $variant->product->update(['availability' => 'ready']);
+
+            $response = $this->readyPickupCheckout(
+                $variant,
+                'custom-exact-24h-morning@test.com',
+                '2026-11-04',
+                'ANGGA',
+                '10',
+                true,
+                '08:00',
+                '09:00'
+            );
+
+            $response->assertRedirect(route('checkout.success'));
+
+            $transaction = Transaction::query()
+                ->where('shipping_email', 'custom-exact-24h-morning@test.com')
+                ->firstOrFail();
+
+            $this->assertSame(
+                '2026-11-04',
+                $transaction->pickup_date->toDateString()
+            );
+
+            $this->assertSame(
+                '08:00:00',
+                $transaction->pickup_time_start
+            );
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_ready_stock_custom_rejects_next_day_morning_when_checkout_is_in_the_evening(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-03 20:00:00'));
+
+        try {
+            $variant = $this->customizationVariant(true, 15000);
+            $variant->product->update(['availability' => 'ready']);
+
+            $response = $this->readyPickupCheckout(
+                $variant,
+                'custom-evening-reject-morning@test.com',
+                '2026-11-04',
+                'ANGGA',
+                '10',
+                false,
+                '09:00',
+                '10:00'
+            );
+
+            $response->assertSessionHasErrors('ready_pickup_date');
+
+            $this->assertDatabaseMissing('transactions', [
+                'shipping_email' => 'custom-evening-reject-morning@test.com',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_ready_stock_custom_accepts_pickup_exactly_24_hours_after_evening_checkout(): void
+    {
+        // Jendela pickup diperlebar khusus test ini agar batas 24 jam dapat
+        // diuji tanpa terpotong jam operasional default 09:00-17:00.
+        config([
+            'fulfillment.pickup.start_time' => '09:00',
+            'fulfillment.pickup.end_time' => '21:00',
+        ]);
+
+        Carbon::setTestNow(Carbon::parse('2026-11-03 20:00:00'));
+
+        try {
+            $variant = $this->customizationVariant(true, 15000);
+            $variant->product->update(['availability' => 'ready']);
+
+            $response = $this->readyPickupCheckout(
+                $variant,
+                'custom-exact-24h-evening@test.com',
+                '2026-11-04',
+                'ANGGA',
+                '10',
+                true,
+                '20:00',
+                '21:00'
+            );
+
+            $response->assertRedirect(route('checkout.success'));
+
+            $transaction = Transaction::query()
+                ->where('shipping_email', 'custom-exact-24h-evening@test.com')
+                ->firstOrFail();
+
+            $this->assertSame(
+                '2026-11-04',
+                $transaction->pickup_date->toDateString()
+            );
+
+            $this->assertSame(
+                '20:00:00',
+                $transaction->pickup_time_start
+            );
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_ready_stock_custom_accepts_pickup_more_than_24_hours_after_checkout(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-03 08:00:00'));
+
+        try {
+            $variant = $this->customizationVariant(true, 15000);
+            $variant->product->update(['availability' => 'ready']);
+
+            $response = $this->readyPickupCheckout(
+                $variant,
+                'custom-more-than-24h@test.com',
+                '2026-11-04',
+                'ANGGA',
+                '10',
+                true,
+                '09:00',
+                '10:00'
+            );
+
+            $response->assertRedirect(route('checkout.success'));
+
+            $transaction = Transaction::query()
+                ->where('shipping_email', 'custom-more-than-24h@test.com')
+                ->firstOrFail();
+
+            $this->assertSame(
+                '2026-11-04',
+                $transaction->pickup_date->toDateString()
+            );
+
+            $this->assertSame(
+                '09:00:00',
+                $transaction->pickup_time_start
+            );
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
     public function test_ready_stock_without_custom_still_allows_same_day_pickup_before_cutoff(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-11-03 10:00:00'));
@@ -2972,6 +3199,146 @@ class CheckoutControllerTest extends TestCase
             Carbon::setTestNow();
         }
     }
+    public function test_combined_checkout_with_custom_rejects_pickup_before_24_hours(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-04 10:00:00'));
+
+        try {
+            $readyVariant = $this->customizationVariant(true, 15000);
+            $readyVariant->product->update(['availability' => 'ready']);
+            $preOrderVariant = $this->createPreOrderVariantForCustomPickupTest();
+
+            Session::put('cart', [
+                [
+                    'variant_id' => $readyVariant->id,
+                    'price' => (float) $readyVariant->price,
+                    'qty' => 1,
+                    'custom_name' => 'ANGGA',
+                    'custom_number' => '10',
+                ],
+                [
+                    'variant_id' => $preOrderVariant->id,
+                    'price' => (float) $preOrderVariant->price,
+                    'qty' => 1,
+                    'custom_name' => '',
+                    'custom_number' => '',
+                ],
+            ]);
+
+            $this->mock(BiteshipService::class, function ($mock) {
+                $mock->shouldReceive('getCourierRates')->never();
+            });
+
+            $response = $this->post(route('checkout.store'), [
+                'name' => 'Combined Custom 24H Test',
+                'email' => 'combined-custom-before-24h@test.com',
+                'phone' => '08123456789',
+                'shipping_address' => 'Alamat Combined',
+                'shipping_district' => 'District',
+                'shipping_city' => 'Banjarmasin',
+                'shipping_province' => 'Kalimantan Selatan',
+                'shipping_postal_code' => '70111',
+
+                'fulfillment_mode' => 'combined',
+
+                'ready_shipping_method' => 'Ambil di Tempat',
+                'pre_order_shipping_method' => 'Ambil di Tempat',
+
+                'pre_order_pickup_date' => '2026-11-05',
+                'pre_order_pickup_time_start' => '09:00',
+                'pre_order_pickup_time_end' => '10:00',
+
+                'payment_method' => 'VA',
+                'va_bank' => 'MANDIRI',
+            ]);
+
+            $response->assertSessionHasErrors('pre_order_pickup_date');
+
+            $this->assertDatabaseMissing('transactions', [
+                'shipping_email' => 'combined-custom-before-24h@test.com',
+            ]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_combined_checkout_with_custom_accepts_pickup_at_24_hours(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-04 10:00:00'));
+
+        try {
+            $readyVariant = $this->customizationVariant(true, 15000);
+            $readyVariant->product->update(['availability' => 'ready']);
+            $preOrderVariant = $this->createPreOrderVariantForCustomPickupTest();
+
+            Session::put('cart', [
+                [
+                    'variant_id' => $readyVariant->id,
+                    'price' => (float) $readyVariant->price,
+                    'qty' => 1,
+                    'custom_name' => 'ANGGA',
+                    'custom_number' => '10',
+                ],
+                [
+                    'variant_id' => $preOrderVariant->id,
+                    'price' => (float) $preOrderVariant->price,
+                    'qty' => 1,
+                    'custom_name' => '',
+                    'custom_number' => '',
+                ],
+            ]);
+
+            $this->mock(BiteshipService::class, function ($mock) {
+                $mock->shouldReceive('getCourierRates')->never();
+            });
+
+            $this->mockDokuSuccess();
+
+            $response = $this->post(route('checkout.store'), [
+                'name' => 'Combined Custom 24H Test',
+                'email' => 'combined-custom-exact-24h@test.com',
+                'phone' => '08123456789',
+                'shipping_address' => 'Alamat Combined',
+                'shipping_district' => 'District',
+                'shipping_city' => 'Banjarmasin',
+                'shipping_province' => 'Kalimantan Selatan',
+                'shipping_postal_code' => '70111',
+
+                'fulfillment_mode' => 'combined',
+
+                'ready_shipping_method' => 'Ambil di Tempat',
+                'pre_order_shipping_method' => 'Ambil di Tempat',
+
+                'pre_order_pickup_date' => '2026-11-05',
+                'pre_order_pickup_time_start' => '10:00',
+                'pre_order_pickup_time_end' => '11:00',
+
+                'payment_method' => 'VA',
+                'va_bank' => 'MANDIRI',
+            ]);
+
+            $response->assertRedirect(route('checkout.success'));
+
+            $transaction = Transaction::query()
+                ->where('shipping_email', 'combined-custom-exact-24h@test.com')
+                ->firstOrFail();
+
+            $this->assertSame('combined', $transaction->fulfillment_mode);
+
+            $this->assertSame(
+                '2026-11-05',
+                $transaction->pickup_date->toDateString()
+            );
+
+            $this->assertSame(
+                '10:00:00',
+                $transaction->pickup_time_start
+            );
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
     public function test_checkout_succeeds_when_email_job_dispatch_fails(): void
     {
         $variant = $this->customizationVariant(false, 0);

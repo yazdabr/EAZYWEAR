@@ -172,6 +172,8 @@ document.addEventListener('DOMContentLoaded', function () {
         pickupSameDayCutoff: form.dataset.pickupSameDayCutoff,
         checkoutDate: form.dataset.checkoutDate,
         checkoutTime: form.dataset.checkoutTime,
+        checkoutAt: form.dataset.checkoutAt,
+        timezone: form.dataset.timezone || 'Asia/Makassar',
         jntLogo: form.dataset.jntLogo,
         lionLogo: form.dataset.lionLogo
     };
@@ -293,8 +295,101 @@ document.addEventListener('DOMContentLoaded', function () {
         return group.type === 'pre_order' && config.checkoutDate <= config.specialBatchEnd;
     }
 
-    function getMinimumPickupDate(group) {
+    function parseCheckoutAt() {
+        if (config.checkoutAt) {
+            const parsed = new Date(config.checkoutAt);
+
+            if (!Number.isNaN(parsed.getTime())) {
+                return parsed;
+            }
+        }
+
+        // Fallback: checkout date/time dari server dianggap WITA (+08:00).
+        return new Date(`${config.checkoutDate}T${config.checkoutTime}:00+08:00`);
+    }
+
+    function getDateTimePartsInAppTimezone(date) {
+        const formatter = new Intl.DateTimeFormat('en-GB', {
+            timeZone: config.timezone || 'Asia/Makassar',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hourCycle: 'h23'
+        });
+
+        const parts = formatter.formatToParts(date).reduce((result, part) => {
+            if (part.type !== 'literal') {
+                result[part.type] = part.value;
+            }
+
+            return result;
+        }, {});
+
+        const hour = parts.hour === '24' ? '00' : parts.hour;
+
+        return {
+            date: `${parts.year}-${parts.month}-${parts.day}`,
+            time: `${hour}:${parts.minute}`
+        };
+    }
+
+    function hasCustom24HourRule(group) {
+        // Pada mode Combined, periksa kedua grup karena jadwalnya bersama.
+        const combinedWithCustom = getFulfillmentMode() === 'combined'
+            && groups.some((item) => item.hasCustom);
+
+        return (group.type === 'ready' && group.hasCustom)
+            || combinedWithCustom;
+    }
+
+    function hasPreOrderCustomTomorrowRule(group) {
+        // Pre-order custom di luar mode Combined tetap memakai aturan besok.
+        return group.type === 'pre_order'
+            && group.hasCustom
+            && getFulfillmentMode() !== 'combined';
+    }
+
+    function getCustomMinimumPickupSlot(group) {
+        if (hasPreOrderCustomTomorrowRule(group)) {
+            return {
+                date: addDays(config.checkoutDate, 1),
+                time: config.pickupStartTime
+            };
+        }
+
+        if (!hasCustom24HourRule(group)) {
+            return null;
+        }
+
+        const minimumAt = new Date(
+            parseCheckoutAt().getTime() + (24 * 60 * 60 * 1000)
+        );
+        const parts = getDateTimePartsInAppTimezone(minimumAt);
+
+        // Jam operasional pickup tetap berlaku. Jika batas 24 jam jatuh
+        // setelah jam tutup, geser ke hari berikutnya pada jam buka.
+        if (parts.time < config.pickupStartTime) {
+            return {
+                date: parts.date,
+                time: config.pickupStartTime
+            };
+        }
+
+        if (parts.time > config.pickupEndTime) {
+            return {
+                date: addDays(parts.date, 1),
+                time: config.pickupStartTime
+            };
+        }
+
+        return parts;
+    }
+
+    function getMinimumPickupSlot(group) {
         let minimumDate;
+        let minimumTime = config.pickupStartTime;
 
         if (isSpecialBatchCheckout(group)) {
             minimumDate = config.checkoutDate > config.specialBatchStart
@@ -305,24 +400,34 @@ document.addEventListener('DOMContentLoaded', function () {
             minimumDate = config.checkoutTime < config.pickupSameDayCutoff
                 ? config.checkoutDate
                 : addDays(config.checkoutDate, 1);
-        }
 
-        // Custom nama dan nomor wajib pickup paling cepat besok.
-        // Pada mode Combined, periksa kedua grup karena jadwalnya bersama.
-        const hasCustom = group.hasCustom || (
-            getFulfillmentMode() === 'combined'
-            && groups.some((item) => item.hasCustom)
-        );
-
-        if (hasCustom) {
-            const tomorrow = addDays(config.checkoutDate, 1);
-
-            if (minimumDate < tomorrow) {
-                minimumDate = tomorrow;
+            if (
+                minimumDate === config.checkoutDate
+                && config.checkoutTime > config.pickupStartTime
+            ) {
+                minimumTime = config.checkoutTime;
             }
         }
 
-        return minimumDate;
+        // Custom nama dan nomor wajib pickup paling cepat 24 jam setelah checkout.
+        const customSlot = getCustomMinimumPickupSlot(group);
+
+        if (customSlot) {
+            if (customSlot.date > minimumDate) {
+                minimumDate = customSlot.date;
+                minimumTime = customSlot.time;
+            } else if (
+                customSlot.date === minimumDate
+                && customSlot.time > minimumTime
+            ) {
+                minimumTime = customSlot.time;
+            }
+        }
+
+        return {
+            date: minimumDate,
+            time: minimumTime
+        };
     }
 
     function clearRatesError(group) {
@@ -354,12 +459,11 @@ document.addEventListener('DOMContentLoaded', function () {
         group.pickupTimeEnd.max = config.pickupEndTime;
 
         const selectedDate = group.pickupDate.value;
-        if (!isSpecialBatchCheckout(group) && selectedDate === config.checkoutDate) {
-            const minimumTime = config.checkoutTime > config.pickupStartTime
-                ? config.checkoutTime
-                : config.pickupStartTime;
-            group.pickupTimeStart.min = minimumTime;
-            group.pickupTimeEnd.min = minimumTime;
+        const minimumSlot = getMinimumPickupSlot(group);
+
+        if (selectedDate && selectedDate === minimumSlot.date) {
+            group.pickupTimeStart.min = minimumSlot.time;
+            group.pickupTimeEnd.min = minimumSlot.time;
         }
 
         if (group.pickupTimeStart.value) {
@@ -368,8 +472,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function applyPickupDateRules(group) {
-        const minimumDate = getMinimumPickupDate(group);
-        group.pickupDate.min = minimumDate;
+        const minimumSlot = getMinimumPickupSlot(group);
+        group.pickupDate.min = minimumSlot.date;
 
         if (isSpecialBatchCheckout(group)) {
             group.pickupDate.max = config.specialBatchEnd;
@@ -377,12 +481,30 @@ document.addEventListener('DOMContentLoaded', function () {
             group.pickupDate.removeAttribute('max');
         }
 
-        if (group.pickupDate.value && group.pickupDate.value < minimumDate) {
-            group.pickupDate.value = minimumDate;
+        if (group.pickupDate.value && group.pickupDate.value < minimumSlot.date) {
+            group.pickupDate.value = minimumSlot.date;
         }
 
         if (isSpecialBatchCheckout(group) && group.pickupDate.value > config.specialBatchEnd) {
-            group.pickupDate.value = minimumDate;
+            group.pickupDate.value = minimumSlot.date;
+        }
+
+        // Jika tanggal minimum sudah dipilih, jangan biarkan jam pickup
+        // berada sebelum batas minimum (mis. batas 24 jam pada hari itu).
+        if (group.pickupDate.value === minimumSlot.date) {
+            if (
+                group.pickupTimeStart.value
+                && group.pickupTimeStart.value < minimumSlot.time
+            ) {
+                group.pickupTimeStart.value = minimumSlot.time;
+            }
+
+            if (
+                group.pickupTimeEnd.value
+                && group.pickupTimeEnd.value < minimumSlot.time
+            ) {
+                group.pickupTimeEnd.value = minimumSlot.time;
+            }
         }
 
         updatePickupTimeRules(group);
@@ -397,9 +519,23 @@ document.addEventListener('DOMContentLoaded', function () {
             return 'Silakan lengkapi tanggal dan waktu pengambilan terlebih dahulu.';
         }
 
-        const minimumDate = getMinimumPickupDate(group);
-        if (pickupDate < minimumDate) {
-            return `Tanggal pickup paling cepat ${formatDisplayDate(minimumDate)}.`;
+        const minimumSlot = getMinimumPickupSlot(group);
+        const custom24HourRule = hasCustom24HourRule(group);
+        const preOrderCustomRule = hasPreOrderCustomTomorrowRule(group);
+        const beforeCustomMinimum = (custom24HourRule || preOrderCustomRule)
+            && pickupDate === minimumSlot.date
+            && pickupStart < minimumSlot.time;
+
+        if (pickupDate < minimumSlot.date || beforeCustomMinimum) {
+            if (custom24HourRule) {
+                return `Produk dengan custom nama dan nomor paling cepat dapat diambil 24 jam setelah checkout, yaitu ${formatDisplayDate(minimumSlot.date)} pukul ${minimumSlot.time}.`;
+            }
+
+            if (preOrderCustomRule) {
+                return `Produk dengan custom nama dan nomor paling cepat dapat diambil besok, yaitu ${formatDisplayDate(minimumSlot.date)}.`;
+            }
+
+            return `Tanggal pickup paling cepat ${formatDisplayDate(minimumSlot.date)}.`;
         }
 
         if (isSpecialBatchCheckout(group) && pickupDate > config.specialBatchEnd) {

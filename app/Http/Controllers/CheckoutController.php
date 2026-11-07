@@ -715,7 +715,7 @@ class CheckoutController extends Controller
                         $pickupDate = $validated[$inputPrefix . '_pickup_date'] ?? null;
                         $pickupTimeStart = $validated[$inputPrefix . '_pickup_time_start'] ?? null;
                         $pickupTimeEnd = $validated[$inputPrefix . '_pickup_time_end'] ?? null;
-                        // Custom nama dan nomor wajib pickup paling cepat besok.
+                        // Custom nama dan nomor wajib pickup paling cepat 24 jam setelah checkout.
                         $hasCustomInGroup = $itemsByGroup[$groupType]->contains(function ($item) {
                             return trim((string) ($item['custom_name'] ?? '')) !== ''
                                 && trim((string) ($item['custom_number'] ?? '')) !== '';
@@ -728,7 +728,25 @@ class CheckoutController extends Controller
                                     && trim((string) ($item['custom_number'] ?? '')) !== '';
                             });
 
-                        if ($hasCustomInGroup || $hasCustomInCombined) {
+                        $usesCustom24HourRule = (
+                            $groupType === 'ready' && $hasCustomInGroup
+                        ) || $hasCustomInCombined;
+
+                        if ($usesCustom24HourRule) {
+                            // Bandingkan timestamp lengkap agar jam pickup ikut menjadi batas minimum.
+                            $minimumCustomPickupAt = $checkoutAt->copy()->addHours(24);
+                            $pickupStartAt = \Illuminate\Support\Carbon::parse(
+                                $pickupDate . ' ' . (string) $pickupTimeStart
+                            );
+
+                            if ($pickupStartAt->lt($minimumCustomPickupAt)) {
+                                throw ValidationException::withMessages([
+                                    $inputPrefix . '_pickup_date' => 'Produk dengan custom nama dan nomor paling cepat dapat diambil 24 jam setelah checkout, yaitu '
+                                        . $minimumCustomPickupAt->format('d-m-Y H:i') . ' WITA.',
+                                ]);
+                            }
+                        } elseif ($groupType === 'pre_order' && $hasCustomInGroup) {
+                            // Aturan Pre-Order custom dipertahankan: paling cepat besok.
                             $minimumCustomPickupDate = $checkoutAt->copy()
                                 ->startOfDay()
                                 ->addDay()

@@ -45,6 +45,8 @@
             data-pickup-same-day-cutoff="{{ config('fulfillment.pickup.same_day_cutoff') }}"
             data-checkout-date="{{ now()->toDateString() }}"
             data-checkout-time="{{ now()->format('H:i') }}"
+            data-checkout-at="{{ now()->toIso8601String() }}"
+            data-timezone="{{ config('app.timezone') }}"
             data-jnt-logo="{{ asset('images/shipping/jnt.png') }}"
             data-lion-logo="{{ asset('images/shipping/lion-parcel.png') }}"
         >
@@ -219,7 +221,7 @@
                                                         Pilih jadwal pengambilan sesuai jadwal Pre-order yang tersedia.
                                                     @elseif(!empty($group['has_custom']))
                                                         Pesanan dengan custom nama dan nomor membutuhkan waktu pengerjaan.
-                                                        Pickup paling cepat dapat dijadwalkan besok, terlepas dari waktu checkout.
+                                                        Pickup paling cepat dapat dijadwalkan 24 jam setelah checkout.
                                                     @else
                                                         Pickup Ready Stock sebelum pukul 14.00 dapat dijadwalkan hari ini.
                                                         Pukul 14.00 atau setelahnya mulai besok.

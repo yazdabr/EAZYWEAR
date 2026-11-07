@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    {{-- Meta Domain Verification --}}
+    <meta name="facebook-domain-verification" content="qcwynpzlwmyqsn0nlx3ko2i49fbg3z" />
+
     {{-- ================= SEO ================= --}}
     <title>@yield('title', 'Eazywear Indonesia')</title>
     <meta name="description" content="@yield('meta_description', 'Eazywear Indonesia menyediakan custom sportswear, jersey, teamwear, dan apparel berkualitas untuk tim, komunitas, sekolah, dan bisnis.')">

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Http\\Controllers;
+namespace App\Http\Controllers;
 
-use App\\Models\\Product;
-use Illuminate\\Http\\Response;
-use Illuminate\\Support\\Facades\\Storage;
+use App\Models\Product;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 
 class MetaProductFeedController extends Controller
 {
@@ -47,26 +47,22 @@ class MetaProductFeedController extends Controller
                     ? !$product->pre_order_closed
                     : (!$product->ready_stock_closed && (int) ($variant->inventory?->stock ?? 0) > 0);
 
-                $availability = $isAvailable ? 'in stock' : 'out of stock';
                 $title = $product->name;
                 if ($variant->size?->name) {
                     $title .= ' - ' . $variant->size->name;
                 }
 
                 $description = strip_tags((string) ($product->description ?: $product->name));
-                $description = preg_replace('/\\s+/', ' ', $description);
-
-                $link = route('product.detail', ['product' => $product->slug]);
-                $price = number_format((float) $variant->price, 2, '.', '');
+                $description = preg_replace('/\s+/', ' ', $description);
 
                 $fields = [
                     'g:id' => $variant->sku ?: ($product->product_code . '-' . $variant->id),
                     'g:title' => $title,
                     'g:description' => $description,
-                    'g:availability' => $availability,
+                    'g:availability' => $isAvailable ? 'in stock' : 'out of stock',
                     'g:condition' => 'new',
-                    'g:price' => $price . ' IDR',
-                    'g:link' => $link,
+                    'g:price' => number_format((float) $variant->price, 2, '.', '') . ' IDR',
+                    'g:link' => route('product.detail', ['product' => $product->slug]),
                     'g:image_link' => $imageUrl,
                     'g:brand' => 'Eazywear',
                     'g:item_group_id' => $product->product_code,
@@ -77,32 +73,29 @@ class MetaProductFeedController extends Controller
                 if ($variant->size?->name) {
                     $fields['g:size'] = $variant->size->name;
                 }
-
                 if ($variant->color?->name) {
                     $fields['g:color'] = $variant->color->name;
                 }
-
                 if ($product->material) {
                     $fields['g:material'] = $product->material;
                 }
 
-                $itemXml = "    <item>\\n";
+                $itemXml = "    <item>\n";
                 foreach ($fields as $tag => $value) {
-                    $itemXml .= "      <{$tag}>{$escape($value)}</{$tag}>\\n";
+                    $itemXml .= "      <{$tag}>{$escape($value)}</{$tag}>\n";
                 }
-                $itemXml .= "    </item>";
-                $items[] = $itemXml;
+                $items[] = $itemXml . "    </item>";
             }
         }
 
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\\n"
-            . '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">' . "\\n"
-            . "  <channel>\\n"
-            . '    <title>' . $escape(config('app.name', 'Eazywear')) . "</title>\\n"
-            . '    <link>' . $escape(url('/shop')) . "</link>\\n"
-            . "    <description>Product catalog Eazywear</description>\\n"
-            . implode("\\n", $items) . "\\n"
-            . "  </channel>\\n"
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+            . '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">' . "\n"
+            . "  <channel>\n"
+            . '    <title>' . $escape(config('app.name', 'Eazywear')) . "</title>\n"
+            . '    <link>' . $escape(url('/shop')) . "</link>\n"
+            . "    <description>Product catalog Eazywear</description>\n"
+            . implode("\n", $items) . "\n"
+            . "  </channel>\n"
             . '</rss>';
 
         return response($xml, 200, [

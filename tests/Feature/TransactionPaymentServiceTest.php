@@ -328,6 +328,13 @@ class TransactionPaymentServiceTest extends TestCase
 
         Mail::assertSent(PaymentConfirmedMail::class, 1);
 
+        Mail::assertSent(
+            PaymentConfirmedMail::class,
+            function (PaymentConfirmedMail $mail): bool {
+                return $mail->hasBcc('orders@eazywear.id');
+            }
+        );
+
         $notification = TransactionNotification::query()
             ->where('transaction_id', $transaction->id)
             ->where('type', 'PAYMENT_CONFIRMED_EMAIL')

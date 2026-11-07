@@ -28,6 +28,7 @@ class MetaProductFeedController extends Controller
         );
 
         $items = [];
+        $baseUrl = rtrim(config('app.url'), '/');
 
         foreach ($products as $product) {
             $image = $product->images->firstWhere('is_thumbnail', true)
@@ -38,9 +39,10 @@ class MetaProductFeedController extends Controller
             }
 
             $imageUrl = Storage::disk('public')->url($image->image);
-            $imageUrl = str_starts_with($imageUrl, 'http')
-                ? $imageUrl
-                : url($imageUrl);
+
+            if (!str_starts_with($imageUrl, 'http')) {
+                $imageUrl = $baseUrl . '/' . ltrim($imageUrl, '/');
+            }
 
             foreach ($product->variants as $variant) {
                 $isAvailable = $product->availability === 'pre_order'
@@ -62,7 +64,11 @@ class MetaProductFeedController extends Controller
                     'g:availability' => $isAvailable ? 'in stock' : 'out of stock',
                     'g:condition' => 'new',
                     'g:price' => number_format((float) $variant->price, 2, '.', '') . ' IDR',
-                    'g:link' => route('product.detail', ['product' => $product->slug]),
+                    'g:link' => $baseUrl . route(
+                        'product.detail',
+                        ['product' => $product->slug],
+                        false
+                    ),
                     'g:image_link' => $imageUrl,
                     'g:brand' => 'Eazywear',
                     'g:item_group_id' => $product->product_code,
@@ -92,7 +98,7 @@ class MetaProductFeedController extends Controller
             . '<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">' . "\n"
             . "  <channel>\n"
             . '    <title>' . $escape(config('app.name', 'Eazywear')) . "</title>\n"
-            . '    <link>' . $escape(url('/shop')) . "</link>\n"
+            . '    <link>' . $escape($baseUrl . '/shop') . "</link>\n"
             . "    <description>Product catalog Eazywear</description>\n"
             . implode("\n", $items) . "\n"
             . "  </channel>\n"

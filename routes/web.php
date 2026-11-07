@@ -18,9 +18,14 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\BiteshipWebhookController;
+use App\Http\Controllers\MetaProductFeedController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'pages.home')->name('home');\n\n// Meta Commerce Manager product catalog feed.\nRoute::get('/meta/products.xml', MetaProductFeedController::class)\n    ->name('meta.product-feed');
+Route::view('/', 'pages.home')->name('home');
+
+// Meta Commerce Manager product catalog feed.
+Route::get('/meta/products.xml', MetaProductFeedController::class)
+    ->name('meta.product-feed');
 
 // URL baru untuk SHOP
 Route::get('/shop', [ProductController::class, 'shop'])->name('shop');

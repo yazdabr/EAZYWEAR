@@ -20,7 +20,7 @@ use App\Http\Controllers\OrderTrackingController;
 use App\Http\Controllers\BiteshipWebhookController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'pages.home')->name('home');
+Route::view('/', 'pages.home')->name('home');\n\n// Meta Commerce Manager product catalog feed.\nRoute::get('/meta/products.xml', MetaProductFeedController::class)\n    ->name('meta.product-feed');
 
 // URL baru untuk SHOP
 Route::get('/shop', [ProductController::class, 'shop'])->name('shop');

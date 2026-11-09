@@ -28,6 +28,10 @@ return [
         'start_time' => '09:00',
         'end_time' => '17:00',
         'same_day_cutoff' => '14:00',
+
+        // Jam istirahat pickup: mulai pukul 13:00 sampai sebelum pukul 14:00 WITA.
+        'break_start_time' => '13:00',
+        'break_end_time' => '14:00',
     ],
 
 ];

@@ -793,12 +793,14 @@ class CheckoutController extends Controller
                         $fulfillmentDateService->validatePickupTime(
                             $pickupTimeStart,
                             $pickupDate,
-                            $checkoutAt
+                            $checkoutAt,
+                            $inputPrefix . '_pickup_time_start'
                         );
                         $fulfillmentDateService->validatePickupTime(
                             $pickupTimeEnd,
                             $pickupDate,
-                            $checkoutAt
+                            $checkoutAt,
+                            $inputPrefix . '_pickup_time_end'
                         );
                     }
 

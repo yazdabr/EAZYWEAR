@@ -170,6 +170,8 @@ document.addEventListener('DOMContentLoaded', function () {
         pickupStartTime: form.dataset.pickupStartTime,
         pickupEndTime: form.dataset.pickupEndTime,
         pickupSameDayCutoff: form.dataset.pickupSameDayCutoff,
+        pickupBreakStartTime: form.dataset.pickupBreakStartTime || '13:00',
+        pickupBreakEndTime: form.dataset.pickupBreakEndTime || '14:00',
         checkoutDate: form.dataset.checkoutDate,
         checkoutTime: form.dataset.checkoutTime,
         checkoutAt: form.dataset.checkoutAt,
@@ -452,6 +454,31 @@ document.addEventListener('DOMContentLoaded', function () {
         group.pickupSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    function isPickupBreakTime(time) {
+        if (!time) return false;
+
+        return time >= config.pickupBreakStartTime
+            && time < config.pickupBreakEndTime;
+    }
+
+    function getPickupBreakMessage() {
+        return `Jam pengambilan pukul ${config.pickupBreakStartTime} sampai sebelum pukul ${config.pickupBreakEndTime} WITA adalah jam istirahat. Silakan pilih sebelum pukul ${config.pickupBreakStartTime} atau mulai pukul ${config.pickupBreakEndTime}.`;
+    }
+
+    function handlePickupTimeChange(group, input) {
+        const isBreakTime = isPickupBreakTime(input.value);
+
+        updatePickupTimeRules(group);
+        clearPickupError(group);
+
+        if (isBreakTime) {
+            input.value = '';
+            group.pickupError.textContent = getPickupBreakMessage();
+            group.pickupError.classList.remove('hidden');
+            updatePickupTimeRules(group);
+        }
+    }
+
     function updatePickupTimeRules(group) {
         group.pickupTimeStart.min = config.pickupStartTime;
         group.pickupTimeStart.max = config.pickupEndTime;
@@ -553,6 +580,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (pickupStart > pickupEnd) {
             return 'Waktu mulai tidak boleh lebih dari waktu selesai.';
+        }
+
+        if (isPickupBreakTime(pickupStart) || isPickupBreakTime(pickupEnd)) {
+            return getPickupBreakMessage();
         }
 
         if (!isSpecialBatchCheckout(group) && pickupDate === config.checkoutDate) {
@@ -947,12 +978,10 @@ document.addEventListener('DOMContentLoaded', function () {
             await checkPickupDateAvailability(group);
         });
         group.pickupTimeStart.addEventListener('change', () => {
-            updatePickupTimeRules(group);
-            clearPickupError(group);
+            handlePickupTimeChange(group, group.pickupTimeStart);
         });
         group.pickupTimeEnd.addEventListener('change', () => {
-            updatePickupTimeRules(group);
-            clearPickupError(group);
+            handlePickupTimeChange(group, group.pickupTimeEnd);
         });
     });
 

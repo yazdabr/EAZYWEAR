@@ -43,6 +43,8 @@
             data-pickup-start-time="{{ config('fulfillment.pickup.start_time') }}"
             data-pickup-end-time="{{ config('fulfillment.pickup.end_time') }}"
             data-pickup-same-day-cutoff="{{ config('fulfillment.pickup.same_day_cutoff') }}"
+            data-pickup-break-start-time="{{ config('fulfillment.pickup.break_start_time') }}"
+            data-pickup-break-end-time="{{ config('fulfillment.pickup.break_end_time') }}"
             data-checkout-date="{{ now()->toDateString() }}"
             data-checkout-time="{{ now()->format('H:i') }}"
             data-checkout-at="{{ now()->toIso8601String() }}"
@@ -226,6 +228,14 @@
                                                         Pickup Ready Stock sebelum pukul 14.00 dapat dijadwalkan hari ini.
                                                         Pukul 14.00 atau setelahnya mulai besok.
                                                     @endif
+                                                </p>
+
+                                                <p class="mt-1 text-[10px] leading-4 text-amber-700 sm:text-xs">
+                                                    Jam istirahat pengambilan: mulai pukul
+                                                    {{ config('fulfillment.pickup.break_start_time') }}
+                                                    sampai sebelum pukul
+                                                    {{ config('fulfillment.pickup.break_end_time') }} WITA.
+                                                    Jadwal pada rentang tersebut tidak tersedia.
                                                 </p>
                                             </div>
                                             <div class="grid gap-3 sm:grid-cols-3 sm:gap-4">

@@ -78,7 +78,8 @@ class FulfillmentDateService
     public function validatePickupTime(
         string $pickupTime,
         Carbon|string $pickupDate,
-        Carbon $checkoutAt
+        Carbon $checkoutAt,
+        string $field = 'pickup_time_start'
     ): void {
         $pickupDate = $pickupDate instanceof Carbon
             ? $pickupDate->copy()->startOfDay()
@@ -89,29 +90,52 @@ class FulfillmentDateService
         $startTime = config('fulfillment.pickup.start_time');
         $endTime = config('fulfillment.pickup.end_time');
 
-        $pickupAt = Carbon::parse(
-            $pickupDate->toDateString() . ' ' . $pickupTime
-        );
+        $pickupAt = $this->pickupDateTime($pickupDate, $pickupTime);
 
-        $startAt = Carbon::parse(
-            $pickupDate->toDateString() . ' ' . $startTime
-        );
+        $startAt = $this->pickupDateTime($pickupDate, $startTime);
 
-        $endAt = Carbon::parse(
-            $pickupDate->toDateString() . ' ' . $endTime
-        );
+        $endAt = $this->pickupDateTime($pickupDate, $endTime);
 
         if ($pickupAt->lt($startAt) || $pickupAt->gt($endAt)) {
             throw ValidationException::withMessages([
-                'pickup_time_start' => 'Waktu pickup harus antara 09:00 dan 17:00.',
+                $field => 'Waktu pickup harus antara 09:00 dan 17:00.',
             ]);
+        }
+
+        $breakStartTime = config('fulfillment.pickup.break_start_time');
+        $breakEndTime = config('fulfillment.pickup.break_end_time');
+
+        if ($breakStartTime && $breakEndTime) {
+            $breakStartAt = $this->pickupDateTime($pickupDate, (string) $breakStartTime);
+
+            $breakEndAt = $this->pickupDateTime($pickupDate, (string) $breakEndTime);
+
+            if ($pickupAt->gte($breakStartAt) && $pickupAt->lt($breakEndAt)) {
+                throw ValidationException::withMessages([
+                    $field => sprintf(
+                        'Waktu pickup pada jam istirahat %s-%s WITA tidak tersedia. Silakan pilih sebelum pukul %s atau mulai pukul %s.',
+                        $breakStartAt->format('H:i'),
+                        $breakEndAt->copy()->subMinute()->format('H:i'),
+                        $breakStartAt->format('H:i'),
+                        $breakEndAt->format('H:i')
+                    ),
+                ]);
+            }
         }
 
         if ($pickupDate->isSameDay($checkoutAt) && $pickupAt->lt($checkoutAt)) {
             throw ValidationException::withMessages([
-                'pickup_time_start' => 'Waktu pickup tidak boleh lebih awal dari waktu checkout.',
+                $field => 'Waktu pickup tidak boleh lebih awal dari waktu checkout.',
             ]);
         }
+    }
+
+    private function pickupDateTime(Carbon $pickupDate, string $time): Carbon
+    {
+        return Carbon::parse(
+            $pickupDate->toDateString() . ' ' . $time,
+            config('app.timezone')
+        );
     }
     public function determine(
         string $shippingMethod,

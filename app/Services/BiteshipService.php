@@ -63,7 +63,7 @@ class BiteshipService
         $destinationLatitude = $data['destination_latitude'] ?? null;
         $destinationLongitude = $data['destination_longitude'] ?? null;
         $destinationPostalCode = $data['destination_postal_code'] ?? null;
-        $couriers = $this->couriers;
+        $couriers = $data['couriers'] ?? $this->couriers;
         $items = $data['items'] ?? [];
 
         if (

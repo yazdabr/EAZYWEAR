@@ -1939,6 +1939,232 @@ class CheckoutControllerTest extends TestCase
                 'message' => 'Produk ini tidak menyediakan custom nama atau nomor.',
             ]);
     }
+
+    public function test_shipping_rates_excludes_gojek_when_custom_number_is_used(): void
+    {
+        config([
+            'biteship.couriers' => 'jnt,lion',
+            'biteship.origin.latitude' => -3.3,
+            'biteship.origin.longitude' => 114.6,
+        ]);
+
+        $variant = $this->customizationVariant(true, 125000);
+
+        $variant->product->update([
+            'availability' => 'ready',
+            'patch_enabled' => true,
+        ]);
+
+        Session::put('cart', [[
+            'variant_id' => $variant->id,
+            'price' => (float) $variant->price,
+            'qty' => 1,
+            'custom_name' => '',
+            'custom_number' => '10',
+            'is_patch' => false,
+        ]]);
+
+        $this->mock(BiteshipService::class, function ($mock) use ($variant) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->withArgs(function (array $payload) use ($variant) {
+                    return $payload['couriers'] === 'jnt,lion'
+                        && $payload['items'][0]['value'] === (int) round((float) $variant->price + 125000);
+                })
+                ->andReturn(['success' => true, 'rates' => []]);
+        });
+
+        $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+            'shipping_latitude' => -3.3,
+            'shipping_longitude' => 114.6,
+            'group_type' => 'ready',
+        ])->assertOk()->assertJson(['success' => true]);
+    }
+
+
+    public function test_shipping_rates_excludes_gojek_when_patch_is_selected(): void
+    {
+        config([
+            'biteship.couriers' => 'jnt,lion',
+            'biteship.origin.latitude' => -3.3,
+            'biteship.origin.longitude' => 114.6,
+        ]);
+
+        $variant = $this->customizationVariant(false, 125000);
+
+        $variant->product->update([
+            'availability' => 'ready',
+            'patch_enabled' => true,
+            'patch_price' => 25000,
+        ]);
+
+        Session::put('cart', [[
+            'variant_id' => $variant->id,
+            'price' => (float) $variant->price,
+            'qty' => 1,
+            'custom_name' => '',
+            'custom_number' => '',
+            'is_patch' => true,
+        ]]);
+
+        $this->mock(BiteshipService::class, function ($mock) use ($variant) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->withArgs(function (array $payload) use ($variant) {
+                    return $payload['couriers'] === 'jnt,lion'
+                        && $payload['items'][0]['value'] === (int) round((float) $variant->price + 25000);
+                })
+                ->andReturn(['success' => true, 'rates' => []]);
+        });
+
+        $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+            'shipping_latitude' => -3.3,
+            'shipping_longitude' => 114.6,
+            'group_type' => 'ready',
+        ])->assertOk()->assertJson(['success' => true]);
+    }
+
+
+    public function test_shipping_rates_excludes_gojek_when_destination_coordinates_are_missing(): void
+    {
+        config([
+            'biteship.couriers' => 'jnt,lion',
+            'biteship.origin.latitude' => -3.3,
+            'biteship.origin.longitude' => 114.6,
+        ]);
+
+        $variant = $this->customizationVariant(false, 125000);
+
+        $variant->product->update([
+            'availability' => 'ready',
+        ]);
+
+        Session::put('cart', [[
+            'variant_id' => $variant->id,
+            'price' => (float) $variant->price,
+            'qty' => 1,
+            'custom_name' => '',
+            'custom_number' => '',
+            'is_patch' => false,
+        ]]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->withArgs(function (array $payload) {
+                    return $payload['couriers'] === 'jnt,lion';
+                })
+                ->andReturn(['success' => true, 'rates' => []]);
+        });
+
+        $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+            'group_type' => 'ready',
+        ])->assertOk()->assertJson(['success' => true]);
+    }
+
+    public function test_shipping_rates_includes_gojek_for_eligible_ready_stock(): void
+    {
+        config([
+            'biteship.couriers' => 'jnt,lion',
+            'biteship.origin.latitude' => -3.3,
+            'biteship.origin.longitude' => 114.6,
+        ]);
+
+        $variant = $this->customizationVariant(false, 125000);
+
+        $variant->product->update([
+            'availability' => 'ready',
+            'patch_enabled' => true,
+        ]);
+
+        Session::put('cart', [[
+            'variant_id' => $variant->id,
+            'price' => (float) $variant->price,
+            'qty' => 1,
+            'custom_name' => '',
+            'custom_number' => '',
+            'is_patch' => false,
+        ]]);
+
+        $this->mock(BiteshipService::class, function ($mock) use ($variant) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->withArgs(function (array $payload) use ($variant) {
+                    return $payload['couriers'] === 'jnt,lion,gojek'
+                        && $payload['items'][0]['value'] === (int) round((float) $variant->price);
+                })
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [],
+                ]);
+        });
+
+        $response = $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+            'shipping_latitude' => -3.3,
+            'shipping_longitude' => 114.6,
+            'group_type' => 'ready',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJson(['success' => true]);
+    }
+
+    public function test_shipping_rates_excludes_gojek_when_custom_name_is_used(): void
+    {
+        config([
+            'biteship.couriers' => 'jnt,lion',
+            'biteship.origin.latitude' => -3.3,
+            'biteship.origin.longitude' => 114.6,
+        ]);
+
+        $variant = $this->customizationVariant(true, 125000);
+
+        $variant->product->update([
+            'availability' => 'ready',
+            'patch_enabled' => true,
+        ]);
+
+        Session::put('cart', [[
+            'variant_id' => $variant->id,
+            'price' => (float) $variant->price,
+            'qty' => 1,
+            'custom_name' => 'MESSI',
+            'custom_number' => '',
+            'is_patch' => false,
+        ]]);
+
+        $this->mock(BiteshipService::class, function ($mock) use ($variant) {
+            $mock->shouldReceive('getCourierRates')
+                ->once()
+                ->withArgs(function (array $payload) use ($variant) {
+                    $expectedValue = (int) round((float) $variant->price + 125000);
+
+                    return $payload['couriers'] === 'jnt,lion'
+                        && $payload['items'][0]['value'] === $expectedValue;
+                })
+                ->andReturn([
+                    'success' => true,
+                    'rates' => [],
+                ]);
+        });
+
+        $response = $this->postJson(route('checkout.shipping-rates'), [
+            'shipping_postal_code' => '70111',
+            'shipping_latitude' => -3.3,
+            'shipping_longitude' => 114.6,
+            'group_type' => 'ready',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJson(['success' => true]);
+    }
+
     public function test_shipping_rates_rejects_closed_pre_order_product(): void
     {
         $variant = ProductVariant::query()

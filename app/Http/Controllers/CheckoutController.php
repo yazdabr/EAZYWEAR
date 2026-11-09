@@ -29,6 +29,40 @@ use RuntimeException;
 
 class CheckoutController extends Controller
 {
+    private function courierListForCheckout(bool $allowGojek, array $validated): string
+    {
+        $couriers = array_filter(
+            array_map(
+                'trim',
+                explode(',', (string) config('biteship.couriers'))
+            )
+        );
+
+        // Gojek tidak boleh aktif secara default.
+        $couriers = array_values(array_filter(
+            $couriers,
+            fn ($courier) => strtolower($courier) !== 'gojek'
+        ));
+
+        $hasOriginCoordinates =
+            is_numeric(config('biteship.origin.latitude'))
+            && is_numeric(config('biteship.origin.longitude'));
+
+        $hasDestinationCoordinates =
+            isset($validated['shipping_latitude'], $validated['shipping_longitude'])
+            && is_numeric($validated['shipping_latitude'])
+            && is_numeric($validated['shipping_longitude']);
+
+        if (
+            $allowGojek
+            && $hasOriginCoordinates
+            && $hasDestinationCoordinates
+        ) {
+            $couriers[] = 'gojek';
+        }
+
+        return implode(',', array_unique($couriers));
+    }
     public function shippingRates(Request $request, BiteshipService $biteshipService): JsonResponse
     {
         $validated = $request->validate([
@@ -46,6 +80,7 @@ class CheckoutController extends Controller
 
         try {
             $items = [];
+            $allowGojek = ($validated['group_type'] ?? null) === 'ready';
 
                 foreach ($cart as $cartItem) {
                     $variantId = (int) ($cartItem['variant_id'] ?? 0);
@@ -170,6 +205,14 @@ class CheckoutController extends Controller
                         ? (int) $variant->product->patch_price
                         : 0;
 
+                    if (
+                        $variant->product->availability !== 'ready'
+                        || $hasCustomization
+                        || $isPatch
+                    ) {
+                        $allowGojek = false;
+                    }
+
                     $itemValue = (float) $variant->price
                         + $customizationFee
                         + $longsleeveFee
@@ -194,6 +237,7 @@ class CheckoutController extends Controller
                 'destination_postal_code' => $validated['shipping_postal_code'],
                 'destination_latitude' => $validated['shipping_latitude'] ?? null,
                 'destination_longitude' => $validated['shipping_longitude'] ?? null,
+                'couriers' => $this->courierListForCheckout($allowGojek, $validated),
                 'items' => $items,
             ]);
 
@@ -672,6 +716,17 @@ class CheckoutController extends Controller
                             ? collect($items)
                             : $itemsByGroup[$groupType];
 
+                        $allowGojek = (
+                            $fulfillmentMode !== 'combined'
+                            && $groupType === 'ready'
+                            && $rateItems->every(function ($item) {
+                                return ($item['group_type'] ?? null) === 'ready'
+                                    && trim((string) ($item['custom_name'] ?? '')) === ''
+                                    && trim((string) ($item['custom_number'] ?? '')) === ''
+                                    && ! (bool) ($item['is_patch'] ?? false);
+                            })
+                        );
+
                         foreach ($rateItems as $item) {
                             $weight = $item['variant']->weight;
 
@@ -693,6 +748,7 @@ class CheckoutController extends Controller
                             'destination_postal_code' => $validated['shipping_postal_code'],
                             'destination_latitude' => $validated['shipping_latitude'] ?? null,
                             'destination_longitude' => $validated['shipping_longitude'] ?? null,
+                            'couriers' => $this->courierListForCheckout($allowGojek, $validated),
                             'items' => $shippingItems,
                         ]);
 

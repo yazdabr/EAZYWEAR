@@ -79,42 +79,72 @@
                     <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
                         <div class="mb-4">
                             <h2 class="text-base font-bold text-slate-900 sm:text-lg">Alamat Pengiriman</h2>
-                            <p class="mt-1 text-[11px] leading-4 text-gray-500 sm:text-xs">Pastikan alamat pengiriman ditulis dengan lengkap dan benar.</p>
+                            <p class="mt-1 text-[11px] leading-4 text-gray-500 sm:text-xs">Pastikan alamat ditulis dengan lengkap dan benar.</p>
                         </div>
-                        <div class="space-y-3.5">
-                            <div>
-                                <label for="shipping_address" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Alamat Lengkap <span class="text-red-500">*</span></label>
-                                <textarea id="shipping_address" name="shipping_address" rows="2" required autocomplete="street-address" placeholder="Nama jalan, nomor rumah, RT/RW, patokan, dan detail lainnya" class="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs leading-5 text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm sm:leading-6">{{ old('shipping_address') }}</textarea>
-                            </div>
 
+                        <div class="space-y-4">
+                            {{-- Titik Lokasi Penerima --}}
                             <div>
-                                <div class="mb-1.5 flex items-center justify-between gap-3">
-                                    <label class="block text-xs font-semibold text-slate-700 sm:text-sm" for="shipping-map">Titik Lokasi Penerima</label>
-                                    <button type="button" id="use-my-location" class="text-[10px] font-semibold text-[#AE7C18] transition hover:underline disabled:cursor-not-allowed disabled:opacity-60 sm:text-xs">Gunakan Lokasi Saya</button>
+                                <div class="mb-2">
+                                    <label class="block text-xs font-semibold text-slate-700 sm:text-sm" for="shipping-map">
+                                        1. Titik Lokasi Penerima
+                                        <span class="text-red-500">*</span>
+                                    </label>
                                 </div>
+
+                                <button type="button" id="use-my-location"
+                                    class="mb-2 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#916512] disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v2m0 16v2M4 12H2m20 0h-2M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41m14.14 0l-1.41-1.41M6.34 6.34L4.93 4.93M12 8a4 4 0 100 8 4 4 0 000-8z"/>
+                                    </svg>
+                                    Gunakan Lokasi Saya
+                                </button>
+
                                 <div id="shipping-map" class="w-full overflow-hidden rounded-xl border border-gray-200"></div>
-                                <p class="mt-1.5 text-[10px] leading-4 text-gray-500 sm:text-xs">Geser pin pada peta untuk menentukan titik lokasi penerima dengan lebih tepat.</p>
+
+                                <p class="mt-1.5 text-[10px] leading-4 text-gray-500 sm:text-xs">
+                                    Setelah lokasi ditemukan, periksa posisi pin pada peta. Geser pin secara manual jika titik lokasi belum tepat.
+                                </p>
+
                                 <input type="hidden" id="shipping_latitude" name="shipping_latitude" value="{{ old('shipping_latitude') }}">
                                 <input type="hidden" id="shipping_longitude" name="shipping_longitude" value="{{ old('shipping_longitude') }}">
                             </div>
 
-                            <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                                <div>
-                                    <label for="shipping_district" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kecamatan <span class="text-red-500">*</span></label>
-                                    <input id="shipping_district" name="shipping_district" type="text" value="{{ old('shipping_district') }}" required placeholder="Kecamatan" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
+                            {{-- Informasi Wilayah --}}
+                            <div>
+                                <h3 class="mb-2 text-xs font-bold text-slate-800 sm:text-sm">
+                                    2. Informasi Wilayah
+                                </h3>
+
+                                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                                    <div>
+                                        <label for="shipping_district" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kecamatan <span class="text-red-500">*</span></label>
+                                        <input id="shipping_district" name="shipping_district" type="text" value="{{ old('shipping_district') }}" required placeholder="Kecamatan" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
+                                    </div>
+
+                                    <div>
+                                        <label for="shipping_city" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kota / Kab. <span class="text-red-500">*</span></label>
+                                        <input id="shipping_city" name="shipping_city" type="text" value="{{ old('shipping_city') }}" required placeholder="Kota / Kabupaten" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
+                                    </div>
+
+                                    <div>
+                                        <label for="shipping_province" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Provinsi <span class="text-red-500">*</span></label>
+                                        <input id="shipping_province" name="shipping_province" type="text" value="{{ old('shipping_province') }}" required placeholder="Provinsi" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
+                                    </div>
+
+                                    <div>
+                                        <label for="shipping_postal_code" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kode Pos <span class="text-red-500">*</span></label>
+                                        <input id="shipping_postal_code" name="shipping_postal_code" type="text" value="{{ old('shipping_postal_code') }}" required inputmode="numeric" autocomplete="postal-code" placeholder="Kode Pos" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
+                                    </div>
                                 </div>
-                                <div>
-                                    <label for="shipping_city" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kota / Kab. <span class="text-red-500">*</span></label>
-                                    <input id="shipping_city" name="shipping_city" type="text" value="{{ old('shipping_city') }}" required placeholder="Kota / Kabupaten" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
-                                </div>
-                                <div>
-                                    <label for="shipping_province" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Provinsi <span class="text-red-500">*</span></label>
-                                    <input id="shipping_province" name="shipping_province" type="text" value="{{ old('shipping_province') }}" required placeholder="Provinsi" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
-                                </div>
-                                <div>
-                                    <label for="shipping_postal_code" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kode Pos <span class="text-red-500">*</span></label>
-                                    <input id="shipping_postal_code" name="shipping_postal_code" type="text" value="{{ old('shipping_postal_code') }}" required inputmode="numeric" autocomplete="postal-code" placeholder="Kode Pos" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
-                                </div>
+                            </div>
+
+                            {{-- Alamat Lengkap --}}
+                            <div>
+                                <h3 class="mb-2 text-xs font-bold text-slate-800 sm:text-sm">
+                                    3. Alamat Lengkap <span class="text-red-500">*</span>
+                                </h3>
+                                <textarea id="shipping_address" name="shipping_address" rows="2" required autocomplete="street-address" placeholder="Nama jalan, nomor rumah, RT/RW, patokan, dan detail lainnya" class="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs leading-5 text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:rounded-xl sm:px-4 sm:py-3 sm:text-sm sm:leading-6">{{ old('shipping_address') }}</textarea>
                             </div>
                         </div>
                     </div>

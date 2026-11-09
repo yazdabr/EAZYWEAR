@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -21,9 +22,7 @@ class InstagramGiveawayService
         $userId = config('services.instagram.user_id');
 
         if (!$token || !$userId) {
-            throw new RuntimeException(
-                'Konfigurasi Instagram belum lengkap.'
-            );
+            throw new RuntimeException('Konfigurasi Instagram belum lengkap.');
         }
 
         $target = $this->normalizePermalink($permalink);
@@ -36,55 +35,156 @@ class InstagramGiveawayService
         }
 
         $comments = [];
+
+        $rawMainComments = 0;
+        $rawReplies = 0;
+        $importedMainComments = 0;
+        $importedReplies = 0;
+        $missingUsername = 0;
+        $emptyText = 0;
+        $excludedComments = 0;
+        $mainPages = 0;
+        $replyPages = 0;
+
+        $appendComment = function (array $item, string $type) use (
+            &$comments,
+            &$importedMainComments,
+            &$importedReplies,
+            &$missingUsername,
+            &$emptyText,
+            &$excludedComments
+        ) {
+            $username = $item['username']
+                ?? $item['from']['username']
+                ?? null;
+
+            $text = trim((string) ($item['text'] ?? ''));
+
+            $hasUsername = !empty($username);
+            $hasText = $text !== '';
+
+            if (!$hasUsername) {
+                $missingUsername++;
+            }
+
+            if (!$hasText) {
+                $emptyText++;
+            }
+
+            if (!$hasUsername || !$hasText) {
+                $excludedComments++;
+                return;
+            }
+
+            $comments[] = [
+                'username' => ltrim($username, '@'),
+                'text' => $text,
+                'id' => $item['id'] ?? null,
+                'created_at' => $item['timestamp'] ?? null,
+                'comment_type' => $type,
+            ];
+
+            if ($type === 'reply') {
+                $importedReplies++;
+            } else {
+                $importedMainComments++;
+            }
+        };
+
         $url = $this->baseUrl . '/' . $mediaId . '/comments';
 
         $params = [
-            'fields' => 'id,text,username,timestamp',
+            'fields' => 'id,text,username,timestamp,replies{id,text,username,timestamp}',
             'limit' => 100,
             'access_token' => $token,
         ];
 
-        do {
+        $hasNext = true;
+        $stopReason = 'unknown';
+
+        while ($hasNext && count($comments) < 50000) {
             $response = $this->request($url, $params);
+            $mainPages++;
 
-            foreach ($response['data'] ?? [] as $comment) {
-                $username = $comment['username']
-                    ?? $comment['from']['username']
-                    ?? null;
+            $pageData = $response['data'] ?? [];
+            $rawMainComments += count($pageData);
 
-                $text = trim((string) ($comment['text'] ?? ''));
+            foreach ($pageData as $comment) {
 
-                if ($username && $text !== '') {
-                    $comments[] = [
-                        'username' => ltrim($username, '@'),
-                        'text' => $text,
-                        'id' => $comment['id'] ?? null,
-                        'created_at' => $comment['timestamp'] ?? null,
-                    ];
+                $appendComment($comment, 'main');
+
+                // Replies halaman pertama yang ikut dalam field expansion.
+                $replyData = data_get($comment, 'replies.data', []);
+                $rawReplies += count($replyData);
+
+                foreach ($replyData as $reply) {
+                    $appendComment($reply, 'reply');
+                }
+
+                // Ambil halaman replies berikutnya jika tersedia.
+                $replyNextUrl = data_get($comment, 'replies.paging.next');
+
+                while ($replyNextUrl && count($comments) < 50000) {
+                    $replyResponse = $this->request($replyNextUrl);
+                    $replyPages++;
+
+                    $nextReplies = $replyResponse['data'] ?? [];
+                    $rawReplies += count($nextReplies);
+
+                    foreach ($nextReplies as $reply) {
+                        $appendComment($reply, 'reply');
+                    }
+
+                    $replyNextUrl = $replyResponse['paging']['next'] ?? null;
                 }
             }
 
             $after = $response['paging']['cursors']['after'] ?? null;
-            $hasNext = !empty($response['paging']['next']);
+            $hasNext = !empty($response['paging']['next']) && !empty($after);
 
-            $params = [
-                'fields' => 'id,text,username,timestamp',
-                'limit' => 100,
-                'access_token' => $token,
-            ];
-
-            if ($hasNext && $after) {
-                $params['after'] = $after;
+            if ($hasNext) {
+                $params = [
+                    'fields' => 'id,text,username,timestamp,replies{id,text,username,timestamp}',
+                    'limit' => 100,
+                    'access_token' => $token,
+                    'after' => $after,
+                ];
             } else {
-                $hasNext = false;
+                $stopReason = !empty($response['paging']['next'])
+                    ? 'next_url_without_cursor'
+                    : 'no_next_page';
             }
+        }
 
-        } while ($hasNext && count($comments) < 50000);
+        if (count($comments) >= 50000) {
+            $stopReason = 'safety_limit_reached';
+        }
+
+        $summary = [
+            'main_pages_fetched' => $mainPages,
+            'reply_pages_fetched' => $replyPages,
+            'raw_main_comments' => $rawMainComments,
+            'raw_replies' => $rawReplies,
+            'imported_main_comments' => $importedMainComments,
+            'imported_replies' => $importedReplies,
+            'total_imported' => count($comments),
+            'missing_username' => $missingUsername,
+            'empty_text' => $emptyText,
+            'excluded_comments' => $excludedComments,
+            'stop_reason' => $stopReason,
+        ];
+
+        Log::info('Instagram Giveaway comments and replies diagnostics', [
+            'media_id' => $mediaId,
+            'api_version' => config('services.instagram.graph_version'),
+            ...$summary,
+        ]);
 
         return [
             'media_id' => $mediaId,
             'comments' => $comments,
             'total' => count($comments),
+            'summary' => $summary,
         ];
     }
 

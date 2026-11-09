@@ -78,6 +78,67 @@ class TransactionCompletionServiceTest extends TestCase
             'Silakan ambil pesanan Anda sesuai dengan jadwal pengambilan',
             $html
         );
+
+        $this->assertStringContainsString(
+            'Lokasi Pengambilan Pesanan',
+            $html
+        );
+
+        $this->assertStringContainsString(
+            'Jl. Asang Permai No.Km 11.200, Mekar Raya, Kec. Kertak Hanyar, Kabupaten Banjar, Kalimantan Selatan 70654.',
+            $html
+        );
+
+        $this->assertStringContainsString(
+            'Lihat Lokasi di Google Maps',
+            $html
+        );
+
+        $this->assertSame(
+            2,
+            substr_count(
+                $html,
+                'href="https://maps.app.goo.gl/4qrorZuYjM7WuvgV8"'
+            )
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/<a\s+href="https:\/\/maps\.app\.goo\.gl\/4qrorZuYjM7WuvgV8"[^>]*>\s*Jl\. Asang Permai No\.Km 11\.200.*?<\/a>/s',
+            $html
+        );
+    }
+
+    public function test_courier_completion_email_does_not_contain_pickup_location(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'status' => Transaction::ORDER_SHIPPED,
+            'shipping_method' => 'Kurir',
+            'shipping_email' => 'courier@example.com',
+        ]);
+
+        $mail = new OrderCompletedMail($transaction);
+
+        $html = $mail->render();
+
+        $this->assertStringNotContainsString(
+            'Lokasi Pengambilan Pesanan',
+            $html
+        );
+
+        $this->assertStringNotContainsString(
+            'Jl. Asang Permai No.Km 11.200',
+            $html
+        );
+
+        $this->assertStringNotContainsString(
+            'Lihat Lokasi di Google Maps',
+            $html
+        );
+
+        $this->assertStringNotContainsString(
+            'https://maps.app.goo.gl/4qrorZuYjM7WuvgV8',
+            $html
+        );
     }
 
     public function test_service_can_complete_courier_order(): void

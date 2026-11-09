@@ -172,6 +172,52 @@
                     </td>
                 </tr>
 
+                @if ($transaction->shipping_method === 'Ambil di Tempat')
+                    <!-- Lokasi Pengambilan Pesanan -->
+                    <tr>
+                        <td style="padding:0 30px 24px 30px;">
+                            <div style="font-size:16px; font-weight:bold; color:#222222; margin-bottom:12px;">
+                                Lokasi Pengambilan Pesanan
+                            </div>
+
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                                   style="background:#faf7ef; border:1px solid #ead9ae; border-radius:8px;">
+                                <tr>
+                                    <td style="padding:16px 18px;">
+                                        <div style="font-size:13px; color:#888888; margin-bottom:5px;">
+                                            Nama Lokasi
+                                        </div>
+
+                                        <div style="font-size:14px; font-weight:bold; color:#222222; margin-bottom:14px;">
+                                            Eazywear
+                                        </div>
+
+                                        <div style="font-size:13px; color:#888888; margin-bottom:5px;">
+                                            Alamat
+                                        </div>
+
+                                        <div style="font-size:14px; line-height:1.7; color:#555555; margin-bottom:14px;">
+                                            <a href="https://maps.app.goo.gl/4qrorZuYjM7WuvgV8"
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               style="color:#AE7C18; text-decoration:underline;">
+                                                Jl. Asang Permai No.Km 11.200, Mekar Raya, Kec. Kertak Hanyar, Kabupaten Banjar, Kalimantan Selatan 70654.
+                                            </a>
+                                        </div>
+
+                                        <a href="https://maps.app.goo.gl/4qrorZuYjM7WuvgV8"
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           style="display:inline-block; padding:10px 16px; background-color:#AE7C18; color:#ffffff; font-size:13px; font-weight:bold; text-decoration:none; border-radius:6px;">
+                                            Lihat Lokasi di Google Maps
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                @endif
+
                 <!-- Produk -->
                 <tr>
                     <td style="padding:0 30px 24px 30px;">

@@ -64,6 +64,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     [latitude, longitude],
                     16
                 );
+                latitudeInput.dispatchEvent(
+                    new Event('shippinglocationchange')
+                );
             }
 
             marker.on('dragend', function () {
@@ -745,7 +748,11 @@ document.addEventListener('DOMContentLoaded', function () {
             logoWrapper.className = 'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white';
 
             const courierNameText = rate.courier_name || rate.courier_code || 'Kurir';
-            const logoUrl = { jnt: config.jntLogo, lion: config.lionLogo }[rate.courier_code];
+            const logoUrl = {
+                jnt: config.jntLogo,
+                lion: config.lionLogo,
+                gojek: '/images/shipping/gosend.png'
+            }[rate.courier_code];
             if (logoUrl) {
                 const logo = document.createElement('img');
                 logo.src = logoUrl;
@@ -887,6 +894,15 @@ document.addEventListener('DOMContentLoaded', function () {
             group.ratesHint.textContent = 'Periksa kembali kode pos dan alamat tujuan.';
         }
     }
+
+    latitudeInput.addEventListener('shippinglocationchange', () => {
+        groups
+            .filter((group) =>
+                getShippingMethod(group) === 'Kurir' &&
+                (getFulfillmentMode() !== 'combined' || group.type === 'pre_order')
+            )
+            .forEach(loadRates);
+    });
 
     function updateShippingMethodUI(group) {
         const combined = getFulfillmentMode() === 'combined';

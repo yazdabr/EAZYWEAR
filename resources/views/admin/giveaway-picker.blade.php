@@ -20,7 +20,8 @@
                         <input
                             id="comment-filter"
                             type="text"
-                            placeholder="Contoh: 2-1"
+                            value="1-1"
+                            placeholder="Contoh: 1-1"
                             class="h-[46px] w-full rounded-xl border border-slate-300 px-4 text-sm outline-none focus:border-[#C4902C] focus:ring-2 focus:ring-amber-100"
                         >
                         <p class="mt-1.5 text-xs text-slate-400">
@@ -48,12 +49,11 @@
                         </p>
                     </div>
                 </div>
-                <div class="mt-5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 p-4">
-                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p class="text-sm font-bold text-slate-800">Ambil komentar Instagram</p><p class="text-xs text-slate-500">Ambil komentar asli dari postingan akun Instagram yang terhubung.</p></div><button id="fetch-instagram" type="button" class="rounded-lg bg-[#C4902C] px-3 py-2 text-xs font-bold text-white hover:bg-[#AD7D20]">Ambil Komentar Instagram</button><button id="load-demo" type="button" class="shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-bold text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100">Muat data contoh</button></div>
+                <div class="mt-5 rounded-xl border border-amber-300 bg-amber-50/60 p-4">
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p class="text-sm font-bold text-slate-800">Ambil komentar Instagram</p><p class="text-xs text-slate-500">Ambil komentar asli dari postingan akun Instagram yang terhubung.</p></div><button id="fetch-instagram" type="button" class="rounded-lg bg-[#C4902C] px-3 py-2 text-xs font-bold text-white hover:bg-[#AD7D20]">Ambil Komentar Instagram</button></div>
                     <textarea id="comments-input" rows="5" placeholder="@username|Prediksi saya 2-1&#10;@username2|Skor 1-0" class="mt-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 font-mono text-xs outline-none focus:border-[#C4902C] focus:ring-2 focus:ring-amber-100"></textarea>
                     <div class="mt-3 flex flex-wrap items-center justify-between gap-3"><p id="import-status" class="text-xs text-slate-500">Belum ada komentar dimuat.</p><button id="apply-filter" type="button" class="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700">Terapkan Filter</button></div>
                 </div>
-                <p class="mt-3 text-xs text-slate-400">Jika gagal, periksa token, ID akun Instagram, akses aset System User, dan versi Graph API. Data contoh bukan komentar Instagram asli.</p>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="font-bold text-slate-900">Peserta Undian</h2><p class="text-xs text-slate-500">Daftar komentar yang memenuhi filter.</p></div><div class="flex gap-2"><div class="rounded-xl bg-slate-50 px-3 py-2 text-center"><strong id="total-comments" class="block text-lg text-slate-900">0</strong><span class="text-[10px] text-slate-500">Komentar</span></div><div class="rounded-xl bg-amber-50 px-3 py-2 text-center"><strong id="eligible-count" class="block text-lg text-amber-700">0</strong><span class="text-[10px] text-amber-700">Peserta lolos</span></div></div></div>
@@ -128,10 +128,12 @@
         }).format(date) + ' WITA';
     }
     function normalizeScore(value) {
-        return String(value).toLocaleLowerCase().replace(
-            /(\d+)\s*[-–—−:]\s*(\d+)/g,
-            '$1-$2'
-        );
+        return String(value)
+            .toLocaleLowerCase()
+            .replace(
+                /(\d+)\s*(?:[-–—−:：/]\s*|\s+)(\d+)/g,
+                '$1-$2'
+            );
     }
     function parseComments() {
         const previousComments = new Map(

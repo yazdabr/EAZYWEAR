@@ -63,6 +63,36 @@ class CheckoutController extends Controller
 
         return implode(',', array_unique($couriers));
     }
+
+    public function searchShippingAreas(
+        Request $request,
+        BiteshipService $biteshipService
+    ): JsonResponse {
+        $validated = $request->validate([
+            'input' => ['required', 'string', 'min:3', 'max:100'],
+        ]);
+
+        try {
+            $areas = $biteshipService->searchAreas(
+                $validated['input']
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $areas,
+            ]);
+        } catch (RuntimeException $e) {
+            Log::warning('CHECKOUT SHIPPING AREA SEARCH ERROR', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Pencarian wilayah gagal. Silakan coba kembali.',
+            ], 502);
+        }
+    }
+
     public function shippingRates(Request $request, BiteshipService $biteshipService): JsonResponse
     {
         $validated = $request->validate([

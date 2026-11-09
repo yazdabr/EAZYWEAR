@@ -52,7 +52,12 @@ Route::delete('/cart/{key}', [CartController::class, 'remove'])->name('cart.remo
 Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');
 
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-
+Route::get('/checkout/shipping-areas', [
+    CheckoutController::class,
+    'searchShippingAreas',
+])
+    ->middleware('throttle:30,1')
+    ->name('checkout.shipping-areas');
 Route::post('/checkout/shipping-rates', [CheckoutController::class, 'shippingRates'])
     ->middleware('throttle:20,1')
     ->name('checkout.shipping-rates');

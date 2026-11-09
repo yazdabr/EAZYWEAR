@@ -683,4 +683,52 @@ class BiteshipServiceTest extends TestCase
         $this->assertSame('in_transit', $result['status']);
         $this->assertCount(1, $result['history']);
     }
+    public function test_search_areas_returns_normalized_biteship_area_data(): void
+    {
+        Http::fake([
+            'https://api.biteship.test/v1/maps/areas*' =>
+                Http::response([
+                    'success' => true,
+                    'areas' => [
+                        [
+                            'id' => 'IDNP-TEST-001',
+                            'name' => 'Gambut, Banjar, Kalimantan Selatan. 70652',
+                            'administrative_division_level_1_name' => 'Kalimantan Selatan',
+                            'administrative_division_level_2_name' => 'Banjar',
+                            'administrative_division_level_3_name' => 'Gambut',
+                            'postal_code' => 70652,
+                        ],
+                    ],
+                ], 200),
+        ]);
+
+        $result = app(BiteshipService::class)->searchAreas('Gambut');
+
+        $this->assertCount(1, $result);
+        $this->assertSame('IDNP-TEST-001', $result[0]['id']);
+        $this->assertSame('Gambut', $result[0]['district']);
+        $this->assertSame('Banjar', $result[0]['city']);
+        $this->assertSame('Kalimantan Selatan', $result[0]['province']);
+        $this->assertSame('70652', $result[0]['postal_code']);
+
+        Http::assertSent(function ($request) {
+            return $request->method() === 'GET'
+                && str_contains($request->url(), '/v1/maps/areas')
+                && $request['countries'] === 'ID'
+                && $request['input'] === 'Gambut'
+                && $request['type'] === 'single'
+                && $request->header('Authorization')[0] === 'test-api-key';
+        });
+    }
+
+    public function test_search_areas_returns_empty_for_short_input(): void
+    {
+        Http::fake();
+
+        $result = app(BiteshipService::class)->searchAreas('Ga');
+
+        $this->assertSame([], $result);
+
+        Http::assertNothingSent();
+    }
 }

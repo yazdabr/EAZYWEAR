@@ -35,6 +35,7 @@
             action="{{ route('checkout.store') }}"
             id="checkout-form"
             data-shipping-rates-url="{{ route('checkout.shipping-rates') }}"
+            data-shipping-areas-url="{{ route('checkout.shipping-areas') }}"
             data-fulfillment-availability-url="{{ route('checkout.fulfillment-availability') }}"
             data-subtotal="{{ (float) $subtotal }}"
             data-special-batch-start="{{ config('fulfillment.special_batch.start_date') }}"
@@ -116,26 +117,51 @@
                                     2. Informasi Wilayah
                                 </h3>
 
-                                <div class="grid grid-cols-2 gap-3 sm:gap-4">
-                                    <div>
-                                        <label for="shipping_district" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kecamatan <span class="text-red-500">*</span></label>
-                                        <input id="shipping_district" name="shipping_district" type="text" value="{{ old('shipping_district') }}" required placeholder="Kecamatan" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
+                                <div class="relative">
+                                    <label for="shipping-area-search"
+                                        class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">
+                                        Kecamatan / Kota / Provinsi / Kode Pos
+                                        <span class="text-red-500">*</span>
+                                    </label>
+
+                                    <input
+                                        id="shipping-area-search"
+                                        type="search"
+                                        required
+                                        value="{{ old('shipping_district') ? old('shipping_district') . ', ' . old('shipping_city') . ', ' . old('shipping_province') . ' - ' . old('shipping_postal_code') : '' }}"
+                                        autocomplete="off"
+                                        placeholder="Ketik nama kecamatan, kota, atau kode pos..."
+                                        aria-autocomplete="list"
+                                        aria-controls="shipping-area-results"
+                                        aria-expanded="false"
+                                        class="h-11 w-full rounded-xl border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:px-4 sm:text-sm"
+                                    >
+
+                                    <div id="shipping-area-results"
+                                        role="listbox"
+                                        class="absolute z-30 mt-1 hidden max-h-64 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg">
                                     </div>
 
-                                    <div>
-                                        <label for="shipping_city" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kota / Kab. <span class="text-red-500">*</span></label>
-                                        <input id="shipping_city" name="shipping_city" type="text" value="{{ old('shipping_city') }}" required placeholder="Kota / Kabupaten" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
-                                    </div>
+                                    <p id="shipping-area-status"
+                                        class="mt-1.5 text-[10px] text-gray-500 sm:text-xs"
+                                        aria-live="polite">
+                                        Pilih wilayah dari daftar hasil pencarian agar kode pos terisi otomatis.
+                                    </p>
+                                </div>
 
-                                    <div>
-                                        <label for="shipping_province" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Provinsi <span class="text-red-500">*</span></label>
-                                        <input id="shipping_province" name="shipping_province" type="text" value="{{ old('shipping_province') }}" required placeholder="Provinsi" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
-                                    </div>
+                                {{-- Field tersembunyi untuk kompatibilitas dengan backend --}}
+                                <div class="hidden" aria-hidden="true">
+                                    <input id="shipping_district" name="shipping_district"
+                                        type="text" value="{{ old('shipping_district') }}">
 
-                                    <div>
-                                        <label for="shipping_postal_code" class="mb-1.5 block text-xs font-semibold text-slate-700 sm:text-sm">Kode Pos <span class="text-red-500">*</span></label>
-                                        <input id="shipping_postal_code" name="shipping_postal_code" type="text" value="{{ old('shipping_postal_code') }}" required inputmode="numeric" autocomplete="postal-code" placeholder="Kode Pos" class="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-xs text-slate-800 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-4 focus:ring-[#AE7C18]/10 sm:h-11 sm:rounded-xl sm:px-4 sm:text-sm">
-                                    </div>
+                                    <input id="shipping_city" name="shipping_city"
+                                        type="text" value="{{ old('shipping_city') }}">
+
+                                    <input id="shipping_province" name="shipping_province"
+                                        type="text" value="{{ old('shipping_province') }}">
+
+                                    <input id="shipping_postal_code" name="shipping_postal_code"
+                                        type="text" value="{{ old('shipping_postal_code') }}">
                                 </div>
                             </div>
 

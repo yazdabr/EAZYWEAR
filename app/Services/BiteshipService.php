@@ -256,6 +256,82 @@ class BiteshipService
             : [];
     }
 
+    public function searchAreas(string $input): array
+    {
+        if (! $this->isConfigured()) {
+            throw new RuntimeException(
+                'Konfigurasi Biteship belum lengkap.'
+            );
+        }
+
+        $input = trim($input);
+
+        if (mb_strlen($input) < 3) {
+            return [];
+        }
+
+        $response = Http::timeout($this->timeout)
+            ->acceptJson()
+            ->withHeaders([
+                'Authorization' => (string) $this->apiKey,
+            ])
+            ->get($this->baseUrl . '/v1/maps/areas', [
+                'countries' => 'ID',
+                'input' => $input,
+                'type' => 'single',
+            ]);
+
+        if ($response->failed()) {
+            $body = $response->json();
+
+            if (! is_array($body)) {
+                $body = [];
+            }
+
+            \Log::warning('BITESHIP AREA SEARCH FAILED', [
+                'status' => $response->status(),
+                'message' => $body['message']
+                    ?? $body['error']
+                    ?? null,
+            ]);
+
+            throw new RuntimeException(
+                'Pencarian wilayah Biteship sedang tidak tersedia.'
+            );
+        }
+
+        $body = $response->json();
+
+        if (! is_array($body) || empty($body['success'])) {
+            return [];
+        }
+
+        return array_values(array_map(
+            static function (array $area): array {
+                return [
+                    'id' => $area['id'] ?? null,
+                    'name' => $area['name'] ?? null,
+                    'district' => $area['administrative_division_level_3_name'] ?? null,
+                    'city' => $area['administrative_division_level_2_name'] ?? null,
+                    'province' => $area['administrative_division_level_1_name'] ?? null,
+                    'postal_code' => isset($area['postal_code'])
+                        ? (string) $area['postal_code']
+                        : null,
+                ];
+            },
+            array_filter(
+                $body['areas'] ?? [],
+                static fn ($area) =>
+                    is_array($area)
+                    && ! empty($area['id'])
+                    && ! empty($area['administrative_division_level_3_name'])
+                    && ! empty($area['administrative_division_level_2_name'])
+                    && ! empty($area['administrative_division_level_1_name'])
+                    && ! empty($area['postal_code'])
+            )
+        ));
+    }
+
     public function createOrder(array $data): array
     {
         if (! $this->isConfigured()) {

@@ -152,6 +152,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const postalInput = document.getElementById('shipping_postal_code');
+    const areaSearchInput = document.getElementById('shipping-area-search');
+    const areaResults = document.getElementById('shipping-area-results');
+    const areaStatus = document.getElementById('shipping-area-status');
+    const districtInput = document.getElementById('shipping_district');
+    const cityInput = document.getElementById('shipping_city');
+    const provinceInput = document.getElementById('shipping_province');
     const latitudeInput = document.getElementById('shipping_latitude');
     const longitudeInput = document.getElementById('shipping_longitude');
     const vaBankSection = document.getElementById('va-bank-section');
@@ -170,6 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
         specialBatchStart: form.dataset.specialBatchStart,
         specialBatchEnd: form.dataset.specialBatchEnd,
         specialBatchCapacity: Number(form.dataset.specialBatchCapacity || 100),
+        shippingAreasUrl: form.dataset.shippingAreasUrl,
         pickupStartTime: form.dataset.pickupStartTime,
         pickupEndTime: form.dataset.pickupEndTime,
         pickupSameDayCutoff: form.dataset.pickupSameDayCutoff,
@@ -244,6 +251,183 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     let debounceTimer = null;
+
+    let areaSearchTimer = null;
+    let areaSearchController = null;
+    let areaSearchSequence = 0;
+
+    function validateAreaSelection() {
+        const isSelected = Boolean(
+            districtInput.value.trim()
+            && cityInput.value.trim()
+            && provinceInput.value.trim()
+            && postalInput.value.trim()
+        );
+
+        areaSearchInput.setCustomValidity(
+            isSelected ? '' : 'Silakan pilih wilayah dari daftar pencarian.'
+        );
+    }
+
+    function closeAreaResults() {
+        areaResults.classList.add('hidden');
+        areaSearchInput.setAttribute('aria-expanded', 'false');
+    }
+
+    function clearSelectedArea() {
+        districtInput.value = '';
+        cityInput.value = '';
+        provinceInput.value = '';
+        postalInput.value = '';
+
+        postalInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function selectShippingArea(area) {
+        districtInput.value = area.district || '';
+        cityInput.value = area.city || '';
+        provinceInput.value = area.province || '';
+        postalInput.value = area.postal_code || '';
+        validateAreaSelection();
+
+        areaSearchInput.value =
+            `${area.district}, ${area.city}, ${area.province} - ${area.postal_code}`;
+
+        areaStatus.textContent = 'Wilayah berhasil dipilih.';
+        closeAreaResults();
+
+        postalInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function renderAreaResults(areas) {
+        areaResults.replaceChildren();
+
+        if (!areas.length) {
+            const empty = document.createElement('div');
+            empty.className = 'px-4 py-3 text-xs text-gray-500';
+            empty.textContent = 'Wilayah tidak ditemukan.';
+            areaResults.appendChild(empty);
+            areaResults.classList.remove('hidden');
+            areaSearchInput.setAttribute('aria-expanded', 'true');
+            return;
+        }
+
+        areas.forEach((area) => {
+            const button = document.createElement('button');
+
+            button.type = 'button';
+            button.role = 'option';
+            button.className =
+                'block w-full border-b border-gray-100 px-4 py-3 text-left transition last:border-0 hover:bg-[#AE7C18]/5';
+
+            const title = document.createElement('span');
+            title.className = 'block text-xs font-semibold text-slate-800 sm:text-sm';
+            title.textContent = area.district;
+
+            const detail = document.createElement('span');
+            detail.className = 'mt-1 block text-[10px] text-gray-500 sm:text-xs';
+            detail.textContent =
+                `${area.city}, ${area.province} · ${area.postal_code}`;
+
+            button.append(title, detail);
+
+            button.addEventListener('click', () => {
+                selectShippingArea(area);
+            });
+
+            areaResults.appendChild(button);
+        });
+
+        areaResults.classList.remove('hidden');
+        areaSearchInput.setAttribute('aria-expanded', 'true');
+    }
+
+    async function searchShippingAreas(keyword) {
+        if (areaSearchController) {
+            areaSearchController.abort();
+        }
+
+        const controller = new AbortController();
+        areaSearchController = controller;
+
+        const sequence = ++areaSearchSequence;
+
+        areaStatus.textContent = 'Mencari wilayah...';
+
+        try {
+            const url = new URL(config.shippingAreasUrl, window.location.origin);
+            url.searchParams.set('input', keyword);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json'
+                },
+                signal: controller.signal
+            });
+
+            const result = await response.json();
+
+            if (sequence !== areaSearchSequence) return;
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Pencarian wilayah gagal.');
+            }
+
+            renderAreaResults(result.data || []);
+
+            areaStatus.textContent = result.data?.length
+                ? `${result.data.length} wilayah ditemukan. Pilih salah satu hasil.`
+                : 'Wilayah tidak ditemukan. Periksa kembali kata kunci.';
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+
+            if (sequence !== areaSearchSequence) return;
+
+            areaResults.replaceChildren();
+
+            const message = document.createElement('div');
+            message.className = 'px-4 py-3 text-xs text-red-600';
+            message.textContent = 'Pencarian gagal. Silakan coba kembali.';
+
+            areaResults.appendChild(message);
+            areaResults.classList.remove('hidden');
+            areaSearchInput.setAttribute('aria-expanded', 'true');
+            areaStatus.textContent = error.message;
+        }
+    }
+
+    areaSearchInput.addEventListener('input', () => {
+        clearTimeout(areaSearchTimer);
+
+        clearSelectedArea();
+        validateAreaSelection();
+        const keyword = areaSearchInput.value.trim();
+
+        if (keyword.length < 3) {
+            if (areaSearchController) {
+                areaSearchController.abort();
+            }
+
+            areaSearchSequence++;
+            closeAreaResults();
+            areaStatus.textContent = 'Ketik minimal 3 karakter untuk mencari wilayah.';
+            return;
+        }
+
+        areaSearchTimer = setTimeout(() => {
+            searchShippingAreas(keyword);
+        }, 400);
+    });
+
+    document.addEventListener('click', (event) => {
+        if (
+            !areaSearchInput.contains(event.target)
+            && !areaResults.contains(event.target)
+        ) {
+            closeAreaResults();
+        }
+    });
 
     function formatRupiah(value) {
         return 'Rp ' + Number(value || 0).toLocaleString('id-ID');

@@ -260,11 +260,6 @@
             button.textContent = 'Ambil Komentar Instagram';
         }
     });
-    $('load-demo').addEventListener('click', () => {
-        allComments = demo.map(row => ({username:row[0],text:row[1]}));
-        $('comments-input').value = demo.map(row => '@' + row[0] + '|' + row[1]).join('\n');
-        applyFilter();
-    });
     $('apply-filter').addEventListener('click', () => { allComments = parseComments(); applyFilter(); });
     $('unique-user').addEventListener('change', () => { if (allComments.length) applyFilter(); });
     $('draw-button').addEventListener('click', () => {

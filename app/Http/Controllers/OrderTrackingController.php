@@ -102,8 +102,9 @@ class OrderTrackingController extends Controller
                 ], 422);
             }
 
-            // Ambil foto bukti pengiriman melalui GET Order.
+            // Ambil foto bukti pengiriman dan link live tracking melalui GET Order.
             $proofImages = [];
+            $liveTrackingUrl = null;
 
             if ($shipment->biteship_order_id) {
                 try {
@@ -112,6 +113,20 @@ class OrderTrackingController extends Controller
                     );
 
                     if (! empty($order['success'])) {
+                        // Ambil URL live tracking dari Biteship.
+                        $candidateLiveTrackingUrl = data_get(
+                            $order,
+                            'raw.courier.link'
+                        );
+
+                        if (
+                            is_string($candidateLiveTrackingUrl) &&
+                            filter_var($candidateLiveTrackingUrl, FILTER_VALIDATE_URL) &&
+                            strtolower((string) parse_url($candidateLiveTrackingUrl, PHP_URL_SCHEME)) === 'https'
+                        ) {
+                            $liveTrackingUrl = $candidateLiveTrackingUrl;
+                        }
+
                         $orderHistory = data_get(
                             $order,
                             'raw.courier.history',
@@ -184,6 +199,7 @@ class OrderTrackingController extends Controller
                         ?: ($shipment->courier_code ?: ($tracking['courier_code'] ?? null)),
                     'history' => $tracking['history'] ?? [],
                     'proof_images' => array_values(array_unique($proofImages)),
+                    'live_tracking_url' => $liveTrackingUrl,
                 ],
             ]);
         } catch (\Throwable $e) {

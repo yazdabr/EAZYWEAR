@@ -85,6 +85,19 @@
                     <p id="customer-tracking-number" class="mt-0.5 break-all text-xs font-bold text-slate-900">-</p>
                     <p class="mt-2 text-[11px] text-slate-500">Kurir</p>
                     <p id="customer-tracking-courier" class="mt-0.5 text-xs font-semibold text-slate-900">-</p>
+                    <a
+                        id="customer-live-tracking-link"
+                        href="#"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="mt-3 hidden w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[#916511]"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/>
+                            <circle cx="12" cy="10" r="2.5"/>
+                        </svg>
+                        Lihat Live Tracking
+                    </a>
                 </div>
 
                 <h3 class="mb-2 mt-5 text-xs font-bold text-slate-900">Riwayat pengiriman</h3>
@@ -257,6 +270,10 @@
         el('customer-tracking-loading').classList.remove('hidden');
         el('customer-tracking-error').classList.add('hidden');
         el('customer-tracking-content').classList.add('hidden');
+        const liveTrackingLink = el('customer-live-tracking-link');
+
+        liveTrackingLink.classList.add('hidden');
+        liveTrackingLink.removeAttribute('href');
         el('customer-tracking-history').replaceChildren();
         renderProofImages([]);
 
@@ -274,6 +291,19 @@
             const data = result.data || {};
             setText('customer-tracking-number', data.tracking_number);
             setText('customer-tracking-courier', data.courier);
+            if (typeof data.live_tracking_url === 'string') {
+                try {
+                    const liveTrackingUrl = new URL(data.live_tracking_url);
+
+                    if (liveTrackingUrl.protocol === 'https:') {
+                        liveTrackingLink.href = liveTrackingUrl.href;
+                        liveTrackingLink.classList.remove('hidden');
+                        liveTrackingLink.classList.add('flex');
+                    }
+                } catch {
+                    liveTrackingLink.classList.add('hidden');
+                }
+            }
             renderHistory(Array.isArray(data.history) ? data.history : []);
             renderProofImages(
                 Array.isArray(data.proof_images) ? data.proof_images : []

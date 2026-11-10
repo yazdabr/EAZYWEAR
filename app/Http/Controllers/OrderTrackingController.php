@@ -76,7 +76,10 @@ class OrderTrackingController extends Controller
             ->where('shipping_email', $validated['email'])
             ->first();
 
-        if (! $transaction || (int) $shipment->transaction_id !== (int) $transaction->id) {
+        if (
+            ! $transaction ||
+            (int) $shipment->transaction_id !== (int) $transaction->id
+        ) {
             abort(404);
         }
 
@@ -99,6 +102,54 @@ class OrderTrackingController extends Controller
                 ], 422);
             }
 
+            // Ambil foto bukti pengiriman melalui GET Order.
+            $proofImages = [];
+
+            if ($shipment->biteship_order_id) {
+                try {
+                    $order = $biteshipService->getOrder(
+                        $shipment->biteship_order_id
+                    );
+
+                    if (! empty($order['success'])) {
+                        $orderHistory = data_get(
+                            $order,
+                            'raw.courier.history',
+                            []
+                        );
+
+                        if (is_array($orderHistory)) {
+                            foreach ($orderHistory as $historyItem) {
+                                $images = $historyItem['proof_of_delivery_images'] ?? [];
+
+                                if (is_string($images)) {
+                                    $images = [$images];
+                                }
+
+                                if (! is_array($images)) {
+                                    continue;
+                                }
+
+                                foreach ($images as $image) {
+                                    if (
+                                        ! is_string($image) ||
+                                        ! filter_var($image, FILTER_VALIDATE_URL) ||
+                                        parse_url($image, PHP_URL_SCHEME) !== 'https'
+                                    ) {
+                                        continue;
+                                    }
+
+                                    $proofImages[] = $image;
+                                }
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Kegagalan mengambil foto tidak boleh menggagalkan tracking.
+                    report($e);
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -107,6 +158,7 @@ class OrderTrackingController extends Controller
                     'courier' => $shipment->courier
                         ?: ($shipment->courier_code ?: ($tracking['courier_code'] ?? null)),
                     'history' => $tracking['history'] ?? [],
+                    'proof_images' => array_values(array_unique($proofImages)),
                 ],
             ]);
         } catch (\Throwable $e) {

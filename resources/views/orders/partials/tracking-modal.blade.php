@@ -89,6 +89,22 @@
 
                 <h3 class="mb-2 mt-5 text-xs font-bold text-slate-900">Riwayat pengiriman</h3>
                 <div id="customer-tracking-history" class="space-y-3"></div>
+
+                <div id="customer-tracking-proof-section" class="mt-5 hidden">
+                    <h3 class="mb-2 text-xs font-bold text-slate-900">
+                        Bukti Pengiriman
+                    </h3>
+
+                    <div
+                        id="customer-tracking-proof-images"
+                        class="grid grid-cols-2 gap-2"
+                    ></div>
+
+                    <p class="mt-2 text-[10px] text-slate-400">
+                        Foto bukti pengiriman dari kurir.
+                        Tekan foto untuk melihat ukuran penuh.
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -170,6 +186,61 @@
         });
     }
 
+    function renderProofImages(images) {
+        const section = el('customer-tracking-proof-section');
+        const container = el('customer-tracking-proof-images');
+
+        container.replaceChildren();
+        section.classList.add('hidden');
+
+        if (!Array.isArray(images) || images.length === 0) {
+            return;
+        }
+
+        images.forEach((imageUrl, index) => {
+            if (typeof imageUrl !== 'string') return;
+
+            let parsedUrl;
+
+            try {
+                parsedUrl = new URL(imageUrl);
+            } catch {
+                return;
+            }
+
+            if (parsedUrl.protocol !== 'https:') return;
+
+            const link = document.createElement('a');
+            link.href = parsedUrl.href;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.className =
+                'block overflow-hidden rounded-xl border border-slate-200 bg-slate-50';
+
+            const image = document.createElement('img');
+            image.src = parsedUrl.href;
+            image.alt = `Bukti pengiriman ${index + 1}`;
+            image.loading = 'lazy';
+            image.className =
+                'aspect-square w-full object-cover transition hover:opacity-90';
+
+            image.addEventListener('error', () => {
+                link.remove();
+
+                if (!container.children.length) {
+                    section.classList.add('hidden');
+                }
+            });
+
+            link.appendChild(image);
+            container.appendChild(link);
+        });
+
+        if (container.children.length > 0) {
+            section.classList.remove('hidden');
+        }
+    }
+
     window.openCustomerTrackingModal = function () {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -187,6 +258,7 @@
         el('customer-tracking-error').classList.add('hidden');
         el('customer-tracking-content').classList.add('hidden');
         el('customer-tracking-history').replaceChildren();
+        renderProofImages([]);
 
         try {
             const response = await fetch(url, {
@@ -203,6 +275,9 @@
             setText('customer-tracking-number', data.tracking_number);
             setText('customer-tracking-courier', data.courier);
             renderHistory(Array.isArray(data.history) ? data.history : []);
+            renderProofImages(
+                Array.isArray(data.proof_images) ? data.proof_images : []
+            );
             el('customer-tracking-content').classList.remove('hidden');
         } catch (error) {
             el('customer-tracking-error').textContent =

@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\TransactionFulfillment;
 use App\Models\TransactionShipment;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class OrderTrackingTest extends TestCase
@@ -258,5 +259,126 @@ class OrderTrackingTest extends TestCase
 
         $this->assertSame(15000, (int) $transaction->shipping);
         $this->assertSame(215000, (int) $transaction->total);
+    }
+    public function test_customer_tracking_returns_biteship_proof_of_delivery_images(): void
+    {
+        config([
+            'biteship.base_url' => 'https://api.biteship.test',
+            'biteship.api_key' => 'test-api-key',
+            'biteship.timeout' => 10,
+        ]);
+
+        $transaction = $this->createTransaction();
+
+        $shipment = $this->createShipment(
+            $transaction,
+            TransactionShipment::TYPE_SEPARATE,
+            'RESI-PROOF-001'
+        );
+
+        $shipment->update([
+            'biteship_order_id' => 'order-proof-001',
+            'biteship_tracking_id' => 'track-proof-001',
+        ]);
+
+        Http::fake([
+            'https://api.biteship.test/v1/trackings/track-proof-001' =>
+                Http::response([
+                    'success' => true,
+                    'id' => 'track-proof-001',
+                    'waybill_id' => 'RESI-PROOF-001',
+                    'status' => 'delivered',
+                    'history' => [
+                        [
+                            'status' => 'delivered',
+                            'note' => 'Paket telah diterima.',
+                        ],
+                    ],
+                ], 200),
+
+            'https://api.biteship.test/v1/orders/order-proof-001' =>
+                Http::response([
+                    'success' => true,
+                    'id' => 'order-proof-001',
+                    'status' => 'delivered',
+                    'courier' => [
+                        'history' => [
+                            [
+                                'status' => 'delivered',
+                                'proof_of_delivery_images' => [
+                                    'https://images.example.com/proof-1.jpg',
+                                    'https://images.example.com/proof-2.jpg',
+                                ],
+                            ],
+                        ],
+                    ],
+                ], 200),
+        ]);
+
+        $this->get(route('orders.tracking.shipment', [
+            'invoice' => $transaction->invoice_number,
+            'shipment' => $shipment->id,
+            'email' => $transaction->shipping_email,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.tracking_number', 'RESI-PROOF-001')
+            ->assertJsonPath('data.history.0.note', 'Paket telah diterima.')
+            ->assertJsonPath('data.proof_images.0', 'https://images.example.com/proof-1.jpg')
+            ->assertJsonPath('data.proof_images.1', 'https://images.example.com/proof-2.jpg');
+    }
+
+    public function test_customer_tracking_still_works_when_biteship_order_request_fails(): void
+    {
+        config([
+            'biteship.base_url' => 'https://api.biteship.test',
+            'biteship.api_key' => 'test-api-key',
+            'biteship.timeout' => 10,
+        ]);
+
+        $transaction = $this->createTransaction();
+
+        $shipment = $this->createShipment(
+            $transaction,
+            TransactionShipment::TYPE_SEPARATE,
+            'RESI-PROOF-002'
+        );
+
+        $shipment->update([
+            'biteship_order_id' => 'order-proof-002',
+            'biteship_tracking_id' => 'track-proof-002',
+        ]);
+
+        Http::fake([
+            'https://api.biteship.test/v1/trackings/track-proof-002' =>
+                Http::response([
+                    'success' => true,
+                    'id' => 'track-proof-002',
+                    'waybill_id' => 'RESI-PROOF-002',
+                    'status' => 'in_transit',
+                    'history' => [
+                        [
+                            'status' => 'in_transit',
+                            'note' => 'Paket sedang dalam perjalanan.',
+                        ],
+                    ],
+                ], 200),
+
+            'https://api.biteship.test/v1/orders/order-proof-002' =>
+                Http::response([
+                    'success' => false,
+                    'message' => 'Order temporarily unavailable.',
+                ], 500),
+        ]);
+
+        $this->get(route('orders.tracking.shipment', [
+            'invoice' => $transaction->invoice_number,
+            'shipment' => $shipment->id,
+            'email' => $transaction->shipping_email,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.history.0.note', 'Paket sedang dalam perjalanan.')
+            ->assertJsonPath('data.proof_images', []);
     }
 }

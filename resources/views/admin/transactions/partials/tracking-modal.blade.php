@@ -21,7 +21,7 @@
             </button>
         </div>
 
-        <div class="max-h-[70vh] space-y-4 overflow-y-auto p-5">
+        <div class="max-h-[70vh] overflow-y-auto p-5">
             <p id="shipment-tracking-loading" class="text-sm text-slate-500">
                 Memuat informasi tracking...
             </p>

@@ -1801,7 +1801,8 @@ class TransactionController extends Controller
      */
     private function getProofOfDeliveryImages(
         BiteshipService $biteshipService,
-        ?string $orderId
+        ?string $orderId,
+        ?string &$liveTrackingUrl = null
     ): array {
         if (! $orderId) {
             return [];
@@ -1814,6 +1815,16 @@ class TransactionController extends Controller
 
             if (empty($order['success'])) {
                 return [];
+            }
+
+            $candidateTrackingUrl = data_get($order, 'raw.courier.link');
+
+            if (
+                is_string($candidateTrackingUrl) &&
+                filter_var($candidateTrackingUrl, FILTER_VALIDATE_URL) &&
+                strtolower((string) parse_url($candidateTrackingUrl, PHP_URL_SCHEME)) === 'https'
+            ) {
+                $liveTrackingUrl = $candidateTrackingUrl;
             }
 
             $orderHistory = data_get($order, 'raw.courier.history', []);
@@ -1906,6 +1917,8 @@ class TransactionController extends Controller
                 ], 422);
             }
 
+            $liveTrackingUrl = null;
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -1917,8 +1930,10 @@ class TransactionController extends Controller
                     'history' => $tracking['history'] ?? [],
                     'proof_images' => $this->getProofOfDeliveryImages(
                         $biteshipService,
-                        $transaction->biteship_order_id
+                        $transaction->biteship_order_id,
+                        $liveTrackingUrl
                     ),
+                    'live_tracking_url' => $liveTrackingUrl,
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -1961,6 +1976,8 @@ class TransactionController extends Controller
                 ], 422);
             }
 
+            $liveTrackingUrl = null;
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -1973,8 +1990,10 @@ class TransactionController extends Controller
                     'history' => $tracking['history'],
                     'proof_images' => $this->getProofOfDeliveryImages(
                         $biteshipService,
-                        $shipment->biteship_order_id
-                    ),
+                        $shipment->biteship_order_id,
+                        $liveTrackingUrl
+                        ),
+                        'live_tracking_url' => $liveTrackingUrl,
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -2017,6 +2036,8 @@ class TransactionController extends Controller
                 ], 422);
             }
 
+            $liveTrackingUrl = null;
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -2031,8 +2052,10 @@ class TransactionController extends Controller
                     'history' => $tracking['history'],
                     'proof_images' => $this->getProofOfDeliveryImages(
                         $biteshipService,
-                        $fulfillment->biteship_order_id
+                        $fulfillment->biteship_order_id,
+                        $liveTrackingUrl
                     ),
+                    'live_tracking_url' => $liveTrackingUrl,
                 ],
             ]);
         } catch (\Throwable $e) {

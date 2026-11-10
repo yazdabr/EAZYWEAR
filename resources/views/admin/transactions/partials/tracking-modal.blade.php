@@ -45,6 +45,24 @@
                        class="mt-1 text-sm font-bold text-amber-700">-</p>
                 </div>
 
+                <a id="shipment-live-tracking-link"
+                   href="#"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="mt-4 hidden inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#916613]">
+                    <span>Lihat Live Tracking</span>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         class="h-4 w-4"
+                         fill="none"
+                         viewBox="0 0 24 24"
+                         stroke="currentColor"
+                         stroke-width="2">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M13 5h6m0 0v6m0-6L10 14M19 13v6H5V5h6"/>
+                    </svg>
+                </a>
+
                 <h3 class="mb-3 mt-5 text-sm font-bold text-slate-900">
                     Riwayat pengiriman
                 </h3>
@@ -182,6 +200,11 @@
         getElement('shipment-tracking-history').replaceChildren();
         renderProofImages([]);
 
+        const liveTrackingLink = getElement('shipment-live-tracking-link');
+
+        liveTrackingLink.href = '#';
+        liveTrackingLink.classList.add('hidden');
+
         try {
             const response = await fetch(url, {
                 headers: { 'Accept': 'application/json' },
@@ -212,6 +235,11 @@
             }
 
             renderProofImages(data.proof_images);
+
+            if (isHttpsUrl(data.live_tracking_url)) {
+                liveTrackingLink.href = data.live_tracking_url;
+                liveTrackingLink.classList.remove('hidden');
+            }
 
             getElement('shipment-tracking-content').classList.remove('hidden');
         } catch (error) {

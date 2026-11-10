@@ -50,6 +50,15 @@
                 </h3>
 
                 <div id="shipment-tracking-history" class="space-y-4"></div>
+
+                <section id="shipment-tracking-proof" class="mt-5 hidden">
+                    <h3 class="mb-3 text-sm font-bold text-slate-900">
+                        Foto Bukti Pengiriman
+                    </h3>
+
+                    <div id="shipment-tracking-proof-grid"
+                         class="grid grid-cols-2 gap-3"></div>
+                </section>
             </div>
         </div>
 
@@ -116,6 +125,48 @@
         getElement('shipment-tracking-history').appendChild(entry);
     }
 
+    function isHttpsUrl(value) {
+        if (typeof value !== 'string' || value === '') return false;
+
+        try {
+            return new URL(value).protocol === 'https:';
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function renderProofImages(images) {
+        const gallery = getElement('shipment-tracking-proof');
+        const grid = getElement('shipment-tracking-proof-grid');
+
+        grid.replaceChildren();
+        gallery.classList.add('hidden');
+
+        const validImages = (Array.isArray(images) ? images : [])
+            .filter(isHttpsUrl);
+
+        if (!validImages.length) return;
+
+        validImages.forEach(function (url) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.className = 'block overflow-hidden rounded-xl border border-slate-200 bg-slate-50';
+
+            const image = document.createElement('img');
+            image.src = url;
+            image.alt = 'Foto bukti pengiriman';
+            image.loading = 'lazy';
+            image.className = 'h-28 w-full object-cover';
+
+            link.appendChild(image);
+            grid.appendChild(link);
+        });
+
+        gallery.classList.remove('hidden');
+    }
+
     window.closeShipmentTrackingModal = function () {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
@@ -129,6 +180,7 @@
         getElement('shipment-tracking-error').classList.add('hidden');
         getElement('shipment-tracking-content').classList.add('hidden');
         getElement('shipment-tracking-history').replaceChildren();
+        renderProofImages([]);
 
         try {
             const response = await fetch(url, {
@@ -158,6 +210,8 @@
                 empty.textContent = 'Belum ada riwayat perjalanan yang tersedia.';
                 getElement('shipment-tracking-history').appendChild(empty);
             }
+
+            renderProofImages(data.proof_images);
 
             getElement('shipment-tracking-content').classList.remove('hidden');
         } catch (error) {

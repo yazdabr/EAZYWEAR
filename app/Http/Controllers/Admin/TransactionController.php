@@ -1796,6 +1796,90 @@ class TransactionController extends Controller
         }
     }
 
+    /**
+     * Ambil foto bukti pengiriman dari detail order Biteship.
+     */
+    private function getProofOfDeliveryImages(
+        BiteshipService $biteshipService,
+        ?string $orderId
+    ): array {
+        if (! $orderId) {
+            return [];
+        }
+
+        $proofImages = [];
+
+        try {
+            $order = $biteshipService->getOrder($orderId);
+
+            if (empty($order['success'])) {
+                return [];
+            }
+
+            $orderHistory = data_get($order, 'raw.courier.history', []);
+
+            if (! is_array($orderHistory)) {
+                return [];
+            }
+
+            foreach ($orderHistory as $historyItem) {
+                if (! is_array($historyItem)) {
+                    continue;
+                }
+
+                $imageSources = [
+                    $historyItem['proof_of_delivery_images'] ?? [],
+                    $historyItem['images'] ?? [],
+                ];
+
+                foreach ($imageSources as $source) {
+                    if (is_string($source)) {
+                        $source = [$source];
+                    }
+
+                    if (! is_array($source)) {
+                        continue;
+                    }
+
+                    foreach ($source as $image) {
+                        if (is_string($image)) {
+                            $imageUrls = [$image];
+                        } elseif (is_array($image)) {
+                            $imageUrls = $image['images_urls'] ?? [];
+
+                            if (is_string($imageUrls)) {
+                                $imageUrls = [$imageUrls];
+                            }
+                        } else {
+                            continue;
+                        }
+
+                        if (! is_array($imageUrls)) {
+                            continue;
+                        }
+
+                        foreach ($imageUrls as $imageUrl) {
+                            if (
+                                ! is_string($imageUrl) ||
+                                ! filter_var($imageUrl, FILTER_VALIDATE_URL) ||
+                                strtolower((string) parse_url($imageUrl, PHP_URL_SCHEME)) !== 'https'
+                            ) {
+                                continue;
+                            }
+
+                            $proofImages[] = $imageUrl;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Kegagalan mengambil foto tidak boleh menggagalkan tracking.
+            report($e);
+        }
+
+        return array_values(array_unique($proofImages));
+    }
+
     public function trackingLegacyTransaction(
         Transaction $transaction,
         BiteshipService $biteshipService
@@ -1831,6 +1915,10 @@ class TransactionController extends Controller
                     'status' => ($tracking['status'] ?? null)
                         ?: ($transaction->biteship_status ?? null),
                     'history' => $tracking['history'] ?? [],
+                    'proof_images' => $this->getProofOfDeliveryImages(
+                        $biteshipService,
+                        $transaction->biteship_order_id
+                    ),
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -1883,6 +1971,10 @@ class TransactionController extends Controller
                     'status' => $tracking['status']
                         ?: $shipment->biteship_status,
                     'history' => $tracking['history'],
+                    'proof_images' => $this->getProofOfDeliveryImages(
+                        $biteshipService,
+                        $shipment->biteship_order_id
+                    ),
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -1937,6 +2029,10 @@ class TransactionController extends Controller
                     'status' => $tracking['status']
                         ?: $fulfillment->biteship_status,
                     'history' => $tracking['history'],
+                    'proof_images' => $this->getProofOfDeliveryImages(
+                        $biteshipService,
+                        $fulfillment->biteship_order_id
+                    ),
                 ],
             ]);
         } catch (\Throwable $e) {

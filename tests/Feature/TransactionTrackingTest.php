@@ -14,11 +14,11 @@ class TransactionTrackingTest extends TestCase
 {
     use DatabaseTransactions;
 
-    private function makeTransaction(): Transaction
+    private function makeTransaction(array $attributes = []): Transaction
     {
         $customer = Customer::query()->firstOrFail();
 
-        return Transaction::create([
+        return Transaction::create(array_merge([
             'customer_id' => $customer->id,
             'invoice_number' => 'INV-TRACK-' . uniqid(),
             'transaction_date' => now(),
@@ -38,7 +38,7 @@ class TransactionTrackingTest extends TestCase
             'shipping_province' => 'Kalimantan Selatan',
             'shipping_postal_code' => '70111',
             'shipping_method' => 'Kurir',
-        ]);
+        ], $attributes));
     }
 
     private function makeShipment(
@@ -90,6 +90,14 @@ class TransactionTrackingTest extends TestCase
                     'status' => null,
                     'history' => [],
                 ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => ['courier' => ['history' => []]],
+                ]);
         });
 
         $this->getJson(route(
@@ -100,7 +108,8 @@ class TransactionTrackingTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.tracking_number', null)
             ->assertJsonPath('data.status', null)
-            ->assertJsonPath('data.history', []);
+            ->assertJsonPath('data.history', [])
+            ->assertJsonPath('data.proof_images', []);
     }
 
     public function test_shipment_tracking_uses_waybill_fallback_from_biteship(): void
@@ -127,6 +136,14 @@ class TransactionTrackingTest extends TestCase
                     'courier_code' => 'jnt',
                     'status' => 'in_transit',
                     'history' => [],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => ['courier' => ['history' => []]],
                 ]);
         });
 
@@ -155,6 +172,7 @@ class TransactionTrackingTest extends TestCase
 
         $this->mock(BiteshipService::class, function ($mock) {
             $mock->shouldNotReceive('getTracking');
+            $mock->shouldNotReceive('getOrder');
         });
 
         $this->getJson(route(
@@ -457,6 +475,14 @@ class TransactionTrackingTest extends TestCase
                         ['status' => 'picked_up', 'note' => 'Paket dijemput'],
                     ],
                 ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-FULFILLMENT-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => ['courier' => ['history' => []]],
+                ]);
         });
 
         $this->getJson(route(
@@ -498,6 +524,14 @@ class TransactionTrackingTest extends TestCase
                     'status' => null,
                     'history' => [],
                 ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-FULFILLMENT-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => ['courier' => ['history' => []]],
+                ]);
         });
 
         $this->getJson(route(
@@ -524,6 +558,7 @@ class TransactionTrackingTest extends TestCase
 
         $this->mock(BiteshipService::class, function ($mock) {
             $mock->shouldNotReceive('getTracking');
+            $mock->shouldNotReceive('getOrder');
         });
 
         $this->getJson(route(
@@ -532,27 +567,270 @@ class TransactionTrackingTest extends TestCase
         ))->assertNotFound();
     }
 
-    public function test_fulfillment_tracking_requires_biteship_tracking_ids(): void
+    public function test_legacy_transaction_tracking_returns_proof_images(): void
+    {
+        $this->actingAs(User::factory()->create([
+            'role' => 'super_admin',
+        ]));
+
+        $transaction = $this->makeTransaction([
+            'biteship_order_id' => 'ORDER-LEGACY-PROOF-TEST',
+            'biteship_tracking_id' => 'TRACK-LEGACY-PROOF-TEST',
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getTracking')
+                ->once()
+                ->with('TRACK-LEGACY-PROOF-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'waybill_id' => 'WB-LEGACY-PROOF-TEST',
+                    'courier_code' => 'jnt',
+                    'status' => 'delivered',
+                    'history' => [],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-LEGACY-PROOF-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => [
+                        'courier' => [
+                            'history' => [
+                                [
+                                    'proof_of_delivery_images' => [
+                                        'https://cdn.example.com/legacy-proof.jpg',
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ]);
+        });
+
+        $this->getJson(route(
+            'admin.transactions.legacy-tracking',
+            $transaction
+        ))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.proof_images', [
+                'https://cdn.example.com/legacy-proof.jpg',
+            ]);
+    }
+
+    public function test_shipment_tracking_extracts_proof_images_from_both_formats(): void
     {
         $this->actingAs(User::factory()->create([
             'role' => 'super_admin',
         ]));
 
         $transaction = $this->makeTransaction();
-        $fulfillment = $this->makeFulfillment($transaction, [
-            'biteship_order_id' => null,
-            'biteship_tracking_id' => null,
-        ]);
+        $shipment = $this->makeShipment($transaction);
 
         $this->mock(BiteshipService::class, function ($mock) {
-            $mock->shouldNotReceive('getTracking');
+            $mock->shouldReceive('getTracking')
+                ->once()
+                ->with('TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'waybill_id' => 'WB-TRACK-TEST',
+                    'courier_code' => 'jnt',
+                    'status' => 'delivered',
+                    'history' => [],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => [
+                        'courier' => [
+                            'history' => [
+                                [
+                                    'proof_of_delivery_images' => 'https://cdn.example.com/proof-string.jpg',
+                                ],
+                                [
+                                    'images' => [
+                                        [
+                                            'images_urls' => [
+                                                'https://cdn.example.com/proof-array.jpg',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ]);
+        });
+
+        $this->getJson(route(
+            'admin.transactions.shipments.tracking',
+            [$transaction, $shipment]
+        ))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.proof_images', [
+                'https://cdn.example.com/proof-string.jpg',
+                'https://cdn.example.com/proof-array.jpg',
+            ]);
+    }
+
+    public function test_fulfillment_tracking_returns_proof_images(): void
+    {
+        $this->actingAs(User::factory()->create([
+            'role' => 'super_admin',
+        ]));
+
+        $transaction = $this->makeTransaction();
+        $fulfillment = $this->makeFulfillment($transaction);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getTracking')
+                ->once()
+                ->with('TRACK-FULFILLMENT-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'waybill_id' => 'WB-FULFILLMENT-TEST',
+                    'courier_code' => 'jnt',
+                    'status' => 'delivered',
+                    'history' => [],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-FULFILLMENT-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => [
+                        'courier' => [
+                            'history' => [
+                                [
+                                    'proof_of_delivery_images' => [
+                                        'https://cdn.example.com/fulfillment-proof.jpg',
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ]);
         });
 
         $this->getJson(route(
             'admin.transactions.fulfillments.tracking',
             [$transaction, $fulfillment]
         ))
-            ->assertStatus(422)
-            ->assertJsonPath('success', false);
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.proof_images', [
+                'https://cdn.example.com/fulfillment-proof.jpg',
+            ]);
+    }
+
+    public function test_proof_images_ignore_insecure_invalid_and_duplicate_urls(): void
+    {
+        $this->actingAs(User::factory()->create([
+            'role' => 'super_admin',
+        ]));
+
+        $transaction = $this->makeTransaction();
+        $shipment = $this->makeShipment($transaction);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getTracking')
+                ->once()
+                ->with('TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'waybill_id' => 'WB-TRACK-TEST',
+                    'courier_code' => 'jnt',
+                    'status' => 'delivered',
+                    'history' => [],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => [
+                        'courier' => [
+                            'history' => [
+                                [
+                                    'proof_of_delivery_images' => [
+                                        'http://cdn.example.com/insecure.jpg',
+                                        'not-a-valid-url',
+                                        'https://cdn.example.com/valid.jpg',
+                                        123,
+                                    ],
+                                ],
+                                [
+                                    'images' => [
+                                        [
+                                            'images_urls' => [
+                                                'https://cdn.example.com/valid.jpg',
+                                                'https://cdn.example.com/second.jpg',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ]);
+        });
+
+        $this->getJson(route(
+            'admin.transactions.shipments.tracking',
+            [$transaction, $shipment]
+        ))
+            ->assertOk()
+            ->assertJsonPath('data.proof_images', [
+                'https://cdn.example.com/valid.jpg',
+                'https://cdn.example.com/second.jpg',
+            ]);
+    }
+
+    public function test_tracking_still_succeeds_when_get_order_fails(): void
+    {
+        $this->actingAs(User::factory()->create([
+            'role' => 'super_admin',
+        ]));
+
+        $transaction = $this->makeTransaction();
+        $shipment = $this->makeShipment($transaction);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getTracking')
+                ->once()
+                ->with('TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'waybill_id' => 'WB-TRACK-TEST',
+                    'courier_code' => 'jnt',
+                    'status' => 'in_transit',
+                    'history' => [
+                        ['status' => 'in_transit', 'note' => 'Paket dalam perjalanan'],
+                    ],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-TRACK-TEST')
+                ->andThrow(new \RuntimeException('Biteship order gagal dimuat.'));
+        });
+
+        $this->getJson(route(
+            'admin.transactions.shipments.tracking',
+            [$transaction, $shipment]
+        ))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'in_transit')
+            ->assertJsonCount(1, 'data.history')
+            ->assertJsonPath('data.proof_images', []);
     }
 }

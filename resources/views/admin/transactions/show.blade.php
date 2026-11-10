@@ -588,7 +588,7 @@ $currentStatus = $statusMap[$latestHistory?->status ?? ''] ?? ['label' => $trans
                                             <span>Tracking Belum Tersedia</span>
                                         </button>
                                     @endif
-</div>
+                                    </div>
                                 </div>
                             @endif
 

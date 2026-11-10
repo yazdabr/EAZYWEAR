@@ -47,13 +47,34 @@
                                 </div>
                             </div>
                         @elseif($transaction->payment_method === 'QRIS')
-                            <div style="margin-top:18px; padding:14px 16px; background:#fff8e8; border:1px solid #f0d99a; border-radius:8px;">
-                                <div style="font-size:13px; font-weight:bold; color:#7a5a12;">
+                            <div style="margin-top:18px; padding:18px; background:#fff8e8; border:1px solid #f0d99a; border-radius:8px; text-align:center;">
+                                <div style="font-size:13px; font-weight:bold; color:#7a5a12; text-align:left;">
                                     Cara Pembayaran QRIS
                                 </div>
-                                <div style="margin-top:6px; font-size:13px; line-height:1.7; color:#666666;">
-                                    Gunakan QRIS pada halaman pembayaran untuk menyelesaikan transaksi.
-                                    Pastikan nominal pembayaran sesuai dengan total invoice ini dan lakukan pembayaran sebelum batas waktu.
+
+                                <div style="margin-top:8px; font-size:13px; line-height:1.7; color:#666666; text-align:left;">
+                                    Scan QRIS berikut menggunakan aplikasi pembayaran yang mendukung QRIS.
+                                    Pastikan nominal pembayaran sesuai dengan total invoice dan lakukan pembayaran sebelum batas waktu.
+                                </div>
+
+                                @if(!empty($qrisImageCid))
+                                    <div style="margin:18px auto 10px; padding:12px; background:#ffffff; border:1px solid #eeeeee; border-radius:10px; display:inline-block;">
+                                        <img
+                                            src="cid:{{ $qrisImageCid }}"
+                                            width="320"
+                                            height="320"
+                                            alt="Kode QRIS Eazywear"
+                                            style="display:block; width:260px; max-width:100%; height:auto; border:0;"
+                                        >
+                                    </div>
+                                @else
+                                    <div style="margin-top:15px; padding:12px; background:#ffffff; border-radius:8px; color:#b45309; font-size:12px;">
+                                        QRIS tidak dapat ditampilkan. Silakan buka halaman pembayaran untuk melihat kode QR.
+                                    </div>
+                                @endif
+
+                                <div style="margin-top:8px; font-size:11px; color:#888888;">
+                                    Pindai kode QR di atas untuk melakukan pembayaran.
                                 </div>
                             </div>
                         @endif

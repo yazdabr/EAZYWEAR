@@ -399,11 +399,10 @@ class BiteshipService
             ! empty($data['destination_latitude'])
             && ! empty($data['destination_longitude'])
         ) {
-            $payload['destination_latitude'] =
-                (float) $data['destination_latitude'];
-
-            $payload['destination_longitude'] =
-                (float) $data['destination_longitude'];
+            $payload['destination_coordinate'] = [
+                'latitude' => (float) $data['destination_latitude'],
+                'longitude' => (float) $data['destination_longitude'],
+            ];
         }
 
         try {

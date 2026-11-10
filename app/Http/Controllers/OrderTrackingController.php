@@ -120,26 +120,49 @@ class OrderTrackingController extends Controller
 
                         if (is_array($orderHistory)) {
                             foreach ($orderHistory as $historyItem) {
-                                $images = $historyItem['proof_of_delivery_images'] ?? [];
+                                $imageSources = [
+                                    $historyItem['proof_of_delivery_images'] ?? [],
+                                    $historyItem['images'] ?? [],
+                                ];
 
-                                if (is_string($images)) {
-                                    $images = [$images];
-                                }
+                                foreach ($imageSources as $source) {
+                                    if (is_string($source)) {
+                                        $source = [$source];
+                                    }
 
-                                if (! is_array($images)) {
-                                    continue;
-                                }
-
-                                foreach ($images as $image) {
-                                    if (
-                                        ! is_string($image) ||
-                                        ! filter_var($image, FILTER_VALIDATE_URL) ||
-                                        parse_url($image, PHP_URL_SCHEME) !== 'https'
-                                    ) {
+                                    if (! is_array($source)) {
                                         continue;
                                     }
 
-                                    $proofImages[] = $image;
+                                    foreach ($source as $image) {
+                                        if (is_string($image)) {
+                                            $imageUrls = [$image];
+                                        } elseif (is_array($image)) {
+                                            $imageUrls = $image['images_urls'] ?? [];
+
+                                            if (is_string($imageUrls)) {
+                                                $imageUrls = [$imageUrls];
+                                            }
+                                        } else {
+                                            continue;
+                                        }
+
+                                        if (! is_array($imageUrls)) {
+                                            continue;
+                                        }
+
+                                        foreach ($imageUrls as $imageUrl) {
+                                            if (
+                                                ! is_string($imageUrl) ||
+                                                ! filter_var($imageUrl, FILTER_VALIDATE_URL) ||
+                                                strtolower((string) parse_url($imageUrl, PHP_URL_SCHEME)) !== 'https'
+                                            ) {
+                                                continue;
+                                            }
+
+                                            $proofImages[] = $imageUrl;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -149,6 +172,8 @@ class OrderTrackingController extends Controller
                     report($e);
                 }
             }
+
+            $proofImages = array_values(array_unique($proofImages));
 
             return response()->json([
                 'success' => true,

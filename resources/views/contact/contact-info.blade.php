@@ -23,6 +23,17 @@ $contacts = [
         'btn_color' => 'bg-emerald-600 text-white shadow-sm group-hover:bg-emerald-700',
     ],
     [
+        'title' => 'Shopee',
+        'value' => 'Eazywear Indonesia',
+        'badge' => 'Official Store',
+        'action_label' => 'Shop Now',
+        'href' => 'https://shopee.co.id/eazywearindonesia',
+        'icon' => 'shopping-bag',
+        'card_bg' => 'bg-orange-50/60 border-orange-200/80 hover:bg-orange-50 hover:border-orange-400',
+        'brand_color' => 'bg-orange-500 text-white group-hover:bg-orange-600',
+        'btn_color' => 'bg-orange-500 text-white shadow-sm group-hover:bg-orange-600',
+    ],
+    [
         'title' => 'Instagram',
         'value' => '@eazywear_',
         'badge' => null,
@@ -76,6 +87,9 @@ $contacts = [
                                 @switch($contact['icon'])
                                     @case('chat-bubble-left-right')
                                         <x-heroicon-o-chat-bubble-left-right class="h-5 w-5 sm:h-6 sm:w-6"/>
+                                        @break
+                                    @case('shopping-bag')
+                                        <x-heroicon-o-shopping-bag class="h-5 w-5 sm:h-6 sm:w-6"/>
                                         @break
                                     @case('camera')
                                         <x-heroicon-o-camera class="h-5 w-5 sm:h-6 sm:w-6"/>

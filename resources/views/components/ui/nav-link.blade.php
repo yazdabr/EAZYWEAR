@@ -8,12 +8,12 @@
 
     if ($mobile) {
         $classes = $active
-            ? 'flex items-center justify-between rounded-xl bg-[#AE7C18]/10 px-4 py-3 text-base font-semibold text-[#AE7C18] transition'
-            : 'flex items-center justify-between rounded-xl px-4 py-3 text-base font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#AE7C18]';
+            ? 'flex items-center justify-between rounded-xl bg-[#AE7C18]/10 px-4 py-3 text-base font-semibold text-[#AE7C18] transition dark:bg-[#AE7C18]/15 dark:text-[#D4A72C]'
+            : 'flex items-center justify-between rounded-xl px-4 py-3 text-base font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#AE7C18] dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-[#D4A72C]';
     } else {
         $classes = $active
-            ? 'border-b-2 border-[#AE7C18] pb-2 text-sm font-semibold text-[#AE7C18] transition duration-300'
-            : 'pb-2 text-sm font-semibold text-gray-900 transition duration-300 hover:text-[#AE7C18]';
+            ? 'border-b-2 border-[#AE7C18] pb-2 text-sm font-semibold text-[#AE7C18] transition duration-300 dark:text-[#D4A72C]'
+            : 'pb-2 text-sm font-semibold text-gray-900 transition duration-300 hover:text-[#AE7C18] dark:text-slate-200 dark:hover:text-[#D4A72C]';
     }
 @endphp
 

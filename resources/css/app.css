@@ -185,3 +185,586 @@ body {
     overflow-x: hidden;
     width: 100%;
 }
+
+/* =====================================================
+    THEME SYSTEM (PUBLIC WEBSITE ONLY)
+    Activated by the `dark` class on <html>.
+===================================================== */
+
+:root {
+    --ew-bg: #ffffff;
+    --ew-surface: #ffffff;
+    --ew-surface-muted: #f7f8f7;
+    --ew-elevated: #f3f4f6;
+    --ew-elevated-2: #e5e7eb;
+    --ew-text: #111827;
+    --ew-text-soft: #374151;
+    --ew-text-muted: #6b7280;
+    --ew-text-faint: #9ca3af;
+    --ew-border: #e5e7eb;
+    --ew-border-strong: #d1d5db;
+    --ew-input: #f9fafb;
+    --ew-gold: #ae7c18;
+}
+
+html.dark {
+    color-scheme: dark;
+
+    --ew-bg: #0f1115;
+    --ew-surface: #171a21;
+    --ew-surface-muted: #171a21;
+    --ew-elevated: #1c2029;
+    --ew-elevated-2: #242936;
+    --ew-text: #f8fafc;
+    --ew-text-soft: #e4e4e7;
+    --ew-text-muted: #a1a1aa;
+    --ew-text-faint: #71717a;
+    --ew-border: #303642;
+    --ew-border-strong: #3f4652;
+    --ew-input: #1c2029;
+}
+
+html {
+    background-color: var(--ew-bg);
+}
+
+html.dark body {
+    background-color: var(--ew-bg);
+    color: var(--ew-text);
+}
+
+/* Smooth theme cross-fade while switching (kept short and limited to colors). */
+html.theme-transition,
+html.theme-transition body,
+html.theme-transition header,
+html.theme-transition footer,
+html.theme-transition main,
+html.theme-transition section,
+html.theme-transition div,
+html.theme-transition a,
+html.theme-transition button,
+html.theme-transition span,
+html.theme-transition p,
+html.theme-transition h1,
+html.theme-transition h2,
+html.theme-transition h3,
+html.theme-transition h4,
+html.theme-transition li,
+html.theme-transition input,
+html.theme-transition textarea,
+html.theme-transition select,
+html.theme-transition svg {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-duration: 320ms;
+    transition-timing-function: ease;
+}
+
+/* -------------------------
+    Surfaces
+-------------------------- */
+html.dark .bg-white {
+    background-color: var(--ew-surface) !important;
+}
+
+html.dark .bg-white.border,
+html.dark .bg-white[class*="shadow"] {
+    background-color: var(--ew-elevated) !important;
+}
+
+html.dark [class~="bg-white/95"] {
+    background-color: rgb(15 17 21 / 0.95) !important;
+}
+
+html.dark [class~="bg-white/85"] {
+    background-color: rgb(15 17 21 / 0.88) !important;
+}
+
+html.dark [class~="bg-white/80"] {
+    background-color: rgb(23 26 33 / 0.85) !important;
+}
+
+html.dark [class~="bg-white/70"] {
+    background-color: rgb(15 17 21 / 0.75) !important;
+}
+
+html.dark [class~="bg-white/60"] {
+    background-color: rgb(15 17 21 / 0.68) !important;
+}
+
+html.dark [class~="bg-white/50"] {
+    background-color: rgb(23 26 33 / 0.55) !important;
+}
+
+html.dark [class~="bg-white/40"] {
+    background-color: rgb(15 17 21 / 0.58) !important;
+}
+
+html.dark .bg-gray-50,
+html.dark [class~="bg-gray-50/50"],
+html.dark .bg-slate-50,
+html.dark [class~="bg-slate-50/50"],
+html.dark [class~="bg-slate-50/80"] {
+    background-color: var(--ew-bg) !important;
+}
+
+html.dark .bg-gray-100,
+html.dark .bg-slate-100,
+html.dark [class~="bg-slate-100/70"],
+html.dark [class~="bg-slate-100/80"] {
+    background-color: var(--ew-elevated) !important;
+}
+
+html.dark .bg-gray-200,
+html.dark .bg-gray-300,
+html.dark .bg-slate-200,
+html.dark .bg-slate-300 {
+    background-color: var(--ew-elevated-2) !important;
+}
+
+html.dark [class~="bg-[#F7F8F7]"],
+html.dark [class~="bg-[#F8F8F8]"],
+html.dark [class~="bg-[#FAF6EF]"],
+html.dark [class~="bg-[#9e9686]"] {
+    background-color: var(--ew-surface-muted) !important;
+}
+
+html.dark .bg-slate-900,
+html.dark .bg-gray-900 {
+    background-color: var(--ew-elevated-2) !important;
+}
+
+html.dark .bg-slate-950 {
+    background-color: #0b0d11 !important;
+}
+
+/* -------------------------
+    Text
+-------------------------- */
+html.dark .text-secondary,
+html.dark .text-gray-900,
+html.dark .text-slate-900 {
+    color: var(--ew-text) !important;
+}
+
+html.dark .text-gray-800,
+html.dark .text-slate-800 {
+    color: var(--ew-text-soft) !important;
+}
+
+html.dark .text-gray-700,
+html.dark .text-slate-700 {
+    color: #d4d4d8 !important;
+}
+
+html.dark .text-gray-600,
+html.dark .text-slate-600,
+html.dark .text-gray-500,
+html.dark .text-slate-500 {
+    color: var(--ew-text-muted) !important;
+}
+
+html.dark .text-gray-400,
+html.dark .text-slate-400 {
+    color: var(--ew-text-faint) !important;
+}
+
+html.dark .text-gray-300 {
+    color: #52525b !important;
+}
+
+html.dark .text-slate-300 {
+    color: var(--ew-text-muted) !important;
+}
+
+html.dark [class~="text-[#8A620F]"],
+html.dark [class~="text-[#96690F]"] {
+    color: #d4a72c !important;
+}
+
+/* Brand-yellow surfaces keep their dark ink for readable contrast. */
+html.dark [class~="bg-[#F5E047]"] {
+    color: #111827 !important;
+}
+
+html.dark [class~="placeholder-slate-400"],
+html.dark [class~="placeholder:text-gray-400"] {
+    color: #6b7280 !important;
+}
+
+/* -------------------------
+    Borders & dividers
+-------------------------- */
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300,
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-300,
+html.dark [class~="border-gray-200/70"],
+html.dark [class~="border-slate-200/60"],
+html.dark [class~="border-slate-200/80"],
+html.dark [class~="border-[#E4DCC8]"],
+html.dark [class~="border-[#E7DFC9]"] {
+    border-color: var(--ew-border) !important;
+}
+
+html.dark .border-gray-400,
+html.dark .border-slate-400 {
+    border-color: var(--ew-border-strong) !important;
+}
+
+html.dark .border-slate-800,
+html.dark [class~="border-slate-800/80"] {
+    border-color: var(--ew-border) !important;
+}
+
+html.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--ew-border) !important;
+}
+
+/* Colored notices, alerts and validation states */
+html.dark .bg-amber-50,
+html.dark [class~="bg-amber-50/40"] {
+    background-color: rgb(245 158 11 / 0.13) !important;
+}
+
+html.dark .border-amber-200 {
+    border-color: rgb(245 158 11 / 0.35) !important;
+}
+
+html.dark .bg-blue-50,
+html.dark .bg-blue-100 {
+    background-color: rgb(59 130 246 / 0.14) !important;
+}
+
+html.dark .border-blue-200 {
+    border-color: rgb(59 130 246 / 0.35) !important;
+}
+
+html.dark .bg-emerald-50,
+html.dark [class~="bg-emerald-50/60"],
+html.dark .bg-emerald-100 {
+    background-color: rgb(16 185 129 / 0.14) !important;
+}
+
+html.dark .border-emerald-200,
+html.dark [class~="border-emerald-200/80"] {
+    border-color: rgb(16 185 129 / 0.35) !important;
+}
+
+html.dark .bg-green-50 {
+    background-color: rgb(34 197 94 / 0.14) !important;
+}
+
+html.dark .border-green-200 {
+    border-color: rgb(34 197 94 / 0.35) !important;
+}
+
+html.dark .bg-indigo-50 {
+    background-color: rgb(99 102 241 / 0.14) !important;
+}
+
+html.dark .border-indigo-200 {
+    border-color: rgb(99 102 241 / 0.35) !important;
+}
+
+html.dark .bg-red-50,
+html.dark [class~="bg-red-50/80"] {
+    background-color: rgb(239 68 68 / 0.14) !important;
+}
+
+html.dark .border-red-200,
+html.dark .border-red-300 {
+    border-color: rgb(239 68 68 / 0.35) !important;
+}
+
+html.dark [class~="bg-orange-50/60"] {
+    background-color: rgb(249 115 22 / 0.14) !important;
+}
+
+html.dark [class~="border-orange-200/80"] {
+    border-color: rgb(249 115 22 / 0.35) !important;
+}
+
+html.dark [class~="bg-rose-50/60"] {
+    background-color: rgb(244 63 94 / 0.14) !important;
+}
+
+html.dark [class~="border-rose-200/80"] {
+    border-color: rgb(244 63 94 / 0.35) !important;
+}
+
+html.dark .text-amber-900,
+html.dark .text-amber-800,
+html.dark .text-amber-700 {
+    color: #fcd34d !important;
+}
+
+html.dark .text-amber-600 {
+    color: #fbbf24 !important;
+}
+
+html.dark .text-blue-900,
+html.dark .text-blue-700 {
+    color: #93c5fd !important;
+}
+
+html.dark .text-blue-600 {
+    color: #60a5fa !important;
+}
+
+html.dark .text-emerald-700,
+html.dark .text-emerald-600 {
+    color: #6ee7b7 !important;
+}
+
+html.dark .text-green-700 {
+    color: #86efac !important;
+}
+
+html.dark .text-indigo-700 {
+    color: #a5b4fc !important;
+}
+
+html.dark .text-red-800,
+html.dark .text-red-700 {
+    color: #fca5a5 !important;
+}
+
+html.dark .text-red-600,
+html.dark .text-red-500 {
+    color: #f87171 !important;
+}
+
+/* -------------------------
+    Hover / focus / disabled
+-------------------------- */
+html.dark [class~="hover:bg-gray-50"]:hover,
+html.dark [class~="hover:bg-gray-100"]:hover,
+html.dark [class~="hover:bg-slate-50"]:hover,
+html.dark [class~="hover:bg-slate-100"]:hover {
+    background-color: var(--ew-elevated-2) !important;
+}
+
+html.dark [class~="hover:bg-slate-200"]:hover,
+html.dark [class~="hover:bg-slate-700"]:hover,
+html.dark [class~="hover:bg-slate-800"]:hover,
+html.dark [class~="hover:bg-slate-900"]:hover {
+    background-color: #303642 !important;
+}
+
+html.dark [class~="hover:bg-red-50"]:hover {
+    background-color: rgb(239 68 68 / 0.16) !important;
+}
+
+html.dark [class~="hover:bg-blue-50"]:hover {
+    background-color: rgb(59 130 246 / 0.16) !important;
+}
+
+html.dark [class~="hover:bg-emerald-50"]:hover {
+    background-color: rgb(16 185 129 / 0.16) !important;
+}
+
+html.dark [class~="hover:bg-orange-50"]:hover {
+    background-color: rgb(249 115 22 / 0.16) !important;
+}
+
+html.dark [class~="hover:bg-rose-50"]:hover {
+    background-color: rgb(244 63 94 / 0.16) !important;
+}
+
+html.dark [class~="hover:bg-amber-50/40"]:hover {
+    background-color: rgb(245 158 11 / 0.1) !important;
+}
+
+html.dark [class~="hover:border-gray-300"]:hover,
+html.dark [class~="hover:border-gray-400"]:hover,
+html.dark [class~="hover:border-slate-400"]:hover {
+    border-color: #4b5563 !important;
+}
+
+html.dark [class~="hover:border-red-300"]:hover {
+    border-color: rgb(239 68 68 / 0.5) !important;
+}
+
+html.dark [class~="hover:text-gray-900"]:hover {
+    color: var(--ew-text) !important;
+}
+
+html.dark [class~="group-hover:text-gray-700"] {
+    color: #d4d4d8;
+}
+
+html.dark .group:hover [class~="group-hover:text-gray-700"] {
+    color: #d4d4d8 !important;
+}
+
+html.dark [class~="focus:bg-white"]:focus {
+    background-color: var(--ew-elevated) !important;
+}
+
+html.dark [class~="focus:border-black"]:focus {
+    border-color: var(--ew-gold) !important;
+}
+
+html.dark [class~="disabled:bg-gray-100"]:disabled,
+html.dark [class~="disabled:bg-slate-200"]:disabled {
+    background-color: var(--ew-elevated) !important;
+}
+
+html.dark [class~="disabled:text-gray-400"]:disabled,
+html.dark [class~="disabled:text-slate-400"]:disabled {
+    color: var(--ew-text-faint) !important;
+}
+
+html.dark [class~="disabled:border-gray-200"]:disabled,
+html.dark [class~="disabled:border-gray-300"]:disabled {
+    border-color: var(--ew-border) !important;
+}
+
+/* -------------------------
+    Forms
+-------------------------- */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+html.dark textarea,
+html.dark select {
+    color: var(--ew-text);
+    border-color: var(--ew-border);
+    background-color: var(--ew-input);
+    caret-color: var(--ew-gold);
+}
+
+html.dark input[class~="bg-gray-50"],
+html.dark input[class~="bg-slate-50"],
+html.dark input[class~="bg-slate-50/50"],
+html.dark input[class~="bg-white"],
+html.dark textarea[class~="bg-gray-50"],
+html.dark textarea[class~="bg-slate-50/50"],
+html.dark select[class~="bg-gray-50"] {
+    background-color: var(--ew-input) !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+    color: #6b7280;
+}
+
+html.dark select option {
+    background-color: var(--ew-elevated);
+    color: var(--ew-text);
+}
+
+html.dark input[type="checkbox"],
+html.dark input[type="radio"] {
+    accent-color: var(--ew-gold);
+    border-color: #4b5563;
+    background-color: var(--ew-elevated);
+}
+
+html.dark input[type="date"]::-webkit-calendar-picker-indicator,
+html.dark input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) opacity(0.65);
+}
+
+/* -------------------------
+    Shadows & rings
+-------------------------- */
+html.dark .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.45);
+}
+
+html.dark .shadow-md {
+    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.5);
+}
+
+html.dark .shadow-lg {
+    box-shadow: 0 10px 24px -6px rgb(0 0 0 / 0.55);
+}
+
+html.dark .shadow-xl {
+    box-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.62);
+}
+
+html.dark .shadow-2xl {
+    box-shadow: 0 28px 60px -20px rgb(0 0 0 / 0.72);
+}
+
+html.dark [class~="ring-black/5"] {
+    --tw-ring-color: rgb(255 255 255 / 0.06);
+}
+
+/* Keep functional assets (QR codes, payment logos) readable on light surfaces. */
+html.dark .theme-keep-light,
+html.dark .theme-keep-light.bg-white {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #111827 !important;
+}
+
+/* -------------------------
+    Theme toggle
+-------------------------- */
+.theme-toggle-icon-wrap {
+    position: relative;
+    display: block;
+    height: 1.25rem;
+    width: 1.25rem;
+}
+
+.theme-icon {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    width: 100%;
+    transition:
+        transform 450ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 300ms ease;
+    will-change: transform, opacity;
+}
+
+.theme-icon-sun {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+}
+
+.theme-icon-moon {
+    transform: rotate(-90deg) scale(0.35);
+    opacity: 0;
+}
+
+html.dark .theme-icon-sun {
+    transform: rotate(90deg) scale(0.35);
+    opacity: 0;
+}
+
+html.dark .theme-icon-moon {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+}
+
+.theme-tooltip-dark {
+    display: none;
+}
+
+html.dark .theme-tooltip-light {
+    display: none;
+}
+
+html.dark .theme-tooltip-dark {
+    display: inline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.theme-transition,
+    html.theme-transition body,
+    html.theme-transition *,
+    html.theme-transition *::before,
+    html.theme-transition *::after {
+        transition: none !important;
+    }
+
+    .theme-icon {
+        transition: none;
+    }
+}

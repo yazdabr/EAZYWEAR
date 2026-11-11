@@ -4,6 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    {{-- ================= THEME INITIALIZATION ================= --}}
+    {{-- Applied before paint to avoid a light-theme flash on reload. --}}
+    <script>
+        (function () {
+            try {
+                var key = 'eazywear-theme';
+                var stored = window.localStorage.getItem(key);
+                var theme = stored === 'dark' ? 'dark' : 'light';
+                var root = document.documentElement;
+
+                root.classList.toggle('dark', theme === 'dark');
+                root.setAttribute('data-theme', theme);
+                root.style.colorScheme = theme;
+            } catch (error) {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+
     {{-- Meta Domain Verification --}}
     <meta name="facebook-domain-verification" content="qcwynpzlwmyqsn0nlx3ko2i49fbg3z" />
 

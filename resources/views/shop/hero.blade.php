@@ -1,4 +1,4 @@
-<section class="relative overflow-hidden border-b border-amber-900/10 bg-[#FAF6EF]">
+<section class="relative overflow-hidden border-b border-amber-900/10 bg-[#FAF6EF] dark:border-[#303642] dark:bg-[#171A21]">
 
     {{-- 1. Full PNG Background Layer (Transparan & Cover) --}}
     <div class="pointer-events-none absolute inset-0 z-0">
@@ -8,10 +8,10 @@
             fetchpriority="high"
             loading="eager"
             decoding="async"
-            class="h-full w-full object-cover object-right opacity-15 mix-blend-multiply"
+            class="h-full w-full object-cover object-right opacity-15 mix-blend-multiply dark:opacity-[0.07] dark:mix-blend-screen"
         >
         {{-- Overlay Gradient agar Teks di Kiri Tetap Kontras & Jelas --}}
-        <div class="absolute inset-0 bg-gradient-to-r from-[#FAF6EF] via-[#FAF6EF]/90 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-[#FAF6EF] via-[#FAF6EF]/90 to-transparent dark:from-[#171A21] dark:via-[#171A21]/90"></div>
     </div>
 
     {{-- 3. Ambient Background Glows --}}

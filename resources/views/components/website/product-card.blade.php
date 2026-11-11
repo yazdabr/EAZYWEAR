@@ -26,7 +26,7 @@
         </p>
 
         {{-- Product Name --}}
-        <h3 class="mt-0.5 text-base font-bold text-gray-900 sm:mt-1 sm:text-2xl">
+        <h3 class="mt-0.5 text-base font-bold text-gray-900 sm:mt-1 sm:text-2xl dark:text-slate-100">
             {{ $title }}
         </h3>
 

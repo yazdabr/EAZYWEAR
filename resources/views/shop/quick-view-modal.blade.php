@@ -36,7 +36,7 @@
             x-transition:leave="transition duration-300 ease-[cubic-bezier(0.7,0,0.84,0)]"
             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-            class="relative z-10 w-full max-w-4xl overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]"
+            class="relative z-10 w-full max-w-4xl overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] dark:border-[#303642] dark:bg-[#1C2029]"
         >
 
             {{-- Close Button --}}
@@ -44,7 +44,7 @@
                 @click="close()"
                 type="button"
                 aria-label="Close modal"
-                class="absolute right-6 top-6 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100/80 text-slate-500 shadow-sm backdrop-blur-md transition-all hover:bg-slate-900 hover:text-white active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]"
+                class="absolute right-6 top-6 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100/80 text-slate-500 shadow-sm backdrop-blur-md transition-all hover:bg-slate-900 hover:text-white active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#AE7C18] dark:bg-[#242936]/80 dark:text-slate-300 dark:hover:bg-[#AE7C18] dark:hover:text-white"
             >
                 <x-heroicon-o-x-mark class="h-5 w-5"/>
             </button>
@@ -52,7 +52,7 @@
             <div class="grid lg:grid-cols-12">
 
                 {{-- Product Image --}}
-                <div class="relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100/80 p-8 lg:col-span-5">
+                <div class="relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100/80 p-8 dark:from-[#171A21] dark:to-[#1C2029] lg:col-span-5">
 
                     <img
                         :src="image"
@@ -92,7 +92,7 @@
                     </div>
 
                     {{-- Footer Modal --}}
-                    <div class="mt-8 border-t border-slate-100 pt-6">
+                    <div class="mt-8 border-t border-slate-100 pt-6 dark:border-[#303642]">
 
                         <div class="flex items-center justify-between gap-4">
 
@@ -147,14 +147,14 @@
         x-transition:leave-end="translate-y-full"
         :style="isDragging || offsetY > 0 ? `transform: translateY(${offsetY}px); transition: none;` : ''"
         @click.outside="close()"
-        class="relative z-20 flex h-[85vh] max-h-[85vh] w-full flex-col overflow-hidden rounded-t-[2.5rem] bg-white shadow-2xl lg:hidden"
+        class="relative z-20 flex h-[85vh] max-h-[85vh] w-full flex-col overflow-hidden rounded-t-[2.5rem] bg-white shadow-2xl dark:bg-[#1C2029] lg:hidden"
     >
 
         {{-- Drag Handle --}}
         <div
             @mousedown="startDrag($event)"
             @touchstart="startDrag($event)"
-            class="relative flex shrink-0 select-none touch-none items-center justify-center bg-white py-4"
+            class="relative flex shrink-0 select-none touch-none items-center justify-center bg-white py-4 dark:bg-[#1C2029]"
         >
 
             <div class="h-1.5 w-12 cursor-grab rounded-full bg-slate-300 active:cursor-grabbing"></div>
@@ -163,7 +163,7 @@
             <button
                 @click.stop="close()"
                 type="button"
-                class="absolute right-4 top-2.5 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 shadow-sm transition-all hover:bg-slate-200 active:scale-90"
+                class="absolute right-4 top-2.5 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 shadow-sm transition-all hover:bg-slate-200 active:scale-90 dark:bg-[#242936] dark:text-slate-300 dark:hover:bg-[#303642]"
             >
                 <x-heroicon-o-x-mark class="pointer-events-none h-5 w-5"/>
             </button>
@@ -214,7 +214,7 @@
 
 
         {{-- Sticky Footer --}}
-        <div class="absolute inset-x-0 bottom-0 z-20 border-t border-slate-100 bg-white/95 p-4 backdrop-blur-md">
+        <div class="absolute inset-x-0 bottom-0 z-20 border-t border-slate-100 bg-white/95 p-4 backdrop-blur-md dark:border-[#303642] dark:bg-[#171A21]/95">
 
             <div class="flex items-center gap-4">
 

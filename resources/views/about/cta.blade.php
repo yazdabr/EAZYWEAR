@@ -4,6 +4,7 @@
 >
     {{-- Backdrop overlay tipis untuk kontras teks di mobile --}}
     <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] sm:bg-transparent sm:backdrop-blur-none"></div>
+    <div class="pointer-events-none absolute inset-0 hidden bg-[#0F1115]/65 dark:block"></div>
 
     <div class="relative z-10">
         <x-ui.container>

@@ -1,4 +1,4 @@
-<footer class="border-t border-slate-200 bg-[#111827] text-slate-300">
+<footer class="border-t border-slate-200 bg-[#111827] text-slate-300 dark:border-[#303642] dark:bg-[#0B0D11]">
     <x-ui.container>
         <div class="py-4 sm:py-12">
             {{-- Top Row --}}

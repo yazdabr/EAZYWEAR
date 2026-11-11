@@ -1,4 +1,4 @@
-<section class="relative overflow-hidden border-y border-[#E7DFC9] bg-[#9e9686] py-8">
+<section class="relative overflow-hidden border-y border-[#E7DFC9] bg-[#9e9686] py-8 dark:border-[#303642] dark:bg-[#171A21]">
     <div class="absolute inset-0 overflow-hidden">
         <div class="absolute -left-24 top-1/2 h-56 w-56 -translate-y-1/2 rounded-full bg-[#AE7C18]/6 blur-3xl"></div>
         <div class="absolute right-0 top-0 h-64 w-64 rounded-full bg-[#AE7C18]/5 blur-[90px]"></div>

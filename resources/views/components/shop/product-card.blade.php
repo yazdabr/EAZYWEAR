@@ -26,11 +26,11 @@
     ]);
 @endphp
 
-<div class="group flex h-full min-h-full flex-col overflow-hidden rounded-xl border border-gray-100 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg lg:rounded-2xl">
+<div class="group flex h-full min-h-full flex-col overflow-hidden rounded-xl border border-gray-100 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-lg lg:rounded-2xl dark:border-[#303642] dark:bg-[#1C2029]">
 
     {{-- Product Image --}}
     <div
-        class="relative cursor-pointer overflow-hidden bg-gray-100"
+        class="relative cursor-pointer overflow-hidden bg-gray-100 dark:bg-[#242936]"
         @click="$dispatch('quick-view', {
             id: @js($product->id),
             url: @js($detailUrl),
@@ -71,7 +71,7 @@
         <div class="absolute inset-0 hidden items-center justify-center bg-black/0 transition-all duration-300 lg:flex lg:group-hover:bg-black/20">
             <button
                 type="button"
-                class="translate-y-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-[#AE7C18] hover:text-white"
+                class="translate-y-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 hover:bg-[#AE7C18] hover:text-white dark:bg-[#242936] dark:text-slate-100"
             >
                 Quick View
             </button>

@@ -497,7 +497,7 @@
                                                     class="h-3.5 w-3.5 shrink-0 accent-[#AE7C18]"
                                                 >
 
-                                                <div class="flex h-7 flex-1 items-center justify-center">
+                                                <div class="theme-keep-light flex h-7 flex-1 items-center justify-center rounded bg-white">
                                                     <img
                                                         src="{{ asset('images/payment/' . $logo) }}"
                                                         alt="{{ $bank }}"
@@ -533,6 +533,10 @@
         overflow: hidden;
         border: 1px solid #e5e7eb;
         z-index: 1;
+    }
+
+    html.dark #shipping-map {
+        border-color: #303642;
     }
 </style>
 @endpush

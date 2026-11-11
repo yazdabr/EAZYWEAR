@@ -1,13 +1,13 @@
 <div x-data="{open:false,scrolled:false,searchOpen:false}" @scroll.window="scrolled=window.scrollY>20" x-effect="document.body.style.overflow=open?'hidden':'';document.documentElement.style.overflowX='hidden';" class="relative w-full overflow-x-clip">
     {{-- MOBILE MENU --}}
-    <div id="mobile-menu" x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed left-0 right-0 top-0 z-[999] h-[100dvh] w-screen overflow-hidden bg-slate-900/40 backdrop-blur-sm" style="display:none;">
-        <div x-show="open" x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="-translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition ease-in duration-200 transform" x-transition:leave-start="translate-y-0" x-transition:leave-end="-translate-y-full" @click.away="open=false" class="relative flex h-auto max-h-[85vh] w-full max-w-none flex-col overflow-y-auto overflow-x-hidden rounded-b-3xl bg-white px-6 pb-8 pt-6 shadow-2xl">
+    <div id="mobile-menu" x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed left-0 right-0 top-0 z-[999] h-[100dvh] w-screen overflow-hidden bg-slate-900/40 backdrop-blur-sm dark:bg-black/60" style="display:none;">
+        <div x-show="open" x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="-translate-y-full" x-transition:enter-end="translate-y-0" x-transition:leave="transition ease-in duration-200 transform" x-transition:leave-start="translate-y-0" x-transition:leave-end="-translate-y-full" @click.away="open=false" class="relative flex h-auto max-h-[85vh] w-full max-w-none flex-col overflow-y-auto overflow-x-hidden rounded-b-3xl bg-white px-6 pb-8 pt-6 shadow-2xl dark:bg-[#171A21]">
             {{-- Logo & Close --}}
-            <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-4 dark:border-[#303642]">
                 <a href="{{ route('home') }}" aria-label="Eazywear Indonesia - Home">
                     <img src="{{ asset('images/hero/logo-navbar-small.webp') }}" alt="Eazywear" width="450" height="318" class="h-9 w-auto object-contain">
                 </a>
-                <button @click="open=false" type="button" aria-label="Close navigation menu" aria-controls="mobile-menu" :aria-expanded="open.toString()" class="group rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none">
+                <button @click="open=false" type="button" aria-label="Close navigation menu" aria-controls="mobile-menu" :aria-expanded="open.toString()" class="group rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus:outline-none dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white">
                     <x-heroicon-o-x-mark class="h-6 w-6 transition group-hover:rotate-90"/>
                 </button>
             </div>
@@ -19,14 +19,14 @@
                 <x-ui.nav-link route="contact" mobile @click="open=false">Contact</x-ui.nav-link>
             </nav>
             {{-- Bottom Actions --}}
-            <div class="space-y-3 border-t border-gray-100 pt-4">
+            <div class="space-y-3 border-t border-gray-100 pt-4 dark:border-[#303642]">
                 {{-- Mobile Search --}}
                 <form method="GET" action="{{ route('shop') }}" class="relative" role="search">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                         <x-heroicon-o-magnifying-glass class="h-5 w-5 text-gray-400"/>
                     </div>
                     <label for="mobile-search" class="sr-only">Search products</label>
-                    <input id="mobile-search" type="text" name="search" value="{{ request('search') }}" placeholder="Search Products..." autocomplete="off" class="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm font-medium text-gray-700 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-2 focus:ring-[#AE7C18]/10">
+                    <input id="mobile-search" type="text" name="search" value="{{ request('search') }}" placeholder="Search Products..." autocomplete="off" class="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm font-medium text-gray-700 outline-none transition focus:border-[#AE7C18] focus:bg-white focus:ring-2 focus:ring-[#AE7C18]/10 dark:border-[#303642] dark:bg-[#1C2029] dark:text-slate-200 dark:placeholder:text-gray-500 dark:focus:bg-[#1C2029]">
                 </form>
                 {{-- Mobile Actions --}}
                 @php $cartCount=collect(session('cart',[]))->sum('qty'); @endphp
@@ -37,7 +37,7 @@
                         href="{{ route('orders.tracking') }}"
                         @click="open=false"
                         aria-label="Cek pesanan"
-                        class="flex min-w-0 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[#AE7C18] hover:text-[#AE7C18] active:scale-[0.98]"
+                        class="flex min-w-0 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white py-3 text-center text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[#AE7C18] hover:text-[#AE7C18] active:scale-[0.98] dark:border-[#303642] dark:bg-[#1C2029] dark:text-slate-200 dark:hover:border-[#AE7C18] dark:hover:text-[#D4A72C]"
                     >
                         <x-heroicon-o-clipboard-document-list class="h-5 w-5 shrink-0" aria-hidden="true"/>
                         <span class="truncate">Check Order</span>
@@ -49,7 +49,7 @@
                         href="{{ route('cart.index') }}"
                         @click="open=false"
                         aria-label="View shopping cart{{ $cartCount>0 ? ', '.$cartCount.' items' : '' }}"
-                        class="flex min-w-0 items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98]"
+                        class="flex min-w-0 items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-center text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 active:scale-[0.98] dark:bg-[#242936] dark:hover:bg-[#303642]"
                     >
                         <x-heroicon-o-shopping-cart class="h-5 w-5 shrink-0" aria-hidden="true"/>
                         <span class="truncate">Cart @if($cartCount>0)({{ $cartCount }})@endif</span>
@@ -90,8 +90,8 @@
     {{-- HEADER --}}
     <header
         :class="scrolled
-            ? 'bg-white/95 backdrop-blur-xl shadow-lg border-gray-200/70'
-            : 'bg-white/70 backdrop-blur-md border-transparent'"
+            ? 'bg-white/95 backdrop-blur-xl shadow-lg border-gray-200/70 dark:bg-[#0F1115]/95 dark:border-[#303642]/70'
+            : 'bg-white/70 backdrop-blur-md border-transparent dark:bg-[#0F1115]/70'"
         class="fixed inset-x-0 top-0 z-[1000] border-b transition-all duration-300"
     >
         <x-ui.container>
@@ -142,7 +142,7 @@
                         <div
                             x-cloak
                             :class="focused ? 'w-40' : 'w-32'"
-                            class="{{ request('search') ? 'w-40' : 'w-32' }} flex items-center rounded-full border border-gray-300 bg-white/50 transition-all duration-300 focus-within:border-[#AE7C18] focus-within:ring-2 focus-within:ring-[#AE7C18]/10"
+                            class="{{ request('search') ? 'w-40' : 'w-32' }} flex items-center rounded-full border border-gray-300 bg-white/50 transition-all duration-300 focus-within:border-[#AE7C18] focus-within:ring-2 focus-within:ring-[#AE7C18]/10 dark:border-[#303642] dark:bg-[#1C2029]/60 dark:focus-within:border-[#AE7C18]"
                         >
                             <x-heroicon-o-magnifying-glass
                                 class="ml-3.5 h-5 w-5 shrink-0 text-gray-500"
@@ -177,6 +177,9 @@
                             </button>
                         </div>
                     </form>
+
+                    {{-- Theme Toggle --}}
+                    <x-website.theme-toggle />
 
                     {{-- Check Order --}}
                     <a
@@ -223,20 +226,26 @@
                     </a>
                 </div>
 
-                {{-- Mobile Menu Button --}}
-                <button
-                    @click="open=true"
-                    type="button"
-                    aria-label="Open navigation menu"
-                    aria-controls="mobile-menu"
-                    :aria-expanded="open.toString()"
-                    class="ml-auto rounded-full p-2 text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18] lg:hidden"
-                >
-                    <x-heroicon-o-bars-3
-                        class="h-8 w-8"
-                        aria-hidden="true"
-                    />
-                </button>
+                {{-- Mobile Actions --}}
+                <div class="ml-auto flex items-center gap-1 lg:hidden">
+                    {{-- Theme Toggle (always visible, left of the hamburger) --}}
+                    <x-website.theme-toggle mobile />
+
+                    {{-- Mobile Menu Button --}}
+                    <button
+                        @click="open=true"
+                        type="button"
+                        aria-label="Open navigation menu"
+                        aria-controls="mobile-menu"
+                        :aria-expanded="open.toString()"
+                        class="rounded-full p-2 text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#AE7C18] dark:text-slate-200 dark:hover:bg-white/10"
+                    >
+                        <x-heroicon-o-bars-3
+                            class="h-8 w-8"
+                            aria-hidden="true"
+                        />
+                    </button>
+                </div>
 
             </nav>
         </x-ui.container>

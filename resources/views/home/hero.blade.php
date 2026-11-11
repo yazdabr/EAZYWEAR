@@ -16,16 +16,16 @@
                 decoding="async" 
                 width="2160" 
                 height="1440" 
-                class="absolute inset-0 h-full w-full object-cover object-center sm:object-right"
+                class="absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-500 dark:opacity-25 dark:saturate-50 sm:object-right"
             >
         </picture>
         
         {{-- Overlay Mobile --}}
-        <div class="absolute inset-0 z-10 bg-gradient-to-r from-white via-white/90 to-white/40 sm:hidden"></div>
-        <div class="absolute inset-0 z-10 bg-gradient-to-b from-white/95 via-white/75 to-transparent sm:hidden"></div>
+        <div class="absolute inset-0 z-10 bg-gradient-to-r from-white via-white/90 to-white/40 dark:from-[#0F1115] dark:via-[#0F1115]/90 dark:to-[#0F1115]/40 sm:hidden"></div>
+        <div class="absolute inset-0 z-10 bg-gradient-to-b from-white/95 via-white/75 to-transparent dark:from-[#0F1115]/95 dark:via-[#0F1115]/75 dark:to-transparent sm:hidden"></div>
 
         {{-- Overlay Desktop (Sudah ditambahkan 'absolute') --}}
-        <div class="hidden absolute inset-0 z-10 bg-gradient-to-r from-white via-white/90 to-white/20 sm:block"></div>
+        <div class="hidden absolute inset-0 z-10 bg-gradient-to-r from-white via-white/90 to-white/20 dark:from-[#0F1115] dark:via-[#0F1115]/90 dark:to-[#0F1115]/20 sm:block"></div>
     </div>
 
     {{-- Content --}}

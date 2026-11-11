@@ -6,7 +6,8 @@
                 style="background-image: url('{{ asset('images/cta/bg.png') }}');"
             >
                 {{-- Overlay --}}
-                <div class="absolute inset-0 bg-white/60 backdrop-blur-[1px] sm:hidden"></div>
+                <div class="absolute inset-0 bg-white/60 backdrop-blur-[1px] dark:bg-[#0F1115]/70 sm:hidden"></div>
+                <div class="pointer-events-none absolute inset-0 hidden bg-[#0F1115]/70 dark:block"></div>
 
                 {{-- Content --}}
                 <div class="relative z-10">

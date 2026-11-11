@@ -99,4 +99,37 @@ Alpine.data('quickView', () => ({
 
 }));
 
+Alpine.store('theme', {
+    dark: document.documentElement.classList.contains('dark'),
+    transitionTimeout: null,
+
+    init() {
+        this.dark = document.documentElement.classList.contains('dark');
+    },
+
+    toggle() {
+        const root = document.documentElement;
+        const next = !this.dark;
+        const theme = next ? 'dark' : 'light';
+
+        this.dark = next;
+
+        root.classList.add('theme-transition');
+        root.classList.toggle('dark', next);
+        root.setAttribute('data-theme', theme);
+        root.style.colorScheme = theme;
+
+        try {
+            window.localStorage.setItem('eazywear-theme', theme);
+        } catch (error) {
+            // Storage can be unavailable in private mode; the theme still applies for this page.
+        }
+
+        window.clearTimeout(this.transitionTimeout);
+        this.transitionTimeout = window.setTimeout(() => {
+            root.classList.remove('theme-transition');
+        }, 420);
+    },
+});
+
 Alpine.start();

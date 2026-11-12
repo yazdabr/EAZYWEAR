@@ -15,7 +15,6 @@ class MetaProductFeedController extends Controller
             ->with([
                 'images' => fn ($query) => $query->orderBy('sort_order'),
                 'variants.size',
-                'variants.color',
                 'variants.inventory',
             ])
             ->orderBy('id')
@@ -134,9 +133,6 @@ class MetaProductFeedController extends Controller
 
                 if ($variant->size?->name) {
                     $fields['g:size'] = $variant->size->name;
-                }
-                if ($variant->color?->name) {
-                    $fields['g:color'] = $variant->color->name;
                 }
                 if ($product->material) {
                     $fields['g:material'] = $product->material;

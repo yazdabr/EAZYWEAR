@@ -8,6 +8,7 @@ use App\Models\TransactionFulfillment;
 use App\Models\TransactionShipment;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Http;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class OrderTrackingTest extends TestCase
@@ -380,5 +381,257 @@ class OrderTrackingTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.history.0.note', 'Paket sedang dalam perjalanan.')
             ->assertJsonPath('data.proof_images', []);
+    }
+
+    public function test_customer_live_tracking_is_returned_for_gojek(): void
+    {
+        $this->fakeBiteshipTracking(
+            'track-gojek',
+            'order-gojek',
+            'gojek',
+            'https://track.example.com/gojek'
+        );
+
+        $transaction = $this->createTransaction();
+        $shipment = $this->createShipment(
+            $transaction,
+            TransactionShipment::TYPE_SEPARATE,
+            'RESI-GOJEK'
+        );
+
+        $shipment->update([
+            'courier' => 'Gojek',
+            'courier_code' => ' GOJEK ',
+            'biteship_order_id' => 'order-gojek',
+            'biteship_tracking_id' => 'track-gojek',
+        ]);
+
+        $this->get(route('orders.tracking.shipment', [
+            'invoice' => $transaction->invoice_number,
+            'shipment' => $shipment->id,
+            'email' => $transaction->shipping_email,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.courier_code', 'gojek')
+            ->assertJsonPath('data.live_tracking_allowed', true)
+            ->assertJsonPath(
+                'data.live_tracking_url',
+                'https://track.example.com/gojek'
+            );
+    }
+
+    public static function nonGojekCourierProvider(): array
+    {
+        return [
+            'jnt' => [' JnT ', 'jnt'],
+            'lion parcel' => ['Lion Parcel', 'lion parcel'],
+            'other courier' => ['jne', 'jne'],
+            'unknown courier' => [null, null],
+        ];
+    }
+
+    #[DataProvider('nonGojekCourierProvider')]
+    public function test_customer_live_tracking_is_hidden_for_non_gojek(
+        ?string $storedCourier,
+        ?string $expectedCourierCode
+    ): void {
+        $this->fakeBiteshipTracking(
+            'track-non-gojek',
+            'order-non-gojek',
+            null,
+            'https://track.example.com/non-gojek'
+        );
+
+        $transaction = $this->createTransaction();
+        $shipment = $this->createShipment(
+            $transaction,
+            TransactionShipment::TYPE_SEPARATE,
+            'RESI-NON-GOJEK'
+        );
+
+        $shipment->update([
+            'courier' => null,
+            'courier_code' => $storedCourier,
+            'biteship_order_id' => 'order-non-gojek',
+            'biteship_tracking_id' => 'track-non-gojek',
+        ]);
+
+        $this->get(route('orders.tracking.shipment', [
+            'invoice' => $transaction->invoice_number,
+            'shipment' => $shipment->id,
+            'email' => $transaction->shipping_email,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.courier_code', $expectedCourierCode)
+            ->assertJsonPath('data.live_tracking_allowed', false)
+            ->assertJsonPath('data.live_tracking_url', null);
+    }
+
+    public function test_customer_live_tracking_is_hidden_for_gojek_without_https_url(): void
+    {
+        $this->fakeBiteshipTracking(
+            'track-gojek-no-link',
+            'order-gojek-no-link',
+            'gojek',
+            'http://track.example.com/insecure'
+        );
+
+        $transaction = $this->createTransaction();
+        $shipment = $this->createShipment(
+            $transaction,
+            TransactionShipment::TYPE_SEPARATE,
+            'RESI-GOJEK-NO-LINK'
+        );
+
+        $shipment->update([
+            'courier' => 'Gojek',
+            'courier_code' => 'gojek',
+            'biteship_order_id' => 'order-gojek-no-link',
+            'biteship_tracking_id' => 'track-gojek-no-link',
+        ]);
+
+        $this->get(route('orders.tracking.shipment', [
+            'invoice' => $transaction->invoice_number,
+            'shipment' => $shipment->id,
+            'email' => $transaction->shipping_email,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('data.live_tracking_allowed', true)
+            ->assertJsonPath('data.live_tracking_url', null);
+    }
+
+    public function test_customer_live_tracking_follows_each_shipment_courier(): void
+    {
+        config([
+            'biteship.base_url' => 'https://api.biteship.test',
+            'biteship.api_key' => 'test-api-key',
+            'biteship.timeout' => 10,
+        ]);
+
+        Http::fake([
+            'https://api.biteship.test/v1/trackings/track-gojek' =>
+                Http::response([
+                    'success' => true,
+                    'id' => 'track-gojek',
+                    'waybill_id' => 'RESI-GOJEK',
+                    'status' => 'in_transit',
+                    'courier' => ['company' => 'gojek'],
+                    'history' => [],
+                ], 200),
+
+            'https://api.biteship.test/v1/orders/order-gojek' =>
+                Http::response([
+                    'success' => true,
+                    'id' => 'order-gojek',
+                    'courier' => [
+                        'link' => 'https://track.example.com/gojek',
+                        'history' => [],
+                    ],
+                ], 200),
+
+            'https://api.biteship.test/v1/trackings/track-jnt' =>
+                Http::response([
+                    'success' => true,
+                    'id' => 'track-jnt',
+                    'waybill_id' => 'RESI-JNT',
+                    'status' => 'in_transit',
+                    'courier' => ['company' => 'jnt'],
+                    'history' => [],
+                ], 200),
+
+            'https://api.biteship.test/v1/orders/order-jnt' =>
+                Http::response([
+                    'success' => true,
+                    'id' => 'order-jnt',
+                    'courier' => [
+                        'link' => 'https://track.example.com/jnt',
+                        'history' => [],
+                    ],
+                ], 200),
+        ]);
+
+        $transaction = $this->createTransaction();
+
+        $gojekShipment = $this->createShipment(
+            $transaction,
+            TransactionShipment::TYPE_SEPARATE,
+            'RESI-GOJEK'
+        );
+        $gojekShipment->update([
+            'courier' => 'Gojek',
+            'courier_code' => 'gojek',
+            'biteship_order_id' => 'order-gojek',
+            'biteship_tracking_id' => 'track-gojek',
+        ]);
+
+        $jntShipment = $this->createShipment(
+            $transaction,
+            TransactionShipment::TYPE_SEPARATE,
+            'RESI-JNT'
+        );
+        $jntShipment->update([
+            'courier' => 'J&T Express',
+            'courier_code' => 'jnt',
+            'biteship_order_id' => 'order-jnt',
+            'biteship_tracking_id' => 'track-jnt',
+        ]);
+
+        $this->get(route('orders.tracking.shipment', [
+            'invoice' => $transaction->invoice_number,
+            'shipment' => $gojekShipment->id,
+            'email' => $transaction->shipping_email,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('data.live_tracking_allowed', true)
+            ->assertJsonPath(
+                'data.live_tracking_url',
+                'https://track.example.com/gojek'
+            );
+
+        $this->get(route('orders.tracking.shipment', [
+            'invoice' => $transaction->invoice_number,
+            'shipment' => $jntShipment->id,
+            'email' => $transaction->shipping_email,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('data.live_tracking_allowed', false)
+            ->assertJsonPath('data.live_tracking_url', null);
+    }
+
+    private function fakeBiteshipTracking(
+        string $trackingId,
+        string $orderId,
+        ?string $courierCode,
+        ?string $liveTrackingUrl
+    ): void {
+        config([
+            'biteship.base_url' => 'https://api.biteship.test',
+            'biteship.api_key' => 'test-api-key',
+            'biteship.timeout' => 10,
+        ]);
+
+        Http::fake([
+            "https://api.biteship.test/v1/trackings/{$trackingId}" =>
+                Http::response([
+                    'success' => true,
+                    'id' => $trackingId,
+                    'waybill_id' => 'RESI-' . strtoupper($trackingId),
+                    'status' => 'in_transit',
+                    'courier' => ['company' => $courierCode],
+                    'history' => [],
+                ], 200),
+
+            "https://api.biteship.test/v1/orders/{$orderId}" =>
+                Http::response([
+                    'success' => true,
+                    'id' => $orderId,
+                    'courier' => [
+                        'link' => $liveTrackingUrl,
+                        'history' => [],
+                    ],
+                ], 200),
+        ]);
     }
 }

@@ -153,6 +153,10 @@
         }
     }
 
+    function isGojekCourier(value) {
+        return typeof value === 'string' && value.trim().toLowerCase() === 'gojek';
+    }
+
     function renderProofImages(images) {
         const gallery = getElement('shipment-tracking-proof');
         const grid = getElement('shipment-tracking-proof-grid');
@@ -236,7 +240,11 @@
 
             renderProofImages(data.proof_images);
 
-            if (isHttpsUrl(data.live_tracking_url)) {
+            if (
+                data.live_tracking_allowed === true
+                && isGojekCourier(data.courier_code)
+                && isHttpsUrl(data.live_tracking_url)
+            ) {
                 liveTrackingLink.href = data.live_tracking_url;
                 liveTrackingLink.classList.remove('hidden');
             }

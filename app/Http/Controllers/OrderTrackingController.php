@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Transaction;
 use App\Models\TransactionShipment;
 use App\Services\BiteshipService;
+use App\Support\CourierCode;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -190,6 +191,18 @@ class OrderTrackingController extends Controller
 
             $proofImages = array_values(array_unique($proofImages));
 
+            $courierCode = CourierCode::resolve(
+                $shipment->courier_code,
+                $shipment->courier,
+                $tracking['courier_code'] ?? null
+            );
+
+            $liveTrackingAllowed = CourierCode::allowsLiveTracking($courierCode);
+
+            if (! $liveTrackingAllowed) {
+                $liveTrackingUrl = null;
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -197,8 +210,10 @@ class OrderTrackingController extends Controller
                         ?: ($shipment->biteship_waybill_id ?: ($tracking['waybill_id'] ?? null)),
                     'courier' => $shipment->courier
                         ?: ($shipment->courier_code ?: ($tracking['courier_code'] ?? null)),
+                    'courier_code' => $courierCode,
                     'history' => $tracking['history'] ?? [],
-                    'proof_images' => array_values(array_unique($proofImages)),
+                    'proof_images' => $proofImages,
+                    'live_tracking_allowed' => $liveTrackingAllowed,
                     'live_tracking_url' => $liveTrackingUrl,
                 ],
             ]);

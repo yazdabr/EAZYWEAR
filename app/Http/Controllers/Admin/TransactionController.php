@@ -32,6 +32,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use App\Services\EmailArchiveService;
+use App\Support\CourierCode;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -1917,7 +1918,25 @@ class TransactionController extends Controller
                 ], 422);
             }
 
+            $courierCode = CourierCode::resolve(
+                $transaction->courier_code,
+                $transaction->courier,
+                $tracking['courier_code'] ?? null
+            );
+
             $liveTrackingUrl = null;
+
+            $proofImages = $this->getProofOfDeliveryImages(
+                $biteshipService,
+                $transaction->biteship_order_id,
+                $liveTrackingUrl
+            );
+
+            $liveTrackingAllowed = CourierCode::allowsLiveTracking($courierCode);
+
+            if (! $liveTrackingAllowed) {
+                $liveTrackingUrl = null;
+            }
 
             return response()->json([
                 'success' => true,
@@ -1925,14 +1944,12 @@ class TransactionController extends Controller
                     'tracking_number' => $transaction->tracking_number
                         ?: ($transaction->biteship_waybill_id ?: ($tracking['waybill_id'] ?? null)),
                     'courier' => $tracking['courier_code'] ?? null,
+                    'courier_code' => $courierCode,
                     'status' => ($tracking['status'] ?? null)
                         ?: ($transaction->biteship_status ?? null),
                     'history' => $tracking['history'] ?? [],
-                    'proof_images' => $this->getProofOfDeliveryImages(
-                        $biteshipService,
-                        $transaction->biteship_order_id,
-                        $liveTrackingUrl
-                    ),
+                    'proof_images' => $proofImages,
+                    'live_tracking_allowed' => $liveTrackingAllowed,
                     'live_tracking_url' => $liveTrackingUrl,
                 ],
             ]);
@@ -1976,7 +1993,25 @@ class TransactionController extends Controller
                 ], 422);
             }
 
+            $courierCode = CourierCode::resolve(
+                $shipment->courier_code,
+                $shipment->courier,
+                $tracking['courier_code'] ?? null
+            );
+
             $liveTrackingUrl = null;
+
+            $proofImages = $this->getProofOfDeliveryImages(
+                $biteshipService,
+                $shipment->biteship_order_id,
+                $liveTrackingUrl
+            );
+
+            $liveTrackingAllowed = CourierCode::allowsLiveTracking($courierCode);
+
+            if (! $liveTrackingAllowed) {
+                $liveTrackingUrl = null;
+            }
 
             return response()->json([
                 'success' => true,
@@ -1985,15 +2020,13 @@ class TransactionController extends Controller
                         ?: ($shipment->biteship_waybill_id ?: ($tracking['waybill_id'] ?? null)),
                     'courier' => $shipment->courier
                         ?: ($shipment->courier_code ?: ($tracking['courier_code'] ?? null)),
+                    'courier_code' => $courierCode,
                     'status' => $tracking['status']
                         ?: $shipment->biteship_status,
                     'history' => $tracking['history'],
-                    'proof_images' => $this->getProofOfDeliveryImages(
-                        $biteshipService,
-                        $shipment->biteship_order_id,
-                        $liveTrackingUrl
-                        ),
-                        'live_tracking_url' => $liveTrackingUrl,
+                    'proof_images' => $proofImages,
+                    'live_tracking_allowed' => $liveTrackingAllowed,
+                    'live_tracking_url' => $liveTrackingUrl,
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -2036,7 +2069,25 @@ class TransactionController extends Controller
                 ], 422);
             }
 
+            $courierCode = CourierCode::resolve(
+                $fulfillment->courier_code,
+                $fulfillment->courier,
+                $tracking['courier_code'] ?? null
+            );
+
             $liveTrackingUrl = null;
+
+            $proofImages = $this->getProofOfDeliveryImages(
+                $biteshipService,
+                $fulfillment->biteship_order_id,
+                $liveTrackingUrl
+            );
+
+            $liveTrackingAllowed = CourierCode::allowsLiveTracking($courierCode);
+
+            if (! $liveTrackingAllowed) {
+                $liveTrackingUrl = null;
+            }
 
             return response()->json([
                 'success' => true,
@@ -2047,14 +2098,12 @@ class TransactionController extends Controller
                     'courier' => $fulfillment->courier
                         ?: $fulfillment->courier_code
                         ?: $tracking['courier_code'],
+                    'courier_code' => $courierCode,
                     'status' => $tracking['status']
                         ?: $fulfillment->biteship_status,
                     'history' => $tracking['history'],
-                    'proof_images' => $this->getProofOfDeliveryImages(
-                        $biteshipService,
-                        $fulfillment->biteship_order_id,
-                        $liveTrackingUrl
-                    ),
+                    'proof_images' => $proofImages,
+                    'live_tracking_allowed' => $liveTrackingAllowed,
                     'live_tracking_url' => $liveTrackingUrl,
                 ],
             ]);

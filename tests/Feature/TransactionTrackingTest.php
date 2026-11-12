@@ -8,6 +8,7 @@ use App\Models\TransactionShipment;
 use App\Models\User;
 use App\Services\BiteshipService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class TransactionTrackingTest extends TestCase
@@ -832,5 +833,266 @@ class TransactionTrackingTest extends TestCase
             ->assertJsonPath('data.status', 'in_transit')
             ->assertJsonCount(1, 'data.history')
             ->assertJsonPath('data.proof_images', []);
+    }
+
+    public function test_shipment_live_tracking_is_returned_for_gojek(): void
+    {
+        $this->actingAs(User::factory()->create([
+            'role' => 'super_admin',
+        ]));
+
+        $transaction = $this->makeTransaction();
+
+        $shipment = $this->makeShipment($transaction, [
+            'tracking_number' => 'RESI-GOJEK',
+            'courier' => 'Gojek',
+            'courier_code' => ' GOJEK ',
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getTracking')
+                ->once()
+                ->with('TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'waybill_id' => 'WB-GOJEK',
+                    'courier_code' => 'gojek',
+                    'status' => 'in_transit',
+                    'history' => [],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => [
+                        'courier' => [
+                            'link' => 'https://track.example.com/gojek',
+                            'history' => [],
+                        ],
+                    ],
+                ]);
+        });
+
+        $this->getJson(route(
+            'admin.transactions.shipments.tracking',
+            [$transaction, $shipment]
+        ))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.courier_code', 'gojek')
+            ->assertJsonPath('data.live_tracking_allowed', true)
+            ->assertJsonPath(
+                'data.live_tracking_url',
+                'https://track.example.com/gojek'
+            );
+    }
+
+    public static function nonGojekCourierProvider(): array
+    {
+        return [
+            'jnt' => [' JnT ', 'jnt'],
+            'lion parcel' => ['Lion Parcel', 'lion parcel'],
+            'other courier' => ['jne', 'jne'],
+            'unknown courier' => [null, null],
+        ];
+    }
+
+    #[DataProvider('nonGojekCourierProvider')]
+    public function test_shipment_live_tracking_is_hidden_for_non_gojek(
+        ?string $storedCourier,
+        ?string $expectedCourierCode
+    ): void {
+        $this->actingAs(User::factory()->create([
+            'role' => 'super_admin',
+        ]));
+
+        $transaction = $this->makeTransaction();
+
+        $shipment = $this->makeShipment($transaction, [
+            'tracking_number' => 'RESI-NON-GOJEK',
+            'courier' => null,
+            'courier_code' => $storedCourier,
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getTracking')
+                ->once()
+                ->with('TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'waybill_id' => 'WB-NON-GOJEK',
+                    'courier_code' => null,
+                    'status' => 'in_transit',
+                    'history' => [],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => [
+                        'courier' => [
+                            'link' => 'https://track.example.com/non-gojek',
+                            'history' => [],
+                        ],
+                    ],
+                ]);
+        });
+
+        $this->getJson(route(
+            'admin.transactions.shipments.tracking',
+            [$transaction, $shipment]
+        ))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.courier_code', $expectedCourierCode)
+            ->assertJsonPath('data.live_tracking_allowed', false)
+            ->assertJsonPath('data.live_tracking_url', null);
+    }
+
+    public function test_shipment_live_tracking_is_hidden_for_gojek_without_https_url(): void
+    {
+        $this->actingAs(User::factory()->create([
+            'role' => 'super_admin',
+        ]));
+
+        $transaction = $this->makeTransaction();
+
+        $shipment = $this->makeShipment($transaction, [
+            'tracking_number' => 'RESI-GOJEK-NO-LINK',
+            'courier' => 'Gojek',
+            'courier_code' => 'gojek',
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getTracking')
+                ->once()
+                ->with('TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'waybill_id' => 'WB-GOJEK-NO-LINK',
+                    'courier_code' => 'gojek',
+                    'status' => 'in_transit',
+                    'history' => [],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-TRACK-TEST')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => [
+                        'courier' => [
+                            'link' => 'http://track.example.com/insecure',
+                            'history' => [],
+                        ],
+                    ],
+                ]);
+        });
+
+        $this->getJson(route(
+            'admin.transactions.shipments.tracking',
+            [$transaction, $shipment]
+        ))
+            ->assertOk()
+            ->assertJsonPath('data.live_tracking_allowed', true)
+            ->assertJsonPath('data.live_tracking_url', null);
+    }
+
+    public function test_each_shipment_live_tracking_follows_its_own_courier(): void
+    {
+        $this->actingAs(User::factory()->create([
+            'role' => 'super_admin',
+        ]));
+
+        $transaction = $this->makeTransaction();
+
+        $gojekShipment = $this->makeShipment($transaction, [
+            'shipment_type' => TransactionShipment::TYPE_SEPARATE,
+            'courier' => 'Gojek',
+            'courier_code' => 'gojek',
+            'biteship_order_id' => 'ORDER-GOJEK',
+            'biteship_tracking_id' => 'TRACK-GOJEK',
+        ]);
+
+        $jntShipment = $this->makeShipment($transaction, [
+            'shipment_type' => TransactionShipment::TYPE_SEPARATE,
+            'courier' => 'J&T Express',
+            'courier_code' => 'jnt',
+            'biteship_order_id' => 'ORDER-JNT',
+            'biteship_tracking_id' => 'TRACK-JNT',
+        ]);
+
+        $this->mock(BiteshipService::class, function ($mock) {
+            $mock->shouldReceive('getTracking')
+                ->once()
+                ->with('TRACK-GOJEK')
+                ->andReturn([
+                    'success' => true,
+                    'waybill_id' => 'WB-GOJEK',
+                    'courier_code' => 'gojek',
+                    'status' => 'in_transit',
+                    'history' => [],
+                ]);
+
+            $mock->shouldReceive('getTracking')
+                ->once()
+                ->with('TRACK-JNT')
+                ->andReturn([
+                    'success' => true,
+                    'waybill_id' => 'WB-JNT',
+                    'courier_code' => 'jnt',
+                    'status' => 'in_transit',
+                    'history' => [],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-GOJEK')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => [
+                        'courier' => [
+                            'link' => 'https://track.example.com/gojek',
+                            'history' => [],
+                        ],
+                    ],
+                ]);
+
+            $mock->shouldReceive('getOrder')
+                ->once()
+                ->with('ORDER-JNT')
+                ->andReturn([
+                    'success' => true,
+                    'raw' => [
+                        'courier' => [
+                            'link' => 'https://track.example.com/jnt',
+                            'history' => [],
+                        ],
+                    ],
+                ]);
+        });
+
+        $this->getJson(route(
+            'admin.transactions.shipments.tracking',
+            [$transaction, $gojekShipment]
+        ))
+            ->assertOk()
+            ->assertJsonPath('data.live_tracking_allowed', true)
+            ->assertJsonPath(
+                'data.live_tracking_url',
+                'https://track.example.com/gojek'
+            );
+
+        $this->getJson(route(
+            'admin.transactions.shipments.tracking',
+            [$transaction, $jntShipment]
+        ))
+            ->assertOk()
+            ->assertJsonPath('data.live_tracking_allowed', false)
+            ->assertJsonPath('data.live_tracking_url', null);
     }
 }

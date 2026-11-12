@@ -30,7 +30,57 @@ class MetaProductFeedController extends Controller
         $items = [];
         $baseUrl = rtrim(config('app.url'), '/');
 
+        // Mapping SKU/Product Group ke nama folder lokal
+        // Kunci: Awal ID Group (misal PRD-014), Nilai: Nama Folder
+        $folderMapping = [
+            'PRD-014' => 'STADIUM HOME',
+            'PRD-016' => 'STADIUM AWAY',
+            'PRD-017' => 'STAIDUM THIRD', // Sesuai nama di gambar (typo Staidum)
+            'PRD-019' => 'SUPPORTER HOME',
+            'PRD-020' => 'SUPPORTER AWAY',
+            'PRD-021' => 'SUPPORTER THIRD',
+            'PRD-022' => 'POLO',
+        ];
+
         foreach ($products as $product) {
+            $group_id = $product->product_code;
+
+        // Ambil gambar dari folder khusus Meta terlebih dahulu
+        $localImageFound = false;
+        $imageUrl = '';
+        $additionalImageUrls = [];
+
+        if (array_key_exists($group_id, $folderMapping)) {
+            $folderName = $folderMapping[$group_id];
+
+            // Foto 1.png sebagai foto utama
+            $localPath = "images/{$folderName}/1.png";
+
+            if (file_exists(public_path($localPath))) {
+                $imageUrl = $baseUrl . '/' . implode(
+                    '/',
+                    array_map('rawurlencode', explode('/', $localPath))
+                );
+
+                $localImageFound = true;
+
+                // Foto 2.png sampai 8.png sebagai foto tambahan
+                for ($i = 2; $i <= 8; $i++) {
+                    $additionalPath = "images/{$folderName}/{$i}.png";
+
+                    if (file_exists(public_path($additionalPath))) {
+                        $additionalImageUrls[] = $baseUrl . '/' . implode(
+                            '/',
+                            array_map('rawurlencode', explode('/', $additionalPath))
+                        );
+                    }
+                }
+            }
+        }
+
+        // Fallback: Jika foto utama lokal tidak ditemukan,
+        // gunakan gambar dari database
+        if (!$localImageFound) {
             $image = $product->images->firstWhere('is_thumbnail', true)
                 ?? $product->images->first();
 
@@ -43,6 +93,7 @@ class MetaProductFeedController extends Controller
             if (!str_starts_with($imageUrl, 'http')) {
                 $imageUrl = $baseUrl . '/' . ltrim($imageUrl, '/');
             }
+        }
 
             foreach ($product->variants as $variant) {
                 $isAvailable = $product->availability === 'pre_order'
@@ -75,6 +126,11 @@ class MetaProductFeedController extends Controller
                     'g:google_product_category' => 'Apparel & Accessories > Clothing',
                     'g:fb_product_category' => 'Clothing & Accessories > Clothing',
                 ];
+
+                // Tambahkan foto 2-8 jika tersedia
+                if (!empty($additionalImageUrls)) {
+                    $fields['g:additional_image_link'] = implode(', ', $additionalImageUrls);
+                }
 
                 if ($variant->size?->name) {
                     $fields['g:size'] = $variant->size->name;

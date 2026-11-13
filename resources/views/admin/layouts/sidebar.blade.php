@@ -511,6 +511,18 @@
                     <span>Penjualan Web</span>
                 </a>
 
+                {{-- Laporan Penjualan Kasir --}}
+                <a
+                    href="{{ route('admin.cashier-sales-reports') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.cashier-sales-reports*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-banknotes class="h-5 w-5 shrink-0"/>
+                    <span>Penjualan Kasir</span>
+                </a>
+
                 {{-- Laporan Penjualan Offline --}}
                 <a
                     href="{{ route('admin.offline-sales-reports') }}"
@@ -535,17 +547,7 @@
                     <span>Penjualan Stadion</span>
                 </a>
 
-                {{-- Laporan Penjualan Kasir --}}
-                <a
-                    href="{{ route('admin.cashier-sales-reports') }}"
-                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
-                    {{ request()->routeIs('admin.cashier-sales-reports*')
-                        ? 'bg-[#C99322] text-white shadow-lg'
-                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
-                >
-                    <x-heroicon-o-banknotes class="h-5 w-5 shrink-0"/>
-                    <span>Penjualan Kasir</span>
-                </a>
+
 
                 {{-- Laporan Penjualan NNS --}}
                 {{-- <a

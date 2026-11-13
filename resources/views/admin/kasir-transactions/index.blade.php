@@ -194,7 +194,7 @@
     </form>
 
     {{-- ================= STATISTICS ================= --}}
-    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         <x-admin.stat-card
             title="{{ $jerseyVersion ? 'Total Jersey ' . $jerseyVersion . ' Dipesan' : 'Total Transaksi' }}"
             value="{{ number_format($jerseyVersion ? $jerseyQuantity : $totalTransactions, 0, ',', '.') }}"
@@ -207,9 +207,9 @@
             </x-slot:icon>
         </x-admin.stat-card>
 
-        <x-admin.stat-card title="Transaksi Pending" value="{{ number_format($pendingTransactions, 0, ',', '.') }}" growth="Belum dibayar" :positive="false" :neutral="true">
+        {{-- <x-admin.stat-card title="Transaksi Pending" value="{{ number_format($pendingTransactions, 0, ',', '.') }}" growth="Belum dibayar" :positive="false" :neutral="true">
             <x-slot:icon><x-heroicon-o-clock class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
-        </x-admin.stat-card>
+        </x-admin.stat-card> --}}
 
         <x-admin.stat-card title="Total Pendapatan" value="Rp {{ number_format($totalRevenue, 0, ',', '.') }}" growth="{{ $revenueGrowth['value'] }}" :positive="$revenueGrowth['positive']" :neutral="$revenueGrowth['neutral']">
             <x-slot:icon><x-heroicon-o-banknotes class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>

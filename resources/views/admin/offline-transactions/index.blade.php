@@ -123,7 +123,7 @@
 
     {{-- ================= STATISTICS ================= --}}
     {{-- ================= STATISTICS ================= --}}
-    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
+    <div class="grid gap-3 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         <x-admin.stat-card
             title="Total Transaksi"
             value="{{ number_format($summary['total_transactions'], 0, ',', '.') }}"
@@ -134,7 +134,7 @@
             <x-slot:icon><x-heroicon-o-receipt-percent class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
         </x-admin.stat-card>
 
-        <x-admin.stat-card
+        {{-- <x-admin.stat-card
             title="Transaksi Pending"
             value="{{ number_format($summary['pending_transactions'], 0, ',', '.') }}"
             growth="Belum dibayar"
@@ -142,7 +142,7 @@
             :neutral="true"
         >
             <x-slot:icon><x-heroicon-o-clock class="h-6 w-6 sm:h-7 sm:w-7"/></x-slot:icon>
-        </x-admin.stat-card>
+        </x-admin.stat-card> --}}
 
         <x-admin.stat-card
             title="Total Pendapatan"

@@ -327,7 +327,7 @@
                         <th class="px-6 py-4">Invoice</th>
                         <th class="px-6 py-4">Pelanggan</th>
                         <th class="px-6 py-4">Ringkasan Pesanan</th>
-                        <th class="px-6 py-4 text-center">PO/READY</th>
+                        {{-- <th class="px-6 py-4 text-center">PO/READY</th> --}}
                         <th class="px-6 py-4 text-center">Total</th>
                         <th class="px-6 py-4 text-center">Pembayaran</th>
                         <th class="px-6 py-4 text-center">Status</th>

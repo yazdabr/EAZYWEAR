@@ -75,7 +75,7 @@
         </div>
     </td>
 
-    <td class="px-6 py-5 text-center">
+    {{-- <td class="px-6 py-5 text-center">
         @php
             $availabilityLabel = $transaction['availability_label'] ?? '-';
             $availabilityColor = match ($availabilityLabel) {
@@ -88,7 +88,7 @@
         <span class="inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold {{ $availabilityColor }}">
             {{ $availabilityLabel }}
         </span>
-    </td>
+    </td> --}}
 
     <td class="px-6 py-5 text-center">
         <span class="font-bold text-[#AE7C18]">

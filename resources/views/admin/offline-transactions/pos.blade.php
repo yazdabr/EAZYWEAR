@@ -363,7 +363,7 @@
                         >
                             <option value="CASH">Tunai (Cash)</option>
                             <option value="TRANSFER">Transfer</option>
-                            <option value="QRIS">QRIS DOKU</option>
+                            <option value="QRIS">QRIS</option>
                         </select>
                     </div>
                 </div>
@@ -681,8 +681,7 @@
 
                 <h2 id="booth-success-title" class="mt-2 text-2xl font-extrabold text-slate-900" x-text="isPaid ? 'Transaksi Berhasil!' : 'Selesaikan Pembayaran QRIS'"></h2>
 
-                <p class="mt-2 text-sm leading-6 text-slate-500" x-text="isPaid ? 'Pembayaran telah dikonfirmasi. Transaksi sudah lunas.' : 'Silakan pindai QRIS. Stok diperbarui setelah pembayaran dikonfirmasi DOKU.'"></p>
-
+                <p class="mt-2 text-sm leading-6 text-slate-500" x-text="'Pembayaran telah diterima. Transaksi sudah lunas.'"></p>
                 <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left">
                     <p class="text-xs font-medium text-slate-500">Nomor Invoice</p>
                     <p class="mt-1 break-all text-sm font-extrabold text-slate-900"
@@ -695,12 +694,6 @@
                        x-text="money(successTotal)"></p>
 
                     <p class="mt-1 text-xs font-semibold" :class="isPaid ? 'text-emerald-700' : 'text-amber-700'" x-text="isPaid ? (successPaymentMethod === 'CASH' ? 'Tunai - Lunas' : (successPaymentMethod === 'TRANSFER' ? 'Transfer - Lunas' : 'QRIS - Lunas')) : 'QRIS - Menunggu Pembayaran'"></p>
-                    <div x-show="successPaymentMethod === 'QRIS' && !isPaid" class="mt-4 rounded-xl border border-slate-200 bg-white p-3 text-center">
-                        <div class="mx-auto flex min-h-48 items-center justify-center [&_svg]:h-auto [&_svg]:max-w-full" x-show="qrisSvg" x-html="qrisSvg"></div>
-                        <p class="mt-2 text-xs font-medium text-slate-500">Pindai QRIS menggunakan aplikasi pembayaran.</p>
-                        <p class="mt-2 break-all text-xs text-slate-500" x-text="'Referensi: ' + qrisReferenceNo"></p>
-                        <p class="mt-2 text-xs font-semibold text-amber-700" x-text="paymentStatusMessage"></p>
-                    </div>
                 </div>
 
                 <button
@@ -765,14 +758,8 @@
             successTotal: 0,
             successPaymentMethod: 'CASH',
             paymentStatus: 'PENDING',
-            qrisSvg: '',
-            qrisReferenceNo: '',
-            qrisExpiredAt: null,
-            paymentStatusMessage: 'Menunggu konfirmasi pembayaran dari DOKU...',
-            paymentPollTimer: null,
             paymentSoundPlayed: false,
             historyUrl: @js(route('admin.kasir-transactions.index')),
-            paymentStatusUrlTemplate: @js(route('admin.kasir.payment-status', ['invoice' => '__INVOICE__'])),
             csrfToken: @js(csrf_token()),
             checkoutUrl: @js(route('admin.kasir.checkout')),
             stockUpdateUrl: @js(route('admin.kasir.update-stock')),
@@ -847,7 +834,7 @@
 
             get paymentMethodLabel() {
                 if (this.paymentMethod === 'TRANSFER') return 'Transfer';
-                if (this.paymentMethod === 'QRIS') return 'QRIS DOKU';
+                if (this.paymentMethod === 'QRIS') return 'QRIS';
 
                 return 'Tunai (Cash)';
             },
@@ -1065,12 +1052,9 @@
                     this.successInvoice = data.invoice_number;
                     this.successTotal = Number(data.total) || 0;
                     this.successPaymentMethod = data.payment_method || this.paymentMethod;
-                    this.paymentStatus = data.status || (['CASH', 'TRANSFER'].includes(this.successPaymentMethod) ? 'ORDER_COMPLETED' : 'PENDING');
-                    this.qrisSvg = data.qris_qr_code || '';
-                    this.qrisReferenceNo = data.qris_reference_no || '';
-                    this.qrisExpiredAt = data.qris_expired_at || null;
+                    this.paymentStatus = data.status || 'ORDER_COMPLETED';
                     this.paymentSoundPlayed = false;
-                    this.paymentStatusMessage = 'Menunggu konfirmasi pembayaran dari DOKU...';
+
                     this.cart = [];
                     this.discount = 0;
                     this.cartOpen = false;
@@ -1080,8 +1064,6 @@
                     if (this.isPaid) {
                         this.paymentSoundPlayed = true;
                         this.playSuccessSound();
-                    } else if (this.successPaymentMethod === 'QRIS') {
-                        this.startPaymentPolling();
                     }
 
                 } catch (error) {
@@ -1092,43 +1074,6 @@
                 } finally {
                     this.isSubmitting = false;
                 }
-            },
-
-            startPaymentPolling() {
-                if (this.paymentPollTimer) clearTimeout(this.paymentPollTimer);
-                this.pollPaymentStatus();
-            },
-
-            async pollPaymentStatus() {
-                if (!this.successInvoice || this.isPaid) return;
-
-                try {
-                    const url = this.paymentStatusUrlTemplate.replace(
-                        '__INVOICE__',
-                        encodeURIComponent(this.successInvoice)
-                    );
-                    const response = await fetch(url, {
-                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-                    });
-                    const data = await response.json().catch(() => ({}));
-
-                    if (response.ok && ['PAID', 'ORDER_COMPLETED'].includes(data.status)) {
-                        this.paymentStatus = data.status;
-                        this.paymentStatusMessage = 'Pembayaran berhasil dikonfirmasi.';
-                        this.qrisSvg = '';
-                        if (!this.paymentSoundPlayed) {
-                            this.paymentSoundPlayed = true;
-                            this.playSuccessSound();
-                        }
-                        return;
-                    }
-
-                    this.paymentStatusMessage = 'Menunggu pembayaran QRIS dikonfirmasi DOKU...';
-                } catch (error) {
-                    this.paymentStatusMessage = 'Koneksi status terganggu. Mencoba kembali...';
-                }
-
-                this.paymentPollTimer = setTimeout(() => this.pollPaymentStatus(), 3000);
             },
 
             playSuccessSound() {

@@ -63,26 +63,10 @@ class BoothPosControllerTest extends TestCase
         );
     }
 
-    public function test_qris_checkout_stays_pending_and_does_not_reduce_stock(): void
+    public function test_qris_checkout_completes_immediately_and_reduces_stock_once(): void
     {
         $variant = $this->createBoothProduct();
         $this->loginAsSuperAdmin();
-
-        $qrContent = '00020101021226670016COM.DOKU.WWW01189360091500000000000215QRIS2026100614300303UMI5204599953033605802ID5908Eazywear6007Banjarmasin6105701116304ABCD';
-
-        $doku = Mockery::mock(DokuQrisService::class);
-        $doku->shouldReceive('generateQr')
-            ->once()
-            ->andReturnUsing(function ($invoice, $amount, $validUntil) use ($qrContent) {
-                return [
-                    'responseCode' => '2004700',
-                    'referenceNo' => 'DOKU-TEST-REF-001',
-                    'partnerReferenceNo' => $invoice,
-                    'qrContent' => $qrContent,
-                ];
-            });
-
-        $this->app->instance(DokuQrisService::class, $doku);
 
         $response = $this->postJson(route('admin.kasir.checkout'), [
             'payment_method' => 'QRIS',
@@ -93,9 +77,12 @@ class BoothPosControllerTest extends TestCase
         ]);
 
         $response->assertOk()
+            ->assertJsonPath('message', 'Pembayaran QRIS offline berhasil disimpan.')
             ->assertJsonPath('payment_method', 'QRIS')
-            ->assertJsonPath('status', 'PENDING')
-            ->assertJsonPath('qris_reference_no', 'DOKU-TEST-REF-001')
+            ->assertJsonPath('status', Transaction::ORDER_COMPLETED)
+            ->assertJsonPath('qris_qr_code', null)
+            ->assertJsonPath('qris_reference_no', null)
+            ->assertJsonPath('qris_expired_at', null)
             ->assertJsonPath('redirect', route('admin.kasir-transactions.index'));
 
         $transaction = Transaction::query()
@@ -104,20 +91,42 @@ class BoothPosControllerTest extends TestCase
 
         $this->assertKasirInvoice($transaction->invoice_number);
         $this->assertSame('QRIS', $transaction->payment_method);
-        $this->assertSame('PENDING', $transaction->status);
+        $this->assertSame(Transaction::ORDER_COMPLETED, $transaction->status);
         $this->assertSame(Transaction::SOURCE_POS, $transaction->source);
-        $this->assertSame(
-            'DOKU-TEST-REF-001',
-            $transaction->qris_reference_no
-        );
-        $this->assertNotEmpty($response->json('qris_qr_code'));
+        $this->assertNotNull($transaction->paid_at);
+        $this->assertNull($transaction->qris_reference_no);
+        $this->assertNull($transaction->qris_content);
 
         $this->assertSame(
-            10,
+            9,
             (int) Inventory::where(
                 'product_variant_id',
                 $variant->id
             )->value('stock')
+        );
+
+        $this->assertSame(
+            1,
+            StockMovement::query()
+                ->where('transaction_id', $transaction->id)
+                ->count()
+        );
+
+        $this->assertDatabaseHas('order_status_histories', [
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::PAYMENT_CONFIRMED,
+        ]);
+
+        $this->assertDatabaseHas('order_status_histories', [
+            'transaction_id' => $transaction->id,
+            'status' => Transaction::ORDER_COMPLETED,
+        ]);
+
+        $this->assertSame(
+            2,
+            OrderStatusHistory::query()
+                ->where('transaction_id', $transaction->id)
+                ->count()
         );
     }
 
@@ -174,6 +183,8 @@ class BoothPosControllerTest extends TestCase
         $this->get(route('admin.kasir'))
             ->assertOk()
             ->assertSee('value="TRANSFER"', false)
+            ->assertSee('value="QRIS"', false)
+            ->assertSee('QRIS')
             ->assertSee('Transfer');
     }
 

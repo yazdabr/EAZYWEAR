@@ -7,10 +7,7 @@ use App\Models\Inventory;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Transaction;
-use App\Models\TransactionItem;
 use App\Services\InventoryStockService;
-use App\Services\DokuQrisService;
-use App\Services\QrisQrCodeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,9 +49,7 @@ class BoothPosController extends Controller
 
     public function store(
         Request $request,
-        InventoryStockService $stockService,
-        DokuQrisService $dokuQrisService,
-        QrisQrCodeService $qrisQrCodeService
+        InventoryStockService $stockService
     ): JsonResponse {
         $validated = $request->validate([
             'payment_method' => ['required', 'in:CASH,TRANSFER,QRIS'],
@@ -71,9 +66,7 @@ class BoothPosController extends Controller
 
         $transaction = DB::transaction(function () use (
             $validated,
-            $stockService,
-            $dokuQrisService,
-            $qrisQrCodeService
+            $stockService
         ) {
             $requestedItems = collect($validated['items'])
                 ->keyBy(fn ($item) => (int) $item['id']);
@@ -182,63 +175,34 @@ class BoothPosController extends Controller
                 $transaction->items()->create($item);
             }
 
-            if (in_array($validated['payment_method'], ['CASH', 'TRANSFER'], true)) {
-                $paymentLabel = $validated['payment_method'] === 'TRANSFER'
-                    ? 'transfer'
-                    : 'tunai';
+            $paymentLabel = match ($validated['payment_method']) {
+                'TRANSFER' => 'transfer',
+                'QRIS' => 'QRIS offline',
+                default => 'tunai',
+            };
 
-                // Tunai dan transfer langsung lunas serta stok berkurang.
-                $stockService->decreaseForTransaction(
-                    $transaction,
-                    "Penjualan {$paymentLabel} Kasir POS {$invoiceNumber}"
-                );
+            // Semua metode pembayaran POS langsung lunas.
+            // QRIS menggunakan QR milik toko di luar integrasi DOKU.
+            $stockService->decreaseForTransaction(
+                $transaction,
+                "Penjualan {$paymentLabel} Kasir POS {$invoiceNumber}"
+            );
 
-                // Pembayaran langsung selesai di kasir.
-                $transaction->addStatusHistory(
-                    Transaction::PAYMENT_CONFIRMED,
-                    "Pembayaran {$paymentLabel} diterima di Kasir POS."
-                );
+            $transaction->addStatusHistory(
+                Transaction::PAYMENT_CONFIRMED,
+                "Pembayaran {$paymentLabel} diterima di Kasir POS."
+            );
 
-                $transaction->updateStatus(
-                    Transaction::ORDER_COMPLETED,
-                    'Transaksi POS Kasir selesai.'
-                );
-            } else {
-                // QRIS belum dibayar: jangan kurangi stok sekarang.
-                $validUntil = now()->addMinutes(10);
-
-                $qrResponse = $dokuQrisService->generateQr(
-                    $invoiceNumber,
-                    $transaction->total,
-                    $validUntil->format('Y-m-d\TH:i:sP')
-                );
-
-                if (
-                    ($qrResponse['responseCode'] ?? null) !== '2004700'
-                    || blank($qrResponse['referenceNo'] ?? null)
-                    || blank($qrResponse['qrContent'] ?? null)
-                    || ($qrResponse['partnerReferenceNo'] ?? null) !== $invoiceNumber
-                ) {
-                    throw new \RuntimeException(
-                        'DOKU tidak mengembalikan data QRIS yang valid.'
-                    );
-                }
-
-                $transaction->update([
-                    'qris_reference_no' => $qrResponse['referenceNo'],
-                    'qris_content' => $qrResponse['qrContent'],
-                    'qris_expired_at' => $validUntil,
-                    'qris_response' => $qrResponse,
-                ]);
-            }
+            $transaction->updateStatus(
+                Transaction::ORDER_COMPLETED,
+                'Transaksi POS Kasir selesai.'
+            );
 
             return $transaction->fresh();
         });
 
-        $isQris = $transaction->payment_method === 'QRIS';
-
         $message = match ($transaction->payment_method) {
-            'QRIS' => 'QRIS berhasil dibuat. Menunggu pembayaran.',
+            'QRIS' => 'Pembayaran QRIS offline berhasil disimpan.',
             'TRANSFER' => 'Pembayaran transfer berhasil disimpan.',
             default => 'Pembayaran tunai berhasil disimpan.',
         };
@@ -249,11 +213,12 @@ class BoothPosController extends Controller
             'total' => (float) $transaction->total,
             'payment_method' => $transaction->payment_method,
             'status' => $transaction->status,
-            'qris_reference_no' => $transaction->qris_reference_no,
-            'qris_qr_code' => $isQris
-                ? $qrisQrCodeService->generateSvg($transaction->qris_content)
-                : null,
-            'qris_expired_at' => $transaction->qris_expired_at?->toIso8601String(),
+
+            // Dipertahankan sebagai null agar kompatibel dengan response POS lama.
+            'qris_reference_no' => null,
+            'qris_qr_code' => null,
+            'qris_expired_at' => null,
+
             'redirect' => route('admin.kasir-transactions.index'),
         ]);
     }
@@ -299,26 +264,7 @@ class BoothPosController extends Controller
             'stock' => (int) $updatedInventory->stock,
         ]);
     }
-    public function paymentStatus(string $invoice): JsonResponse
-    {
-        $transaction = Transaction::query()
-            ->where('invoice_number', $invoice)
-            ->fromPosKasir()
-            ->where('payment_method', 'QRIS')
-            ->first();
 
-        if (!$transaction) {
-            return response()->json([
-                'message' => 'Transaksi QRIS Booth tidak ditemukan.',
-            ], 404);
-        }
-
-        return response()->json([
-            'invoice_number' => $transaction->invoice_number,
-            'status' => $transaction->status,
-            'paid_at' => $transaction->paid_at?->toIso8601String(),
-        ]);
-    }
     private function generateInvoiceNumber(): string
     {
         do {

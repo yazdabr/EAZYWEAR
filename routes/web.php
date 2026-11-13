@@ -269,11 +269,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'updateStock',
         ])->name('kasir.update-stock');
 
-        Route::get('/kasir/payment-status/{invoice}', [
-            \App\Http\Controllers\Admin\BoothPosController::class,
-            'paymentStatus',
-        ])->name('kasir.payment-status');
-
         // Data transaksi yang berasal dari POS Kasir.
         Route::get('/kasir-transactions', [
             KasirTransactionController::class,

@@ -52,6 +52,15 @@
             </nav>
 
             <nav class="mt-2 space-y-1">
+                <a href="{{ route('admin.kasir') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
+                    {{ request()->routeIs('admin.kasir')
+                        ? 'bg-[#C4902C] text-white shadow-md'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                    <x-heroicon-o-shopping-cart class="h-5 w-5 shrink-0"/>
+                    <span>Kasir</span>
+                </a>
+
                 <a href="{{ route('admin.giveaway-picker') }}"
                     class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
                     {{ request()->routeIs('admin.giveaway-picker')
@@ -524,6 +533,18 @@
                 >
                     <x-heroicon-o-trophy class="h-5 w-5 shrink-0"/>
                     <span>Penjualan Stadion</span>
+                </a>
+
+                {{-- Laporan Penjualan Kasir --}}
+                <a
+                    href="{{ route('admin.cashier-sales-reports') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200
+                    {{ request()->routeIs('admin.cashier-sales-reports*')
+                        ? 'bg-[#C99322] text-white shadow-lg'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                >
+                    <x-heroicon-o-banknotes class="h-5 w-5 shrink-0"/>
+                    <span>Penjualan Kasir</span>
                 </a>
 
                 {{-- Laporan Penjualan NNS --}}

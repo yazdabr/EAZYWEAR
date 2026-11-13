@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ApiLogController;
+use App\Http\Controllers\Admin\CashierSalesReportController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GiveawayPickerController;
@@ -443,6 +444,24 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             \App\Http\Controllers\Admin\StadiumSalesReportController::class,
             'print',
         ])->name('stadium-sales-reports.print');
+    });
+
+    // LAPORAN PENJUALAN KASIR
+    Route::middleware('role:super_admin,management,production,reports')->group(function () {
+        Route::get('/cashier-sales-reports', [
+            CashierSalesReportController::class,
+            'index',
+        ])->name('cashier-sales-reports');
+
+        Route::get('/cashier-sales-reports/export', [
+            CashierSalesReportController::class,
+            'export',
+        ])->name('cashier-sales-reports.export');
+
+        Route::get('/cashier-sales-reports/print', [
+            CashierSalesReportController::class,
+            'print',
+        ])->name('cashier-sales-reports.print');
     });
 
 });

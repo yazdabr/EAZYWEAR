@@ -801,6 +801,19 @@ class CheckoutController extends Controller
                         $pickupDate = $validated[$inputPrefix . '_pickup_date'] ?? null;
                         $pickupTimeStart = $validated[$inputPrefix . '_pickup_time_start'] ?? null;
                         $pickupTimeEnd = $validated[$inputPrefix . '_pickup_time_end'] ?? null;
+
+                        // Jam istirahat: sesuaikan waktu selesai tepat pukul 14:00
+                        // menjadi 13:00 bila rentangnya masih valid. Rentang yang
+                        // hanya melewati jam istirahat tetap dipertahankan.
+                        if ($pickupTimeStart && $pickupTimeEnd) {
+                            [$pickupTimeStart, $pickupTimeEnd] = $fulfillmentDateService->normalizePickupTimeRange(
+                                $pickupTimeStart,
+                                $pickupTimeEnd,
+                                $inputPrefix . '_pickup_time_start',
+                                $inputPrefix . '_pickup_time_end'
+                            );
+                        }
+
                         // Custom nama dan nomor wajib pickup paling cepat 24 jam setelah checkout.
                         $hasCustomInGroup = $itemsByGroup[$groupType]->contains(function ($item) {
                             return trim((string) ($item['custom_name'] ?? '')) !== ''

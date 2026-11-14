@@ -75,6 +75,72 @@ class FulfillmentDateService
             ->addDay()
             ->startOfDay();
     }
+    /**
+     * Normalisasi rentang waktu pickup terhadap jam istirahat.
+     *
+     * Waktu selesai tepat pada akhir jam istirahat digeser ke awal jam
+     * istirahat selama hasilnya masih membentuk rentang yang valid. Rentang
+     * yang hanya melewati jam istirahat tetap dipertahankan, sedangkan waktu
+     * mulai yang berada di dalam jam istirahat ditolak.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public function normalizePickupTimeRange(
+        string $pickupTimeStart,
+        string $pickupTimeEnd,
+        string $startField = 'pickup_time_start',
+        string $endField = 'pickup_time_end'
+    ): array {
+        $breakStartTime = config('fulfillment.pickup.break_start_time');
+        $breakEndTime = config('fulfillment.pickup.break_end_time');
+
+        if ($breakStartTime && $breakEndTime) {
+            $breakStartTime = (string) $breakStartTime;
+            $breakEndTime = (string) $breakEndTime;
+
+            if (
+                $pickupTimeStart > $breakStartTime
+                && $pickupTimeStart < $breakEndTime
+            ) {
+                throw ValidationException::withMessages([
+                    $startField => sprintf(
+                        'Waktu mulai pickup pukul %s berada dalam jam istirahat %s-%s WITA. Silakan sesuaikan waktu mulai pickup di luar jam istirahat.',
+                        $pickupTimeStart,
+                        $breakStartTime,
+                        $breakEndTime
+                    ),
+                ]);
+            }
+
+            if ($pickupTimeEnd === $breakEndTime) {
+                if ($breakStartTime > $pickupTimeStart) {
+                    $pickupTimeEnd = $breakStartTime;
+                } else {
+                    throw ValidationException::withMessages([
+                        $endField => sprintf(
+                            'Waktu selesai pickup pukul %s berada pada akhir jam istirahat %s-%s WITA dan tidak dapat disesuaikan menjadi pukul %s karena harus setelah waktu mulai pickup (%s). Silakan pilih waktu selesai setelah pukul %s atau ubah waktu mulai pickup ke sebelum pukul %s.',
+                            $pickupTimeEnd,
+                            $breakStartTime,
+                            $breakEndTime,
+                            $breakStartTime,
+                            $pickupTimeStart,
+                            $breakEndTime,
+                            $breakStartTime
+                        ),
+                    ]);
+                }
+            }
+        }
+
+        if ($pickupTimeStart >= $pickupTimeEnd) {
+            throw ValidationException::withMessages([
+                $endField => 'Waktu selesai pickup harus setelah waktu mulai pickup.',
+            ]);
+        }
+
+        return [$pickupTimeStart, $pickupTimeEnd];
+    }
+
     public function validatePickupTime(
         string $pickupTime,
         Carbon|string $pickupDate,
@@ -98,31 +164,16 @@ class FulfillmentDateService
 
         if ($pickupAt->lt($startAt) || $pickupAt->gt($endAt)) {
             throw ValidationException::withMessages([
-                $field => 'Waktu pickup harus antara 09:00 dan 17:00.',
+                $field => sprintf(
+                    'Waktu pickup harus antara %s dan %s.',
+                    $startAt->format('H:i'),
+                    $endAt->format('H:i')
+                ),
             ]);
         }
 
-        $breakStartTime = config('fulfillment.pickup.break_start_time');
-        $breakEndTime = config('fulfillment.pickup.break_end_time');
-
-        if ($breakStartTime && $breakEndTime) {
-            $breakStartAt = $this->pickupDateTime($pickupDate, (string) $breakStartTime);
-
-            $breakEndAt = $this->pickupDateTime($pickupDate, (string) $breakEndTime);
-
-            if ($pickupAt->gte($breakStartAt) && $pickupAt->lt($breakEndAt)) {
-                throw ValidationException::withMessages([
-                    $field => sprintf(
-                        'Waktu pickup pada jam istirahat %s-%s WITA tidak tersedia. Silakan pilih sebelum pukul %s atau mulai pukul %s.',
-                        $breakStartAt->format('H:i'),
-                        $breakEndAt->copy()->subMinute()->format('H:i'),
-                        $breakStartAt->format('H:i'),
-                        $breakEndAt->format('H:i')
-                    ),
-                ]);
-            }
-        }
-
+        // Aturan jam istirahat diterapkan pada rentang pickup melalui
+        // normalizePickupTimeRange(), bukan pada masing-masing batas waktu.
         if ($pickupDate->isSameDay($checkoutAt) && $pickupAt->lt($checkoutAt)) {
             throw ValidationException::withMessages([
                 $field => 'Waktu pickup tidak boleh lebih awal dari waktu checkout.',

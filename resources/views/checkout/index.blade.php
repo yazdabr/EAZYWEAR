@@ -279,19 +279,19 @@
                                                         Pilih jadwal pengambilan sesuai jadwal Pre-order yang tersedia.
                                                     @elseif(!empty($group['has_custom']))
                                                         Pesanan dengan custom nama dan nomor membutuhkan waktu pengerjaan.
-                                                        Pickup paling cepat dapat dijadwalkan 24 jam setelah checkout.
+                                                        Pengambilan paling cepat dapat dijadwalkan 24 jam setelah checkout.
                                                     @else
-                                                        Pickup Ready Stock sebelum pukul 14.00 dapat dijadwalkan hari ini.
-                                                        Pukul 14.00 atau setelahnya mulai besok.
+                                                        Pemesanan sebelum jam 14.00 dapat diambil hari ini.
+                                                        jam 14.00 atau setelahnya mulai besok.
                                                     @endif
                                                 </p>
 
                                                 <p class="mt-1 text-[10px] leading-4 text-amber-700 sm:text-xs">
-                                                    Jam istirahat pengambilan: mulai pukul
+                                                    Jam istirahat:
                                                     {{ config('fulfillment.pickup.break_start_time') }}
-                                                    sampai sebelum pukul
+                                                    -
                                                     {{ config('fulfillment.pickup.break_end_time') }} WITA.
-                                                    Jadwal pada rentang tersebut tidak tersedia.
+                                                    Mohon pastikan pengambilan tidak dilakukan pada rentang waktu tersebut.
                                                 </p>
                                             </div>
                                             <div class="grid gap-3 sm:grid-cols-3 sm:gap-4">
@@ -309,6 +309,7 @@
                                                     <input id="{{ $groupType }}-pickup-time-end" name="{{ $groupPrefix }}pickup_time_end" type="time" value="{{ old($groupPrefix . 'pickup_time_end') }}" data-pickup-time-end required disabled class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-xs text-slate-800 outline-none focus:border-[#AE7C18] sm:rounded-xl sm:px-4 sm:text-sm">
                                                 </div>
                                             </div>
+                                            <p data-pickup-notice role="status" aria-live="polite" class="mt-2 hidden rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] leading-4 text-amber-700 sm:text-xs"></p>
                                             <p data-pickup-validation-error class="mt-2 hidden rounded-lg bg-red-50 px-3 py-2 text-[10px] leading-4 text-red-600 sm:text-xs"></p>
                                         </div>
                                     </div>

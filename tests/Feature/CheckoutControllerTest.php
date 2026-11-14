@@ -3609,66 +3609,99 @@ class CheckoutControllerTest extends TestCase
             });
     }
 
-    public function test_checkout_rejects_pickup_start_time_during_break(): void
+    public function test_checkout_adjusts_pickup_end_at_break_end_to_break_start(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-11-04 08:00:00'));
-
-        try {
-            $variant = $this->customizationVariant(false, 0);
-            $variant->product->update(['availability' => 'ready']);
-
-            $response = $this->readyPickupCheckout(
-                $variant,
-                'pickup-break-start@test.com',
-                '2026-11-05',
-                '',
-                '',
-                false,
-                '13:00',
-                '14:00'
-            );
-
-            $response->assertSessionHasErrors('ready_pickup_time_start');
-
-            $this->assertDatabaseMissing('transactions', [
-                'shipping_email' => 'pickup-break-start@test.com',
-            ]);
-        } finally {
-            Carbon::setTestNow();
-        }
+        $this->assertReadyPickupRangeSaved(
+            'pickup-break-adjust@test.com',
+            '12:00',
+            '14:00',
+            '12:00:00',
+            '13:00:00'
+        );
     }
 
-    public function test_checkout_rejects_pickup_end_time_during_break(): void
+    public function test_checkout_accepts_pickup_range_crossing_break(): void
     {
-        Carbon::setTestNow(Carbon::parse('2026-11-04 08:00:00'));
+        $this->assertReadyPickupRangeSaved(
+            'pickup-break-crossing@test.com',
+            '12:00',
+            '15:00',
+            '12:00:00',
+            '15:00:00'
+        );
+    }
 
-        try {
-            $variant = $this->customizationVariant(false, 0);
-            $variant->product->update(['availability' => 'ready']);
+    public function test_checkout_accepts_pickup_range_starting_at_break_start(): void
+    {
+        $this->assertReadyPickupRangeSaved(
+            'pickup-break-start-boundary@test.com',
+            '13:00',
+            '15:00',
+            '13:00:00',
+            '15:00:00'
+        );
+    }
 
-            $response = $this->readyPickupCheckout(
-                $variant,
-                'pickup-break-end@test.com',
-                '2026-11-05',
-                '',
-                '',
-                false,
-                '12:00',
-                '13:30'
-            );
+    public function test_checkout_accepts_pickup_range_ending_at_break_start(): void
+    {
+        $this->assertReadyPickupRangeSaved(
+            'pickup-break-end-boundary@test.com',
+            '12:00',
+            '13:00',
+            '12:00:00',
+            '13:00:00'
+        );
+    }
 
-            $response->assertSessionHasErrors('ready_pickup_time_end');
+    public function test_checkout_accepts_pickup_range_ending_inside_break_with_advisory(): void
+    {
+        $this->assertReadyPickupRangeSaved(
+            'pickup-break-inside-end@test.com',
+            '12:00',
+            '13:30',
+            '12:00:00',
+            '13:30:00'
+        );
+    }
 
-            $this->assertDatabaseMissing('transactions', [
-                'shipping_email' => 'pickup-break-end@test.com',
-            ]);
-        } finally {
-            Carbon::setTestNow();
-        }
+    public function test_checkout_rejects_pickup_range_ending_at_break_end_when_adjustment_is_invalid(): void
+    {
+        $this->assertReadyPickupRangeRejected(
+            'pickup-break-invalid-adjust@test.com',
+            '13:00',
+            '14:00',
+            'ready_pickup_time_end'
+        );
+    }
+
+    public function test_checkout_rejects_pickup_start_time_inside_break(): void
+    {
+        $this->assertReadyPickupRangeRejected(
+            'pickup-break-start-inside@test.com',
+            '13:30',
+            '14:30',
+            'ready_pickup_time_start'
+        );
     }
 
     public function test_checkout_accepts_pickup_time_at_break_end(): void
     {
+        $this->assertReadyPickupRangeSaved(
+            'pickup-break-end-allowed@test.com',
+            '14:00',
+            '15:00',
+            '14:00:00',
+            '15:00:00'
+        );
+    }
+
+    private function assertReadyPickupRangeSaved(
+        string $email,
+        string $pickupTimeStart,
+        string $pickupTimeEnd,
+        string $expectedStart,
+        string $expectedEnd
+    ): void {
         Carbon::setTestNow(Carbon::parse('2026-11-04 08:00:00'));
 
         try {
@@ -3677,23 +3710,61 @@ class CheckoutControllerTest extends TestCase
 
             $response = $this->readyPickupCheckout(
                 $variant,
-                'pickup-break-end-allowed@test.com',
+                $email,
                 '2026-11-05',
                 '',
                 '',
                 true,
-                '14:00',
-                '15:00'
+                $pickupTimeStart,
+                $pickupTimeEnd
             );
 
             $response->assertRedirect(route('checkout.success'));
 
             $transaction = Transaction::query()
-                ->where('shipping_email', 'pickup-break-end-allowed@test.com')
+                ->where('shipping_email', $email)
                 ->firstOrFail();
 
-            $this->assertSame('14:00:00', $transaction->pickup_time_start);
-            $this->assertSame('15:00:00', $transaction->pickup_time_end);
+            $this->assertSame($expectedStart, $transaction->pickup_time_start);
+            $this->assertSame($expectedEnd, $transaction->pickup_time_end);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    private function assertReadyPickupRangeRejected(
+        string $email,
+        string $pickupTimeStart,
+        string $pickupTimeEnd,
+        string $field
+    ): void {
+        Carbon::setTestNow(Carbon::parse('2026-11-04 08:00:00'));
+
+        try {
+            $variant = $this->customizationVariant(false, 0);
+            $variant->product->update(['availability' => 'ready']);
+
+            $response = $this->readyPickupCheckout(
+                $variant,
+                $email,
+                '2026-11-05',
+                '',
+                '',
+                false,
+                $pickupTimeStart,
+                $pickupTimeEnd
+            );
+
+            $response->assertSessionHasErrors($field);
+
+            $this->assertStringContainsString(
+                'jam istirahat',
+                session('errors')->first($field)
+            );
+
+            $this->assertDatabaseMissing('transactions', [
+                'shipping_email' => $email,
+            ]);
         } finally {
             Carbon::setTestNow();
         }

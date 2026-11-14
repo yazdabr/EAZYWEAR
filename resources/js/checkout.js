@@ -208,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
         pickupTimeStart: element.querySelector('[data-pickup-time-start]'),
         pickupTimeEnd: element.querySelector('[data-pickup-time-end]'),
         pickupStatus: element.querySelector('[data-pickup-availability-status]'),
+        pickupNotice: element.querySelector('[data-pickup-notice]'),
         pickupError: element.querySelector('[data-pickup-validation-error]'),
         ratesSection: element.querySelector('[data-shipping-rates-section]'),
         ratesList: element.querySelector('[data-shipping-rates-list]'),
@@ -648,22 +649,107 @@ document.addEventListener('DOMContentLoaded', function () {
             && time < config.pickupBreakEndTime;
     }
 
+    function isPickupBreakStartTime(time) {
+        if (!time) return false;
+
+        return time > config.pickupBreakStartTime
+            && time < config.pickupBreakEndTime;
+    }
+
+    function getPickupBreakRange() {
+        return `${config.pickupBreakStartTime}–${config.pickupBreakEndTime}`;
+    }
+
     function getPickupBreakMessage() {
         return `Jam pengambilan pukul ${config.pickupBreakStartTime} sampai sebelum pukul ${config.pickupBreakEndTime} WITA adalah jam istirahat. Silakan pilih sebelum pukul ${config.pickupBreakStartTime} atau mulai pukul ${config.pickupBreakEndTime}.`;
     }
 
-    function handlePickupTimeChange(group, input) {
-        const isBreakTime = isPickupBreakTime(input.value);
+    function getPickupBreakStartMessage(pickupStart) {
+        return `Jadwal mulai pukul ${pickupStart} berada dalam waktu istirahat ${getPickupBreakRange()} WITA. Silakan sesuaikan waktu mulai pickup agar tidak berada pada jam istirahat.`;
+    }
 
+    function getPickupBreakAdjustMessage() {
+        return `Jam selesai otomatis disesuaikan menjadi pukul ${config.pickupBreakStartTime} karena pukul ${getPickupBreakRange()} WITA merupakan waktu istirahat.`;
+    }
+
+    function getPickupBreakEndMessage(pickupStart) {
+        return `Jadwal pickup berakhir tepat pukul ${config.pickupBreakEndTime} WITA, yaitu akhir waktu istirahat ${getPickupBreakRange()} WITA. Waktu selesai tidak dapat disesuaikan menjadi pukul ${config.pickupBreakStartTime} karena harus setelah waktu mulai (${pickupStart}). Silakan pilih waktu selesai setelah pukul ${config.pickupBreakEndTime} atau ubah waktu mulai pickup ke sebelum pukul ${config.pickupBreakStartTime}.`;
+    }
+
+    function getPickupBreakIntersectionMessage() {
+        return `Perhatian: Pukul ${getPickupBreakRange()} WITA merupakan waktu istirahat. Mohon pastikan pengambilan tidak dilakukan pada rentang waktu tersebut.`;
+    }
+
+    function setPickupNotice(group, message, tone = 'warning') {
+        if (!group.pickupNotice) return;
+
+        group.pickupNotice.textContent = message;
+        group.pickupNotice.className = tone === 'info'
+            ? 'mt-2 rounded-lg border border-[#AE7C18]/20 bg-[#AE7C18]/10 px-3 py-2 text-[10px] leading-4 text-[#AE7C18] sm:text-xs'
+            : 'mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] leading-4 text-amber-700 sm:text-xs';
+        group.pickupNotice.classList.remove('hidden');
+    }
+
+    function clearPickupNotice(group) {
+        if (!group.pickupNotice) return;
+
+        group.pickupNotice.textContent = '';
+        group.pickupNotice.classList.add('hidden');
+    }
+
+    function applyPickupBreakTimeRules(group) {
+        const breakStart = config.pickupBreakStartTime;
+        const breakEnd = config.pickupBreakEndTime;
+        let pickupStart = group.pickupTimeStart.value;
+        let pickupEnd = group.pickupTimeEnd.value;
+
+        clearPickupNotice(group);
+
+        if (!pickupStart && !pickupEnd) {
+            return;
+        }
+
+        // Jam mulai yang berada di dalam jam istirahat minta disesuaikan.
+        if (isPickupBreakStartTime(pickupStart)) {
+            setPickupNotice(group, getPickupBreakStartMessage(pickupStart));
+            return;
+        }
+
+        // Waktu selesai tepat pada akhir jam istirahat tidak nyaman untuk
+        // pelanggan. Geser ke awal jam istirahat selama rentangnya tetap valid.
+        if (pickupEnd === breakEnd) {
+            if (pickupStart && pickupStart < breakStart) {
+                group.pickupTimeEnd.value = breakStart;
+                pickupEnd = breakStart;
+
+                setPickupNotice(group, getPickupBreakAdjustMessage(), 'info');
+                return;
+            }
+
+            if (pickupStart && pickupStart >= breakStart) {
+                setPickupNotice(group, getPickupBreakEndMessage(pickupStart));
+                return;
+            }
+        }
+
+        // Rentang boleh melewati jam istirahat, tetapi beri perhatian jika
+        // waktu selesai masih berada di dalam jam istirahat.
+        if (
+            pickupStart
+            && pickupStart < breakEnd
+            && pickupEnd > breakStart
+            && isPickupBreakTime(pickupEnd)
+        ) {
+            setPickupNotice(group, getPickupBreakIntersectionMessage());
+        }
+    }
+
+    function handlePickupTimeChange(group) {
         updatePickupTimeRules(group);
         clearPickupError(group);
 
-        if (isBreakTime) {
-            input.value = '';
-            group.pickupError.textContent = getPickupBreakMessage();
-            group.pickupError.classList.remove('hidden');
-            updatePickupTimeRules(group);
-        }
+        applyPickupBreakTimeRules(group);
+        updatePickupTimeRules(group);
     }
 
     function updatePickupTimeRules(group) {
@@ -726,6 +812,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function validatePickupSchedule(group) {
         const pickupDate = group.pickupDate.value;
+
+        // Terapkan penyesuaian jam istirahat sebelum validasi akhir agar
+        // waktu selesai yang dikirim ke backend sudah konsisten.
+        applyPickupBreakTimeRules(group);
+
         const pickupStart = group.pickupTimeStart.value;
         const pickupEnd = group.pickupTimeEnd.value;
 
@@ -765,12 +856,16 @@ document.addEventListener('DOMContentLoaded', function () {
             return `Jam pengambilan hanya tersedia antara ${config.pickupStartTime} sampai ${config.pickupEndTime}.`;
         }
 
-        if (pickupStart > pickupEnd) {
-            return 'Waktu mulai tidak boleh lebih dari waktu selesai.';
+        if (pickupStart >= pickupEnd) {
+            return 'Waktu selesai harus setelah waktu mulai pickup.';
         }
 
-        if (isPickupBreakTime(pickupStart) || isPickupBreakTime(pickupEnd)) {
-            return getPickupBreakMessage();
+        if (isPickupBreakStartTime(pickupStart)) {
+            return getPickupBreakStartMessage(pickupStart);
+        }
+
+        if (pickupEnd === config.pickupBreakEndTime) {
+            return getPickupBreakEndMessage(pickupStart);
         }
 
         if (!isSpecialBatchCheckout(group) && pickupDate === config.checkoutDate) {
@@ -1113,10 +1208,12 @@ document.addEventListener('DOMContentLoaded', function () {
         clearRatesError(group);
         group.ratesStatus.textContent = '';
         clearPickupError(group);
+        clearPickupNotice(group);
 
         if (isPickup) {
             if (showPickup) {
                 applyPickupDateRules(group);
+                applyPickupBreakTimeRules(group);
             }
 
             group.courierCode.value = '';
@@ -1175,13 +1272,14 @@ document.addEventListener('DOMContentLoaded', function () {
             applyPickupDateRules(group);
             updatePickupTimeRules(group);
             clearPickupError(group);
+            applyPickupBreakTimeRules(group);
             await checkPickupDateAvailability(group);
         });
         group.pickupTimeStart.addEventListener('change', () => {
-            handlePickupTimeChange(group, group.pickupTimeStart);
+            handlePickupTimeChange(group);
         });
         group.pickupTimeEnd.addEventListener('change', () => {
-            handlePickupTimeChange(group, group.pickupTimeEnd);
+            handlePickupTimeChange(group);
         });
     });
 

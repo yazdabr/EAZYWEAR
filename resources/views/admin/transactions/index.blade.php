@@ -163,6 +163,9 @@
                             <option value="lion" @selected(request('courier') === 'lion')>
                                 Lion Parcel
                             </option>
+                            <option value="gojek" @selected(request('courier') === 'gojek')>
+                                Gosend
+                            </option>
                         </select>
                     </div>
                     {{-- JENIS PRODUK --}}

@@ -100,8 +100,14 @@ class TransactionController extends Controller
         // Filter berdasarkan kurir pengiriman.
         $courierFilter = $request->input('courier');
 
-        if (in_array($courierFilter, ['jnt', 'lion'], true)) {
-            $courierKeyword = $courierFilter === 'jnt' ? '%jnt%' : '%lion%';
+        $courierKeywords = [
+            'jnt' => '%jnt%',
+            'lion' => '%lion%',
+            'gojek' => '%gojek%',
+        ];
+
+        if (isset($courierKeywords[$courierFilter])) {
+            $courierKeyword = $courierKeywords[$courierFilter];
 
             $query->where(function ($courierQuery) use ($courierKeyword) {
                 $courierQuery

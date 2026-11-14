@@ -164,7 +164,7 @@
                                 Lion Parcel
                             </option>
                             <option value="gojek" @selected(request('courier') === 'gojek')>
-                                Gosend
+                                Gojek
                             </option>
                         </select>
                     </div>

@@ -36,7 +36,7 @@
 @endphp
 <section x-data="galleryProduct()" class="bg-white py-6 sm:py-10 lg:py-14">
     <x-ui.container>
-        <div class="grid items-start gap-6 sm:gap-10 lg:grid-cols-2 lg:gap-16">
+        <div class="grid items-start gap-3 sm:gap-5 lg:grid-cols-2 lg:gap-x-16">
             {{-- *GALLERY* --}}
             <div class="w-full min-w-0">
                 <div class="w-full">
@@ -92,7 +92,7 @@
                 <div>
                     <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs sm:tracking-[0.3em]">{{ $product->category?->name ?? 'PRODUCT' }}</p>
                     <h1 class="mt-3 text-2xl font-bold leading-none tracking-tight text-slate-900 sm:mt-4 sm:text-4xl sm:leading-tight lg:text-5xl">{{ $product->name }}</h1>
-                    <h2 class="mt-1 text-xl font-bold leading-none text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}</h2>
+                    <h2 class="mt-3 text-xl font-bold leading-none text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}</h2>
                     @if (($product->availability === 'pre_order' && $product->pre_order_closed) || ($product->availability === 'ready' && $product->ready_stock_closed))
                         <p class="mt-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold leading-relaxed text-red-800 sm:mt-4">
                             {{ $product->availability === 'ready' ? 'Mohon maaf, pemesanan produk ini sedang ditutup.' : 'Periode pre-order produk ini telah ditutup.' }}
@@ -121,7 +121,7 @@
                 {{-- SIZE / VARIANT --}}
                 @if(count($availableSizes))
 
-                <div class="mt-4 sm:mt-7" x-data="{
+                <div class="mt-3 sm:mt-3" x-data="{
                     availability: @js($product->availability),
                     preOrderClosed: @js((bool) $product->pre_order_closed),
                     readyStockClosed: @js((bool) $product->ready_stock_closed),
@@ -389,7 +389,7 @@
                                 <span class="text-xl font-extrabold text-[#AE7C18] sm:text-2xl" x-text="'Rp ' + Number(finalPrice).toLocaleString('id-ID')"></span>
                             </div>
                         </div>
-                        <form id="add-to-cart-form" method="POST" action="{{ route('cart.add') }}" class="mt-4 sm:mt-5" @submit.prevent="addToCartAnimation($event)">
+                        <form id="add-to-cart-form" method="POST" action="{{ route('cart.add') }}" class="mt-6 sm:mt-7" @submit.prevent="addToCartAnimation($event)">
                             @csrf
                             <input type="hidden" name="variant_id" x-model="selectedVariant">
                             <input type="hidden" name="qty" value="1">

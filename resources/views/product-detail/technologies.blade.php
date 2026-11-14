@@ -1,4 +1,4 @@
-<section class="bg-white py-6 sm:py-10 lg:py-14">
+<section class="bg-white pt-0 pb-6 sm:pt-1 sm:pb-10 lg:pt-2 lg:pb-14">
     <x-ui.container>
         <div class="grid gap-3 sm:gap-5 lg:grid-cols-2 lg:gap-8">
             {{-- LEFT: FEATURES --}}

@@ -91,7 +91,7 @@
                 {{-- PRODUCT HEADER --}}
                 <div>
                     <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#AE7C18] sm:text-xs sm:tracking-[0.3em]">{{ $product->category?->name ?? 'PRODUCT' }}</p>
-                    <h1 class="mt-3 text-2xl font-bold leading-none tracking-tight text-slate-900 sm:mt-4 sm:text-4xl sm:leading-tight lg:text-5xl">{{ $product->name }}</h1>
+                    <h1 class="mt-1 text-2xl font-bold leading-none tracking-tight text-slate-900 sm:mt-4 sm:text-4xl sm:leading-tight lg:text-5xl">{{ $product->name }}</h1>
                     <h2 class="mt-1 text-xl font-bold leading-none text-[#AE7C18] sm:mt-3 sm:text-3xl lg:text-4xl">Starting from Rp {{ number_format($startingPrice, 0, ',', '.') }}</h2>
                     @if (($product->availability === 'pre_order' && $product->pre_order_closed) || ($product->availability === 'ready' && $product->ready_stock_closed))
                         <p class="mt-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold leading-relaxed text-red-800 sm:mt-4">
@@ -259,6 +259,12 @@
                                 </button>
                             @endforeach
                         </div>
+
+                        {{-- SIZE EXCHANGE NOTICE --}}
+                        <p class="mt-2 text-xs font-semibold leading-5 text-amber-900 sm:text-sm sm:leading-6">
+                            Pastikan ukuran pilihan Anda sudah benar. Kami tidak menerima penukaran ukuran setelah pembelian.
+                        </p>
+
                         {{-- *JERSEY CUSTOMIZATION* --}}
                         <div x-show="customizationEnabled" x-cloak class="mt-5 sm:mt-6">
                             {{-- *CUSTOMIZATION NOTICE* --}}

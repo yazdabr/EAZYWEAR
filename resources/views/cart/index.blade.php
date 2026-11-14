@@ -3,7 +3,11 @@
 @section('title', 'Shopping Cart')
 
 @section('content')
-<section class="py-8 sm:py-14 lg:py-20">
+<section
+    class="py-8 sm:py-14 lg:py-20"
+    x-data="cartCheckoutConfirm()"
+    data-checkout-url="{{ route('checkout.index') }}"
+>
     <x-ui.container>
         <div class="mb-6 sm:mb-8">
             <p class="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#AE7C18] sm:text-xs">
@@ -124,7 +128,16 @@
                                 <span class="text-lg font-bold text-[#AE7C18] sm:text-xl">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
                             </div>
                         </div>
-                        <a href="{{ route('checkout.index') }}" class="mt-3 inline-flex w-full items-center justify-center rounded-full bg-[#AE7C18] px-6 py-3.5 text-xs font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 sm:mt-4 sm:py-4 sm:text-sm">Proceed to Checkout</a>
+                        <button
+                            type="button"
+                            x-ref="checkoutTrigger"
+                            @click="openConfirmation()"
+                            aria-haspopup="dialog"
+                            aria-controls="checkout-confirm-dialog"
+                            class="mt-3 inline-flex w-full items-center justify-center rounded-full bg-[#AE7C18] px-6 py-3.5 text-xs font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#AE7C18] focus-visible:ring-offset-2 active:scale-[0.99] sm:mt-4 sm:py-4 sm:text-sm"
+                        >
+                            Proceed to Checkout
+                        </button>
                     </div>
                 </aside>
 
@@ -139,5 +152,166 @@
             </div>
         @endif
     </x-ui.container>
+
+    {{-- Popup konfirmasi produk & ukuran sebelum checkout --}}
+    <div
+        id="checkout-confirm-dialog"
+        x-cloak
+        x-show="confirmOpen"
+        x-transition.opacity.duration.200ms
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/70 px-4 py-4 backdrop-blur-sm sm:py-6"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="checkout-confirm-title"
+        aria-describedby="checkout-confirm-description checkout-confirm-warning"
+        @keydown.escape.window="closeConfirmation()"
+        @click.self="closeConfirmation()"
+    >
+        <div
+            x-ref="confirmDialog"
+            x-show="confirmOpen"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="translate-y-5 scale-95 opacity-0"
+            x-transition:enter-end="translate-y-0 scale-100 opacity-100"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="translate-y-0 scale-100 opacity-100"
+            x-transition:leave-end="translate-y-5 scale-95 opacity-0"
+            @click.stop
+            @keydown.tab="trapFocus($event)"
+            class="relative max-h-[90dvh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white shadow-2xl sm:max-w-md sm:rounded-3xl"
+        >
+            <button
+                type="button"
+                @click="closeConfirmation()"
+                class="absolute right-3 top-2.5 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/30 sm:right-4 sm:top-4 sm:h-9 sm:w-9"
+                aria-label="Tutup konfirmasi checkout"
+                title="Tutup"
+            >
+                <svg class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round"
+                     aria-hidden="true">
+                    <path d="M6 6l12 12M18 6 6 18"/>
+                </svg>
+            </button>
+
+            <div class="px-4 pb-5 pt-6 text-center sm:px-8 sm:py-8">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#AE7C18]/10 text-[#AE7C18] ring-4 ring-[#AE7C18]/5 sm:h-16 sm:w-16 sm:ring-8">
+                    <svg class="h-6 w-6 sm:h-8 sm:w-8"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                         aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"/>
+                        <path d="M12 16v-4M12 8h.01"/>
+                    </svg>
+                </div>
+
+                <h2 id="checkout-confirm-title" class="mt-4 text-lg font-bold leading-snug text-slate-900 sm:mt-5 sm:text-2xl">
+                    Pesanan Sudah Sesuai?
+                </h2>
+
+                <p id="checkout-confirm-description" class="mt-1.5 text-xs leading-5 text-slate-500 sm:mt-2 sm:text-sm sm:leading-6">
+                    Periksa kembali produk dan ukuran pilihan Anda.
+                </p>
+                <p id="checkout-confirm-warning" class="text-xs font-semibold leading-5 text-amber-900 sm:text-sm sm:leading-6">
+                    Ukuran yang sudah dibeli tidak dapat ditukar.
+                </p>
+
+                <div class="mt-4 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-3">
+                    <button
+                        type="button"
+                        @click="closeConfirmation()"
+                        class="inline-flex h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-2 text-center text-[11px] font-semibold leading-tight text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#AE7C18]/40 active:scale-[0.98] sm:h-12 sm:px-2 sm:text-[13px]"
+                        aria-label="Periksa kembali produk dan ukuran di keranjang"
+                    >
+                        Periksa Kembali
+                    </button>
+
+                    <button
+                        type="button"
+                        x-ref="confirmCheckoutButton"
+                        @click="proceedToCheckout()"
+                        class="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#AE7C18] px-2 text-center text-[11px] font-semibold leading-tight text-white shadow-lg shadow-amber-900/10 transition hover:bg-[#8F6514] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#AE7C18]/40 focus-visible:ring-offset-2 active:scale-[0.98] sm:h-12 sm:px-2 sm:text-[13px]"
+                        aria-label="Ya, lanjutkan ke halaman checkout"
+                    >
+                        Ya, Lanjutkan Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+    function cartCheckoutConfirm() {
+        return {
+            checkoutUrl: @js(route('checkout.index')),
+            confirmOpen: false,
+            bodyOverflow: '',
+            previouslyFocused: null,
+
+            openConfirmation() {
+                if (this.confirmOpen) return;
+
+                this.previouslyFocused = document.activeElement;
+                this.bodyOverflow = document.body.style.overflow;
+                document.body.style.overflow = 'hidden';
+                this.confirmOpen = true;
+
+                this.$nextTick(() => {
+                    this.$refs.confirmCheckoutButton?.focus();
+                });
+            },
+
+            closeConfirmation() {
+                if (!this.confirmOpen) return;
+
+                this.confirmOpen = false;
+                document.body.style.overflow = this.bodyOverflow || '';
+
+                this.$nextTick(() => {
+                    const target = this.previouslyFocused && this.previouslyFocused !== document.body
+                        ? this.previouslyFocused
+                        : this.$refs.checkoutTrigger;
+
+                    target?.focus?.();
+                });
+            },
+
+            proceedToCheckout() {
+                if (!this.confirmOpen) return;
+
+                this.confirmOpen = false;
+                document.body.style.overflow = this.bodyOverflow || '';
+
+                window.location.assign(this.checkoutUrl);
+            },
+
+            trapFocus(event) {
+                if (!this.confirmOpen) return;
+
+                const focusable = Array.from(
+                    this.$refs.confirmDialog.querySelectorAll(
+                        'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                    )
+                ).filter((element) => element.offsetParent !== null);
+
+                if (focusable.length === 0) return;
+
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
+            },
+        };
+    }
+</script>
+@endpush

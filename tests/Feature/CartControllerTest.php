@@ -42,6 +42,33 @@ class CartControllerTest extends TestCase
         ], $overrides);
     }
 
+    public function test_cart_page_shows_checkout_confirmation_popup(): void
+    {
+        $response = $this->withSession([
+            'cart' => [[
+                'image' => 'https://example.com/jersey.jpg',
+                'product_name' => 'Jersey Test',
+                'size_name' => 'L',
+                'qty' => 1,
+                'stock' => 5,
+                'price' => 100000,
+            ]],
+        ])->get(route('cart.index'));
+
+        $response->assertOk();
+        $response->assertSee('data-checkout-url="'.route('checkout.index').'"', false);
+        $response->assertSee('role="dialog"', false);
+        $response->assertSee('aria-modal="true"', false);
+        $response->assertSee('Pesanan Sudah Sesuai?', false);
+        $response->assertSee('Periksa kembali produk dan ukuran pilihan Anda.', false);
+        $response->assertSee('Ukuran yang sudah dibeli tidak dapat ditukar.', false);
+        $response->assertSee('Periksa Kembali', false);
+        $response->assertSee('Ya, Lanjutkan Checkout', false);
+        $response->assertDontSee('Pastikan Pesanan Anda Sudah Benar!', false);
+        $response->assertDontSee('cart-confirm-check', false);
+        $response->assertDontSee('cart-confirm-check-draw', false);
+    }
+
     public function test_cart_rejects_closed_pre_order_product(): void
     {
         $variant = $this->activeVariant();

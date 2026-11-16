@@ -375,7 +375,7 @@
             </div>
 
             {{-- OPSI LONGSLEEVE --}}
-            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            {{-- <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="mb-4 flex items-start gap-3 sm:mb-6 sm:gap-4">
                     <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 sm:h-11 sm:w-11">
                         <x-heroicon-o-clipboard-document-list class="h-5 w-5 text-blue-600" />
@@ -479,7 +479,7 @@
                         Pelanggan hanya dapat membeli produk dengan opsi standar.
                     </p>
                 </div>
-            </div>
+            </div> --}}
 
             {{-- OPSI PATCH --}}
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">

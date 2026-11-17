@@ -3695,6 +3695,134 @@ class CheckoutControllerTest extends TestCase
         );
     }
 
+    public function test_gojek_is_excluded_from_shipping_rates_on_sunday(): void
+    {
+        Carbon::setTestNow(
+            Carbon::parse('2026-11-22 10:00:00', 'Asia/Makassar')
+        );
+
+        try {
+            $variant = ProductVariant::query()
+                ->with('product')
+                ->whereNotNull('weight')
+                ->where('weight', '>', 0)
+                ->whereHas('product', function ($query) {
+                    $query->where('status', true)
+                        ->where('availability', 'ready')
+                        ->where('customization_enabled', false)
+                        ->where('patch_enabled', false);
+                })
+                ->firstOrFail();
+
+            config([
+                'biteship.couriers' => 'jnt,lion,gojek',
+                'biteship.origin.latitude' => -3.3194,
+                'biteship.origin.longitude' => 114.5908,
+            ]);
+
+            Session::put('cart', [[
+                'variant_id' => $variant->id,
+                'price' => (float) $variant->price,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ]]);
+
+            $this->mock(BiteshipService::class, function ($mock) {
+                $mock->shouldReceive('getCourierRates')
+                    ->once()
+                    ->with(Mockery::on(function (array $payload) {
+                        $couriers = explode(',', $payload['couriers']);
+
+                        return in_array('jnt', $couriers, true)
+                            && in_array('lion', $couriers, true)
+                            && ! in_array('gojek', $couriers, true);
+                    }))
+                    ->andReturn([
+                        'success' => true,
+                        'rates' => [],
+                        'raw' => [],
+                    ]);
+            });
+
+            $response = $this->postJson(route('checkout.shipping-rates'), [
+                'shipping_postal_code' => '70111',
+                'shipping_latitude' => -3.3194,
+                'shipping_longitude' => 114.5908,
+                'group_type' => 'ready',
+            ]);
+
+            $response->assertOk()
+                ->assertJson(['success' => true]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_gojek_remains_available_from_monday_to_saturday(): void
+    {
+        Carbon::setTestNow(
+            Carbon::parse('2026-11-23 10:00:00', 'Asia/Makassar')
+        );
+
+        try {
+            $variant = ProductVariant::query()
+                ->with('product')
+                ->whereNotNull('weight')
+                ->where('weight', '>', 0)
+                ->whereHas('product', function ($query) {
+                    $query->where('status', true)
+                        ->where('availability', 'ready')
+                        ->where('customization_enabled', false)
+                        ->where('patch_enabled', false);
+                })
+                ->firstOrFail();
+
+            config([
+                'biteship.couriers' => 'jnt,lion,gojek',
+                'biteship.origin.latitude' => -3.3194,
+                'biteship.origin.longitude' => 114.5908,
+            ]);
+
+            Session::put('cart', [[
+                'variant_id' => $variant->id,
+                'price' => (float) $variant->price,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ]]);
+
+            $this->mock(BiteshipService::class, function ($mock) {
+                $mock->shouldReceive('getCourierRates')
+                    ->once()
+                    ->with(Mockery::on(function (array $payload) {
+                        $couriers = explode(',', $payload['couriers']);
+
+                        return in_array('jnt', $couriers, true)
+                            && in_array('lion', $couriers, true)
+                            && in_array('gojek', $couriers, true);
+                    }))
+                    ->andReturn([
+                        'success' => true,
+                        'rates' => [],
+                        'raw' => [],
+                    ]);
+            });
+
+            $response = $this->postJson(route('checkout.shipping-rates'), [
+                'shipping_postal_code' => '70111',
+                'shipping_latitude' => -3.3194,
+                'shipping_longitude' => 114.5908,
+                'group_type' => 'ready',
+            ]);
+
+            $response->assertOk()
+                ->assertJson(['success' => true]);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
     private function assertReadyPickupRangeSaved(
         string $email,
         string $pickupTimeStart,

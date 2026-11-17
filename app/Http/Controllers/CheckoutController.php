@@ -31,6 +31,9 @@ class CheckoutController extends Controller
 {
     private function courierListForCheckout(bool $allowGojek, array $validated): string
     {
+        // Gojek dinonaktifkan khusus hari Minggu (WITA).
+        $allowGojek = $allowGojek && ! now()->isSunday();
+
         $couriers = array_filter(
             array_map(
                 'trim',

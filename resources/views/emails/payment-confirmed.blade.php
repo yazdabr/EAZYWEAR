@@ -103,19 +103,50 @@
                         </div>
 
                         <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                            @foreach($transaction->items as $item)
-                                <tr>
-                                    <td style="padding:14px 0; border-bottom:1px solid #eeeeee;">
-                                        <div style="font-size:14px; font-weight:bold;">
-                                            {{ $item->productVariant?->product?->name }}
-                                        </div>
+                        @foreach ($transaction->items as $item)
+                            @php
+                                $sizeName = $item->productVariant?->size?->name;
+                                $variantLabel = $sizeName
+                                    ? $sizeName . ($item->is_longsleeve ? ' LS' : '')
+                                    : null;
+                            @endphp
 
-                                        <div style="font-size:13px; color:#888888; margin-top:5px;">
-                                            Qty: {{ $item->qty }}
+                            <tr>
+                                <td style="padding:14px 0; border-bottom:1px solid #eeeeee;">
+                                    <div style="font-size:14px; font-weight:bold; color:#333333;">
+                                        {{ $item->productVariant?->product?->name }}
+                                    </div>
+
+                                    <div style="font-size:13px; color:#888888; margin-top:5px;">
+                                        Qty: {{ $item->qty }}
+                                    </div>
+
+                                    @if ($variantLabel)
+                                        <div style="font-size:13px; color:#555555; margin-top:5px;">
+                                            Ukuran: {{ $variantLabel }}
                                         </div>
-                                    </td>
-                                </tr>
-                            @endforeach
+                                    @endif
+
+                                    @if (filled($item->custom_number))
+                                        <div style="font-size:13px; color:#555555; margin-top:5px;">
+                                            Nomor Punggung: {{ $item->custom_number }}
+                                        </div>
+                                    @endif
+
+                                    @if (filled($item->custom_name))
+                                        <div style="font-size:13px; color:#555555; margin-top:5px;">
+                                            Nama Punggung: {{ $item->custom_name }}
+                                        </div>
+                                    @endif
+
+                                    @if ($item->is_patch)
+                                        <div style="font-size:13px; color:#555555; margin-top:5px;">
+                                            Patch: Ya
+                                        </div>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
                         </table>
                     </td>
                 </tr>

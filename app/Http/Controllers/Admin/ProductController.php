@@ -136,7 +136,12 @@ class ProductController extends Controller
             return [$sizeId => $allVariants[$sizeId] ?? $allVariants[(string) $sizeId] ?? []];
         })->all();
 
-        $request->merge(['size_ids' => $sizeIds, 'variants' => $selectedVariants]);
+        $request->merge([
+            'size_ids' => $sizeIds,
+            'variants' => $selectedVariants,
+            'longsleeve_enabled' => $request->input('longsleeve_enabled', false),
+            'longsleeve_price' => $request->input('longsleeve_price', 0),
+        ]);
 
         try {
             $validated = $request->validate([
@@ -347,7 +352,18 @@ class ProductController extends Controller
             return [$sizeId => $allVariants[$sizeId] ?? $allVariants[(string) $sizeId] ?? []];
         })->all();
 
-        $request->merge(['size_ids' => $sizeIds, 'variants' => $selectedVariants]);
+        $request->merge([
+            'size_ids' => $sizeIds,
+            'variants' => $selectedVariants,
+            'longsleeve_enabled' => $request->input(
+                'longsleeve_enabled',
+                $product->longsleeve_enabled ?? false
+            ),
+            'longsleeve_price' => $request->input(
+                'longsleeve_price',
+                $product->longsleeve_price ?? 0
+            ),
+        ]);
 
         $validated = $request->validate([
             'product_code' => ['required', 'string', 'max:50', 'unique:products,product_code,' . $product->id],

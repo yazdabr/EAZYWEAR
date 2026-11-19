@@ -6,6 +6,7 @@ use App\Models\Inventory;
 use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Size;
 use App\Models\StockMovement;
 use App\Models\Transaction;
 use App\Models\User;
@@ -186,6 +187,57 @@ class BoothPosControllerTest extends TestCase
             ->assertSee('value="QRIS"', false)
             ->assertSee('QRIS')
             ->assertSee('Transfer');
+    }
+
+    public function test_pos_catalog_sorts_sizes_with_longsleeve_after_base_size(): void
+    {
+        $product = Product::create([
+            'product_code' => 'BOOTH-SORT-' . uniqid(),
+            'category_id' => 6,
+            'name' => 'Produk Urut Ukuran Booth ' . uniqid(),
+            'slug' => 'produk-urut-ukuran-booth-' . uniqid(),
+            'description' => null,
+            'material' => null,
+            'status' => 1,
+            'availability' => 'ready',
+        ]);
+
+        $skus = [];
+
+        foreach (['L', 'M LS', 'XL', 'S', 'M', 'L LS', 'XS'] as $sizeName) {
+            $size = Size::firstOrCreate(['name' => $sizeName]);
+            $sku = 'BOOTH-SORT-' . str_replace(' ', '-', $sizeName) . '-' . uniqid();
+
+            $variant = ProductVariant::create([
+                'product_id' => $product->id,
+                'size_id' => $size->id,
+                'color_id' => null,
+                'sku' => $sku,
+                'price' => 150000,
+                'weight' => 500,
+            ]);
+
+            Inventory::create([
+                'product_variant_id' => $variant->id,
+                'stock' => 5,
+            ]);
+
+            $skus[$sizeName] = $sku;
+        }
+
+        $this->loginAsSuperAdmin();
+
+        $this->get(route('admin.kasir'))
+            ->assertOk()
+            ->assertSeeInOrder([
+                $skus['XS'],
+                $skus['S'],
+                $skus['M'],
+                $skus['M LS'],
+                $skus['L'],
+                $skus['L LS'],
+                $skus['XL'],
+            ], false);
     }
 
     public function test_transfer_checkout_completes_immediately_and_reduces_stock_once(): void

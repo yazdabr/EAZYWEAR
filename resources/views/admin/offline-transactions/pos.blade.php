@@ -60,28 +60,9 @@
         <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             @forelse($products as $product)
             @php
-                $sizeOrder = [
-                    'XXS' => 1, '2XS' => 1, 'XS' => 2, 'S' => 3,
-                    'M' => 4, 'L' => 5, 'XL' => 6, '2XL' => 7,
-                    'XXL' => 7, '3XL' => 8, '4XL' => 9,
-                    '5XL' => 10, '6XL' => 11,
-                ];
-
-                $readyVariants = $product->variants
-                    ->sortBy(function ($variant) use ($sizeOrder) {
-                        $size = strtoupper(trim(
-                            $variant->size->name
-                            ?? $variant->size->size_name
-                            ?? ''
-                        ));
-
-                        return [
-                            $sizeOrder[$size] ?? 99,
-                            $size,
-                            $variant->id,
-                        ];
-                    })
-                    ->values();
+                // Urutan varian sudah disiapkan oleh BoothPosController
+                // (ukuran dasar lalu ukuran LS setelah ukuran dasarnya).
+                $readyVariants = $product->variants;
 
                 $variantOptions = $readyVariants->map(function ($variant) {
                     return [

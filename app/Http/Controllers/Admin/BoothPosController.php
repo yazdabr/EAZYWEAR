@@ -16,6 +16,23 @@ use Illuminate\Validation\ValidationException;
 
 class BoothPosController extends Controller
 {
+    private const SIZE_RANKS = [
+        '3XS' => 1,
+        'XXS' => 1,
+        '2XS' => 1,
+        'XS' => 2,
+        'S' => 3,
+        'M' => 4,
+        'L' => 5,
+        'XL' => 6,
+        '2XL' => 7,
+        'XXL' => 7,
+        '3XL' => 8,
+        '4XL' => 9,
+        '5XL' => 10,
+        '6XL' => 11,
+    ];
+
     public function index()
     {
         $products = Product::query()
@@ -49,7 +66,50 @@ class BoothPosController extends Controller
             ->orderBy('name')
             ->get();
 
+        $this->sortVariantsBySize($products);
+        $this->sortVariantsBySize($stockProducts);
+
         return view('admin.offline-transactions.pos', compact('products', 'stockProducts'));
+    }
+
+    /**
+     * Urutkan varian berdasarkan ukuran dasar, lalu varian LS tepat setelah
+     * ukuran dasarnya (contoh: M, M LS, L, L LS).
+     */
+    private function sortVariantsBySize($products): void
+    {
+        foreach ($products as $product) {
+            if (! $product->relationLoaded('variants')) {
+                continue;
+            }
+
+            $product->setRelation(
+                'variants',
+                $product->variants
+                    ->sortBy(fn (ProductVariant $variant) => $this->sizeSortKey(
+                        $variant->size?->name,
+                        (int) $variant->id
+                    ))
+                    ->values()
+            );
+        }
+    }
+
+    private function sizeSortKey(?string $name, int $variantId = 0): string
+    {
+        $normalized = strtoupper(trim((string) $name));
+        $isLongsleeve = (bool) preg_match('/\s+LS$/', $normalized);
+        $base = trim((string) preg_replace('/\s+LS$/', '', $normalized));
+
+        $rank = self::SIZE_RANKS[$base] ?? 99;
+
+        return sprintf(
+            '%03d-%d-%s-%010d',
+            $rank,
+            $isLongsleeve ? 1 : 0,
+            $base,
+            $variantId
+        );
     }
 
     public function store(

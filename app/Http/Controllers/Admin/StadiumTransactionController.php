@@ -549,6 +549,7 @@ class StadiumTransactionController extends Controller
         $variants = ProductVariant::query()
             ->with(['product', 'size'])
             ->whereIn('id', $requestedVariantIds)
+            ->where('is_active', true)
             ->get()
             ->keyBy('id');
 
@@ -676,6 +677,7 @@ class StadiumTransactionController extends Controller
     {
         return ProductVariant::query()
             ->with(['product', 'size'])
+            ->where('is_active', true)
             ->whereHas('product', function ($query) {
                 $query->where(function ($query) {
                     $query->where('name', 'like', '%Stadium Version 2026/27%')

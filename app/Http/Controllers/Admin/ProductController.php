@@ -25,6 +25,7 @@ class ProductController extends Controller
         $query = Product::with([
             'category',
             'images',
+            'variants' => fn ($variantQuery) => $variantQuery->where('is_active', true),
             'variants.size',
             'variants.color',
             'variants.inventory'
@@ -49,7 +50,7 @@ class ProductController extends Controller
                 ->all();
 
             $variants = $product->variants
-                ->filter(fn ($variant) => $variant->size_id)
+                ->filter(fn ($variant) => $variant->size_id && $variant->is_active)
                 ->mapWithKeys(function ($variant) {
                     return [
                         (string) $variant->size_id => [
@@ -277,6 +278,7 @@ class ProductController extends Controller
                         'sku' => $sku,
                         'price' => $variantData['price'],
                         'weight' => $variantData['weight'] ?? null,
+                        'is_active' => true,
                     ]);
 
                     Inventory::create([
@@ -329,14 +331,28 @@ class ProductController extends Controller
 
     public function show(Product $product): View
     {
-        $product->load(['category', 'images', 'variants.size', 'variants.color', 'variants.inventory']);
+        $product->load([
+            'category',
+            'images',
+            'variants' => fn ($variantQuery) => $variantQuery->where('is_active', true),
+            'variants.size',
+            'variants.color',
+            'variants.inventory',
+        ]);
 
         return view('admin.products.show', compact('product'));
     }
 
     public function edit(Product $product): View
     {
-        $product->load(['category', 'images', 'variants.size', 'variants.color', 'variants.inventory']);
+        $product->load([
+            'category',
+            'images',
+            'variants' => fn ($variantQuery) => $variantQuery->where('is_active', true),
+            'variants.size',
+            'variants.color',
+            'variants.inventory',
+        ]);
         $categories = Category::query()->where('status', true)->orderBy('name')->get();
         $sizes = Size::ordered()->get();
 
@@ -510,6 +526,7 @@ class ProductController extends Controller
                         'sku' => $sku,
                         'price' => $variantData['price'],
                         'weight' => $variantData['weight'] ?? null,
+                        'is_active' => true,
                     ]);
 
                     if ($variant->inventory) {
@@ -529,6 +546,7 @@ class ProductController extends Controller
                         'sku' => $sku,
                         'price' => $variantData['price'],
                         'weight' => $variantData['weight'] ?? null,
+                        'is_active' => true,
                     ]);
 
                     Inventory::create([
@@ -544,7 +562,21 @@ class ProductController extends Controller
                 ->get();
 
             foreach ($variantsToRemove as $variant) {
-                if ($variant->transactionItems()->exists()) {
+                $hasTransactions = $variant->transactionItems()->exists();
+                $hasStockMovements = $variant->inventory?->stockMovements()->exists() ?? false;
+                $hasRemainingStock = $variant->inventory
+                    && (int) $variant->inventory->stock > 0;
+
+                /*
+                 * Variant yang sudah punya riwayat transaksi/stok tidak boleh
+                 * dihapus. Nonaktifkan agar hilang dari kasir & katalog, tetapi
+                 * data transaksi, inventory, dan stock movement tetap utuh.
+                 */
+                if ($hasTransactions || $hasStockMovements || $hasRemainingStock) {
+                    if ($variant->is_active) {
+                        $variant->update(['is_active' => false]);
+                    }
+
                     continue;
                 }
 
@@ -597,7 +629,13 @@ class ProductController extends Controller
         });
 
         if($request->wantsJson()){
-            $product->load(['images','variants.size','variants.color','variants.inventory']);
+            $product->load([
+                'images',
+                'variants' => fn ($variantQuery) => $variantQuery->where('is_active', true),
+                'variants.size',
+                'variants.color',
+                'variants.inventory',
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -675,7 +713,11 @@ class ProductController extends Controller
 
     public function shop(Request $request)
     {
-        $products = Product::with(['category', 'images', 'variants'])
+        $products = Product::with([
+            'category',
+            'images',
+            'variants' => fn ($variantQuery) => $variantQuery->where('is_active', true),
+        ])
             ->where('status', true)
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -702,6 +744,7 @@ class ProductController extends Controller
         $product->load([
             'category',
             'images',
+            'variants' => fn ($variantQuery) => $variantQuery->where('is_active', true),
             'variants.size',
             'variants.color',
             'variants.inventory',
@@ -727,7 +770,7 @@ class ProductController extends Controller
         $product->setAttribute(
             'available_sizes',
             $product->variants
-                ->filter(fn ($variant) => $variant->size)
+                ->filter(fn ($variant) => $variant->is_active && $variant->size)
                 ->map(function ($variant) {
                     return [
                         'id' => $variant->id,

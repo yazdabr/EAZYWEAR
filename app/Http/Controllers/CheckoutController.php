@@ -158,7 +158,12 @@ class CheckoutController extends Controller
                         ->with('product')
                         ->find($variantId);
 
-                    if (! $variant || ! $variant->product || ! $variant->product->status) {
+                    if (
+                        ! $variant
+                        || ! $variant->is_active
+                        || ! $variant->product
+                        || ! $variant->product->status
+                    ) {
                         return response()->json([
                             'success' => false,
                             'message' => 'Salah satu produk di keranjang sudah tidak tersedia.',
@@ -361,6 +366,7 @@ class CheckoutController extends Controller
         $variantsById = \App\Models\ProductVariant::query()
             ->with('product')
             ->whereIn('id', $variantIds)
+            ->where('is_active', true)
             ->get()
             ->keyBy('id');
 
@@ -576,6 +582,12 @@ class CheckoutController extends Controller
                     if (! $variant) {
                         throw ValidationException::withMessages([
                             'cart' => 'Salah satu produk sudah tidak tersedia.',
+                        ]);
+                    }
+
+                    if (! $variant->is_active) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'Ukuran produk yang dipilih sudah tidak tersedia.',
                         ]);
                     }
 

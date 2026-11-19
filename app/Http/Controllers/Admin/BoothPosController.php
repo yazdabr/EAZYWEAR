@@ -21,10 +21,14 @@ class BoothPosController extends Controller
         $products = Product::query()
             ->where('status', true)
             ->where('availability', 'ready')
-            ->whereHas('variants.inventory', function ($query) {
-                $query->where('stock', '>', 0);
+            ->whereHas('variants', function ($query) {
+                $query->where('is_active', true)
+                    ->whereHas('inventory', function ($inventoryQuery) {
+                        $inventoryQuery->where('stock', '>', 0);
+                    });
             })
             ->with([
+                'variants' => fn ($variantQuery) => $variantQuery->where('is_active', true),
                 'variants.size',
                 'variants.color',
                 'variants.inventory',
@@ -37,6 +41,7 @@ class BoothPosController extends Controller
             ->where('status', true)
             ->where('availability', 'ready')
             ->with([
+                'variants' => fn ($variantQuery) => $variantQuery->where('is_active', true),
                 'variants.size',
                 'variants.color',
                 'variants.inventory',
@@ -98,6 +103,7 @@ class BoothPosController extends Controller
 
                 if (
                     !$variant
+                    || !$variant->is_active
                     || !$variant->product
                     || !$variant->product->status
                     || $variant->product->availability !== 'ready'

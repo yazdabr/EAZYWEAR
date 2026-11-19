@@ -48,6 +48,13 @@ class CartController extends Controller
 
         abort_unless($variant->product?->status, 404);
 
+        if (! $variant->is_active) {
+            return back()->with(
+                'error',
+                'Ukuran produk ini sudah tidak tersedia.'
+            );
+        }
+
         if ($variant->product->availability === 'ready' && $variant->product->ready_stock_closed) {
             return back()->with(
                 'error',

@@ -32,7 +32,7 @@ $variantsData=[];
 $sizeIds=[];
 
 foreach($product->variants as $variant){
-    if(!$variant->size_id){
+    if(!$variant->size_id || !$variant->is_active){
         continue;
     }
 
@@ -57,9 +57,9 @@ $sizeIds = \App\Models\Size::ordered()
     ->values()
     ->all();
 
-$firstVariant=$product->variants->first();
+$firstVariant=$product->variants->first(fn($v)=>(bool)$v->is_active);
 $price=$firstVariant?->price??0;
-$stock=$product->variants->sum(fn($v)=>(int)($v->inventory?->stock??$v->stock??0));
+$stock=$product->variants->filter(fn($v)=>(bool)$v->is_active)->sum(fn($v)=>(int)($v->inventory?->stock??$v->stock??0));
 $status=$product->status?'Aktif':'Tidak Aktif';
 $updated=$product->updated_at?$product->updated_at->diffForHumans():'-';
 

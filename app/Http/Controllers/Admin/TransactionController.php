@@ -459,6 +459,7 @@ class TransactionController extends Controller
     public function create()
     {
         $variants = ProductVariant::with(['product.images', 'size', 'color', 'inventory'])
+            ->where('is_active', true)
             ->whereHas('product', fn ($query) => $query->where('status', true))
             ->whereHas('inventory', fn ($query) => $query->where('stock', '>', 0))
             ->orderBy('id')
@@ -529,6 +530,10 @@ class TransactionController extends Controller
 
                 foreach ($validated['items'] as $item) {
                     $variant = ProductVariant::with(['product', 'size'])->lockForUpdate()->findOrFail($item['product_variant_id']);
+
+                    if (!$variant->is_active) {
+                        throw ValidationException::withMessages(['items' => 'Ukuran produk yang dipilih tidak aktif.']);
+                    }
 
                     if (!$variant->product || !$variant->product->status) {
                         throw ValidationException::withMessages(['items' => 'Produk yang dipilih tidak aktif.']);

@@ -14,6 +14,7 @@ class MetaProductFeedController extends Controller
             ->where('status', true)
             ->with([
                 'images' => fn ($query) => $query->orderBy('sort_order'),
+                'variants' => fn ($query) => $query->where('is_active', true),
                 'variants.size',
                 'variants.inventory',
             ])

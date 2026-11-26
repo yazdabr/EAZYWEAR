@@ -305,21 +305,6 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                             </h2>
                         </div>
 
-                        @if($transaction->payment_method === 'ALFAMART')
-                            <div class="rounded-xl bg-slate-50 p-3.5 space-y-2 text-xs sm:text-sm border border-slate-200/60">
-                                <div class="flex justify-between items-start gap-3">
-                                    <span class="text-slate-500">Metode Pembayaran</span>
-                                    <span class="font-semibold text-slate-900 text-right">Alfamart</span>
-                                </div>
-                                <div class="flex justify-between items-start gap-3 border-t border-slate-200/60 pt-2">
-                                    <span class="text-slate-500">Status Pembayaran</span>
-                                    <span class="font-bold text-right {{ $transaction->status === 'PAID' ? 'text-green-700' : 'text-amber-700' }}">
-                                        {{ strtoupper((string) $transaction->status) }}
-                                    </span>
-                                </div>
-                            </div>
-                        @endif
-
                         @if($transaction->shipments->isNotEmpty())
                             @foreach($transaction->shipments as $shipment)
                                 @php
@@ -375,6 +360,42 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                                 Rp {{ number_format((float) $shipment->shipping_cost, 0, ',', '.') }}
                                             </span>
                                         </div>
+
+                                        @if($loop->first && $transaction->payment_method === 'ALFAMART')
+                                            <div class="border-t border-slate-200/60 pt-2 space-y-2">
+                                                <div class="flex justify-between items-start gap-3">
+                                                    <span class="text-slate-500">Metode Pembayaran</span>
+                                                    <span class="font-semibold text-slate-900 text-right">Alfamart</span>
+                                                </div>
+
+                                                <div class="flex justify-between items-start gap-3">
+                                                    <span class="text-slate-500">Status Pembayaran</span>
+                                                    <span class="font-bold text-right {{ $transaction->status === 'PAID' ? 'text-green-700' : 'text-amber-700' }}">
+                                                        {{ strtoupper((string) $transaction->status) }}
+                                                    </span>
+                                                </div>
+
+                                                <div class="border-t border-slate-200/60 pt-2">
+                                                    <p class="text-slate-500">Kode Pembayaran Alfamart</p>
+                                                    @if(filled($transaction->minimarket_payment_code))
+                                                        <p class="mt-1 select-all break-all rounded-lg bg-white border border-slate-200 px-3 py-2 text-center font-mono font-bold text-base text-slate-900">
+                                                            {{ $transaction->minimarket_payment_code }}
+                                                        </p>
+                                                    @else
+                                                        <p class="mt-1 text-amber-700">Kode pembayaran belum tersedia.</p>
+                                                    @endif
+                                                </div>
+
+                                                @if($transaction->minimarket_expired_at)
+                                                    <div class="flex justify-between items-start gap-3 border-t border-slate-200/60 pt-2">
+                                                        <span class="text-slate-500">Batas Pembayaran</span>
+                                                        <span class="font-semibold text-slate-900 text-right">
+                                                            {{ $transaction->minimarket_expired_at->copy()->timezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y, H:i') }} WITA
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endif
 
                                         @if($shipment->tracking_number || $shipment->biteship_waybill_id)
                                             <div class="flex justify-between items-start gap-3 border-t border-slate-200/60 pt-2">
@@ -450,7 +471,7 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                                 )
                                                     <p class="mt-0.5 text-xs font-semibold text-slate-600">
                                                         {{ \Carbon\Carbon::parse($shipment->pickup_date)->locale('id')->translatedFormat('l, d F Y') }},
-                                                        {{ \Carbon\Carbon::parse($shipment->pickup_time_start)->format('H:i') }}â€“{{ \Carbon\Carbon::parse($shipment->pickup_time_end)->format('H:i') }} WITA
+                                                        {{ \Carbon\Carbon::parse($shipment->pickup_time_start)->format('H:i') }} - {{ \Carbon\Carbon::parse($shipment->pickup_time_end)->format('H:i') }} WITA
                                                     </p>
                                                 @endif
                                             </div>
@@ -540,46 +561,6 @@ $currentStatus = $statusMap[$currentHistory?->status ?? $transaction->status] ??
                                         {{ $transaction->shipping_district }}, {{ $transaction->shipping_city }}, {{ $transaction->shipping_province }} {{ $transaction->shipping_postal_code }}
                                     </p>
                                 </div>
-                            </div>
-                        @endif
-
-                        {{-- KODE PEMBAYARAN ALFAMART --}}
-                        @if($transaction->payment_method === 'ALFAMART')
-                            <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
-                                <div>
-                                    <p class="text-xs font-bold uppercase tracking-wider text-amber-800">
-                                        Kode Pembayaran Alfamart
-                                    </p>
-
-                                    @if(filled($transaction->minimarket_payment_code))
-                                        <p class="mt-2 select-all break-all rounded-lg border border-amber-200 bg-white px-3 py-3 text-center font-mono text-lg font-bold tracking-wide text-slate-900">
-                                            {{ $transaction->minimarket_payment_code }}
-                                        </p>
-                                        <p class="mt-2 text-[11px] text-amber-800">
-                                            Tunjukkan kode ini kepada kasir Alfamart.
-                                        </p>
-                                    @else
-                                        <p class="mt-2 rounded-lg bg-white p-3 text-xs text-amber-800">
-                                            Kode pembayaran belum tersedia. Silakan hubungi Eazywear untuk bantuan.
-                                        </p>
-                                    @endif
-                                </div>
-
-                                @if($transaction->minimarket_expired_at)
-                                    <div class="border-t border-amber-200 pt-3">
-                                        <p class="text-[10px] font-bold uppercase tracking-wider text-amber-800">
-                                            Batas Pembayaran
-                                        </p>
-                                        <p class="mt-1 text-sm font-bold text-slate-900">
-                                            {{ $transaction->minimarket_expired_at
-                                                ->copy()
-                                                ->timezone('Asia/Makassar')
-                                                ->locale('id')
-                                                ->translatedFormat('d M Y, H:i')
-                                            }} WITA
-                                        </p>
-                                    </div>
-                                @endif
                             </div>
                         @endif
                     </div>

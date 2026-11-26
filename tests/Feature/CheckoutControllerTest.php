@@ -8,6 +8,7 @@ use App\Services\DokuService;
 use App\Services\BiteshipService;
 use App\Models\Transaction;
 use App\Services\DokuQrisService;
+use App\Services\DokuMinimarketService;
 use App\Models\FulfillmentSlot;
 use App\Models\FulfillmentHold;
 use Carbon\Carbon;
@@ -64,6 +65,37 @@ class CheckoutControllerTest extends TestCase
                         'qrContent' => '000201010212...',
                         'terminalId' => 'TEST-TERMINAL-ID',
                         '_external_id' => 'EXT-QRIS-001',
+                    ];
+                });
+        });
+    }
+
+    private function mockAlfamartSuccess(): void
+    {
+        $this->mock(DokuMinimarketService::class, function ($mock) {
+            $mock->shouldReceive('isConfigured')
+                ->once()
+                ->andReturn(true);
+
+            $mock->shouldReceive('createAlfamartPaymentCode')
+                ->once()
+                ->andReturnUsing(function (
+                    string $invoiceNumber,
+                    int|float|string $amount,
+                    string $customerName,
+                    string $requestId,
+                    ?string $customerEmail = null,
+                    ?string $info = null
+                ) {
+                    return [
+                        'order' => [
+                            'invoice_number' => $invoiceNumber,
+                            'amount' => (int) $amount,
+                        ],
+                        'online_to_offline_info' => [
+                            'payment_code' => '1900600000000046',
+                        ],
+                        '_request_id' => $requestId,
                     ];
                 });
         });
@@ -192,6 +224,182 @@ class CheckoutControllerTest extends TestCase
             $pickupDate,
             $transaction->pickup_date->toDateString()
         );
+    }
+
+    public function test_checkout_creates_pending_transaction_with_alfamart(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        $databasePrice = (float) $variant->price;
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => $databasePrice,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $biteship = $this->mock(BiteshipService::class);
+
+        $biteship->shouldReceive('getCourierRates')
+            ->never();
+
+        $this->mockAlfamartSuccess();
+
+        $pickupDate = now()->addDay()->format('Y-m-d');
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Alfamart Customer',
+            'email' => 'alfamart-test@test.com',
+            'phone' => '08123456780',
+            'shipping_address' => 'Alamat Pickup',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+
+            ...($variant->product->availability === 'ready'
+                ? [
+                    'ready_shipping_method' => 'Ambil di Tempat',
+                    'ready_pickup_date' => $pickupDate,
+                    'ready_pickup_time_start' => '09:00',
+                    'ready_pickup_time_end' => '11:00',
+                ]
+                : [
+                    'pre_order_shipping_method' => 'Ambil di Tempat',
+                    'pre_order_pickup_date' => $pickupDate,
+                    'pre_order_pickup_time_start' => '09:00',
+                    'pre_order_pickup_time_end' => '11:00',
+                ]),
+
+            'payment_method' => 'ALFAMART',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'alfamart-test@test.com')
+            ->firstOrFail();
+
+        $this->assertSame('PENDING', $transaction->status);
+        $this->assertSame('ALFAMART', $transaction->payment_method);
+        $this->assertSame('ALFAMART', $transaction->minimarket_store);
+        $this->assertSame(
+            '1900600000000046',
+            $transaction->minimarket_payment_code
+        );
+
+        $this->assertNotEmpty($transaction->minimarket_request_id);
+        $this->assertNotNull($transaction->minimarket_expired_at);
+        $this->assertIsArray($transaction->minimarket_response);
+
+        $this->assertSame(
+            $databasePrice,
+            (float) $transaction->subtotal
+        );
+    }
+
+    public function test_checkout_keeps_pending_transaction_when_alfamart_api_fails(): void
+    {
+        $variant = ProductVariant::query()
+            ->whereHas('product', function ($query) {
+                $query->where('status', true);
+            })
+            ->firstOrFail();
+
+        $variant->update([
+            'weight' => 250,
+        ]);
+
+        Inventory::query()
+            ->where('product_variant_id', $variant->id)
+            ->update([
+                'stock' => 10,
+            ]);
+
+        Session::put('cart', [
+            [
+                'variant_id' => $variant->id,
+                'price' => $variant->price,
+                'qty' => 1,
+                'custom_name' => '',
+                'custom_number' => '',
+            ],
+        ]);
+
+        $biteship = $this->mock(BiteshipService::class);
+
+        $biteship->shouldReceive('getCourierRates')
+            ->never();
+
+        $this->mock(DokuMinimarketService::class, function ($mock) {
+            $mock->shouldReceive('isConfigured')
+                ->once()
+                ->andReturn(true);
+
+            $mock->shouldReceive('createAlfamartPaymentCode')
+                ->once()
+                ->andThrow(new \RuntimeException('DOKU API unavailable'));
+        });
+
+        $pickupDate = now()->addDay()->format('Y-m-d');
+
+        $response = $this->post(route('checkout.store'), [
+            'name' => 'Alfamart Failure Customer',
+            'email' => 'alfamart-failure@test.com',
+            'phone' => '08123456780',
+            'shipping_address' => 'Alamat Pickup',
+            'shipping_district' => 'District',
+            'shipping_city' => 'Banjarmasin',
+            'shipping_province' => 'Kalimantan Selatan',
+            'shipping_postal_code' => '70111',
+
+            ...($variant->product->availability === 'ready'
+                ? [
+                    'ready_shipping_method' => 'Ambil di Tempat',
+                    'ready_pickup_date' => $pickupDate,
+                    'ready_pickup_time_start' => '09:00',
+                    'ready_pickup_time_end' => '11:00',
+                ]
+                : [
+                    'pre_order_shipping_method' => 'Ambil di Tempat',
+                    'pre_order_pickup_date' => $pickupDate,
+                    'pre_order_pickup_time_start' => '09:00',
+                    'pre_order_pickup_time_end' => '11:00',
+                ]),
+
+            'payment_method' => 'ALFAMART',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+
+        $transaction = Transaction::query()
+            ->where('shipping_email', 'alfamart-failure@test.com')
+            ->firstOrFail();
+
+        $this->assertSame('PENDING', $transaction->status);
+        $this->assertSame('ALFAMART', $transaction->payment_method);
+        $this->assertSame('ALFAMART', $transaction->minimarket_store);
+        $this->assertNull($transaction->minimarket_payment_code);
+        $this->assertNotEmpty($transaction->minimarket_request_id);
+        $this->assertNotNull($transaction->minimarket_expired_at);
     }
 
     public function test_checkout_creates_pending_transaction_with_va(): void

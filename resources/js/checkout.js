@@ -161,8 +161,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const latitudeInput = document.getElementById('shipping_latitude');
     const longitudeInput = document.getElementById('shipping_longitude');
     const vaBankSection = document.getElementById('va-bank-section');
+    const alfamartSection = document.getElementById('alfamart-section');
+    const alfamartDetailSection = document.getElementById('alfamart-detail-section');
     const paymentMethodInputs = form.querySelectorAll('input[name="payment_method"]');
     const vaBankInputs = form.querySelectorAll('input[name="va_bank"]');
+    const alfamartStoreInputs = form.querySelectorAll('[data-alfamart-store]');
     const fulfillmentModeInputs = form.querySelectorAll('input[name="fulfillment_mode"]');
 
     if (!postalInput || !vaBankSection || paymentMethodInputs.length === 0 || vaBankInputs.length === 0) {
@@ -1249,11 +1252,37 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function updateAlfamartDetailUI() {
+        const paymentMethod = form.querySelector('input[name="payment_method"]:checked')?.value;
+        const isAlfamart = paymentMethod === 'ALFAMART';
+        const storeSelected = isAlfamart && Array.from(alfamartStoreInputs).some((input) => input.checked);
+
+        if (alfamartDetailSection) {
+            alfamartDetailSection.classList.toggle('hidden', !storeSelected);
+        }
+    }
+
     function updatePaymentMethodUI() {
         const paymentMethod = form.querySelector('input[name="payment_method"]:checked')?.value;
         const isVa = paymentMethod === 'VA';
+        const isAlfamart = paymentMethod === 'ALFAMART';
+
         vaBankSection.classList.toggle('hidden', !isVa);
         vaBankInputs.forEach((input) => { input.disabled = !isVa; });
+
+        // Pembayaran Gerai memakai alur bertingkat: metode utama -> Pilih Gerai (Alfamart) -> detail.
+        if (alfamartSection) {
+            alfamartSection.classList.toggle('hidden', !isAlfamart);
+        }
+
+        alfamartStoreInputs.forEach((input) => {
+            input.disabled = !isAlfamart;
+            if (!isAlfamart) {
+                input.checked = false;
+            }
+        });
+
+        updateAlfamartDetailUI();
     }
 
     groups.forEach((group) => {
@@ -1361,6 +1390,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     paymentMethodInputs.forEach((input) => input.addEventListener('change', updatePaymentMethodUI));
+    alfamartStoreInputs.forEach((input) => input.addEventListener('change', updateAlfamartDetailUI));
 
     postalInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);

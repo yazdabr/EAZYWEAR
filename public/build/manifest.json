@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-C5aT_Lkt.css",
+    "file": "assets/app-BgKMBz14.css",
     "name": "app",
     "names": [
       "app.css"
@@ -15,7 +15,7 @@
     "isEntry": true
   },
   "resources/js/checkout.js": {
-    "file": "assets/checkout-C8MRYwzd.js",
+    "file": "assets/checkout-BPzfT5LR.js",
     "name": "checkout",
     "src": "resources/js/checkout.js",
     "isEntry": true

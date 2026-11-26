@@ -31,6 +31,12 @@ class ExpireTransactions extends Command
                             ->where('payment_method', 'QRIS')
                             ->whereNotNull('qris_expired_at')
                             ->where('qris_expired_at', '<=', now());
+                    })
+                    ->orWhere(function ($query) {
+                        $query
+                            ->where('payment_method', 'ALFAMART')
+                            ->whereNotNull('minimarket_expired_at')
+                            ->where('minimarket_expired_at', '<=', now());
                     });
             })
             ->orderBy('id')
@@ -42,7 +48,7 @@ class ExpireTransactions extends Command
                     $expiredCount++;
 
                     $this->info(
-                        "Transaction #{$transaction->id} ({$transaction->invoice_number}) → EXPIRED"
+                        "Transaction #{$transaction->id} ({$transaction->invoice_number}) -> EXPIRED"
                     );
                 }
             });

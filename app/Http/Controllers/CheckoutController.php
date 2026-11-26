@@ -16,6 +16,7 @@ use App\Services\FulfillmentDateService;
 use App\Services\FulfillmentHoldService;
 use App\Services\FulfillmentSlotService;
 use App\Services\QrisQrCodeService;
+use App\Services\DokuMinimarketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -418,6 +419,7 @@ class CheckoutController extends Controller
         Request $request,
         DokuService $dokuService,
         DokuQrisService $dokuQrisService,
+        DokuMinimarketService $dokuMinimarketService,
         BiteshipService $biteshipService,
         FulfillmentDateService $fulfillmentDateService,
         FulfillmentSlotService $fulfillmentSlotService,
@@ -482,7 +484,11 @@ class CheckoutController extends Controller
                 'nullable', 'date_format:H:i',
             ],
 
-            'payment_method' => ['required', 'string', Rule::in(['VA', 'QRIS'])],
+            'payment_method' => [
+                'required',
+                'string',
+                Rule::in(['VA', 'QRIS', 'ALFAMART']),
+            ],
             'va_bank' => [
                 Rule::requiredIf(fn () => $request->input('payment_method') === 'VA'),
                 'nullable', 'string', Rule::in(['MANDIRI', 'BNI', 'BRI', 'BSI']),
@@ -495,8 +501,17 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Keranjang masih kosong.');
         }
 
-        try {
-            $transaction = DB::transaction(function () use (
+            try {
+                if (
+                    $validated['payment_method'] === 'ALFAMART'
+                    && ! $dokuMinimarketService->isConfigured()
+                ) {
+                    throw new RuntimeException(
+                        'Konfigurasi DOKU Alfamart belum lengkap.'
+                    );
+                }
+
+                $transaction = DB::transaction(function () use (
                 $validated,
                 $cart,
                 $dokuService,
@@ -953,6 +968,19 @@ class CheckoutController extends Controller
                     'invoice_number' => $invoiceNumber,
                     'transaction_date' => now(),
                     'payment_method' => $validated['payment_method'],
+                    'minimarket_store' => $validated['payment_method'] === 'ALFAMART'
+                        ? 'ALFAMART'
+                        : null,
+
+                    'minimarket_request_id' => $validated['payment_method'] === 'ALFAMART'
+                        ? (string) Str::uuid()
+                        : null,
+
+                    'minimarket_expired_at' => $validated['payment_method'] === 'ALFAMART'
+                        ? now()->addMinutes(
+                            (int) config('doku-minimarket.alfamart.expired_time', 1440)
+                        )
+                        : null,
                     'subtotal' => $subtotal,
                     'discount' => $discount,
                     'shipping' => $shipping,
@@ -1196,7 +1224,8 @@ class CheckoutController extends Controller
                         'va_expired_at' => $vaExpiredAt,
                         'doku_response' => $dokuResponse,
                     ]);
-                } else {
+
+                } elseif ($validated['payment_method'] === 'QRIS') {
                     $qrisExpiredAt = now()->addMinutes(10);
 
                     $qrisResponse = $dokuQrisService->generateQr(
@@ -1253,6 +1282,7 @@ class CheckoutController extends Controller
                         'qris_expired_at' => $qrisExpiredAt,
                         'qris_response' => $qrisResponse,
                     ]);
+
                 }
 
                 $transaction->load(['items.productVariant.product']);
@@ -1265,6 +1295,45 @@ class CheckoutController extends Controller
 
                 return $transaction;
             });
+
+            // Generate kode pembayaran Alfamart setelah transaksi database commit.
+            if ($transaction->payment_method === 'ALFAMART') {
+                try {
+                    $minimarketResponse = $dokuMinimarketService->createAlfamartPaymentCode(
+                        (string) $transaction->invoice_number,
+                        (string) $transaction->total,
+                        (string) $transaction->shipping_name,
+                        (string) $transaction->minimarket_request_id,
+                        $transaction->shipping_email
+                            ? (string) $transaction->shipping_email
+                            : null
+                    );
+
+                    $paymentCode = trim((string) data_get(
+                        $minimarketResponse,
+                        'online_to_offline_info.payment_code',
+                        ''
+                    ));
+
+                    if ($paymentCode === '') {
+                        throw new RuntimeException(
+                            'Payment code Alfamart tidak ditemukan.'
+                        );
+                    }
+
+                    $transaction->update([
+                        'minimarket_payment_code' => $paymentCode,
+                        'minimarket_response' => $minimarketResponse,
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to generate DOKU Alfamart payment code.', [
+                        'transaction_id' => $transaction->id,
+                        'invoice_number' => $transaction->invoice_number,
+                        'request_id' => $transaction->minimarket_request_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             $outbox = null;
 

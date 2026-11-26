@@ -17,3 +17,8 @@ Schedule::command('emails:recover-orders')
 Schedule::command('emails:recover-completed')
     ->everyMinute()
     ->withoutOverlapping();
+
+// Expire transaksi VA, QRIS, dan Alfamart yang melewati batas pembayaran.
+Schedule::command('transactions:expire')
+    ->everyMinute()
+    ->withoutOverlapping();

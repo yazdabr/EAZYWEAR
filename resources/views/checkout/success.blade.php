@@ -20,7 +20,7 @@
                             <p class="mt-0.5 text-[10px] text-gray-500 sm:mt-1 sm:text-xs">Simpan nomor invoice ini untuk referensi pesanan Anda.</p>
                             <p class="mt-1.5 break-all text-base font-extrabold tracking-wide text-slate-900 sm:mt-3 sm:text-2xl">{{ $transaction->invoice_number }}</p>
                         </div>
-                        <span class="inline-flex shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700 sm:px-4 sm:py-1.5 sm:text-xs">{{ $transaction->status }}</span>
+                        <span id="transaction-status-label" class="inline-flex shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700 sm:px-4 sm:py-1.5 sm:text-xs">{{ $transaction->status }}</span>
                     </div>
                 </div>
                 <div class="px-4 sm:px-8">
@@ -109,7 +109,12 @@
 @endif
                             <div class="flex justify-between text-xs text-gray-600 sm:text-sm">
                                 <span>Metode Pembayaran</span>
-                                <span class="font-bold text-slate-900">{{ $transaction->payment_method === 'VA' ? 'Virtual Account' : $transaction->payment_method }}</span>
+                                <span class="font-bold text-slate-900">{{ match($transaction->payment_method) {
+                                    'VA' => 'Virtual Account',
+                                    'QRIS' => 'QRIS',
+                                    'ALFAMART' => 'Alfamart',
+                                    default => $transaction->payment_method,
+                                } }}</span>
                             </div>
                             <div class="border-t border-gray-100 pt-2.5 sm:pt-4">
                                 <div class="flex items-center justify-between gap-4">
@@ -234,7 +239,65 @@
                         @endif
                     </div>
                 </div>
-            @endif
+                @elseif($transaction->payment_method === 'ALFAMART')
+                    <div class="mt-4 overflow-hidden rounded-xl border border-red-200 bg-white shadow-sm sm:mt-6 sm:rounded-3xl">
+                        <div class="bg-red-50 px-4 py-3.5 sm:px-8 sm:py-6">
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white sm:h-10 sm:w-10">
+                                    <x-heroicon-o-shopping-bag class="h-4 w-4 text-red-600 sm:h-5 sm:w-5"/>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold uppercase tracking-wider text-red-700 sm:text-sm">Pembayaran Alfamart</p>
+                                    <p class="mt-0.5 text-[10px] text-red-600 sm:text-xs">Selesaikan pembayaran di gerai Alfamart menggunakan kode berikut.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 px-4 py-4 sm:px-8 sm:py-6">
+                            @if($transaction->minimarket_payment_code)
+                                <div>
+                                    <p class="text-xs font-semibold text-gray-500 sm:text-sm">Kode Pembayaran</p>
+                                    <div class="mt-1.5 flex items-center justify-between gap-2.5 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 sm:px-4 sm:py-3">
+                                        <p id="minimarket-payment-code" class="break-all text-base font-extrabold tracking-wide text-slate-900 sm:text-2xl">{{ $transaction->minimarket_payment_code }}</p>
+                                        <button type="button" id="copy-minimarket-code-button" class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-red-600 bg-white px-2.5 py-1.5 text-[11px] font-bold text-red-600 transition hover:bg-red-50 sm:gap-1.5 sm:px-3 sm:py-2 sm:text-xs">
+                                            <x-heroicon-o-clipboard class="h-3.5 w-3.5 sm:h-4 sm:w-4"/>
+                                            <span>Salin</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between gap-4 text-xs sm:text-sm">
+                                    <span class="text-gray-500">Total pembayaran</span>
+                                    <span class="font-extrabold text-[#AE7C18]">Rp {{ number_format($transaction->total, 0, ',', '.') }}</span>
+                                </div>
+
+                                @if($transaction->minimarket_expired_at)
+                                    <div class="flex items-center justify-between gap-4 text-xs sm:text-sm">
+                                        <span class="text-gray-500">Batas Pembayaran</span>
+                                        <span class="text-right font-bold text-slate-900">{{ $transaction->minimarket_expired_at->copy()->setTimezone('Asia/Makassar')->locale('id')->translatedFormat('d M Y, H:i') . ' WITA' }}</span>
+                                    </div>
+
+                                    <div id="minimarket-payment-countdown" data-expires-at="{{ $transaction->minimarket_expired_at->timestamp * 1000 }}" class="rounded-xl border border-red-200 bg-red-50 p-3 sm:px-4 sm:py-3">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <span class="text-xs font-semibold text-red-700 sm:text-sm">Waktu pembayaran tersisa</span>
+                                            <span id="minimarket-payment-countdown-timer" class="text-base font-extrabold tabular-nums text-red-700 sm:text-xl">24:00:00</span>
+                                        </div>
+                                        <p id="minimarket-payment-countdown-message" class="mt-0.5 text-[11px] text-red-600 sm:mt-1 sm:text-xs">Segera selesaikan pembayaran Anda di gerai Alfamart.</p>
+                                    </div>
+                                @endif
+
+                                <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 sm:p-4">
+                                    <p class="text-xs leading-relaxed text-amber-800 sm:text-sm sm:leading-6">Tunjukkan kode pembayaran kepada kasir Alfamart. Pastikan nominal pembayaran sesuai dengan total pesanan. Pembayaran harus diselesaikan sebelum batas waktu berakhir.</p>
+                                </div>
+                            @else
+                                <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 sm:p-4">
+                                    <p class="text-xs font-semibold text-amber-900 sm:text-sm">Kode pembayaran Alfamart belum tersedia</p>
+                                    <p class="mt-1 text-[11px] leading-relaxed text-amber-800 sm:text-sm sm:leading-5">Pesanan sudah tercatat, tetapi kode pembayaran belum berhasil dibuat. Silakan tunggu informasi pembayaran berikutnya.</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3.5 sm:mt-6 sm:rounded-2xl sm:p-5">
                 <div class="flex items-start gap-2.5 sm:gap-3">
                     <x-heroicon-o-information-circle class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 sm:h-5 sm:w-5"/>
@@ -249,6 +312,8 @@
                                     Nomor Virtual Account dapat digunakan untuk menyelesaikan pembayaran Anda.
                                 @elseif($transaction->payment_method === 'QRIS')
                                     Silakan selesaikan pembayaran menggunakan QRIS di atas.
+                                @elseif($transaction->payment_method === 'ALFAMART')
+                                    Silakan selesaikan pembayaran menggunakan kode Alfamart sebelum batas waktu berakhir.
                                 @endif
                             @endif
                         </p>
@@ -298,32 +363,44 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const startCountdown = ({ countdownId, timerId, messageId }) => {
+    const startCountdown = ({ countdownId, timerId, messageId, showHours = false }) => {
         const countdown = document.getElementById(countdownId);
         const timer = document.getElementById(timerId);
         const message = document.getElementById(messageId);
+
         if (!countdown || !timer || !message) {
             return;
         }
+
         const expiresAt = Number(countdown.dataset.expiresAt);
+
         if (!Number.isFinite(expiresAt)) {
             return;
         }
+
         let interval;
+
         const updateCountdown = () => {
             const remaining = Math.max(0, expiresAt - Date.now());
             const totalSeconds = Math.floor(remaining / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
+
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
             const seconds = totalSeconds % 60;
-            timer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            timer.textContent = showHours
+                ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+                : `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
             if (remaining <= 0) {
-                timer.textContent = '00:00';
+                timer.textContent = showHours ? '00:00:00' : '00:00';
                 message.textContent = 'Waktu pembayaran telah berakhir.';
                 countdown.classList.remove('border-red-200', 'bg-red-50');
                 countdown.classList.add('border-gray-200', 'bg-gray-100');
                 clearInterval(interval);
             }
         };
+
         updateCountdown();
         interval = setInterval(updateCountdown, 1000);
     };
@@ -340,6 +417,13 @@ document.addEventListener('DOMContentLoaded', () => {
         messageId: 'qris-payment-countdown-message',
     });
 
+    startCountdown({
+        countdownId: 'minimarket-payment-countdown',
+        timerId: 'minimarket-payment-countdown-timer',
+        messageId: 'minimarket-payment-countdown-message',
+        showHours: true,
+    });
+
     const copyButton = document.getElementById('copy-va-button');
     const vaNumber = document.getElementById('va-number');
 
@@ -350,6 +434,24 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 copyButton.querySelector('span').textContent = 'Salin';
             }, 2000);
+        });
+    }
+
+    const minimarketCopyButton = document.getElementById('copy-minimarket-code-button');
+    const minimarketPaymentCode = document.getElementById('minimarket-payment-code');
+
+    if (minimarketCopyButton && minimarketPaymentCode) {
+        minimarketCopyButton.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(minimarketPaymentCode.innerText.trim());
+                minimarketCopyButton.querySelector('span').textContent = 'Tersalin';
+
+                setTimeout(() => {
+                    minimarketCopyButton.querySelector('span').textContent = 'Salin';
+                }, 2000);
+            } catch (error) {
+                console.error('Gagal menyalin kode pembayaran.', error);
+            }
         });
     }
 
@@ -365,6 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const countdowns = [
             document.getElementById('payment-countdown'),
             document.getElementById('qris-payment-countdown'),
+            document.getElementById('minimarket-payment-countdown'),
         ];
         countdowns.forEach((countdown) => {
             countdown?.classList.add('hidden');
@@ -373,7 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const paymentStatusUrl = @json(route('checkout.payment-status'));
 
-    if (paymentModal && paymentStatusUrl && ['VA', 'QRIS'].includes(paymentMethod)) {
+    if (paymentModal && paymentStatusUrl && ['VA', 'QRIS', 'ALFAMART'].includes(paymentMethod)) {
         const popupStorageKey = `eazywear-payment-success-${invoice}`;
 
         const showPaymentSuccess = () => {
@@ -425,6 +528,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const data = await response.json();
+
+                if (data.success && typeof data.status === 'string') {
+                    const statusLabel = document.getElementById('transaction-status-label');
+
+                    if (statusLabel) {
+                        statusLabel.textContent = data.status;
+
+                        statusLabel.classList.remove(
+                            'bg-amber-50', 'text-amber-700',
+                            'bg-emerald-50', 'text-emerald-700',
+                            'bg-red-50', 'text-red-700'
+                        );
+
+                        if (data.status === 'PAID') {
+                            statusLabel.classList.add('bg-emerald-50', 'text-emerald-700');
+                        } else if (['EXPIRED', 'CANCELLED'].includes(data.status)) {
+                            statusLabel.classList.add('bg-red-50', 'text-red-700');
+                        } else {
+                            statusLabel.classList.add('bg-amber-50', 'text-amber-700');
+                        }
+                    }
+
+                    if (['EXPIRED', 'CANCELLED'].includes(data.status)) {
+                        clearInterval(paymentStatusInterval);
+                        hidePaymentCountdowns();
+                        return;
+                    }
+                }
 
                 if (data.success && data.paid === true) {
                     clearInterval(paymentStatusInterval);

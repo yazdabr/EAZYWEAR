@@ -237,4 +237,43 @@ class TransactionExpiryServiceTest extends TestCase
         $this->assertNotNull($hold->released_at);
         $this->assertSame(0, (int) $slot->used_count);
     }
+    public function test_pending_alfamart_transaction_expires_after_minimarket_deadline(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'payment_method' => 'ALFAMART',
+            'va_expired_at' => null,
+            'qris_expired_at' => null,
+            'minimarket_expired_at' => now()->subMinute(),
+        ]);
+
+        $result = app(TransactionExpiryService::class)->expire($transaction);
+
+        $this->assertTrue($result);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => 'EXPIRED',
+        ]);
+    }
+
+    public function test_pending_alfamart_transaction_does_not_expire_before_minimarket_deadline(): void
+    {
+        $transaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'payment_method' => 'ALFAMART',
+            'va_expired_at' => null,
+            'qris_expired_at' => null,
+            'minimarket_expired_at' => now()->addMinute(),
+        ]);
+
+        $result = app(TransactionExpiryService::class)->expire($transaction);
+
+        $this->assertFalse($result);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'status' => 'PENDING',
+        ]);
+    }
 }

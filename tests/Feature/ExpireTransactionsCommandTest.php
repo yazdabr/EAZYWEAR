@@ -97,4 +97,36 @@ class ExpireTransactionsCommandTest extends TestCase
             'status' => 'PENDING',
         ]);
     }
+    public function test_command_expires_pending_alfamart_transaction_past_minimarket_deadline(): void
+    {
+        $expiredTransaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'payment_method' => 'ALFAMART',
+            'va_expired_at' => null,
+            'qris_expired_at' => null,
+            'minimarket_expired_at' => now()->subMinute(),
+        ]);
+
+        $activeTransaction = Transaction::factory()->create([
+            'status' => 'PENDING',
+            'payment_method' => 'ALFAMART',
+            'va_expired_at' => null,
+            'qris_expired_at' => null,
+            'minimarket_expired_at' => now()->addMinute(),
+        ]);
+
+        $exitCode = Artisan::call('transactions:expire');
+
+        $this->assertSame(0, $exitCode);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $expiredTransaction->id,
+            'status' => 'EXPIRED',
+        ]);
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $activeTransaction->id,
+            'status' => 'PENDING',
+        ]);
+    }
 }

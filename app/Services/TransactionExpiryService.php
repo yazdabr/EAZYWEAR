@@ -36,9 +36,11 @@ class TransactionExpiryService
                 return false;
             }
 
-            $expiredAt = $lockedTransaction->payment_method === 'QRIS'
-                ? $lockedTransaction->qris_expired_at
-                : $lockedTransaction->va_expired_at;
+            $expiredAt = match (strtoupper((string) $lockedTransaction->payment_method)) {
+                'QRIS' => $lockedTransaction->qris_expired_at,
+                'ALFAMART' => $lockedTransaction->minimarket_expired_at,
+                default => $lockedTransaction->va_expired_at,
+            };
 
             if (!$expiredAt) {
                 return false;
@@ -68,9 +70,11 @@ class TransactionExpiryService
                 'transaction_id' => $expiredTransaction->id,
                 'invoice' => $expiredTransaction->invoice_number,
                 'payment_method' => $expiredTransaction->payment_method,
-                'expired_at' => $expiredTransaction->payment_method === 'QRIS'
-                    ? $expiredTransaction->qris_expired_at
-                    : $expiredTransaction->va_expired_at,
+                'expired_at' => match (strtoupper((string) $expiredTransaction->payment_method)) {
+                    'QRIS' => $expiredTransaction->qris_expired_at,
+                    'ALFAMART' => $expiredTransaction->minimarket_expired_at,
+                    default => $expiredTransaction->va_expired_at,
+                },
             ]);
 
             if (

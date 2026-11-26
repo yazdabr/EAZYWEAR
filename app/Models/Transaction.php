@@ -51,6 +51,12 @@ class Transaction extends Model
         'qris_expired_at',
         'qris_response',
 
+        'minimarket_payment_code',
+        'minimarket_store',
+        'minimarket_request_id',
+        'minimarket_expired_at',
+        'minimarket_response',
+
         'subtotal',
         'discount',
         'shipping',
@@ -102,6 +108,8 @@ class Transaction extends Model
         'qris_response' => 'array',
         'fulfillment_date' => 'date',
         'pickup_date' => 'date',
+        'minimarket_expired_at' => 'datetime',
+        'minimarket_response' => 'array',
     ];
 
     /*

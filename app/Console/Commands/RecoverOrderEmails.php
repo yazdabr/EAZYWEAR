@@ -82,6 +82,13 @@ class RecoverOrderEmails extends Command
                         });
                     });
             })
+            ->whereHas('transaction', function ($query) {
+                $query->where(function ($query) {
+                    $query->where('payment_method', '!=', 'ALFAMART')
+                        ->orWhereNotNull('minimarket_payment_code')
+                        ->where('minimarket_payment_code', '!=', '');
+                });
+            })
             ->orderBy('id')
             ->limit(100)
             ->pluck('id');

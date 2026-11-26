@@ -69,6 +69,27 @@ class SendOrderCreatedEmail implements ShouldQueue
                 'items.productVariant.product',
             ])->findOrFail($outbox->transaction_id);
 
+            // Jangan kirim email Alfamart jika kode pembayaran belum tersedia.
+            if (
+                $transaction->payment_method === 'ALFAMART'
+                && blank($transaction->minimarket_payment_code)
+            ) {
+                $outbox->update([
+                    'status' => OrderEmailOutbox::STATUS_PENDING,
+                    'locked_until' => null,
+                    'available_at' => null,
+                    'last_error' => 'Email Alfamart menunggu kode pembayaran dari DOKU.',
+                ]);
+
+                Log::warning('Order email skipped: Alfamart payment code is missing.', [
+                    'outbox_id' => $outbox->id,
+                    'transaction_id' => $transaction->id,
+                    'invoice_number' => $transaction->invoice_number,
+                ]);
+
+                return;
+            }
+
             $emailArchiveService->send(
                 $transaction->shipping_email,
                 new OrderCreatedMail($transaction)

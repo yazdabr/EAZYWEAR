@@ -77,6 +77,44 @@
                                     Pindai kode QR di atas untuk melakukan pembayaran.
                                 </div>
                             </div>
+                        @elseif($transaction->payment_method === 'ALFAMART')
+                            <div style="margin-top:18px; padding:18px; background:#fff8e8; border:1px solid #f0d99a; border-radius:8px;">
+                                <div style="font-size:15px; font-weight:bold; color:#7a5a12;">
+                                    Cara Pembayaran di Alfamart
+                                </div>
+
+                                <div style="margin-top:8px; font-size:13px; line-height:1.7; color:#666666;">
+                                    Tunjukkan kode pembayaran berikut kepada kasir Alfamart.
+                                    Pastikan nominal pembayaran sesuai dengan total invoice dan simpan struk pembayaran Anda.
+                                </div>
+
+                                <div style="margin-top:14px; padding:16px; background:#ffffff; border:1px dashed #d6a63c; border-radius:8px; text-align:center;">
+                                    <div style="font-size:11px; color:#888888; text-transform:uppercase; letter-spacing:1px;">
+                                        Kode Pembayaran Alfamart
+                                    </div>
+                                    <div style="margin-top:8px; font-family:monospace; font-size:22px; font-weight:bold; color:#222222; letter-spacing:1px; word-break:break-all; user-select:all;">
+                                        {{ $transaction->minimarket_payment_code }}
+                                    </div>
+                                </div>
+
+                                @if($transaction->minimarket_expired_at)
+                                    <div style="margin-top:12px; font-size:13px; color:#a16207;">
+                                        Batas pembayaran:
+                                        <strong>
+                                            {{ $transaction->minimarket_expired_at
+                                                ->copy()
+                                                ->timezone('Asia/Makassar')
+                                                ->locale('id')
+                                                ->translatedFormat('d M Y, H:i')
+                                            }} WITA
+                                        </strong>
+                                    </div>
+                                @endif
+
+                                <div style="margin-top:8px; font-size:12px; line-height:1.6; color:#888888;">
+                                    Kode dapat dipilih dan disalin. Lakukan pembayaran sebelum batas waktu yang tertera.
+                                </div>
+                            </div>
                         @endif
                     </td>
                 </tr>
@@ -112,7 +150,9 @@
                                     Metode Pembayaran
                                 </td>
                                 <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#222222;">
-                                    {{ $transaction->payment_method === 'VA' ? 'Virtual Account' : $transaction->payment_method }}
+                                    {{ $transaction->payment_method === 'VA'
+                                        ? 'Virtual Account'
+                                        : ($transaction->payment_method === 'ALFAMART' ? 'Alfamart' : $transaction->payment_method) }}
                                 </td>
                             </tr>
 
@@ -170,6 +210,31 @@
                                         </td>
                                         <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#AE7C18;">
                                             {{ $transaction->qris_expired_at
+                                                ->copy()
+                                                ->timezone('Asia/Makassar')
+                                                ->locale('id')
+                                                ->translatedFormat('d M Y, H:i')
+                                            }} WITA
+                                        </td>
+                                    </tr>
+                                @endif
+                            @elseif($transaction->payment_method === 'ALFAMART')
+                                <tr>
+                                    <td style="padding:14px 16px; color:#777777; font-size:13px;">
+                                        Kode Pembayaran
+                                    </td>
+                                    <td style="padding:14px 16px; font-size:16px; font-family:monospace; font-weight:bold; color:#222222; word-break:break-all; user-select:all;">
+                                        {{ $transaction->minimarket_payment_code }}
+                                    </td>
+                                </tr>
+
+                                @if($transaction->minimarket_expired_at)
+                                    <tr>
+                                        <td style="padding:14px 16px; color:#777777; font-size:13px;">
+                                            Batas Pembayaran
+                                        </td>
+                                        <td style="padding:14px 16px; font-size:14px; font-weight:bold; color:#AE7C18;">
+                                            {{ $transaction->minimarket_expired_at
                                                 ->copy()
                                                 ->timezone('Asia/Makassar')
                                                 ->locale('id')

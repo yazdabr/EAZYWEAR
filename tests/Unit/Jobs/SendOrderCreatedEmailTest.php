@@ -154,6 +154,61 @@ class SendOrderCreatedEmailTest extends TestCase
         ]);
     }
 
+    public function test_job_does_not_send_alfamart_email_when_payment_code_is_missing(): void
+    {
+        $outbox = $this->createOutbox('alfamart-pending@example.com');
+
+        $outbox->transaction->update([
+            'payment_method' => 'ALFAMART',
+            'minimarket_payment_code' => null,
+        ]);
+
+        $emailArchiveService = Mockery::mock(EmailArchiveService::class);
+        $emailArchiveService->shouldNotReceive('send');
+
+        $job = new SendOrderCreatedEmail((int) $outbox->id);
+
+        $job->handle($emailArchiveService);
+
+        $this->assertDatabaseHas('order_email_outboxes', [
+            'id' => $outbox->id,
+            'status' => OrderEmailOutbox::STATUS_PENDING,
+            'available_at' => null,
+            'locked_until' => null,
+            'last_error' => 'Email Alfamart menunggu kode pembayaran dari DOKU.',
+        ]);
+    }
+
+    public function test_job_sends_alfamart_email_when_payment_code_is_available(): void
+    {
+        $outbox = $this->createOutbox('alfamart-paid-code@example.com');
+
+        $outbox->transaction->update([
+            'payment_method' => 'ALFAMART',
+            'minimarket_payment_code' => '1234567890123456',
+        ]);
+
+        $emailArchiveService = Mockery::mock(EmailArchiveService::class);
+
+        $emailArchiveService
+            ->shouldReceive('send')
+            ->once()
+            ->with(
+                'alfamart-paid-code@example.com',
+                Mockery::type(OrderCreatedMail::class)
+            );
+
+        $job = new SendOrderCreatedEmail((int) $outbox->id);
+
+        $job->handle($emailArchiveService);
+
+        $this->assertDatabaseHas('order_email_outboxes', [
+            'id' => $outbox->id,
+            'status' => OrderEmailOutbox::STATUS_SENT,
+            'attempts' => 1,
+        ]);
+    }
+
     public function test_job_has_expected_queue_retry_and_timeout_settings(): void
     {
         $job = new SendOrderCreatedEmail(123);

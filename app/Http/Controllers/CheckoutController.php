@@ -1297,6 +1297,9 @@ class CheckoutController extends Controller
             });
 
             // Generate kode pembayaran Alfamart setelah transaksi database commit.
+            $alfamartPaymentCodeFailed = false;
+            $alfamartPaymentCodeError = null;
+
             if ($transaction->payment_method === 'ALFAMART') {
                 try {
                     $minimarketResponse = $dokuMinimarketService->createAlfamartPaymentCode(
@@ -1326,6 +1329,8 @@ class CheckoutController extends Controller
                         'minimarket_response' => $minimarketResponse,
                     ]);
                 } catch (\Throwable $e) {
+                    $alfamartPaymentCodeFailed = true;
+                    $alfamartPaymentCodeError = $e->getMessage();
                     Log::error('Failed to generate DOKU Alfamart payment code.', [
                         'transaction_id' => $transaction->id,
                         'invoice_number' => $transaction->invoice_number,
@@ -1334,6 +1339,20 @@ class CheckoutController extends Controller
                     ]);
                 }
             }
+
+            if ($alfamartPaymentCodeFailed) {
+                OrderEmailOutbox::query()
+                    ->where('transaction_id', $transaction->id)
+                    ->update([
+                        'status' => OrderEmailOutbox::STATUS_PENDING,
+                        'available_at' => null,
+                        'last_error' => mb_substr(
+                            (string) $alfamartPaymentCodeError,
+                            0,
+                            65000
+                        ),
+                    ]);
+            } else {
 
             $outbox = null;
 
@@ -1369,6 +1388,7 @@ class CheckoutController extends Controller
                     'error' => $e->getMessage(),
                 ]);
             }
+            } // Penutup else: hanya dispatch email jika kode Alfamart berhasil
 
             $request->session()->put('checkout_success_invoice', $transaction->invoice_number);
             $request->session()->forget('cart');

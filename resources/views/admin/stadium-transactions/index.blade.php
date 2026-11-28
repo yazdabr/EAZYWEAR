@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
-@section('title', 'WA')
-@section('page-title', 'Transaksi Stadion')
+@section('title', 'Data Transaksi Stadion')
+@section('page-title', 'Data Transaksi Stadion')
 
 @section('content')
 
@@ -14,20 +14,28 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
             <h2 class="text-xl font-bold text-slate-900 sm:text-3xl">
-                Transaksi Stadion
+                Data Transaksi Stadion
             </h2>
             <p class="mt-1 text-xs text-slate-500 sm:text-sm">
                 Kelola transaksi stadion dan pembayaran pelanggan.
             </p>
         </div>
 
-        <div class="grid w-full grid-cols-1 gap-2 lg:w-auto lg:min-w-0">
+        <div class="grid w-full grid-cols-2 gap-2 lg:w-auto lg:min-w-0">
             <a
                 href="{{ route('admin.stadium-transactions.create') }}"
                 class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex"
             >
-            <x-heroicon-o-plus class="h-5 w-5"/>
-                Tambah Data Transaksi
+                <x-heroicon-o-plus class="h-5 w-5"/>
+                Tambah Data
+            </a>
+
+            <a
+                href="{{ route('admin.kasir-stadion') }}"
+                class="hidden items-center justify-center gap-2 rounded-xl bg-[#AE7C18] px-6 py-3 font-semibold text-white shadow-lg shadow-[#AE7C18]/20 transition hover:bg-[#96690F] active:scale-95 lg:inline-flex"
+            >
+                <x-heroicon-o-shopping-cart class="h-5 w-5"/>
+                Kasir Stadion
             </a>
         </div>
     </div>
@@ -68,7 +76,7 @@
                             class="h-[42px] w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 transition-all duration-200 focus:border-[#AE7C18] focus:outline-none focus:ring-2 focus:ring-[#AE7C18]/20 sm:h-[50px] sm:px-4 sm:text-sm"
                         >
                             <option value="">Semua Status</option>
-                            @foreach (['PENDING', 'PAID', 'EXPIRED', 'CANCELLED', 'COMPLETED'] as $status)
+                            @foreach (['PENDING', 'PAID', 'ORDER_COMPLETED', 'EXPIRED', 'CANCELLED', 'COMPLETED'] as $status)
                                 <option value="{{ $status }}" @selected(request('status') === $status)>
                                     {{ $status }}
                                 </option>
@@ -340,8 +348,8 @@
             @empty
                 <div class="px-4 py-10 text-center">
                     <x-heroicon-o-receipt-percent class="mx-auto h-9 w-9 text-slate-300"/>
-                    <p class="mt-3 text-sm font-semibold text-slate-600">Belum ada transaksi WA</p>
-                    <p class="mt-1 text-xs text-slate-400">Transaksi WA akan muncul di sini.</p>
+                    <p class="mt-3 text-sm font-semibold text-slate-600">Belum ada transaksi stadion</p>
+                    <p class="mt-1 text-xs text-slate-400">Transaksi dari Kasir Stadion akan muncul di sini.</p>
                 </div>
             @endforelse
         </div>
@@ -574,9 +582,9 @@
                         <tr>
                             <td colspan="7" class="px-5 py-14 text-center">
                                 <x-heroicon-o-receipt-percent class="mx-auto h-10 w-10 text-slate-300"/>
-                                <p class="mt-3 font-semibold text-slate-600">Belum ada transaksi WA</p>
+                                <p class="mt-3 font-semibold text-slate-600">Belum ada transaksi stadion</p>
                                 <p class="mt-1 text-sm text-slate-400">
-                                    Transaksi dari kasir booth akan muncul di halaman ini.
+                                    Transaksi dari Kasir Stadion akan muncul di halaman ini.
                                 </p>
                             </td>
                         </tr>

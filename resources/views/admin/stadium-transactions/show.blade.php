@@ -4,6 +4,9 @@
 @section('page-title', 'Detail Transaksi Stadion')
 
 @section('content')
+@php
+    $isPaid = in_array($transaction->status, ['PAID', 'ORDER_COMPLETED'], true);
+@endphp
 <div class="space-y-5">
 
     {{-- Header transaksi --}}
@@ -15,12 +18,12 @@
                 </h1>
 
                 <span class="rounded-full px-3 py-1 text-xs font-bold
-                    {{ $transaction->status === 'PAID'
+                    {{ $isPaid
                         ? 'bg-emerald-100 text-emerald-700'
                         : ($transaction->status === 'PENDING'
                             ? 'bg-amber-100 text-amber-700'
                             : 'bg-slate-100 text-slate-700') }}">
-                    {{ $transaction->status === 'PAID'
+                    {{ $isPaid
                         ? 'Lunas'
                         : ($transaction->status === 'PENDING'
                             ? 'Menunggu Pembayaran'
@@ -95,8 +98,8 @@
 
             <div class="flex items-center justify-between gap-3 border-t border-slate-100 py-2">
                 <span class="text-sm text-slate-500">Status</span>
-                <span class="font-semibold {{ $transaction->status === 'PAID' ? 'text-emerald-700' : 'text-amber-700' }}">
-                    {{ $transaction->status === 'PAID' ? 'Lunas' : $transaction->status }}
+                <span class="font-semibold {{ $isPaid ? 'text-emerald-700' : 'text-amber-700' }}">
+                    {{ $isPaid ? 'Lunas' : $transaction->status }}
                 </span>
             </div>
 
@@ -680,11 +683,11 @@
                 </p>
 
                 <div class="mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold
-                    {{ $transaction->status === 'PAID'
+                    {{ $isPaid
                         ? 'bg-emerald-50 text-emerald-700'
                         : 'bg-amber-50 text-amber-700' }}">
                     <x-heroicon-o-check-circle class="h-4 w-4" />
-                    {{ $transaction->status === 'PAID' ? 'Pembayaran Lunas' : $transaction->status }}
+                    {{ $isPaid ? 'Pembayaran Lunas' : $transaction->status }}
                 </div>
             </div>
         </div>

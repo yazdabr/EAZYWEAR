@@ -61,6 +61,15 @@
                     <span>Kasir</span>
                 </a>
 
+                <a href="{{ route('admin.kasir-stadion') }}"
+                    class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
+                    {{ request()->routeIs('admin.kasir-stadion*')
+                        ? 'bg-[#C4902C] text-white shadow-md'
+                        : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                    <x-heroicon-o-trophy class="h-5 w-5 shrink-0"/>
+                    <span>Kasir Stadion</span>
+                </a>
+
                 <a href="{{ route('admin.giveaway-picker') }}"
                     class="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200
                     {{ request()->routeIs('admin.giveaway-picker')

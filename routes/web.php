@@ -269,6 +269,22 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
             'updateStock',
         ])->name('kasir.update-stock');
 
+        // Kasir Stadion: POS terpisah untuk penjualan di stadion.
+        Route::get('/kasir-stadion', [
+            \App\Http\Controllers\Admin\StadiumPosController::class,
+            'index',
+        ])->name('kasir-stadion');
+
+        Route::post('/kasir-stadion/checkout', [
+            \App\Http\Controllers\Admin\StadiumPosController::class,
+            'store',
+        ])->name('kasir-stadion.checkout');
+
+        Route::post('/kasir-stadion/update-stock', [
+            \App\Http\Controllers\Admin\StadiumPosController::class,
+            'updateStock',
+        ])->name('kasir-stadion.update-stock');
+
         // Data transaksi yang berasal dari POS Kasir.
         Route::get('/kasir-transactions', [
             KasirTransactionController::class,

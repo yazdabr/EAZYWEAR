@@ -61,7 +61,7 @@ class StadiumTransactionController extends Controller
         $summary = [
             'total_transactions' => (clone $summaryQuery)->count(),
             'paid_transactions' => (clone $summaryQuery)
-                ->where('status', 'PAID')
+                ->whereIn('status', ['PAID', Transaction::ORDER_COMPLETED])
                 ->count(),
             'pending_transactions' => (clone $summaryQuery)
                 ->where('status', 'PENDING')
@@ -70,7 +70,7 @@ class StadiumTransactionController extends Controller
                 ->whereIn('status', Transaction::SALES_REPORT_STATUSES)
                 ->sum('total'),
             'completed_orders' => (clone $summaryQuery)
-                ->where('status', 'PAID')
+                ->whereIn('status', ['PAID', Transaction::ORDER_COMPLETED])
                 ->count(),
         ];
 
@@ -149,7 +149,7 @@ class StadiumTransactionController extends Controller
                 $currentMonth->copy()->startOfMonth(),
                 $currentMonth->copy()->endOfMonth(),
             ])
-            ->where('status', 'PAID')
+            ->whereIn('status', ['PAID', Transaction::ORDER_COMPLETED])
             ->count();
 
         $previousCompleted = Transaction::where('source', 'Stadium')
@@ -157,7 +157,7 @@ class StadiumTransactionController extends Controller
                 $previousMonth->copy()->startOfMonth(),
                 $previousMonth->copy()->endOfMonth(),
             ])
-            ->where('status', 'PAID')
+            ->whereIn('status', ['PAID', Transaction::ORDER_COMPLETED])
             ->count();
 
         $completedGrowth = $calculateGrowth(

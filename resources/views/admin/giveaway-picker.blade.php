@@ -89,6 +89,25 @@
             <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div class="flex items-center justify-between"><h3 class="font-bold text-slate-900">Riwayat Pemenang</h3><button id="reset-draw" type="button" class="text-xs font-semibold text-slate-400 hover:text-red-600">Reset</button></div><div id="winner-history" class="mt-4 space-y-3"><p class="text-sm text-slate-400">Belum ada pemenang.</p></div></div>
         </aside>
     </div>
+
+    <div id="delete-winner-modal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="delete-winner-title">
+        <div id="delete-winner-overlay" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="relative w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100/80">
+                <x-heroicon-o-trash class="h-7 w-7 text-red-600"/>
+            </div>
+            <div class="mt-4 text-center">
+                <h2 id="delete-winner-title" class="text-lg font-bold text-slate-900">Hapus Pemenang?</h2>
+                <p class="mt-2 text-sm leading-relaxed text-slate-600">
+                    Pemenang <span id="delete-winner-name" class="font-bold break-words text-slate-900"></span> akan dihapus dari riwayat dan tidak diikutsertakan pada undian berikutnya.
+                </p>
+            </div>
+            <div class="mt-6 flex gap-2.5">
+                <button id="delete-winner-cancel" type="button" class="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">Batal</button>
+                <button id="delete-winner-confirm" type="button" class="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-700">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 @push('scripts')
@@ -103,9 +122,19 @@
         ['dianaaa','3-1 untuk kemenangan!'],['rezafootball','2-1 mantap'],['aldi_aja','Bismillah 2-1'],
         ['salsa.m','1-1'],['yoga_19','Tebakan 2-1'],['nanda_put','2-0']
     ];
-    let allComments = [], eligible = [], winners = [], drawing = false;
+    let allComments = [], eligible = [], winners = [], excludedWinners = new Set(), drawing = false;
+    let displayedWinner = null, pendingWinnerIndex = null;
     function escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+    }
+    function participantKey(value) {
+        return String(value).toLocaleLowerCase();
+    }
+    function isCurrentWinner(item) {
+        return winners.some(winner => participantKey(winner.username) === participantKey(item.username));
+    }
+    function availableParticipants() {
+        return eligible.filter(item => !isCurrentWinner(item) && !excludedWinners.has(participantKey(item.username)));
     }
     function formatCommentDate(value) {
         if (!value) return 'Waktu tidak tersedia';
@@ -162,21 +191,30 @@
         }).filter(Boolean);
     }
     function updateDrawButton() {
-        const remaining = eligible.filter(item => !winners.some(w => w.username.toLowerCase() === item.username.toLowerCase()));
+        const remaining = availableParticipants();
         $('draw-button').disabled = drawing || remaining.length === 0 || winners.length >= 3;
         $('winner-progress').textContent = winners.length + ' / 3';
         $('draw-button').textContent = winners.length >= 3 ? 'UNDIAN SELESAI' : winners.length ? 'UNDI PEMENANG BERIKUTNYA' : 'UNDI PEMENANG';
-        $('draw-hint').textContent = winners.length >= 3 ? 'Tiga pemenang sudah terpilih.' : remaining.length ? remaining.length + ' peserta masih tersedia.' : 'Peserta belum tersedia.';
+        $('draw-hint').textContent = winners.length >= 3
+            ? 'Tiga pemenang sudah terpilih.'
+            : remaining.length
+                ? remaining.length + ' peserta masih tersedia.'
+                : eligible.length
+                    ? 'Tidak ada peserta tersisa untuk diundi.'
+                    : 'Peserta belum tersedia.';
     }
     function renderHistory() {
         $('winner-history').innerHTML = winners.length ? winners.map((winner, index) =>
-            `<div class="flex gap-3 rounded-xl bg-slate-50 p-3">
+            `<div class="flex items-start gap-3 rounded-xl bg-slate-50 p-3">
                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-xs font-black text-amber-800">${index + 1}</div>
-                <div class="min-w-0">
+                <div class="min-w-0 flex-1">
                     <p class="truncate text-sm font-bold text-slate-800">@${escapeHtml(winner.username)}</p>
                     <p class="mt-0.5 text-xs text-slate-500">${escapeHtml(winner.text)}</p>
                     <p class="mt-2 text-[11px] text-slate-400">${escapeHtml(formatCommentDate(winner.created_at))}</p>
                 </div>
+                <button type="button" data-remove-winner="${index}" ${drawing ? 'disabled' : ''} class="shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40" title="Hapus pemenang" aria-label="Hapus pemenang @${escapeHtml(winner.username)}">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7m2 0-.7 11.1A2 2 0 0 1 14.3 20H9.7a2 2 0 0 1-2-1.9L7 7m3 3.5v6m4-6v6"/></svg>
+                </button>
             </div>`
         ).join('') : '<p class="text-sm text-slate-400">Belum ada pemenang.</p>';
 
@@ -198,6 +236,8 @@
             });
         } else eligible = filtered;
         winners = [];
+        excludedWinners.clear();
+        displayedWinner = null;
         $('total-comments').textContent = allComments.length;
         $('eligible-count').textContent = eligible.length;
         $('import-status').textContent = allComments.length + ' komentar dimuat · ' + eligible.length + ' peserta memenuhi filter';
@@ -264,7 +304,7 @@
     $('unique-user').addEventListener('change', () => { if (allComments.length) applyFilter(); });
     $('draw-button').addEventListener('click', () => {
         if (drawing) return;
-        const pool = eligible.filter(item => !winners.some(w => w.username.toLowerCase() === item.username.toLowerCase()));
+        const pool = availableParticipants();
         if (!pool.length || winners.length >= 3) return;
         drawing = true; updateDrawButton();
         $('draw-placeholder').classList.add('hidden'); $('winner-result').classList.add('hidden'); $('rolling-name').classList.remove('hidden');
@@ -277,6 +317,7 @@
                 clearInterval(rolling);
                 const winner = pool[Math.floor(Math.random()*pool.length)];
                 winners.push(winner);
+                displayedWinner = winner;
                 $('rolling-name').classList.add('hidden'); $('winner-result').classList.remove('hidden');
                 $('winner-number').textContent = 'PEMENANG ' + winners.length;
                 $('winner-username').textContent = '@' + winner.username;
@@ -286,9 +327,58 @@
             }
         },75);
     });
+    function openDeleteWinnerModal(index) {
+        if (drawing || !winners[index]) return;
+        pendingWinnerIndex = index;
+        $('delete-winner-name').textContent = '@' + winners[index].username;
+        const modal = $('delete-winner-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+        $('delete-winner-confirm').focus();
+    }
+    function closeDeleteWinnerModal() {
+        pendingWinnerIndex = null;
+        const modal = $('delete-winner-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+    }
+    function deleteWinner() {
+        if (pendingWinnerIndex === null || drawing) return;
+        const removed = winners[pendingWinnerIndex];
+        closeDeleteWinnerModal();
+        if (!removed) return;
+        winners.splice(winners.indexOf(removed), 1);
+        excludedWinners.add(participantKey(removed.username));
+
+        if (displayedWinner === removed) {
+            displayedWinner = null;
+            $('winner-result').classList.add('hidden');
+            $('rolling-name').classList.add('hidden');
+            $('draw-placeholder').classList.remove('hidden');
+        } else if (displayedWinner && !$('winner-result').classList.contains('hidden')) {
+            const displayedIndex = winners.indexOf(displayedWinner);
+            if (displayedIndex !== -1) $('winner-number').textContent = 'PEMENANG ' + (displayedIndex + 1);
+        }
+
+        renderHistory();
+    }
+    $('winner-history').addEventListener('click', event => {
+        const button = event.target.closest('[data-remove-winner]');
+        if (!button || drawing) return;
+        openDeleteWinnerModal(Number(button.dataset.removeWinner));
+    });
+    $('delete-winner-cancel').addEventListener('click', closeDeleteWinnerModal);
+    $('delete-winner-overlay').addEventListener('click', closeDeleteWinnerModal);
+    $('delete-winner-confirm').addEventListener('click', deleteWinner);
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && pendingWinnerIndex !== null) closeDeleteWinnerModal();
+    });
     $('reset-draw').addEventListener('click', () => {
         if (drawing) return;
-        winners = []; $('winner-result').classList.add('hidden'); $('rolling-name').classList.add('hidden');
+        winners = []; excludedWinners.clear(); displayedWinner = null;
+        $('winner-result').classList.add('hidden'); $('rolling-name').classList.add('hidden');
         $('draw-placeholder').classList.remove('hidden'); renderHistory();
     });
 })();
